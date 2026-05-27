@@ -9,7 +9,7 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 // When NITRO_PRESET=vercel is set (e.g. in Vercel's build environment),
 // enable the Nitro Vercel adapter so output goes to .vercel/output/.
 // Locally this is undefined, so the default Cloudflare/dev behaviour is used.
-const nitroPreset = process.env.NITRO_PRESET as string | undefined;
+const nitroPreset = process.env.NITRO_PRESET || (process.env.VERCEL === "1" ? "vercel" : undefined);
 
 export default defineConfig({
   tanstackStart: {
