@@ -7,9 +7,22 @@ export const createLovableAiGatewayProvider = (lovableApiKey?: string) => {
     apiKey: apiKey || "",
   });
 
+  const originalEmbeddingModel = google.textEmbeddingModel("gemini-embedding-001");
+
+  const wrappedEmbeddingModel = {
+    ...originalEmbeddingModel,
+    doEmbed: async (params: any) => {
+      const result = await originalEmbeddingModel.doEmbed(params);
+      return {
+        ...result,
+        embeddings: result.embeddings.map((emb: number[]) => emb.slice(0, 768)),
+      };
+    },
+  };
+
   return {
-    chatModel: (_modelId?: string) => google("gemini-1.5-flash"),
-    textEmbeddingModel: (_modelId?: string) => google.textEmbeddingModel("text-embedding-004"),
+    chatModel: (_modelId?: string) => google("gemini-2.5-flash"),
+    textEmbeddingModel: (_modelId?: string) => wrappedEmbeddingModel as any,
   };
 };
 
