@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient: Scholarly Hearth Warmth -->
+    <radialGradient id="bg-grad" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="hsl(24, 25%, 15%)" />
+      <stop offset="100%" stop-color="hsl(24, 20%, 8%)" />
+    </radialGradient>
+
+    <!-- Terracotta Flame Gradient -->
+    <linearGradient id="terracotta-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="hsl(22, 75%, 48%)" />
+      <stop offset="60%" stop-color="hsl(30, 85%, 52%)" />
+      <stop offset="100%" stop-color="hsl(45, 95%, 60%)" />
+    </linearGradient>
+
+    <!-- Gold Accent Gradient -->
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Card with rounded corners -->
+  <rect width="512" height="512" rx="128" fill="url(#bg-grad)" stroke="hsl(22, 75%, 48%, 0.3)" stroke-width="8" />
+
+  <!-- Inner glowing circle -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#terracotta-grad)" stroke-width="2" opacity="0.15" />
+
+  <g transform="translate(128, 128)">
+    <!-- Book silhouette / pages base -->
+    <!-- Left page -->
+    <path d="M 20 180 Q 70 160 120 190 Q 120 70 120 50 Q 70 20 20 40 Z" fill="hsl(38, 20%, 90%)" opacity="0.9"/>
+    <!-- Right page -->
+    <path d="M 236 180 Q 186 160 136 190 Q 136 70 136 50 Q 186 20 236 40 Z" fill="hsl(38, 20%, 94%)" opacity="0.9"/>
+    
+    <!-- Book spine / middle divider -->
+    <path d="M 120 50 L 136 50 L 136 192 L 120 192 Z" fill="hsl(24, 20%, 25%)" />
+
+    <!-- Socratic Hearth / Flame rising from the book -->
+    <!-- Outer flame glow -->
+    <path d="M 128 40 C 90 85 95 125 128 150 C 161 125 166 85 128 40 Z" fill="url(#terracotta-grad)" opacity="0.9" />
+    
+    <!-- Inner fire / spark -->
+    <path d="M 128 65 C 105 100 110 125 128 142 C 146 125 151 100 128 65 Z" fill="url(#gold-grad)" />
+    
+    <!-- Magical Sparkles -->
+    <!-- Sparkle 1 (Top Left) -->
+    <path d="M 40 40 L 44 44 L 40 48 L 36 44 Z" fill="url(#gold-grad)" transform="scale(1.5) translate(-10, -5)" />
+    <!-- Sparkle 2 (Top Right) -->
+    <path d="M 180 30 L 183 33 L 180 36 L 177 33 Z" fill="url(#gold-grad)" transform="scale(1.5) translate(10, -5)" />
+  </g>
+
+  <!-- Title Text 'G' in modern serif -->
+  <text x="256" y="445" font-family="'Playfair Display', Georgia, serif" font-size="56" font-weight="bold" fill="url(#gold-grad)" text-anchor="middle" letter-spacing="2">GilaniAI</text>
+</svg>

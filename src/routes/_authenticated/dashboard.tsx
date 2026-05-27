@@ -16,7 +16,17 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
+  BarChart3,
+  Sparkles,
 } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -79,7 +89,7 @@ const loadDashboardData = createServerFn({ method: "GET" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — GilaniAI" }] }),
+  head: () => ({ meta: [{ title: "GilaniAI" }] }),
   component: Dashboard,
 });
 
@@ -113,12 +123,12 @@ function Dashboard() {
   const plannerTasks = data?.plannerTasks ?? [];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-8 lg:p-12">
+    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-8 lg:p-12 lg:space-y-12">
       {/* Welcome Header */}
       <header className="animate-in-slide flex items-end justify-between flex-wrap gap-4">
         <div>
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Dashboard</p>
-          <h2 className="mt-1 max-w-2xl font-serif text-4xl text-balance">
+          <h2 className="mt-1 max-w-2xl font-serif text-3xl sm:text-4xl text-balance">
             Habari, <span className="capitalize">{name}</span>. Ready to study?
           </h2>
         </div>
@@ -138,53 +148,105 @@ function Dashboard() {
         </div>
       </header>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Core CTA */}
-        <Link
-          to="/tutor"
-          className="animate-in-slide group lg:col-span-8 flex flex-col justify-between rounded-xl border border-border bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+      {/* Study Suite Carousel */}
+      <section className="animate-in-slide [animation-delay:50ms] w-full">
+        <Carousel
+          opts={{ align: "start" }}
+          className="w-full relative"
         >
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-              Start a session
-            </p>
-            <h3 className="mt-2 font-serif text-2xl group-hover:text-primary transition-colors flex items-center gap-2">
-              Ask the AI tutor <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-            </h3>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-              Curriculum-grounded Socratic explanations, with direct teacher escalations if anything feels complex or distress keywords are found.
-            </p>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="font-serif text-2xl font-semibold">Your Study Suite</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Explore curriculum tools and practice systems</p>
+            </div>
+            <div className="flex gap-2">
+              <CarouselPrevious className="static translate-y-0 h-9 w-9 border-border/80 bg-background/50 hover:bg-background" />
+              <CarouselNext className="static translate-y-0 h-9 w-9 border-border/80 bg-background/50 hover:bg-background" />
+            </div>
           </div>
-          <span className="mt-6 inline-flex items-center text-sm font-semibold text-primary">
-            Open tutor chat →
-          </span>
-        </Link>
 
-        {/* Quick Nav cards */}
-        <div className="lg:col-span-4 space-y-6">
-          <Link to="/notes" className="group block rounded-xl border border-border bg-card p-5 hover:bg-accent transition-all">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-              <BookOpenText className="h-3.5 w-3.5 text-primary" /> Notes
-            </p>
-            <p className="mt-2 font-serif text-lg group-hover:text-primary transition-colors">Upload &amp; Summarise</p>
-          </Link>
-          <Link to="/quizzes" className="group block rounded-xl border border-border bg-card p-5 hover:bg-accent transition-all">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-              <ListChecks className="h-3.5 w-3.5 text-primary" /> Practice
-            </p>
-            <p className="mt-2 font-serif text-lg group-hover:text-primary transition-colors">Generate a Mock Quiz</p>
-          </Link>
-          <Link to="/planner" className="group block rounded-xl border border-dashed border-border p-5 hover:bg-accent transition-all">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 text-primary" /> Plan
-            </p>
-            <p className="mt-2 font-serif text-lg group-hover:text-primary transition-colors">Build Personal Planner</p>
-          </Link>
-        </div>
+          <CarouselContent className="-ml-4">
+            {[
+              {
+                title: "Socratic AI Tutor",
+                description: "Curriculum-grounded Socratic explanations & direct teacher escalations.",
+                icon: MessageCircle,
+                to: "/tutor",
+                accent: "from-blue-500/20 to-indigo-500/10 text-blue-600 dark:text-blue-400",
+                cta: "Start a session",
+              },
+              {
+                title: "Study Notes",
+                description: "Upload and summarize your notes, generating key concepts and terms.",
+                icon: BookOpenText,
+                to: "/notes",
+                accent: "from-emerald-500/20 to-teal-500/10 text-emerald-600 dark:text-emerald-400",
+                cta: "Summarise notes",
+              },
+              {
+                title: "Mock Quizzes",
+                description: "Generate customized practice tests tuned to your weak subject topics.",
+                icon: ListChecks,
+                to: "/quizzes",
+                accent: "from-orange-500/20 to-red-500/10 text-orange-600 dark:text-orange-400",
+                cta: "Take a quiz",
+              },
+              {
+                title: "Syllabus Planner",
+                description: "Create personalized study schedules and keep track of daily revision.",
+                icon: CalendarDays,
+                to: "/planner",
+                accent: "from-violet-500/20 to-purple-500/10 text-violet-600 dark:text-violet-400",
+                cta: "Manage calendar",
+              },
+              {
+                title: "Performance Analytics",
+                description: "Track mastery score progress, daily streaks, and flagged focus items.",
+                icon: BarChart3,
+                to: "/analytics",
+                accent: "from-pink-500/20 to-rose-500/10 text-pink-600 dark:text-pink-400",
+                cta: "View progress",
+              },
+            ].map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <CarouselItem key={idx} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 animate-in-slide">
+                  <Link
+                    to={item.to as any}
+                    className="group block h-full rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:scale-[1.01] flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className={`p-3 rounded-lg w-fit bg-gradient-to-br ${item.accent} transition-transform duration-300 group-hover:scale-110`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <h4 className="mt-4 font-serif text-lg font-bold group-hover:text-primary transition-colors flex items-center gap-1.5">
+                        {item.title}
+                        <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                      </h4>
+                      <p className="mt-2 text-xs leading-relaxed text-muted-foreground min-h-[48px]">
+                        {item.description}
+                      </p>
+                    </div>
+                    <div className="mt-6 flex items-center justify-between border-t border-border/40 pt-4">
+                      <span className="text-[11px] font-mono uppercase tracking-widest text-primary font-bold">
+                        {item.cta}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground font-mono">
+                        0{idx + 1}
+                      </span>
+                    </div>
+                  </Link>
+                </CarouselItem>
+              );
+            })}
+          </CarouselContent>
+        </Carousel>
+      </section>
 
+      {/* Widgets Grid */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 animate-in-slide [animation-delay:100ms]">
         {/* Dynamic Study Plan Widget */}
-        <div className="lg:col-span-6 rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Recent Planner Tasks</p>
             <h3 className="font-serif text-xl mt-2 mb-4">Today's Schedule</h3>
@@ -216,7 +278,7 @@ function Dashboard() {
         </div>
 
         {/* Weak Topics / Mastery Widget */}
-        <div className="lg:col-span-6 rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Focus Concepts</p>
             <h3 className="font-serif text-xl mt-2 mb-4">Target Revision</h3>
