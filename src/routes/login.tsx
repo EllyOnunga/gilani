@@ -5,12 +5,14 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (s: Record<string, unknown>) => ({ redirect: (s.redirect as string) || "/dashboard" }),
+  validateSearch: (s: Record<string, unknown>): { redirect?: string } => ({
+    redirect: (s.redirect as string) || undefined,
+  }),
   beforeLoad: async ({ search }) => {
     const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: search.redirect });
+    if (data.session) throw redirect({ to: search.redirect || "/dashboard" });
   },
-  head: () => ({ meta: [{ title: "Sign in — GolaniAI" }] }),
+  head: () => ({ meta: [{ title: "Sign in — GilaniAI" }] }),
   component: LoginPage,
 });
 
@@ -27,20 +29,20 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) return toast.error(error.message);
-    navigate({ to: search.redirect });
+    navigate({ to: search.redirect || "/dashboard" });
   };
 
   const onGoogle = async () => {
     const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (result.error) return toast.error("Google sign-in failed");
     if (result.redirected) return;
-    navigate({ to: search.redirect });
+    navigate({ to: search.redirect || "/dashboard" });
   };
 
   return (
     <div className="min-h-screen grid place-items-center bg-background px-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-8">
-        <Link to="/" className="font-serif text-xl font-bold italic text-primary">GolaniAI</Link>
+        <Link to="/" className="font-serif text-xl font-bold italic text-primary">GilaniAI</Link>
         <h1 className="mt-6 font-serif text-3xl">Welcome back</h1>
         <p className="mt-1 text-sm text-muted-foreground">Pick up where you left off.</p>
         <form onSubmit={onSubmit} className="mt-6 space-y-3">

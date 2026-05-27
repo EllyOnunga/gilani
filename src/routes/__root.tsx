@@ -73,13 +73,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "GolaniAI — Ethical AI Learning Assistant" },
+      { title: "GilaniAI — Ethical AI Learning Assistant" },
       {
         name: "description",
         content:
           "Curriculum-grounded AI tutoring, notes summarization, quizzes, and study planning for KCSE and CBC students. Human oversight built in.",
       },
-      { property: "og:title", content: "GolaniAI — Ethical AI Learning Assistant" },
+      { property: "og:title", content: "GilaniAI — Ethical AI Learning Assistant" },
       {
         property: "og:description",
         content:

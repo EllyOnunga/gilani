@@ -1,0 +1,62 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { getRequest } from '@tanstack/react-start/server'
+import { supabaseAdmin } from '@/integrations/supabase/client.server'
+import { authenticateRequest } from '@/lib/api-auth'
+
+export const Route = createFileRoute('/api/tutor/threads')({
+  server: {
+    handlers: {
+      POST: async () => {
+        const request = getRequest();
+        let authResult;
+        try {
+          authResult = await authenticateRequest(request);
+        } catch (err) {
+          if (err instanceof Response) return err;
+          return new Response(JSON.stringify({ error: err instanceof Error ? err.message : 'Unauthorized' }), { status: 401 });
+        }
+
+        const { userId } = authResult;
+        const body = await request.json().catch(() => ({}));
+        const title = (body.title as string) || 'New tutor session';
+
+        const { data, error } = await supabaseAdmin
+          .from('conversations')
+          .insert({ title, user_id: userId })
+          .select('*')
+          .limit(1)
+          .single();
+
+        if (error) {
+          return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+
+        return new Response(JSON.stringify({ thread: data }), { status: 200 });
+      },
+      GET: async () => {
+        const request = getRequest();
+        try {
+          await authenticateRequest(request);
+        } catch (err) {
+          if (err instanceof Response) return err;
+          return new Response(JSON.stringify({ error: err instanceof Error ? err.message : 'Unauthorized' }), { status: 401 });
+        }
+
+        const url = new URL(request.url);
+        const limit = Number(url.searchParams.get('limit') || '50');
+
+        const { data, error } = await supabaseAdmin
+          .from('conversations')
+          .select('*')
+          .order('updated_at', { ascending: false })
+          .limit(limit);
+
+        if (error) {
+          return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        }
+
+        return new Response(JSON.stringify({ threads: data }), { status: 200 });
+      },
+    },
+  },
+})

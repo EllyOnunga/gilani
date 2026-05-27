@@ -9,7 +9,7 @@ export const Route = createFileRoute("/register")({
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: "/dashboard" });
   },
-  head: () => ({ meta: [{ title: "Create account — GolaniAI" }] }),
+  head: () => ({ meta: [{ title: "Create account — GilaniAI" }] }),
   component: RegisterPage,
 });
 
@@ -47,7 +47,7 @@ function RegisterPage() {
   return (
     <div className="min-h-screen grid place-items-center bg-background px-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-8">
-        <Link to="/" className="font-serif text-xl font-bold italic text-primary">GolaniAI</Link>
+        <Link to="/" className="font-serif text-xl font-bold italic text-primary">GilaniAI</Link>
         <h1 className="mt-6 font-serif text-3xl">Create your account</h1>
         <p className="mt-1 text-sm text-muted-foreground">Free for students.</p>
         <form onSubmit={onSubmit} className="mt-6 space-y-3">

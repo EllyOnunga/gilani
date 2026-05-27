@@ -3,11 +3,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "How GolaniAI works" },
+      { title: "How GilaniAI works" },
       {
         name: "description",
         content:
-          "GolaniAI combines curriculum-grounded retrieval, structured quiz generation, and human oversight to support African students.",
+          "GilaniAI combines curriculum-grounded retrieval, structured quiz generation, and human oversight to support African students.",
       },
     ],
   }),
@@ -20,7 +20,7 @@ function About() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
           <Link to="/" className="font-serif text-xl font-bold italic text-primary">
-            GolaniAI
+            GilaniAI
           </Link>
           <Link to="/register" className="text-sm font-medium text-muted-foreground hover:text-foreground">
             Get started
@@ -31,7 +31,7 @@ function About() {
         <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">About</p>
         <h1 className="mt-3 font-serif text-4xl text-balance">A learning companion, not a replacement.</h1>
         <p className="mt-6 text-lg leading-relaxed text-muted-foreground text-pretty">
-          GolaniAI is designed around three commitments: ground every answer in real curriculum
+          GilaniAI is designed around three commitments: ground every answer in real curriculum
           material, surface uncertainty instead of bluffing through it, and route hard moments
           to a real human.
         </p>

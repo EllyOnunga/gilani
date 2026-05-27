@@ -18,12 +18,12 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 const NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: GraduationCap },
-  { to: "/tutor", label: "Tutor Chat", icon: MessageCircle },
-  { to: "/notes", label: "Study Notes", icon: BookOpenText },
-  { to: "/quizzes", label: "Mock Quizzes", icon: ListChecks },
-  { to: "/planner", label: "Planner", icon: CalendarDays },
-  { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/dashboard" as any, label: "Dashboard", icon: GraduationCap },
+  { to: "/tutor" as any, label: "Tutor Chat", icon: MessageCircle },
+  { to: "/notes" as any, label: "Study Notes", icon: BookOpenText },
+  { to: "/quizzes" as any, label: "Mock Quizzes", icon: ListChecks },
+  { to: "/planner" as any, label: "Planner", icon: CalendarDays },
+  { to: "/analytics" as any, label: "Analytics", icon: BarChart3 },
 ] as const;
 
 function AuthedShell() {
@@ -44,7 +44,7 @@ function AuthedShell() {
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <aside className="sticky top-0 flex h-screen w-64 flex-col border-r border-border bg-sidebar p-6">
         <Link to="/dashboard" className="mb-10 block">
-          <h1 className="font-serif text-2xl font-bold italic tracking-tight text-primary">GolaniAI</h1>
+          <h1 className="font-serif text-2xl font-bold italic tracking-tight text-primary">GilaniAI</h1>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
             Ethical Learning / KCSE-CBC
           </p>
@@ -72,7 +72,7 @@ function AuthedShell() {
               <div className="mt-6 px-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                 Teacher
               </div>
-              <Link to="/teacher/escalations" className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/teacher/escalations") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"}`}>
+              <Link to={"/teacher/escalations" as any} className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/teacher/escalations") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"}`}>
                 <ShieldAlert className="h-4 w-4" /> Escalations
               </Link>
             </>
@@ -82,7 +82,7 @@ function AuthedShell() {
               <div className="mt-6 px-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                 Admin
               </div>
-              <Link to="/admin/users" className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/admin") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"}`}>
+              <Link to={"/admin/users" as any} className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/admin") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"}`}>
                 <Settings className="h-4 w-4" /> Users & Roles
               </Link>
             </>

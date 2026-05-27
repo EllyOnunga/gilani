@@ -1,10 +1,10 @@
-@import "tailwindcss" source(none);
+@import "tailwindcss";
 @source "../src";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
-/* GolaniAI — "Scholarly hearth" design tokens
+/* GilaniAI — "Scholarly hearth" design tokens
  * Warm parchment + terracotta primary. Playfair Display + Inter + JetBrains Mono. */
 
 @theme inline {

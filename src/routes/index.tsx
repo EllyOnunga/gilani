@@ -4,7 +4,7 @@ import { ArrowRight, BookOpenText, MessageCircle, Sparkles, ShieldCheck } from "
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "GolaniAI — Ethical AI Learning Assistant" },
+      { title: "GilaniAI — Ethical AI Learning Assistant" },
       {
         name: "description",
         content:
@@ -21,7 +21,7 @@ function Landing() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <Link to="/" className="font-serif text-xl font-bold italic text-primary">
-            GolaniAI
+            GilaniAI
           </Link>
           <nav className="flex items-center gap-2">
             <Link
@@ -53,7 +53,7 @@ function Landing() {
             .
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
-            GolaniAI grounds every answer in your curriculum, summarizes your notes, generates
+            GilaniAI grounds every answer in your curriculum, summarizes your notes, generates
             mock quizzes, and quietly escalates to a real teacher when you need one.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -90,7 +90,7 @@ function Landing() {
 
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 text-xs font-mono text-muted-foreground">
-          <span>© {new Date().getFullYear()} GolaniAI</span>
+          <span>© {new Date().getFullYear()} GilaniAI</span>
           <span className="uppercase tracking-widest">Built with care · Nairobi</span>
         </div>
       </footer>
