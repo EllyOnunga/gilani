@@ -90,20 +90,20 @@ function EscalationsPage() {
   const resolved = escalations.filter((e) => e.status === "resolved");
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 p-8 lg:p-12">
+    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8 lg:p-12">
       {/* Header */}
       <header className="animate-in-slide">
         <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
           Teacher Portal
         </p>
-        <h2 className="mt-1 font-serif text-4xl">Student Escalations</h2>
+        <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Student Escalations</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Review flagged conversations and provide expert guidance to students.
         </p>
       </header>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {[
           { label: "Total", value: escalations.length, icon: MessageSquare },
           { label: "Pending", value: pending.length, icon: Clock },
@@ -119,7 +119,7 @@ function EscalationsPage() {
 
       {/* Empty state */}
       {escalations.length === 0 && (
-        <div className="rounded-xl border border-dashed border-border p-16 text-center">
+        <div className="rounded-xl border border-dashed border-border p-8 sm:p-16 text-center">
           <ShieldAlert className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
           <p className="font-serif text-xl text-muted-foreground">No escalations yet</p>
           <p className="text-sm text-muted-foreground mt-1">
@@ -142,7 +142,7 @@ function EscalationsPage() {
                 key={esc.id}
                 className="rounded-xl border border-border bg-card shadow-sm overflow-hidden"
               >
-                <div className="flex items-start justify-between gap-4 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between p-4 sm:p-5">
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${reasonMeta.color}`}>

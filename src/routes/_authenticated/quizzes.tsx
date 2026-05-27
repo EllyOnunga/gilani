@@ -205,12 +205,12 @@ function QuizzesPage() {
   // ── Setup screen ──────────────────────────────────────────────────────────
   if (phase === "setup") {
     return (
-      <div className="mx-auto max-w-2xl space-y-8 p-8 lg:p-12">
+      <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12">
         <header className="animate-in-slide">
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
             Mock Quizzes
           </p>
-          <h2 className="mt-1 font-serif text-4xl">Test Your Knowledge</h2>
+          <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Test Your Knowledge</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             GilaniAI generates KCSE/CBC aligned MCQ questions and tracks your weak topics.
           </p>
@@ -288,10 +288,10 @@ function QuizzesPage() {
   if (phase === "results") {
     const grade = pct >= 80 ? "Excellent!" : pct >= 60 ? "Good work!" : pct >= 40 ? "Keep practising." : "Need more revision.";
     return (
-      <div className="mx-auto max-w-2xl space-y-8 p-8 lg:p-12 text-center">
+      <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12 text-center">
         <div className="animate-in-slide">
           <Trophy className="mx-auto h-14 w-14 text-primary mb-4" />
-          <h2 className="font-serif text-4xl">{grade}</h2>
+          <h2 className="font-serif text-3xl sm:text-4xl">{grade}</h2>
           <p className="mt-2 text-muted-foreground text-sm">Topic: <strong>{activeTopic}</strong></p>
         </div>
 
@@ -347,7 +347,7 @@ function QuizzesPage() {
   // ── Quiz screen ────────────────────────────────────────────────────────────
   const progress = ((current + (answered[current] ? 1 : 0)) / questions.length) * 100;
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-8 lg:p-12">
+    <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12">
       {/* Progress */}
       <div className="animate-in-slide space-y-2">
         <div className="flex items-center justify-between font-mono text-[11px] text-muted-foreground uppercase tracking-widest">

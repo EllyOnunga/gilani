@@ -104,20 +104,20 @@ function AdminUsersPage() {
   }, {} as Record<Role, number>);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 p-8 lg:p-12">
+    <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8 lg:p-12">
       {/* Header */}
       <header className="animate-in-slide">
         <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
           Admin Panel
         </p>
-        <h2 className="mt-1 font-serif text-4xl">Users &amp; Roles</h2>
+        <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Users &amp; Roles</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Manage accounts and assign student, teacher, or admin privileges.
         </p>
       </header>
 
       {/* Role counts */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {ROLES.map((r) => {
           const { icon: Icon, color } = ROLE_META[r];
           return (

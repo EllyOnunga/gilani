@@ -143,21 +143,21 @@ function NotesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 p-8 lg:p-12">
+    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8 lg:p-12">
       {/* Header */}
-      <header className="animate-in-slide flex items-end justify-between">
+      <header className="animate-in-slide flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
             Study Notes
           </p>
-          <h2 className="mt-1 font-serif text-4xl">Upload &amp; Summarise</h2>
+          <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Upload &amp; Summarise</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Paste your class notes and GilaniAI will extract a summary and key concepts automatically.
           </p>
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
+          className="self-start sm:self-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
         >
           {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {showForm ? "Cancel" : "New Note"}
@@ -217,7 +217,7 @@ function NotesPage() {
 
       {/* Notes List */}
       {notes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-16 text-center">
+        <div className="rounded-xl border border-dashed border-border p-8 sm:p-16 text-center">
           <BookOpenText className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
           <p className="font-serif text-xl text-muted-foreground">No notes yet</p>
           <p className="text-sm text-muted-foreground mt-1">Add your first note to get started.</p>

@@ -190,13 +190,13 @@ function AnalyticsPage() {
   const averageScore = hasData ? data.averageScore : 78;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-8 lg:p-12">
+    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8 lg:p-12">
       {/* Header */}
       <header className="animate-in-slide">
         <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
           Analytics
         </p>
-        <h2 className="mt-1 font-serif text-4xl">Performance Insights</h2>
+        <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Performance Insights</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Track your learning trajectory, mock quiz performance, and mastery levels across syllabus subjects.
         </p>
@@ -215,7 +215,7 @@ function AnalyticsPage() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-in-slide">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 animate-in-slide">
         {[
           { label: "Quizzes Completed", value: attemptsCount, icon: Trophy, desc: "Total attempts" },
           { label: "Average Score", value: `${averageScore}%`, icon: BarChart3, desc: "Concept mastery" },

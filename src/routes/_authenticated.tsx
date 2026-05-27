@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { createFileRoute, Outlet, redirect, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
   MessageCircle, BookOpenText, ListChecks, CalendarDays, BarChart3,
-  ShieldAlert, LogOut, GraduationCap, Settings,
+  ShieldAlert, LogOut, GraduationCap, Settings, Menu, X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,6 +31,7 @@ function AuthedShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { roles, user } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isTeacher = roles.includes("teacher") || roles.includes("admin");
   const isAdmin = roles.includes("admin");
@@ -41,14 +43,58 @@ function AuthedShell() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-background text-foreground">
-      <aside className="sticky top-0 flex h-screen w-64 flex-col border-r border-border bg-sidebar p-6">
-        <Link to="/dashboard" className="mb-10 block">
-          <h1 className="font-serif text-2xl font-bold italic tracking-tight text-primary">GilaniAI</h1>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Ethical Learning / KCSE-CBC
-          </p>
+    <div className="flex min-h-screen w-full flex-col lg:flex-row bg-background text-foreground">
+      {/* Mobile Top Navigation Header */}
+      <header className="flex h-16 w-full items-center justify-between border-b border-border bg-sidebar px-4 lg:hidden sticky top-0 z-30">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground"
+          title="Open Menu"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
+        <Link to="/dashboard" className="text-center">
+          <h1 className="font-serif text-xl font-bold italic tracking-tight text-primary">GilaniAI</h1>
         </Link>
+        <button
+          onClick={signOut}
+          className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground"
+          title="Sign out"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
+      </header>
+
+      {/* Sidebar Backdrop Overlay for Mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Responsive Aside Navigation Panel */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Brand logo & Mobile Close Button */}
+        <div className="flex items-center justify-between mb-8">
+          <Link to="/dashboard" onClick={() => setSidebarOpen(false)} className="block">
+            <h1 className="font-serif text-2xl font-bold italic tracking-tight text-primary">GilaniAI</h1>
+            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Ethical Learning / KCSE-CBC
+            </p>
+          </Link>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 lg:hidden"
+            title="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
         <nav className="flex-1 space-y-1">
           {NAV.map(({ to, label, icon: Icon }) => {
@@ -57,6 +103,7 @@ function AuthedShell() {
               <Link
                 key={to}
                 to={to}
+                onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
                 }`}
@@ -72,7 +119,15 @@ function AuthedShell() {
               <div className="mt-6 px-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                 Teacher
               </div>
-              <Link to={"/teacher/escalations" as any} className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/teacher/escalations") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"}`}>
+              <Link
+                to={"/teacher/escalations" as any}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
+                  path.startsWith("/teacher/escalations")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-black/5"
+                }`}
+              >
                 <ShieldAlert className="h-4 w-4" /> Escalations
               </Link>
             </>
@@ -82,7 +137,13 @@ function AuthedShell() {
               <div className="mt-6 px-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                 Admin
               </div>
-              <Link to={"/admin/users" as any} className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/admin") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"}`}>
+              <Link
+                to={"/admin/users" as any}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
+                  path.startsWith("/admin") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
+                }`}
+              >
                 <Settings className="h-4 w-4" /> Users & Roles
               </Link>
             </>
@@ -97,6 +158,7 @@ function AuthedShell() {
             </p>
             <Link
               to="/tutor"
+              onClick={() => setSidebarOpen(false)}
               className="mt-3 block w-full rounded bg-foreground py-2 text-center text-[11px] font-bold uppercase tracking-wider text-background hover:bg-foreground/90"
             >
               Escalate now
@@ -119,3 +181,4 @@ function AuthedShell() {
     </div>
   );
 }
+

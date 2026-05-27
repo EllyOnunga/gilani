@@ -180,14 +180,14 @@ function PlannerPage() {
   const doneTasks = completed.size;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 p-8 lg:p-12">
+    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8 lg:p-12">
       {/* Header */}
       <header className="animate-in-slide flex items-end justify-between flex-wrap gap-4">
         <div>
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
             Study Planner
           </p>
-          <h2 className="mt-1 font-serif text-4xl">Your Weekly Plan</h2>
+          <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Your Weekly Plan</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             AI-generated study schedule based on your quiz performance and weak topics.
           </p>
@@ -229,7 +229,7 @@ function PlannerPage() {
 
       {/* Empty state */}
       {!plan && !loading && (
-        <div className="rounded-xl border border-dashed border-border p-16 text-center">
+        <div className="rounded-xl border border-dashed border-border p-8 sm:p-16 text-center">
           <CalendarDays className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
           <p className="font-serif text-xl text-muted-foreground">No plan yet</p>
           <p className="text-sm text-muted-foreground mt-1">
