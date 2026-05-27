@@ -28,10 +28,10 @@ export const Route = createFileRoute('/api/chat')({
           return new Response(JSON.stringify({ error: 'threadId required' }), { status: 400 });
         }
 
-        const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+        const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY;
         if (!LOVABLE_API_KEY) {
           return new Response(
-            JSON.stringify({ error: 'Missing LOVABLE_API_KEY environment variable' }),
+            JSON.stringify({ error: 'Missing GEMINI_API_KEY or LOVABLE_API_KEY environment variable' }),
             { status: 500, headers: { 'Content-Type': 'application/json' } },
           );
         }
@@ -40,10 +40,11 @@ export const Route = createFileRoute('/api/chat')({
           .from('conversations')
           .select('*')
           .eq('id', threadId)
+          .eq('user_id', userId)
           .maybeSingle();
 
         if (!thread) {
-          return new Response(JSON.stringify({ error: 'thread not found' }), { status: 404 });
+          return new Response(JSON.stringify({ error: 'thread not found or unauthorized' }), { status: 404 });
         }
 
         const userParts = messages?.filter((m: any) => m.role === 'user') || [];

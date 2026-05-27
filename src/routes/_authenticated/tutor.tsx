@@ -53,6 +53,9 @@ function TutorIndex() {
 
   if (error) {
     const isServiceRoleError = error.includes('SUPABASE_SERVICE_ROLE_KEY') || error.toLowerCase().includes('service_role');
+    const isLovableKeyError = error.includes('GEMINI_API_KEY') || error.includes('LOVABLE_API_KEY') || error.toLowerCase().includes('gemini_api_key') || error.toLowerCase().includes('lovable_api_key');
+    const isUnauthorizedError = error.toLowerCase().includes('unauthorized') || error.toLowerCase().includes('token') || error.toLowerCase().includes('claims');
+
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center animate-in-slide">
         <div className="rounded-full bg-destructive/10 p-3 text-destructive mb-4">
@@ -65,6 +68,16 @@ function TutorIndex() {
         {isServiceRoleError && (
           <div className="mt-4 max-w-md rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-3 text-xs text-amber-800 dark:text-amber-200/90 text-left">
             <strong>Setup Required:</strong> You are missing the <code>SUPABASE_SERVICE_ROLE_KEY</code> in your local <code>.env</code> file. Add this environment variable from your Supabase Project Settings to enable local server-side operations.
+          </div>
+        )}
+        {isLovableKeyError && (
+          <div className="mt-4 max-w-md rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-3 text-xs text-amber-800 dark:text-amber-200/90 text-left">
+            <strong>Configuration Missing:</strong> You are missing the <code>GEMINI_API_KEY</code> environment variable. Please make sure this key is added to your local <code>.env</code> file or deployment settings to connect directly to Gemini. You can obtain a free API key from <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-primary">Google AI Studio</a>.
+          </div>
+        )}
+        {isUnauthorizedError && !isServiceRoleError && !isLovableKeyError && (
+          <div className="mt-4 max-w-md rounded-md bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 p-3 text-xs text-blue-800 dark:text-blue-200/90 text-left">
+            <strong>Authentication Tip:</strong> Your session might be using stale cached tokens from a previous database. Try clicking the <strong>Sign Out</strong> button in the sidebar (or clear browser localStorage/cookies) and sign back in to establish a fresh connection.
           </div>
         )}
         <Button onClick={createSession} className="mt-6 flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90">

@@ -35,19 +35,22 @@ export const Route = createFileRoute('/api/tutor/threads')({
       },
       GET: async () => {
         const request = getRequest();
+        let authResult;
         try {
-          await authenticateRequest(request);
+          authResult = await authenticateRequest(request);
         } catch (err) {
           if (err instanceof Response) return err;
           return new Response(JSON.stringify({ error: err instanceof Error ? err.message : 'Unauthorized' }), { status: 401 });
         }
 
+        const { userId } = authResult;
         const url = new URL(request.url);
         const limit = Number(url.searchParams.get('limit') || '50');
 
         const { data, error } = await supabaseAdmin
           .from('conversations')
           .select('*')
+          .eq('user_id', userId)
           .order('updated_at', { ascending: false })
           .limit(limit);
 

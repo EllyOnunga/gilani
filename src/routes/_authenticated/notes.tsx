@@ -23,7 +23,7 @@ const ingestNote = createServerFn({ method: "POST" })
   .inputValidator(z.object({ title: z.string(), content: z.string(), userId: z.string() }))
   .handler(async ({ data }) => {
     const { title, content, userId } = data;
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY!;
+    const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
     const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
       "google/gemini-3-flash-preview"
     );

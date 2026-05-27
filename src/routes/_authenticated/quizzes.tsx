@@ -25,7 +25,7 @@ const generateQuiz = createServerFn({ method: "POST" })
   .inputValidator(z.object({ topic: z.string(), count: z.number(), userId: z.string() }))
   .handler(async ({ data }) => {
     const { topic, count, userId } = data;
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY!;
+    const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
     const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
       "google/gemini-3-flash-preview"
     );

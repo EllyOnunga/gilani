@@ -62,7 +62,7 @@ const generatePlan = createServerFn({ method: "POST" })
       }
     }
 
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY!;
+    const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
     const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
       "google/gemini-3-flash-preview"
     );

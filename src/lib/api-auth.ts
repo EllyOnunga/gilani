@@ -49,17 +49,18 @@ export async function authenticateRequest(request: Request) {
     }
   );
 
-  const { data, error } = await supabaseClient.auth.getClaims(token);
-  if (error || !data?.claims || !data.claims.sub) {
+  const { data, error } = await supabaseClient.auth.getUser(token);
+  if (error || !data?.user) {
+    console.error('[API Auth Error] Token verification failed:', error?.message || 'No user returned');
     throw new Response(
-      JSON.stringify({ error: 'Unauthorized: Invalid token claims' }),
+      JSON.stringify({ error: `Unauthorized: ${error?.message || 'Invalid token claims'}` }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
   return {
     supabase: supabaseClient,
-    userId: data.claims.sub,
-    claims: data.claims,
+    userId: data.user.id,
+    user: data.user,
   };
 }

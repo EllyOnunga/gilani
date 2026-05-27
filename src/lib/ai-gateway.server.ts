@@ -1,11 +1,15 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
-export const createLovableAiGatewayProvider = (lovableApiKey: string) =>
-  createOpenAICompatible({
-    name: "lovable",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    headers: {
-      "Lovable-API-Key": lovableApiKey,
-      "X-Lovable-AIG-SDK": "vercel-ai-sdk",
-    },
+export const createLovableAiGatewayProvider = (lovableApiKey?: string) => {
+  const apiKey = process.env.GEMINI_API_KEY || lovableApiKey || process.env.LOVABLE_API_KEY;
+  
+  const google = createGoogleGenerativeAI({
+    apiKey: apiKey || "",
   });
+
+  return {
+    chatModel: (_modelId?: string) => google("gemini-1.5-flash"),
+    textEmbeddingModel: (_modelId?: string) => google.textEmbeddingModel("text-embedding-004"),
+  };
+};
+
