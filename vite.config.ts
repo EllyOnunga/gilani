@@ -6,10 +6,16 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+// When NITRO_PRESET=vercel is set (e.g. in Vercel's build environment),
+// enable the Nitro Vercel adapter so output goes to .vercel/output/.
+// Locally this is undefined, so the default Cloudflare/dev behaviour is used.
+const nitroPreset = process.env.NITRO_PRESET as string | undefined;
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  nitro: nitroPreset ? { preset: nitroPreset } : undefined,
 });
