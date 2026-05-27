@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, Plus, X, Send } from "lucide-react";
+import { fetchWithTimeout, getErrorMessage } from "@/lib/async";
 
 type Thread = {
   id: string;
@@ -24,9 +25,9 @@ function TutorThread() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
 
   useEffect(() => {
     // load threads
@@ -79,6 +80,7 @@ function TutorThread() {
 
   const handleSend = async () => {
     if (!input.trim() || !threadId || sending) return;
+    setChatError(null);
     const text = input;
     setInput("");
     setSending(true);
@@ -102,18 +104,31 @@ function TutorThread() {
     setMessages((m) => [...m, assistantPlaceholder]);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const token = session?.access_token;
-      const userId = session?.user?.id;
-
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      const res = await fetchWithTimeout(
+        "/api/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ threadId, messages: [{ role: "user", content: text }] }),
         },
-        body: JSON.stringify({ threadId, messages: [{ role: 'user', content: text }] }),
-      });
+        90000,
+      );
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        const message =
+          typeof payload?.error === "string"
+            ? payload.error
+            : `Chat request failed with status ${res.status}`;
+        throw new Error(message);
+      }
 
       if (!res.body) {
         const full = await res.text();
@@ -149,6 +164,20 @@ function TutorThread() {
 
       // server is responsible for persisting the assistant response and user message
     } catch (err) {
+      const message = getErrorMessage(err, "Failed to send message");
+      setChatError(message);
+      // Replace assistant placeholder with a visible failure so UI never looks stuck.
+      setMessages((m) => {
+        const copy = [...m];
+        const idx = copy.map((x) => x.role).lastIndexOf("assistant");
+        if (idx >= 0) {
+          copy[idx] = {
+            ...copy[idx],
+            content: `Sorry, I could not respond right now. ${message}`,
+          };
+        }
+        return copy;
+      });
       console.error("send error", err);
     } finally {
       setSending(false);
@@ -157,7 +186,9 @@ function TutorThread() {
 
   const createNewThread = async () => {
     const title = "New thread";
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const userId = session?.user?.id;
     if (!userId) return;
     const { data, error } = await supabase
@@ -165,7 +196,10 @@ function TutorThread() {
       .insert([{ title, user_id: userId }])
       .select()
       .single();
-    if (error) { console.error("create thread", error); return; }
+    if (error) {
+      console.error("create thread", error);
+      return;
+    }
     const newId = (data as any).id;
     setThreads((t) => [{ id: newId, title }, ...t]);
     navigate({ to: `/tutor/${newId}` });
@@ -176,7 +210,9 @@ function TutorThread() {
   const ThreadList = (
     <div className="flex h-full flex-col">
       <div className="mb-4 flex items-center justify-between">
-        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Sessions</p>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Sessions
+        </p>
         <button
           onClick={createNewThread}
           className="flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -188,7 +224,10 @@ function TutorThread() {
         {threads.map((t) => (
           <button
             key={t.id}
-            onClick={() => { handleSelectThread(t.id); setThreadsOpen(false); }}
+            onClick={() => {
+              handleSelectThread(t.id);
+              setThreadsOpen(false);
+            }}
             className={`w-full text-left rounded-lg px-3 py-2.5 transition-colors ${
               t.id === threadId
                 ? "bg-primary/10 text-primary font-semibold"
@@ -198,13 +237,18 @@ function TutorThread() {
             <div className="text-sm truncate">{t.title || "Untitled"}</div>
             {t.updated_at && (
               <div className="text-[10px] font-mono text-muted-foreground mt-0.5">
-                {new Date(t.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
+                {new Date(t.updated_at).toLocaleDateString("en-KE", {
+                  day: "numeric",
+                  month: "short",
+                })}
               </div>
             )}
           </button>
         ))}
         {threads.length === 0 && (
-          <p className="text-xs text-muted-foreground text-center py-6 italic">No sessions yet. Start a new one!</p>
+          <p className="text-xs text-muted-foreground text-center py-6 italic">
+            No sessions yet. Start a new one!
+          </p>
         )}
       </div>
     </div>
@@ -233,7 +277,10 @@ function TutorThread() {
       >
         <div className="mb-4 flex items-center justify-between">
           <span className="font-serif text-lg font-bold text-primary">Sessions</span>
-          <button onClick={() => setThreadsOpen(false)} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
+          <button
+            onClick={() => setThreadsOpen(false)}
+            className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -255,15 +302,25 @@ function TutorThread() {
 
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {chatError && (
+            <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-destructive">
+              {chatError}
+            </div>
+          )}
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
               <MessageCircle className="h-10 w-10 text-muted-foreground/40" />
               <p className="font-serif text-xl text-muted-foreground">Start a conversation</p>
-              <p className="text-sm text-muted-foreground max-w-xs">Ask GilaniAI anything about your KCSE or CBC curriculum.</p>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Ask GilaniAI anything about your KCSE or CBC curriculum.
+              </p>
             </div>
           )}
           {messages.map((m, idx) => (
-            <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div
+              key={idx}
+              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+            >
               <div
                 className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                   m.role === "user"
@@ -273,9 +330,15 @@ function TutorThread() {
               >
                 {m.content || (
                   <span className="flex gap-1 items-center text-muted-foreground">
-                    <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
-                    <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
-                    <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
+                    <span className="animate-bounce" style={{ animationDelay: "0ms" }}>
+                      •
+                    </span>
+                    <span className="animate-bounce" style={{ animationDelay: "150ms" }}>
+                      •
+                    </span>
+                    <span className="animate-bounce" style={{ animationDelay: "300ms" }}>
+                      •
+                    </span>
                   </span>
                 )}
               </div>
@@ -309,7 +372,9 @@ function TutorThread() {
               <Send className="h-4 w-4" />
             </button>
           </div>
-          <p className="mt-1.5 font-mono text-[10px] text-muted-foreground text-center">Shift+Enter for new line</p>
+          <p className="mt-1.5 font-mono text-[10px] text-muted-foreground text-center">
+            Shift+Enter for new line
+          </p>
         </div>
       </main>
     </div>
@@ -319,4 +384,3 @@ function TutorThread() {
 export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
   component: TutorThread,
 });
-

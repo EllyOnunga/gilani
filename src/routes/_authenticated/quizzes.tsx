@@ -5,17 +5,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import {
-  ListChecks, CheckCircle2, XCircle, ChevronRight, Trophy, RotateCcw, Loader2,
+  ListChecks,
+  CheckCircle2,
+  XCircle,
+  ChevronRight,
+  Trophy,
+  RotateCcw,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { getErrorMessage, withTimeout } from "@/lib/async";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 type MCQ = {
   question: string;
   options: string[]; // exactly 4
-  correct: number;   // 0-indexed
+  correct: number; // 0-indexed
   explanation: string;
 };
 
@@ -27,7 +34,7 @@ const generateQuiz = createServerFn({ method: "POST" })
     const { topic, count, userId } = data;
     const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
     const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-      "google/gemini-3-flash-preview"
+      "google/gemini-3-flash-preview",
     );
     const { generateText } = await import("ai");
     const { text } = await generateText({
@@ -41,7 +48,10 @@ Make questions challenging but fair. Explanations should be concise and educatio
 
     let questions: MCQ[] = [];
     try {
-      const clean = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+      const clean = text
+        .replace(/```json/gi, "")
+        .replace(/```/g, "")
+        .trim();
       questions = JSON.parse(clean);
       if (!Array.isArray(questions)) throw new Error("not array");
     } catch {
@@ -72,7 +82,15 @@ Make questions challenging but fair. Explanations should be concise and educatio
   });
 
 const saveAttempt = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ userId: z.string(), quizId: z.string(), score: z.number(), answers: z.array(z.number()), weakTopics: z.array(z.string()) }))
+  .inputValidator(
+    z.object({
+      userId: z.string(),
+      quizId: z.string(),
+      score: z.number(),
+      answers: z.array(z.number()),
+      weakTopics: z.array(z.string()),
+    }),
+  )
   .handler(async ({ data }) => {
     const { userId, quizId, score, answers, weakTopics } = data;
     const { error } = await supabaseAdmin.from("quiz_attempts").insert({
@@ -132,33 +150,47 @@ function QuizzesPage() {
   const startQuiz = async () => {
     setPhase("loading");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Not signed in");
         setPhase("setup");
         return;
       }
-      const res = await generateQuiz({
-        data: { topic: activeTopic, count: questionCount, userId: session.user.id },
-      });
-      setQuizId(res.quizId);
-      setQuestions(res.questions);
+      const resWithTimeout = await withTimeout(
+        generateQuiz({
+          data: { topic: activeTopic, count: questionCount, userId: session.user.id },
+        }),
+        60000,
+        "Quiz generation timed out. Please try again.",
+      );
+      setQuizId(resWithTimeout.quizId);
+      setQuestions(resWithTimeout.questions);
       setCurrent(0);
       setSelected(null);
-      setAnswered(new Array(res.questions.length).fill(false));
-      setUserAnswers(new Array(res.questions.length).fill(-1));
+      setAnswered(new Array(resWithTimeout.questions.length).fill(false));
+      setUserAnswers(new Array(resWithTimeout.questions.length).fill(-1));
       setShowExplain(false);
       setPhase("quiz");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to generate quiz");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to generate quiz"));
       setPhase("setup");
     }
   };
 
   const confirm = () => {
     if (selected === null) return;
-    setAnswered((a) => { const copy = [...a]; copy[current] = true; return copy; });
-    setUserAnswers((a) => { const copy = [...a]; copy[current] = selected; return copy; });
+    setAnswered((a) => {
+      const copy = [...a];
+      copy[current] = true;
+      return copy;
+    });
+    setUserAnswers((a) => {
+      const copy = [...a];
+      copy[current] = selected;
+      return copy;
+    });
     setShowExplain(true);
   };
 
@@ -180,20 +212,27 @@ function QuizzesPage() {
       .map((q) => q.question.slice(0, 60));
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session && quizId) {
-        await saveAttempt({
-          data: {
-            userId: session.user.id,
-            quizId,
-            score,
-            answers: userAnswers,
-            weakTopics: wrongTopics,
-          },
-        });
+        await withTimeout(
+          saveAttempt({
+            data: {
+              userId: session.user.id,
+              quizId,
+              score,
+              answers: userAnswers,
+              weakTopics: wrongTopics,
+            },
+          }),
+          12000,
+          "Saving quiz attempt timed out.",
+        );
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to save quiz attempt:", err);
+      toast.error(getErrorMessage(err, "Could not save quiz attempt"));
     }
   }, [userAnswers, questions, quizId]);
 
@@ -227,7 +266,9 @@ function QuizzesPage() {
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {TOPICS.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
             </select>
           </div>
@@ -258,7 +299,10 @@ function QuizzesPage() {
               className="w-full accent-[hsl(22,75%,48%)]"
             />
             <div className="flex justify-between font-mono text-[10px] text-muted-foreground mt-1">
-              <span>5</span><span>10</span><span>15</span><span>20</span>
+              <span>5</span>
+              <span>10</span>
+              <span>15</span>
+              <span>20</span>
             </div>
           </div>
 
@@ -279,26 +323,41 @@ function QuizzesPage() {
       <div className="flex flex-col items-center justify-center h-full py-40 gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p className="font-serif text-xl text-muted-foreground">Generating your quiz…</p>
-        <p className="text-sm text-muted-foreground font-mono">Crafting {questionCount} questions on {activeTopic}</p>
+        <p className="text-sm text-muted-foreground font-mono">
+          Crafting {questionCount} questions on {activeTopic}
+        </p>
       </div>
     );
   }
 
   // ── Results screen ─────────────────────────────────────────────────────────
   if (phase === "results") {
-    const grade = pct >= 80 ? "Excellent!" : pct >= 60 ? "Good work!" : pct >= 40 ? "Keep practising." : "Need more revision.";
+    const grade =
+      pct >= 80
+        ? "Excellent!"
+        : pct >= 60
+          ? "Good work!"
+          : pct >= 40
+            ? "Keep practising."
+            : "Need more revision.";
     return (
       <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12 text-center">
         <div className="animate-in-slide">
           <Trophy className="mx-auto h-14 w-14 text-primary mb-4" />
           <h2 className="font-serif text-3xl sm:text-4xl">{grade}</h2>
-          <p className="mt-2 text-muted-foreground text-sm">Topic: <strong>{activeTopic}</strong></p>
+          <p className="mt-2 text-muted-foreground text-sm">
+            Topic: <strong>{activeTopic}</strong>
+          </p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
-          <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2">Your Score</p>
+          <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
+            Your Score
+          </p>
           <p className="font-serif text-6xl font-bold text-primary">{pct}%</p>
-          <p className="mt-2 text-sm text-muted-foreground">{score} / {questions.length} correct</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {score} / {questions.length} correct
+          </p>
 
           {/* Score bar */}
           <div className="mt-6 h-3 rounded-full bg-muted overflow-hidden">
@@ -311,20 +370,27 @@ function QuizzesPage() {
 
         {/* Per-question breakdown */}
         <div className="rounded-xl border border-border bg-card p-5 shadow-sm text-left space-y-3">
-          <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">Question Review</p>
+          <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+            Question Review
+          </p>
           {questions.map((q, i) => {
             const correct = userAnswers[i] === q.correct;
             return (
-              <div key={i} className={`flex gap-3 p-3 rounded-lg ${correct ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}>
-                {correct
-                  ? <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  : <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                }
+              <div
+                key={i}
+                className={`flex gap-3 p-3 rounded-lg ${correct ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}
+              >
+                {correct ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                )}
                 <div className="min-w-0">
                   <p className="text-sm font-medium">{q.question}</p>
                   {!correct && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Correct: <span className="font-semibold text-green-700">{q.options[q.correct]}</span>
+                      Correct:{" "}
+                      <span className="font-semibold text-green-700">{q.options[q.correct]}</span>
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1 italic">{q.explanation}</p>
@@ -335,7 +401,11 @@ function QuizzesPage() {
         </div>
 
         <button
-          onClick={() => { setPhase("setup"); setQuestions([]); setQuizId(null); }}
+          onClick={() => {
+            setPhase("setup");
+            setQuestions([]);
+            setQuizId(null);
+          }}
           className="flex items-center gap-2 mx-auto rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-semibold hover:bg-accent transition-colors"
         >
           <RotateCcw className="h-4 w-4" /> Try Another Quiz
@@ -351,7 +421,9 @@ function QuizzesPage() {
       {/* Progress */}
       <div className="animate-in-slide space-y-2">
         <div className="flex items-center justify-between font-mono text-[11px] text-muted-foreground uppercase tracking-widest">
-          <span>Question {current + 1} / {questions.length}</span>
+          <span>
+            Question {current + 1} / {questions.length}
+          </span>
           <span>{activeTopic}</span>
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -370,12 +442,15 @@ function QuizzesPage() {
           {q.options.map((opt, i) => {
             let cls = "w-full text-left rounded-lg border px-4 py-3 text-sm transition-colors ";
             if (!answered[current]) {
-              cls += selected === i
-                ? "border-primary bg-primary/10 text-primary font-medium"
-                : "border-border hover:bg-accent";
+              cls +=
+                selected === i
+                  ? "border-primary bg-primary/10 text-primary font-medium"
+                  : "border-border hover:bg-accent";
             } else {
-              if (i === q.correct) cls += "border-green-500 bg-green-50 text-green-800 font-semibold";
-              else if (i === userAnswers[current] && i !== q.correct) cls += "border-red-400 bg-red-50 text-red-700";
+              if (i === q.correct)
+                cls += "border-green-500 bg-green-50 text-green-800 font-semibold";
+              else if (i === userAnswers[current] && i !== q.correct)
+                cls += "border-red-400 bg-red-50 text-red-700";
               else cls += "border-border text-muted-foreground";
             }
             return (

@@ -4,9 +4,19 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
-import { BookOpenText, ChevronDown, ChevronUp, Plus, Loader2, Tag, FileText, X } from "lucide-react";
+import {
+  BookOpenText,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Loader2,
+  Tag,
+  FileText,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { getErrorMessage, withTimeout } from "@/lib/async";
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
@@ -25,7 +35,7 @@ const ingestNote = createServerFn({ method: "POST" })
     const { title, content, userId } = data;
     const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
     const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-      "google/gemini-3-flash-preview"
+      "google/gemini-3-flash-preview",
     );
 
     // Ask the AI for a summary and key concepts
@@ -69,7 +79,7 @@ ${content.slice(0, 8000)}`,
       try {
         const { embed } = await import("ai");
         const embeddingModel = createLovableAiGatewayProvider(LOVABLE_API_KEY).textEmbeddingModel(
-          "google/text-embedding-004"
+          "google/text-embedding-004",
         );
         const res = await embed({
           model: embeddingModel,
@@ -127,16 +137,25 @@ function NotesPage() {
     }
     setSaving(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error("Not signed in"); return; }
-      const note = await ingestNote({ data: { title, content, userId: session.user.id } });
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Not signed in");
+        return;
+      }
+      const note = await withTimeout(
+        ingestNote({ data: { title, content, userId: session.user.id } }),
+        30000,
+        "Saving note timed out. Please try again.",
+      );
       setNotes((prev) => [note as Note, ...prev]);
       setTitle("");
       setContent("");
       setShowForm(false);
       toast.success("Note ingested & summarised!");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to save note");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to save note"));
     } finally {
       setSaving(false);
     }
@@ -152,7 +171,8 @@ function NotesPage() {
           </p>
           <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Upload &amp; Summarise</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Paste your class notes and GilaniAI will extract a summary and key concepts automatically.
+            Paste your class notes and GilaniAI will extract a summary and key concepts
+            automatically.
           </p>
         </div>
         <button
@@ -264,9 +284,7 @@ function NotesPage() {
                         <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
                           AI Summary
                         </p>
-                        <p className="text-sm leading-relaxed text-foreground/90">
-                          {note.summary}
-                        </p>
+                        <p className="text-sm leading-relaxed text-foreground/90">{note.summary}</p>
                       </div>
                     )}
                     {note.key_concepts && (note.key_concepts as any).length > 0 && (

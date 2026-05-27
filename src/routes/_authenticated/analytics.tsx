@@ -21,6 +21,7 @@ import {
   PolarRadiusAxis,
   Radar,
 } from "recharts";
+import { getErrorMessage, withTimeout } from "@/lib/async";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -69,7 +70,7 @@ const fetchAnalytics = createServerFn({ method: "GET" })
     // Process attempts count and average
     const attemptsCount = attempts.length;
     const averageScore = Math.round(
-      (attempts.reduce((sum, a) => sum + a.score, 0) / (attemptsCount * 10)) * 100
+      (attempts.reduce((sum, a) => sum + a.score, 0) / (attemptsCount * 10)) * 100,
     ); // Assuming 10 questions per quiz
 
     // History chart data
@@ -132,16 +133,24 @@ function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialised, setInitialised] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const init = async () => {
     if (initialised) return;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) {
-        const res = await fetchAnalytics({ data: session.user.id });
+        const res = await withTimeout(
+          fetchAnalytics({ data: session.user.id }),
+          12000,
+          "Analytics request timed out.",
+        );
         setData(res);
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Could not load analytics"));
       console.error(err);
     } finally {
       setLoading(false);
@@ -149,7 +158,9 @@ function AnalyticsPage() {
     }
   };
 
-  useState(() => { init(); });
+  useState(() => {
+    init();
+  });
 
   if (loading) {
     return (
@@ -198,7 +209,8 @@ function AnalyticsPage() {
         </p>
         <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Performance Insights</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Track your learning trajectory, mock quiz performance, and mastery levels across syllabus subjects.
+          Track your learning trajectory, mock quiz performance, and mastery levels across syllabus
+          subjects.
         </p>
       </header>
 
@@ -208,23 +220,42 @@ function AnalyticsPage() {
           <div>
             <p className="text-xs font-semibold text-amber-800">Viewing Demonstration Analytics</p>
             <p className="text-xs text-amber-700 leading-relaxed mt-0.5">
-              You haven't completed enough practice quizzes yet. Take a few quizzes under **Mock Quizzes** to populate your real-time academic dashboard.
+              You haven't completed enough practice quizzes yet. Take a few quizzes under **Mock
+              Quizzes** to populate your real-time academic dashboard.
             </p>
           </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
         </div>
       )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 animate-in-slide">
         {[
-          { label: "Quizzes Completed", value: attemptsCount, icon: Trophy, desc: "Total attempts" },
-          { label: "Average Score", value: `${averageScore}%`, icon: BarChart3, desc: "Concept mastery" },
+          {
+            label: "Quizzes Completed",
+            value: attemptsCount,
+            icon: Trophy,
+            desc: "Total attempts",
+          },
+          {
+            label: "Average Score",
+            value: `${averageScore}%`,
+            icon: BarChart3,
+            desc: "Concept mastery",
+          },
           { label: "Study Streak", value: "3 Days", icon: Calendar, desc: "Active consistency" },
           { label: "Notes Uploaded", value: "4 Notes", icon: BookOpen, desc: "Syllabus grounding" },
         ].map((c) => (
           <div key={c.label} className="rounded-xl border border-border bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between mb-2">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{c.label}</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                {c.label}
+              </p>
               <c.icon className="h-4 w-4 text-primary" />
             </div>
             <p className="font-serif text-3xl font-bold leading-none">{c.value}</p>
@@ -239,7 +270,9 @@ function AnalyticsPage() {
         <div className="lg:col-span-8 rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div className="mb-4">
             <h3 className="font-serif text-xl">Revision Progress Over Time</h3>
-            <p className="text-xs text-muted-foreground mt-1">Average score percentages for recent quizzes.</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Average score percentages for recent quizzes.
+            </p>
           </div>
           <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -254,7 +287,14 @@ function AnalyticsPage() {
                 <XAxis dataKey="date" fontStyle="italic" style={{ fontSize: 10 }} />
                 <YAxis domain={[0, 100]} style={{ fontSize: 10 }} />
                 <Tooltip />
-                <Area type="monotone" dataKey="score" stroke="hsl(22, 75%, 48%)" strokeWidth={2.5} fillOpacity={1} fill="url(#scoreColor)" />
+                <Area
+                  type="monotone"
+                  dataKey="score"
+                  stroke="hsl(22, 75%, 48%)"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#scoreColor)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -264,7 +304,9 @@ function AnalyticsPage() {
         <div className="lg:col-span-4 rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div className="mb-4">
             <h3 className="font-serif text-xl">Subject Mastery</h3>
-            <p className="text-xs text-muted-foreground mt-1">Strengths across different syllabus branches.</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Strengths across different syllabus branches.
+            </p>
           </div>
           <div className="h-[280px] w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
@@ -272,7 +314,13 @@ function AnalyticsPage() {
                 <PolarGrid stroke="rgba(0,0,0,0.08)" />
                 <PolarAngleAxis dataKey="subject" style={{ fontSize: 10 }} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} style={{ fontSize: 8 }} />
-                <Radar name="Mastery" dataKey="score" stroke="hsl(22, 75%, 48%)" fill="hsl(22, 75%, 48%)" fillOpacity={0.25} />
+                <Radar
+                  name="Mastery"
+                  dataKey="score"
+                  stroke="hsl(22, 75%, 48%)"
+                  fill="hsl(22, 75%, 48%)"
+                  fillOpacity={0.25}
+                />
               </RadarChart>
             </ResponsiveContainer>
           </div>
@@ -282,7 +330,9 @@ function AnalyticsPage() {
         <div className="lg:col-span-12 rounded-xl border border-border bg-card p-6 shadow-sm">
           <div className="mb-6">
             <h3 className="font-serif text-xl">Syllabus Weak Topics</h3>
-            <p className="text-xs text-muted-foreground mt-1">Specific concepts with most incorrect answers during quizzes.</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Specific concepts with most incorrect answers during quizzes.
+            </p>
           </div>
           <div className="h-[240px] w-full">
             {activeWeakTopics.length === 0 ? (
@@ -291,12 +341,25 @@ function AnalyticsPage() {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={activeWeakTopics} layout="vertical" margin={{ top: 0, right: 10, left: 40, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.06)" />
+                <BarChart
+                  data={activeWeakTopics}
+                  layout="vertical"
+                  margin={{ top: 0, right: 10, left: 40, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                    stroke="rgba(0,0,0,0.06)"
+                  />
                   <XAxis type="number" style={{ fontSize: 10 }} />
                   <YAxis dataKey="name" type="category" style={{ fontSize: 10 }} width={120} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="hsl(22, 75%, 48%)" radius={[0, 4, 4, 0]} barSize={20} />
+                  <Bar
+                    dataKey="count"
+                    fill="hsl(22, 75%, 48%)"
+                    radius={[0, 4, 4, 0]}
+                    barSize={20}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}

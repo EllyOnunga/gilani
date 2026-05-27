@@ -7,14 +7,15 @@ import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { CalendarDays, CheckSquare, Square, Loader2, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { getErrorMessage, withTimeout } from "@/lib/async";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 type PlanTask = {
-  date: string;       // ISO date e.g. "2025-06-02"
+  date: string; // ISO date e.g. "2025-06-02"
   subject: string;
   task: string;
-  duration: string;   // e.g. "45 min"
+  duration: string; // e.g. "45 min"
   priority: "high" | "medium" | "low";
 };
 
@@ -64,7 +65,7 @@ const generatePlan = createServerFn({ method: "POST" })
 
     const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
     const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-      "google/gemini-3-flash-preview"
+      "google/gemini-3-flash-preview",
     );
     const { generateText } = await import("ai");
 
@@ -82,7 +83,10 @@ Generate exactly 14 tasks spread across the next 7 days (2 tasks per day). Focus
 
     let items: PlanTask[] = [];
     try {
-      const clean = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+      const clean = text
+        .replace(/```json/gi, "")
+        .replace(/```/g, "")
+        .trim();
       items = JSON.parse(clean);
       if (!Array.isArray(items)) throw new Error();
     } catch {
@@ -121,18 +125,26 @@ function PlannerPage() {
   const [loading, setLoading] = useState(false);
   const [initialised, setInitialised] = useState(false);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
 
   // Lazy-load on first render
   const init = async () => {
     if (initialised) return;
     setLoading(true);
+    setError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) return;
-      const existing = await loadPlan({ data: session.user.id });
+      const existing = await withTimeout(
+        loadPlan({ data: session.user.id }),
+        20000,
+        "Loading study plan timed out.",
+      );
       if (existing) setPlan(existing as any);
-    } catch {
-      /* no plan yet */
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Could not load your plan"));
     } finally {
       setLoading(false);
       setInitialised(true);
@@ -140,19 +152,33 @@ function PlannerPage() {
   };
 
   // Call init on mount via useState initializer trick
-  useState(() => { init(); });
+  useState(() => {
+    init();
+  });
 
   const handleGenerate = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error("Not signed in"); return; }
-      const newPlan = await generatePlan({ data: { userId: session.user.id } });
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Not signed in");
+        return;
+      }
+      const newPlan = await withTimeout(
+        generatePlan({ data: { userId: session.user.id } }),
+        60000,
+        "Generating study plan timed out.",
+      );
       setPlan(newPlan as any);
       setCompleted(new Set());
       toast.success("Study plan generated!");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to generate plan");
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "Failed to generate plan");
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -161,7 +187,11 @@ function PlannerPage() {
   const toggleTask = (key: string) => {
     setCompleted((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
       return next;
     });
   };
@@ -197,12 +227,13 @@ function PlannerPage() {
           disabled={loading}
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60 transition-colors"
         >
-          {loading
-            ? <Loader2 className="h-4 w-4 animate-spin" />
-            : plan
-            ? <RefreshCw className="h-4 w-4" />
-            : <Sparkles className="h-4 w-4" />
-          }
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : plan ? (
+            <RefreshCw className="h-4 w-4" />
+          ) : (
+            <Sparkles className="h-4 w-4" />
+          )}
           {plan ? "Regenerate Plan" : "Generate My Plan"}
         </button>
       </header>
@@ -238,6 +269,12 @@ function PlannerPage() {
         </div>
       )}
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       {loading && !plan && (
         <div className="flex flex-col items-center py-16 gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -251,7 +288,11 @@ function PlannerPage() {
           {sortedDates.map((date) => {
             const tasks = grouped[date];
             const d = new Date(date + "T00:00:00");
-            const dayLabel = d.toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "short" });
+            const dayLabel = d.toLocaleDateString("en-KE", {
+              weekday: "long",
+              day: "numeric",
+              month: "short",
+            });
             return (
               <div key={date} className="animate-in-slide">
                 <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
@@ -271,20 +312,27 @@ function PlannerPage() {
                             : "border-border bg-card shadow-sm hover:shadow-md"
                         }`}
                       >
-                        {done
-                          ? <CheckSquare className="h-5 w-5 flex-shrink-0 text-primary" />
-                          : <Square className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-                        }
+                        {done ? (
+                          <CheckSquare className="h-5 w-5 flex-shrink-0 text-primary" />
+                        ) : (
+                          <Square className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                        )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
-                            <p className={`text-sm font-semibold ${done ? "line-through text-muted-foreground" : ""}`}>
+                            <p
+                              className={`text-sm font-semibold ${done ? "line-through text-muted-foreground" : ""}`}
+                            >
                               {task.subject}
                             </p>
-                            <span className={`rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${PRIORITY_COLOR[task.priority]}`}>
+                            <span
+                              className={`rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${PRIORITY_COLOR[task.priority]}`}
+                            >
                               {task.priority}
                             </span>
                           </div>
-                          <p className={`text-xs ${done ? "line-through text-muted-foreground" : "text-muted-foreground"}`}>
+                          <p
+                            className={`text-xs ${done ? "line-through text-muted-foreground" : "text-muted-foreground"}`}
+                          >
                             {task.task}
                           </p>
                         </div>
