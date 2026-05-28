@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated")({
     // Client-side auth hook handles normal browser navigations.
     if (typeof window === "undefined") {
       const { authenticated } = await requireAuth();
-      if (!authenticated) {
+      if (authenticated === false) {
         throw redirect({ to: "/login", search: { redirect: location.href } });
       }
     }
