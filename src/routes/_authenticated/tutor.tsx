@@ -57,12 +57,17 @@ function TutorIndex() {
         12000,
       );
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || `Server returned status ${res.status}`);
+      let json: any;
+      try {
+        json = await res.json();
+      } catch {
+        json = {};
       }
 
-      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.error || `Server returned status ${res.status}`);
+      }
+
       const id = json?.thread?.id;
       if (id) {
         const destination = `/tutor/${id}`;

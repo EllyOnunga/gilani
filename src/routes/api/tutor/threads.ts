@@ -20,19 +20,24 @@ export const Route = createFileRoute("/api/tutor/threads")({
   server: {
     handlers: {
       POST: async () => {
+        console.log("[/api/tutor/threads POST] handler entered");
         const envError = validateEnvVars();
         if (envError) {
+          console.error("[/api/tutor/threads] env validation failed:", envError.error);
           return new Response(JSON.stringify({ error: envError.error }), {
             status: 500,
             headers: { "Content-Type": "application/json" },
           });
         }
         try {
+          console.log("[/api/tutor/threads POST] auth check starting");
           const request = getRequest();
           let authResult;
           try {
             authResult = await authenticateRequest(request);
+            console.log("[/api/tutor/threads POST] auth succeeded, userId:", authResult.userId);
           } catch (err) {
+            console.error("[/api/tutor/threads POST] auth failed:", err);
             if (err instanceof Response) return err;
             return new Response(
               JSON.stringify({ error: err instanceof Error ? err.message : "Unauthorized" }),
