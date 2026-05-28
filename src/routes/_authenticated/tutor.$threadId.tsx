@@ -29,6 +29,7 @@ function TutorThread() {
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
   const [threadsLoading, setThreadsLoading] = useState(true);
+  const [threadsLoadError, setThreadsLoadError] = useState<string | null>(null);
   const [pendingAssistantIndex, setPendingAssistantIndex] = useState<number | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -52,6 +53,7 @@ function TutorThread() {
           console.error("session error:", sessionError);
           if (mounted) {
             setThreads([]);
+            setThreadsLoadError("Authentication failed. Please sign in again.");
           }
           return;
         }
@@ -59,6 +61,7 @@ function TutorThread() {
         if (!userId) {
           if (mounted) {
             setThreads([]);
+            setThreadsLoadError("Not authenticated. Please sign in.");
           }
           return;
         }
@@ -69,11 +72,13 @@ function TutorThread() {
           .order("updated_at", { ascending: false });
         if (error) {
           console.error("load threads", error);
+          if (mounted) setThreadsLoadError(error.message);
           return;
         }
         if (mounted && data) setThreads(data as Thread[]);
       } catch (e) {
         console.error("thread load exception:", e);
+        if (mounted) setThreadsLoadError("Failed to load threads.");
       } finally {
         if (mounted) setThreadsLoading(false);
       }
@@ -397,28 +402,39 @@ function TutorThread() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messagesLoading && (
-            <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
-              <span className="flex gap-1 items-center text-muted-foreground">
-                <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
-                <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
-                <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
-              </span>
-              <p className="text-sm text-muted-foreground">Loading thread messages…</p>
-            </div>
-          )}
-          {!messagesLoading && messagesLoadError && (
-            <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
-              <p>{messagesLoadError}</p>
-              <button
-                onClick={() => navigate({ to: "/tutor" })}
-                className="mt-2 underline underline-offset-2 hover:text-destructive/80"
-              >
-                Start a new session
-              </button>
-            </div>
-          )}
+<div className="flex-1 overflow-y-auto p-4 space-y-4">
+           {threadsLoadError && (
+             <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+               <p>{threadsLoadError}</p>
+               <button
+                 onClick={() => navigate({ to: "/login" })}
+                 className="mt-2 underline underline-offset-2 hover:text-destructive/80"
+               >
+                 Sign in
+               </button>
+             </div>
+           )}
+           {messagesLoading && (
+             <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
+               <span className="flex gap-1 items-center text-muted-foreground">
+                 <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
+                 <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
+                 <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
+               </span>
+               <p className="text-sm text-muted-foreground">Loading thread messages…</p>
+             </div>
+           )}
+           {!messagesLoading && messagesLoadError && (
+             <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+               <p>{messagesLoadError}</p>
+               <button
+                 onClick={() => navigate({ to: "/tutor" })}
+                 className="mt-2 underline underline-offset-2 hover:text-destructive/80"
+               >
+                 Start a new session
+               </button>
+             </div>
+           )}
           {chatError && (
             <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-destructive">
               {chatError}

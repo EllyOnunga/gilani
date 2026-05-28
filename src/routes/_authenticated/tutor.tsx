@@ -19,8 +19,22 @@ function TutorIndex() {
     setLoading(true);
     try {
       const sessionPromise = supabase.auth.getSession();
-      const { data: { session } } = await withTimeout(sessionPromise, 5000, "Session timed out")
-        .catch(() => ({ data: { session: null } }));
+      const { data: { session }, error: timeoutError } = await withTimeout(sessionPromise, 5000, "Session timed out")
+        .catch((e) => {
+          console.error("session timeout:", e);
+          return { data: { session: null }, error: e };
+        });
+
+      // Check if Supabase client has valid credentials
+      if (!session && sessionPromise instanceof Error === false) {
+        // Check if client is misconfigured by looking for env var errors
+        const hasSupabaseUrl = !!import.meta.env.VITE_SUPABASE_URL;
+        const hasSupabaseKey = !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        if (!hasSupabaseUrl || !hasSupabaseKey) {
+          throw new Error("Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in deployment settings.");
+        }
+      }
+
       const token = session?.access_token;
 
       const res = await fetchWithTimeout(
