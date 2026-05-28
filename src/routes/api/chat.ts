@@ -18,6 +18,7 @@ export const Route = createFileRoute("/api/chat")({
           try {
             authResult = await authenticateRequest(request);
           } catch (err) {
+            console.error("[API Chat] Auth failed:", err);
             if (err instanceof Response) return err;
             return new Response(
               JSON.stringify({ error: err instanceof Error ? err.message : "Unauthorized" }),
@@ -41,6 +42,22 @@ export const Route = createFileRoute("/api/chat")({
             return new Response(
               JSON.stringify({
                 error: "Missing GEMINI_API_KEY or LOVABLE_API_KEY environment variable",
+              }),
+              { status: 500, headers: { "Content-Type": "application/json" } },
+            );
+          }
+
+          // Validate Supabase server client early
+          const SUPABASE_URL = process.env.SUPABASE_URL;
+          const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+            const missing = [
+              ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
+              ...(!SUPABASE_SERVICE_ROLE_KEY ? ["SUPABASE_SERVICE_ROLE_KEY"] : []),
+            ];
+            return new Response(
+              JSON.stringify({
+                error: `Missing Supabase server env vars: ${missing.join(", ")}`,
               }),
               { status: 500, headers: { "Content-Type": "application/json" } },
             );
@@ -90,7 +107,7 @@ export const Route = createFileRoute("/api/chat")({
               const embeddingModel = createLovableAiGatewayProvider(
                 LOVABLE_API_KEY,
               ).textEmbeddingModel("google/text-embedding-004");
-const { embedding } = await withTimeout(
+              const { embedding } = await withTimeout(
                 embed({ model: embeddingModel, value: latestMessageContent }),
                 15000,
                 "Embedding generation timed out"

@@ -17,7 +17,13 @@ function TutorIndex() {
   const createSession = async () => {
     setError(null);
     setLoading(true);
+    let sessionCreationTimeout: ReturnType<typeof setTimeout> | null = null;
     try {
+      sessionCreationTimeout = setTimeout(() => {
+        setError("Session startup timed out. Check deployment env vars and try again.");
+        setLoading(false);
+      }, 15000);
+
       // Check if Supabase client has valid credentials BEFORE trying to get session
       const hasSupabaseUrl = !!import.meta.env.VITE_SUPABASE_URL;
       const hasSupabaseKey = !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -65,6 +71,8 @@ function TutorIndex() {
     } catch (err) {
       setError(getErrorMessage(err, "Failed to create study session"));
       setLoading(false);
+    } finally {
+      if (sessionCreationTimeout) clearTimeout(sessionCreationTimeout);
     }
   };
 

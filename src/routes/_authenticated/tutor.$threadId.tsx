@@ -53,7 +53,7 @@ function TutorThread() {
           console.error("session error:", sessionError);
           if (mounted) {
             setThreads([]);
-            setThreadsLoadError("Authentication failed. Please sign in again.");
+            setThreadsLoadError(`Authentication error: ${sessionError.message}. Please sign in again.`);
           }
           return;
         }
@@ -72,13 +72,13 @@ function TutorThread() {
           .order("updated_at", { ascending: false });
         if (error) {
           console.error("load threads", error);
-          if (mounted) setThreadsLoadError(error.message);
+          if (mounted) setThreadsLoadError(`Failed to load sessions: ${error.message}`);
           return;
         }
         if (mounted && data) setThreads(data as Thread[]);
       } catch (e) {
         console.error("thread load exception:", e);
-        if (mounted) setThreadsLoadError("Failed to load threads.");
+        if (mounted) setThreadsLoadError("Failed to connect to server. Check your network.");
       } finally {
         if (mounted) setThreadsLoading(false);
       }
