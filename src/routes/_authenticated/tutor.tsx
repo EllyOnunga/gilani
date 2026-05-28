@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ function TutorIndex() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const startedRef = useRef(false);
 
   const createSession = async () => {
     setError(null);
@@ -64,7 +65,14 @@ function TutorIndex() {
       const json = await res.json();
       const id = json?.thread?.id;
       if (id) {
+        const destination = `/tutor/${id}`;
         navigate({ to: `/tutor/${id}` });
+        // Fallback for cases where client navigation does not transition on some mobile browsers.
+        setTimeout(() => {
+          if (window.location.pathname === "/tutor") {
+            window.location.assign(destination);
+          }
+        }, 800);
       } else {
         throw new Error("No thread ID returned from server");
       }
@@ -77,8 +85,10 @@ function TutorIndex() {
   };
 
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     createSession();
-  }, [navigate]);
+  }, []);
 
   if (error) {
     const isServiceRoleError =
