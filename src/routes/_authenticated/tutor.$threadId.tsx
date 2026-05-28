@@ -28,6 +28,7 @@ function TutorThread() {
   const [chatError, setChatError] = useState<string | null>(null);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
+  const [threadsLoading, setThreadsLoading] = useState(true);
   const [pendingAssistantIndex, setPendingAssistantIndex] = useState<number | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -49,12 +50,16 @@ function TutorThread() {
 
         if (sessionError) {
           console.error("session error:", sessionError);
-          if (mounted) setThreads([]);
+          if (mounted) {
+            setThreads([]);
+          }
           return;
         }
         const userId = session?.user?.id;
         if (!userId) {
-          if (mounted) setThreads([]);
+          if (mounted) {
+            setThreads([]);
+          }
           return;
         }
         const { data, error } = await supabase
@@ -69,6 +74,8 @@ function TutorThread() {
         if (mounted && data) setThreads(data as Thread[]);
       } catch (e) {
         console.error("thread load exception:", e);
+      } finally {
+        if (mounted) setThreadsLoading(false);
       }
     })();
     return () => {
@@ -80,45 +87,48 @@ function TutorThread() {
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    const loadMessages = async () => {
-      if (!threadId) {
-        setMessagesLoading(false);
-        return;
-      }
+    // Reset loading state when threadId changes
+    setMessagesLoading(true);
 
-      // Must have threads loaded first - if empty, user has no threads
-      if (threads.length === 0) {
-        if (mounted) {
-          setMessagesLoading(false);
-          setMessages([]);
-          setMessagesLoadError(null);
-        }
-        return;
-      }
+    // If no threadId, stop loading
+    if (!threadId) {
+      setMessagesLoading(false);
+      return;
+    }
 
-      // Check if thread belongs to user
-      const threadBelongsToUser = threads.some((t) => t.id === threadId);
-      if (!threadBelongsToUser) {
-        if (mounted) {
-          setMessagesLoading(false);
-          setMessagesLoadError("Thread not found or access denied.");
-        }
-        return;
-      }
+    // If we're still loading threads, wait for them
+    if (threadsLoading) {
+      return;
+    }
 
-      setMessagesLoading(true);
+    // No threads loaded means user has no threads (or no auth)
+    if (threads.length === 0) {
+      setMessagesLoading(false);
+      setMessages([]);
       setMessagesLoadError(null);
-      setPendingAssistantIndex(null);
-      pendingAssistantIndexRef.current = null;
+      return;
+    }
 
-      // Timeout safeguard - will show error after 5 seconds
-      timeoutId = setTimeout(() => {
-        if (mounted) {
-          setMessagesLoading(false);
-          setMessagesLoadError("Loading timed out. The database may be unavailable.");
-        }
-      }, 5000);
+    // Check if thread belongs to user
+    const threadBelongsToUser = threads.some((t) => t.id === threadId);
+    if (!threadBelongsToUser) {
+      setMessagesLoading(false);
+      setMessagesLoadError("Thread not found or access denied.");
+      return;
+    }
 
+    setMessagesLoadError(null);
+    setPendingAssistantIndex(null);
+    pendingAssistantIndexRef.current = null;
+
+    timeoutId = setTimeout(() => {
+      if (mounted) {
+        setMessagesLoading(false);
+        setMessagesLoadError("Loading timed out. The database may be unavailable.");
+      }
+    }, 5000);
+
+    (async () => {
       try {
         const { data, error } = await supabase
           .from("messages")
@@ -146,15 +156,13 @@ function TutorThread() {
           setMessagesLoading(false);
         }
       }
-    };
-
-    loadMessages();
+    })();
 
     return () => {
       mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [threadId, threads]);
+  }, [threadId, threadsLoading, threads]);
 
   useEffect(() => {
     if (messages.length > 0) {
