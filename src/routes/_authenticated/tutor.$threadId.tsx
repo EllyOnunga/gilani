@@ -61,17 +61,29 @@ function TutorThread() {
   useEffect(() => {
     if (!threadId) return;
     let mounted = true;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    
     setMessagesLoading(true);
     setMessagesLoadError(null);
     setPendingAssistantIndex(null);
     pendingAssistantIndexRef.current = null;
+    
+    // Timeout to prevent infinite loading
+    timeoutId = setTimeout(() => {
+      if (mounted) {
+        setMessagesLoadError("Loading timed out. Check your connection.");
+        setMessagesLoading(false);
+      }
+    }, 15000);
+    
     (async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        clearTimeout(timeoutId);
         const userId = session?.user?.id;
         if (!userId) {
           if (mounted) {
-            setMessagesLoadError("Not authenticated");
+            setMessagesLoadError("Please sign in to view messages.");
             setMessagesLoading(false);
           }
           return;
@@ -85,7 +97,7 @@ function TutorThread() {
         if (error) {
           console.error("load messages", error);
           if (mounted) {
-            setMessagesLoadError(error.message || "Could not load messages.");
+            setMessagesLoadError(`Database error: ${error.message}`);
             setMessagesLoading(false);
           }
           return;
@@ -95,15 +107,18 @@ function TutorThread() {
           setMessagesLoading(false);
         }
       } catch (err) {
+        clearTimeout(timeoutId);
         console.error("load messages error", err);
         if (mounted) {
-          setMessagesLoadError("Could not load this tutor thread. Please retry.");
+          setMessagesLoadError("Failed to load messages. Try again.");
           setMessagesLoading(false);
         }
       }
     })();
+    
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
     };
   }, [threadId]);
 
