@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, Plus, X, Send } from "lucide-react";
-import { fetchWithTimeout, getErrorMessage } from "@/lib/async";
+import { fetchWithTimeout, getErrorMessage, withTimeout } from "@/lib/async";
 
 type Thread = {
   id: string;
@@ -36,22 +36,40 @@ function TutorThread() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      if (!userId) {
-        if (mounted) setThreads([]);
-        return;
+      try {
+        const sessionPromise = supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await withTimeout(
+          sessionPromise,
+          5000,
+          "Session fetch timed out"
+        ).catch((e) => {
+          console.error("session timeout:", e);
+          return { data: { session: null }, error: e };
+        });
+
+        if (sessionError) {
+          console.error("session error:", sessionError);
+          if (mounted) setThreads([]);
+          return;
+        }
+        const userId = session?.user?.id;
+        if (!userId) {
+          if (mounted) setThreads([]);
+          return;
+        }
+        const { data, error } = await supabase
+          .from("conversations")
+          .select("id,title,updated_at")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false });
+        if (error) {
+          console.error("load threads", error);
+          return;
+        }
+        if (mounted && data) setThreads(data as Thread[]);
+      } catch (e) {
+        console.error("thread load exception:", e);
       }
-      const { data, error } = await supabase
-        .from("conversations")
-        .select("id,title,updated_at")
-        .eq("user_id", userId)
-        .order("updated_at", { ascending: false });
-      if (error) {
-        console.error("load threads", error);
-        return;
-      }
-      if (mounted && data) setThreads(data as Thread[]);
     })();
     return () => {
       mounted = false;
@@ -59,64 +77,84 @@ function TutorThread() {
   }, []);
 
   useEffect(() => {
-    if (!threadId) {
-      setMessagesLoading(false);
-      return;
-    }
     let mounted = true;
-    
-    setMessagesLoading(true);
-    setMessagesLoadError(null);
-    setPendingAssistantIndex(null);
-    pendingAssistantIndexRef.current = null;
-    
-    // Timeout safeguard
-    const timeoutId = setTimeout(() => {
-      if (mounted) {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const loadMessages = async () => {
+      if (!threadId) {
         setMessagesLoading(false);
-        setMessagesLoadError("Loading timed out");
+        return;
       }
-    }, 8000);
-    
-    (async () => {
+
+      // Must have threads loaded first - if empty, user has no threads
+      if (threads.length === 0) {
+        if (mounted) {
+          setMessagesLoading(false);
+          setMessages([]);
+          setMessagesLoadError(null);
+        }
+        return;
+      }
+
+      // Check if thread belongs to user
+      const threadBelongsToUser = threads.some((t) => t.id === threadId);
+      if (!threadBelongsToUser) {
+        if (mounted) {
+          setMessagesLoading(false);
+          setMessagesLoadError("Thread not found or access denied.");
+        }
+        return;
+      }
+
+      setMessagesLoading(true);
+      setMessagesLoadError(null);
+      setPendingAssistantIndex(null);
+      pendingAssistantIndexRef.current = null;
+
+      // Timeout safeguard - will show error after 5 seconds
+      timeoutId = setTimeout(() => {
+        if (mounted) {
+          setMessagesLoading(false);
+          setMessagesLoadError("Loading timed out. The database may be unavailable.");
+        }
+      }, 5000);
+
       try {
-        // Query without user_id filter since thread listing already verifies ownership
         const { data, error } = await supabase
           .from("messages")
           .select("*")
           .eq("conversation_id", threadId)
           .order("created_at", { ascending: true });
-        
+
         clearTimeout(timeoutId);
-        
-        if (error) {
-          console.error("load messages error:", error);
-          if (mounted) {
-            setMessagesLoadError(error.message || "Failed to load messages");
-            setMessagesLoading(false);
-          }
-          return;
-        }
-        
+
         if (mounted) {
-          setMessages(data ?? []);
+          if (error) {
+            console.error("load messages error:", error);
+            setMessagesLoadError(`Database error: ${error.message}`);
+            setMessagesLoading(false);
+            return;
+          }
+          setMessages((data ?? []) as Message[]);
           setMessagesLoading(false);
         }
       } catch (e) {
         clearTimeout(timeoutId);
-        console.error("load messages exception:", e);
         if (mounted) {
-          setMessagesLoadError("Connection error");
+          console.error("load messages exception:", e);
+          setMessagesLoadError("Connection failed. Try refreshing.");
           setMessagesLoading(false);
         }
       }
-    })();
-    
+    };
+
+    loadMessages();
+
     return () => {
       mounted = false;
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [threadId]);
+  }, [threadId, threads]);
 
   useEffect(() => {
     if (messages.length > 0) {
