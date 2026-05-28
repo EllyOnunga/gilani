@@ -4,6 +4,7 @@ import { streamText } from "ai";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { withTimeout } from "@/lib/async";
 
 const DISTRESS_KEYWORDS = ["suicide", "self-harm", "abuse", "hurt myself", "kill myself"];
 
@@ -89,10 +90,11 @@ export const Route = createFileRoute("/api/chat")({
               const embeddingModel = createLovableAiGatewayProvider(
                 LOVABLE_API_KEY,
               ).textEmbeddingModel("google/text-embedding-004");
-              const { embedding } = await embed({
-                model: embeddingModel,
-                value: latestMessageContent,
-              });
+const { embedding } = await withTimeout(
+                embed({ model: embeddingModel, value: latestMessageContent }),
+                15000,
+                "Embedding generation timed out"
+              );
 
               const { data: chunks, error: rpcErr } = await supabaseAdmin.rpc("match_note_chunks", {
                 query_embedding: JSON.stringify(embedding),
@@ -175,19 +177,20 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
           const responseStream = new ReadableStream({
             async start(controller) {
               try {
-                const streamResult = streamText({
-                  model,
-                  messages: aiMessages,
-                });
+                const streamResult = await withTimeout(
+                  Promise.resolve(streamText({ model, messages: aiMessages })),
+                  30000,
+                  "AI model connection timed out"
+                ).then(r => r as any);
 
-                for await (const delta of streamResult.textStream) {
-                  if (delta) {
-                    assistantText += delta;
-                    controller.enqueue(encoder.encode(delta));
+for await (const delta of streamResult.textStream) {
+                    if (delta) {
+                      assistantText += delta;
+                      controller.enqueue(encoder.encode(delta));
+                    }
                   }
-                }
 
-                controller.close();
+                  controller.close();
               } catch (error) {
                 console.error("Chat stream error:", error);
                 // If nothing was sent yet, enqueue a user-visible error message
