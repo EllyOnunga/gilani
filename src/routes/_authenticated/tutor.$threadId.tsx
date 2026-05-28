@@ -229,7 +229,7 @@ function TutorThread() {
           },
           body: JSON.stringify({ threadId, messages: [{ role: "user", content: text }] }),
         },
-        20000,
+        120000,
       );
 
       if (!res.ok) {
