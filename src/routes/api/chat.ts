@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { streamText } from "ai";
+import { generateText } from "ai";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
@@ -188,69 +188,44 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
               : [{ role: "user" as const, content: "Habari! What can you help me with today?" }]),
           ];
 
-          const encoder = new TextEncoder();
-          let assistantText = "";
+          const { text: assistantText } = await withTimeout(
+            generateText({ model, messages: aiMessages }),
+            30000,
+            "AI response timed out"
+          );
 
-          const responseStream = new ReadableStream({
-            async start(controller) {
-              try {
-                const streamResult = await withTimeout(
-                  Promise.resolve(streamText({ model, messages: aiMessages })),
-                  30000,
-                  "AI model connection timed out"
-                ).then(r => r as any);
+          const safeText =
+            assistantText?.trim() ||
+            "Sorry, I could not generate a response right now. Please try again.";
 
-for await (const delta of streamResult.textStream) {
-                    if (delta) {
-                      assistantText += delta;
-                      controller.enqueue(encoder.encode(delta));
-                    }
-                  }
+          try {
+            const assistantParts = [{ type: "text", text: safeText }];
+            await supabaseAdmin.from("messages").insert({
+              conversation_id: threadId,
+              role: "assistant",
+              content: safeText,
+              parts: JSON.stringify(assistantParts),
+              confidence: 0.9,
+              user_id: userId,
+            });
+            await supabaseAdmin.from("audit_logs").insert({
+              action: "tutor.message",
+              payload: { threadId, confidence: 0.9 },
+            });
 
-                  controller.close();
-              } catch (error) {
-                console.error("Chat stream error:", error);
-                // If nothing was sent yet, enqueue a user-visible error message
-                if (assistantText.length === 0) {
-                  const errMsg =
-                    error instanceof Error ? error.message : "An unexpected error occurred";
-                  controller.enqueue(encoder.encode(`[Error: ${errMsg}]`));
-                }
-                controller.close();
-              } finally {
-                if (assistantText.trim().length > 0) {
-                  try {
-                    const assistantParts = [{ type: "text", text: assistantText }];
-                    await supabaseAdmin.from("messages").insert({
-                      conversation_id: threadId,
-                      role: "assistant",
-                      content: assistantText,
-                      parts: JSON.stringify(assistantParts),
-                      confidence: 0.9,
-                      user_id: userId,
-                    });
-                    await supabaseAdmin.from("audit_logs").insert({
-                      action: "tutor.message",
-                      payload: { threadId, confidence: 0.9 },
-                    });
+            const lowered = safeText.toLowerCase();
+            if (DISTRESS_KEYWORDS.some((k) => lowered.includes(k))) {
+              await supabaseAdmin.from("escalations").insert({
+                conversation_id: threadId,
+                reason: "distress_keyword",
+                user_id: userId,
+              });
+            }
+          } catch (persistError) {
+            console.error("Failed to persist assistant message", persistError);
+          }
 
-                    const lowered = assistantText.toLowerCase();
-                    if (DISTRESS_KEYWORDS.some((k) => lowered.includes(k))) {
-                      await supabaseAdmin.from("escalations").insert({
-                        conversation_id: threadId,
-                        reason: "distress_keyword",
-                        user_id: userId,
-                      });
-                    }
-                  } catch (persistError) {
-                    console.error("Failed to persist assistant message after stream", persistError);
-                  }
-                }
-              }
-            },
-          });
-
-          return new Response(responseStream, {
+          return new Response(safeText, {
             headers: {
               "content-type": "text/plain; charset=utf-8",
               "cache-control": "no-cache",

@@ -1,9 +1,8 @@
-import { useState } from "react";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
+import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth";
 import { ShieldAlert, CheckCircle2, MessageSquare, Clock, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -22,17 +21,10 @@ type Escalation = {
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
-const listEscalations = createServerFn({ method: "GET" }).handler(async () => {
-  // SECURITY: Use proper SSR auth via request header
-  const request = getRequest();
-  let authResult;
-  try {
-    authResult = await authenticateRequest(request);
-  } catch (err) {
-    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
-  }
-
-  const { userId } = authResult;
+const listEscalations = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ userId: z.string() }))
+  .handler(async ({ data }) => {
+  const { userId } = data;
 
   // SECURITY: Verify teacher/admin role before returning escalations
   const { data: roleCheck, error: roleError } = await supabaseAdmin
@@ -46,29 +38,18 @@ const listEscalations = createServerFn({ method: "GET" }).handler(async () => {
     throw new Error("Forbidden: Teacher access required");
   }
 
-  const { data, error } = await supabaseAdmin
+  const { data: escalationsData, error } = await supabaseAdmin
     .from("escalations")
     .select("*")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return (data ?? []) as any[];
+  return (escalationsData ?? []) as any[];
 });
 
 const resolveEscalation = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id: z.string(), expertAnswer: z.string() }))
+  .inputValidator(z.object({ id: z.string(), expertAnswer: z.string(), userId: z.string() }))
   .handler(async ({ data }) => {
-    const { id, expertAnswer } = data;
-
-    // SECURITY: Use proper SSR auth via request header
-    const request = getRequest();
-    let authResult;
-    try {
-      authResult = await authenticateRequest(request);
-    } catch (err) {
-      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
-    }
-
-    const { userId } = authResult;
+    const { id, expertAnswer, userId } = data;
 
     const { data: roleCheck } = await supabaseAdmin
       .from('user_roles')
@@ -92,7 +73,6 @@ const resolveEscalation = createServerFn({ method: "POST" })
 
 export const Route = createFileRoute("/_authenticated/teacher/escalations")({
   head: () => ({ meta: [{ title: "Escalations — GilaniAI" }] }),
-  loader: () => listEscalations(),
   component: EscalationsPage,
 });
 
@@ -105,11 +85,33 @@ const REASON_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 function EscalationsPage() {
-  const initial = Route.useLoaderData() as Escalation[];
-  const [escalations, setEscalations] = useState<Escalation[]>(initial);
+  const [escalations, setEscalations] = useState<Escalation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [answer, setAnswer] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) {
+          if (mounted) setEscalations([]);
+          return;
+        }
+        const rows = await listEscalations({ data: { userId: session.user.id } });
+        if (mounted) setEscalations(rows as Escalation[]);
+      } catch (err: any) {
+        if (mounted) toast.error(err?.message ?? "Failed to load escalations");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const open = (id: string) => {
     setActiveId(id);
@@ -121,7 +123,9 @@ function EscalationsPage() {
     if (!answer.trim()) { toast.error("Please write an expert answer first."); return; }
     setSaving(true);
     try {
-      await resolveEscalation({ data: { id, expertAnswer: answer } });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) throw new Error("Not signed in");
+      await resolveEscalation({ data: { id, expertAnswer: answer, userId: session.user.id } });
       setEscalations((prev) =>
         prev.map((e) => e.id === id ? { ...e, status: "resolved", detail: answer } : e)
       );
@@ -166,13 +170,19 @@ function EscalationsPage() {
       </div>
 
       {/* Empty state */}
-      {escalations.length === 0 && (
+      {!loading && escalations.length === 0 && (
         <div className="rounded-xl border border-dashed border-border p-8 sm:p-16 text-center">
           <ShieldAlert className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
           <p className="font-serif text-xl text-muted-foreground">No escalations yet</p>
           <p className="text-sm text-muted-foreground mt-1">
             Flagged conversations will appear here automatically.
           </p>
+        </div>
+      )}
+      {loading && (
+        <div className="flex flex-col items-center py-16 gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading escalations…</p>
         </div>
       )}
 
