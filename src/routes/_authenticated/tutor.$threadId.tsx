@@ -67,15 +67,25 @@ function TutorThread() {
     pendingAssistantIndexRef.current = null;
     (async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) {
+          if (mounted) {
+            setMessagesLoadError("Not authenticated");
+            setMessagesLoading(false);
+          }
+          return;
+        }
         const { data, error } = await supabase
           .from("messages")
           .select("*")
           .eq("conversation_id", threadId)
+          .eq("user_id", userId)
           .order("created_at", { ascending: true });
         if (error) {
           console.error("load messages", error);
           if (mounted) {
-            setMessagesLoadError("Could not load this tutor thread. Please retry.");
+            setMessagesLoadError(error.message || "Could not load messages.");
             setMessagesLoading(false);
           }
           return;
