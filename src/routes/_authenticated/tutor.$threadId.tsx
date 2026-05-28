@@ -92,17 +92,16 @@ function TutorThread() {
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    // Reset loading state when threadId changes
-    setMessagesLoading(true);
-
     // If no threadId, stop loading
     if (!threadId) {
       setMessagesLoading(false);
       return;
     }
 
-    // If we're still loading threads, wait for them
+    // If we're still loading threads, keep messages loading too
+    // The effect will re-run when threadsLoading becomes false
     if (threadsLoading) {
+      setMessagesLoading(true);
       return;
     }
 
@@ -122,6 +121,7 @@ function TutorThread() {
       return;
     }
 
+    setMessagesLoading(true);
     setMessagesLoadError(null);
     setPendingAssistantIndex(null);
     pendingAssistantIndexRef.current = null;
