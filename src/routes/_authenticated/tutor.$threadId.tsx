@@ -26,16 +26,27 @@ function TutorThread() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+  const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
+  const [pendingAssistantIndex, setPendingAssistantIndex] = useState<number | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const pendingAssistantIndexRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // load threads
+// load threads
     let mounted = true;
     (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) {
+        if (mounted) setThreads([]);
+        return;
+      }
       const { data, error } = await supabase
         .from("conversations")
         .select("id,title,updated_at")
+        .eq("user_id", userId)
         .order("updated_at", { ascending: false });
       if (error) {
         console.error("load threads", error);
@@ -48,10 +59,38 @@ function TutorThread() {
     };
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
+    // Filter messages by thread AND user ownership
     if (!threadId) return;
     let mounted = true;
+    setMessagesLoading(true);
+    setMessagesLoadError(null);
+    setPendingAssistantIndex(null);
+    pendingAssistantIndexRef.current = null;
     (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      // SECURITY: Verify thread belongs to user before loading messages
+      if (!userId) {
+        if (mounted) {
+          setMessagesLoadError("Thread not found or access denied.");
+          setMessagesLoading(false);
+        }
+        return;
+      }
+      const { data: threadCheck } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("id", threadId)
+        .eq("user_id", userId)
+        .single();
+      if (!threadCheck) {
+        if (mounted) {
+          setMessagesLoadError("Thread not found or access denied.");
+          setMessagesLoading(false);
+        }
+        return;
+      }
       const { data, error } = await supabase
         .from("messages")
         .select("*")
@@ -59,9 +98,16 @@ function TutorThread() {
         .order("created_at", { ascending: true });
       if (error) {
         console.error("load messages", error);
+        if (mounted) {
+          setMessagesLoadError("Could not load this tutor thread. Please retry.");
+          setMessagesLoading(false);
+        }
         return;
       }
-      if (mounted && data) setMessages(data as Message[]);
+      if (mounted) {
+        setMessages((data as Message[]) ?? []);
+        setMessagesLoading(false);
+      }
       // mark thread selected in UI maybe; no routing change here
     })();
     return () => {
@@ -92,8 +138,6 @@ function TutorThread() {
       content: text,
       created_at: new Date().toISOString(),
     };
-    setMessages((m) => [...m, userMsg]);
-
     // Create placeholder assistant message that we'll stream into
     const assistantPlaceholder: Message = {
       conversation_id: threadId,
@@ -101,7 +145,23 @@ function TutorThread() {
       content: "",
       created_at: new Date().toISOString(),
     };
-    setMessages((m) => [...m, assistantPlaceholder]);
+    setMessages((m) => {
+      const next = [...m, userMsg, assistantPlaceholder];
+      const nextPending = next.length - 1;
+      pendingAssistantIndexRef.current = nextPending;
+      setPendingAssistantIndex(nextPending);
+      return next;
+    });
+
+    const updateAssistantPlaceholder = (content: string) => {
+      setMessages((m) => {
+        const copy = [...m];
+        const idx =
+          pendingAssistantIndexRef.current ?? copy.map((x) => x.role).lastIndexOf("assistant");
+        if (idx >= 0) copy[idx] = { ...copy[idx], content };
+        return copy;
+      });
+    };
 
     try {
       const {
@@ -118,7 +178,7 @@ function TutorThread() {
           },
           body: JSON.stringify({ threadId, messages: [{ role: "user", content: text }] }),
         },
-        90000,
+        20000,
       );
 
       if (!res.ok) {
@@ -132,33 +192,35 @@ function TutorThread() {
 
       if (!res.body) {
         const full = await res.text();
-        // replace placeholder with full body
-        setMessages((m) => {
-          const copy = [...m];
-          const idx = copy.map((x) => x.role).lastIndexOf("assistant");
-          if (idx >= 0) copy[idx] = { ...copy[idx], content: full };
-          return copy;
-        });
+        updateAssistantPlaceholder(full);
       } else {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let done = false;
         let assistantText = "";
+        let stalledReadTimer: ReturnType<typeof setTimeout> | undefined;
 
         while (!done) {
-          const { value, done: doneReading } = await reader.read();
+          const stalledReadPromise = new Promise<never>((_, reject) => {
+            stalledReadTimer = setTimeout(() => {
+              reject(new Error("Tutor response timed out while streaming."));
+            }, 25000);
+          });
+          const { value, done: doneReading } = await Promise.race([
+            reader.read(),
+            stalledReadPromise,
+          ]);
+          if (stalledReadTimer) clearTimeout(stalledReadTimer);
           done = doneReading;
           if (value) {
             const chunk = decoder.decode(value);
             assistantText += chunk;
-            // update placeholder assistant message progressively
-            setMessages((m) => {
-              const copy = [...m];
-              const idx = copy.map((x) => x.role).lastIndexOf("assistant");
-              if (idx >= 0) copy[idx] = { ...copy[idx], content: assistantText };
-              return copy;
-            });
+            updateAssistantPlaceholder(assistantText);
           }
+        }
+
+        if (!assistantText.trim()) {
+          throw new Error("Tutor returned an empty response. Please try again.");
         }
       }
 
@@ -169,7 +231,8 @@ function TutorThread() {
       // Replace assistant placeholder with a visible failure so UI never looks stuck.
       setMessages((m) => {
         const copy = [...m];
-        const idx = copy.map((x) => x.role).lastIndexOf("assistant");
+        const idx =
+          pendingAssistantIndexRef.current ?? copy.map((x) => x.role).lastIndexOf("assistant");
         if (idx >= 0) {
           copy[idx] = {
             ...copy[idx],
@@ -181,6 +244,8 @@ function TutorThread() {
       console.error("send error", err);
     } finally {
       setSending(false);
+      pendingAssistantIndexRef.current = null;
+      setPendingAssistantIndex(null);
     }
   };
 
@@ -302,12 +367,39 @@ function TutorThread() {
 
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messagesLoading && (
+            <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
+              <span className="flex gap-1 items-center text-muted-foreground">
+                <span className="animate-bounce" style={{ animationDelay: "0ms" }}>
+                  •
+                </span>
+                <span className="animate-bounce" style={{ animationDelay: "150ms" }}>
+                  •
+                </span>
+                <span className="animate-bounce" style={{ animationDelay: "300ms" }}>
+                  •
+                </span>
+              </span>
+              <p className="text-sm text-muted-foreground">Loading thread messages…</p>
+            </div>
+          )}
+          {!messagesLoading && messagesLoadError && (
+            <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+              <p>{messagesLoadError}</p>
+              <button
+                onClick={() => navigate({ to: "/tutor" })}
+                className="mt-2 underline underline-offset-2 hover:text-destructive/80"
+              >
+                Start a new session
+              </button>
+            </div>
+          )}
           {chatError && (
             <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-destructive">
               {chatError}
             </div>
           )}
-          {messages.length === 0 && (
+          {!messagesLoading && !messagesLoadError && messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
               <MessageCircle className="h-10 w-10 text-muted-foreground/40" />
               <p className="font-serif text-xl text-muted-foreground">Start a conversation</p>
@@ -316,34 +408,41 @@ function TutorThread() {
               </p>
             </div>
           )}
-          {messages.map((m, idx) => (
-            <div
-              key={idx}
-              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-            >
+          {!messagesLoading &&
+            !messagesLoadError &&
+            messages.map((m, idx) => (
               <div
-                className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-tr-sm"
-                    : "bg-card border border-border text-foreground rounded-tl-sm"
-                }`}
+                key={idx}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                {m.content || (
-                  <span className="flex gap-1 items-center text-muted-foreground">
-                    <span className="animate-bounce" style={{ animationDelay: "0ms" }}>
-                      •
-                    </span>
-                    <span className="animate-bounce" style={{ animationDelay: "150ms" }}>
-                      •
-                    </span>
-                    <span className="animate-bounce" style={{ animationDelay: "300ms" }}>
-                      •
-                    </span>
-                  </span>
-                )}
+                <div
+                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    m.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-tr-sm"
+                      : "bg-card border border-border text-foreground rounded-tl-sm"
+                  }`}
+                >
+                  {m.content ||
+                    (sending && idx === pendingAssistantIndex ? (
+                      <span className="flex gap-1 items-center text-muted-foreground">
+                        <span className="animate-bounce" style={{ animationDelay: "0ms" }}>
+                          •
+                        </span>
+                        <span className="animate-bounce" style={{ animationDelay: "150ms" }}>
+                          •
+                        </span>
+                        <span className="animate-bounce" style={{ animationDelay: "300ms" }}>
+                          •
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        No response generated. Please resend your question.
+                      </span>
+                    ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
           <div ref={messagesEndRef} />
         </div>
 

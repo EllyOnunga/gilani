@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,25 @@ type Profile = {
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
 const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
+  // SECURITY: Check if user is admin via middleware
+  // This route should only be accessible through the _authenticated layout which checks roles
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized: Not authenticated");
+  }
+  
+  // SECURITY: Verify admin role before returning all profiles
+  const { data: roleCheck } = await supabaseAdmin
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', session.user.id)
+    .eq('role', 'admin')
+    .single();
+  
+  if (!roleCheck) {
+    throw new Error("Forbidden: Admin access required");
+  }
+
   // Fetch profiles
   const { data: profiles, error: pErr } = await supabaseAdmin
     .from("profiles")
@@ -42,6 +61,29 @@ const updateRole = createServerFn({ method: "POST" })
   .inputValidator(z.object({ userId: z.string(), role: z.string() }))
   .handler(async ({ data }) => {
     const { userId, role } = data;
+    
+    // SECURITY: Check if user is admin
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      throw new Error("Unauthorized: Not authenticated");
+    }
+    
+    const { data: roleCheck } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .eq('role', 'admin')
+      .single();
+    
+    if (!roleCheck) {
+      throw new Error("Forbidden: Admin access required");
+    }
+    
+    // SECURITY: Prevent self-demotion from admin
+    if (session.user.id === userId && role !== "admin") {
+      throw new Error("Cannot remove your own admin role");
+    }
+    
     // Upsert into user_roles
     const { error } = await supabaseAdmin
       .from("user_roles")
@@ -53,6 +95,22 @@ const updateRole = createServerFn({ method: "POST" })
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   head: () => ({ meta: [{ title: "Admin — Users & Roles — GilaniAI" }] }),
+  beforeLoad: async () => {
+    // SECURITY: Check admin role before allowing access
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return;
+    
+    const { data: roleCheck } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .eq('role', 'admin')
+      .single();
+    
+    if (!roleCheck) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   loader: () => listProfiles(),
   component: AdminUsersPage,
 });

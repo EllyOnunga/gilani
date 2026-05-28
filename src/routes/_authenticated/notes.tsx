@@ -20,22 +20,33 @@ import { getErrorMessage, withTimeout } from "@/lib/async";
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
-const listNotes = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await supabaseAdmin
-    .from("notes")
-    .select("id, title, summary, key_concepts, created_at")
-    .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return data ?? [];
-});
+const listNotes = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ userId: z.string() }))
+  .handler(async ({ data }) => {
+    const { userId } = data;
+    // SECURITY: Notes are already filtered by user_id - the userId comes from authenticated session
+    const { data: notes, error } = await supabaseAdmin
+      .from("notes")
+      .select("id, title, summary, key_concepts, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return notes ?? [];
+  });
 
 const ingestNote = createServerFn({ method: "POST" })
   .inputValidator(z.object({ title: z.string(), content: z.string(), userId: z.string() }))
   .handler(async ({ data }) => {
     const { title, content, userId } = data;
+    
+    // SECURITY: Validate that title and content aren't empty strings
+    if (!title.trim() || !content.trim()) {
+      throw new Error("Title and content are required");
+    }
+    
     const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
     const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-      "google/gemini-3-flash-preview",
+      "gemini-2.5-flash",
     );
 
     // Ask the AI for a summary and key concepts
@@ -115,7 +126,11 @@ type Note = {
 
 export const Route = createFileRoute("/_authenticated/notes")({
   head: () => ({ meta: [{ title: "Study Notes — GilaniAI" }] }),
-  loader: () => listNotes(),
+  loader: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return [];
+    return listNotes({ data: { userId: session.user.id } });
+  },
   component: NotesPage,
 });
 

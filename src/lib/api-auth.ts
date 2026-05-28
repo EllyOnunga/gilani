@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/integrations/supabase/types'
+import { supabaseAdmin } from '@/integrations/supabase/client.server'
 
 export async function authenticateRequest(request: Request) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -63,4 +64,14 @@ export async function authenticateRequest(request: Request) {
     userId: data.user.id,
     user: data.user,
   };
+}
+
+export async function requireRole(userId: string, role: 'teacher' | 'admin'): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', role)
+    .single();
+  return !error && !!data;
 }

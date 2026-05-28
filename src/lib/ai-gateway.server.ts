@@ -21,8 +21,8 @@ export const createLovableAiGatewayProvider = (lovableApiKey?: string) => {
   };
 
   return {
-    chatModel: (_modelId?: string) => google("gemini-2.5-flash"),
-    textEmbeddingModel: (_modelId?: string) => wrappedEmbeddingModel as any,
+    chatModel: (modelId?: string) => google(modelId || "gemini-2.5-flash"),
+    textEmbeddingModel: (modelId?: string) => wrappedEmbeddingModel as any,
   };
 };
 

@@ -32,9 +32,18 @@ const generateQuiz = createServerFn({ method: "POST" })
   .inputValidator(z.object({ topic: z.string(), count: z.number(), userId: z.string() }))
   .handler(async ({ data }) => {
     const { topic, count, userId } = data;
+    
+    // SECURITY: Validate inputs
+    if (!topic.trim()) {
+      throw new Error("Topic is required");
+    }
+    if (count < 1 || count > 50) {
+      throw new Error("Question count must be between 1 and 50");
+    }
+    
     const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
     const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-      "google/gemini-3-flash-preview",
+      "gemini-2.5-flash",
     );
     const { generateText } = await import("ai");
     const { text } = await generateText({
@@ -134,6 +143,8 @@ type Phase = "setup" | "loading" | "quiz" | "results";
 
 function QuizzesPage() {
   const [phase, setPhase] = useState<Phase>("setup");
+  const [quizError, setQuizError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [topic, setTopic] = useState(TOPICS[0]);
   const [customTopic, setCustomTopic] = useState("");
   const [questionCount, setQuestionCount] = useState(10);
@@ -148,6 +159,9 @@ function QuizzesPage() {
   const activeTopic = customTopic.trim() || topic;
 
   const startQuiz = async () => {
+    if (isGenerating) return;
+    setQuizError(null);
+    setIsGenerating(true);
     setPhase("loading");
     try {
       const {
@@ -155,16 +169,32 @@ function QuizzesPage() {
       } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Not signed in");
+        setIsGenerating(false);
         setPhase("setup");
         return;
       }
-      const resWithTimeout = await withTimeout(
-        generateQuiz({
-          data: { topic: activeTopic, count: questionCount, userId: session.user.id },
-        }),
-        60000,
-        "Quiz generation timed out. Please try again.",
-      );
+      let resWithTimeout: { quizId: string; questions: MCQ[] } | null = null;
+      const attempts = [45000, 60000];
+      for (let i = 0; i < attempts.length; i += 1) {
+        try {
+          resWithTimeout = await withTimeout(
+            generateQuiz({
+              data: { topic: activeTopic, count: questionCount, userId: session.user.id },
+            }),
+            attempts[i],
+            "Quiz generation timed out. Please try again.",
+          );
+          break;
+        } catch (attemptErr) {
+          if (i === attempts.length - 1) {
+            throw attemptErr;
+          }
+          toast.message("Quiz is taking longer than expected, retrying once…");
+        }
+      }
+      if (!resWithTimeout) {
+        throw new Error("Quiz generation failed. Please try again.");
+      }
       setQuizId(resWithTimeout.quizId);
       setQuestions(resWithTimeout.questions);
       setCurrent(0);
@@ -174,8 +204,12 @@ function QuizzesPage() {
       setShowExplain(false);
       setPhase("quiz");
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, "Failed to generate quiz"));
+      const message = getErrorMessage(err, "Failed to generate quiz");
+      setQuizError(message);
+      toast.error(message);
       setPhase("setup");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -256,6 +290,11 @@ function QuizzesPage() {
         </header>
 
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-5">
+          {quizError && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+              {quizError} If this keeps happening, reduce question count or try another topic.
+            </div>
+          )}
           <div>
             <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2 block">
               Choose Topic
@@ -308,9 +347,10 @@ function QuizzesPage() {
 
           <button
             onClick={startQuiz}
+            disabled={isGenerating}
             className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow hover:bg-primary/90 transition-colors"
           >
-            <ListChecks className="h-4 w-4" /> Generate Quiz
+            <ListChecks className="h-4 w-4" /> {isGenerating ? "Generating…" : "Generate Quiz"}
           </button>
         </div>
       </div>
@@ -326,6 +366,18 @@ function QuizzesPage() {
         <p className="text-sm text-muted-foreground font-mono">
           Crafting {questionCount} questions on {activeTopic}
         </p>
+        <p className="text-xs text-muted-foreground">
+          This can take up to a minute during high load.
+        </p>
+        <button
+          onClick={() => {
+            setIsGenerating(false);
+            setPhase("setup");
+          }}
+          className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
+        >
+          Cancel and edit topic
+        </button>
       </div>
     );
   }
