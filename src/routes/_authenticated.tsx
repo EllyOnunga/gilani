@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Outlet, redirect, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,8 +13,14 @@ import { authenticateRequest } from "@/lib/api-auth";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
+  const authHeader = request.headers.get("authorization");
+  // Browser navigations usually rely on persisted client auth state/cookies and do not
+  // include a Bearer header on document requests. Avoid false SSR redirects in that case.
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { authenticated: null as boolean | null };
+  }
   try {
-    const auth = await authenticateRequest(request);
+    await authenticateRequest(request);
     return { authenticated: true };
   } catch {
     return { authenticated: false };
@@ -23,9 +29,9 @@ const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
-    // For SSR: check auth via request header; for client: check via useAuth hook
+    // SSR can only validate when a Bearer token is explicitly present.
+    // Client-side auth hook handles normal browser navigations.
     if (typeof window === "undefined") {
-      // Server-side check
       const { authenticated } = await requireAuth();
       if (!authenticated) {
         throw redirect({ to: "/login", search: { redirect: location.href } });
@@ -46,9 +52,24 @@ const NAV = [
 
 function AuthedShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const { roles, user } = useAuth();
+  const { roles, user, loading } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      navigate({ to: "/login", search: { redirect: window.location.href } });
+    }
+  }, [loading, user, navigate]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center">
+        <p className="text-sm text-muted-foreground font-medium">Checking your session…</p>
+      </div>
+    );
+  }
 
   const isTeacher = roles.includes("teacher") || roles.includes("admin");
   const isAdmin = roles.includes("admin");
