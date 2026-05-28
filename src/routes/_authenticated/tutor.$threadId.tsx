@@ -34,7 +34,6 @@ function TutorThread() {
   const pendingAssistantIndexRef = useRef<number | null>(null);
 
   useEffect(() => {
-// load threads
     let mounted = true;
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -59,8 +58,7 @@ function TutorThread() {
     };
   }, []);
 
-useEffect(() => {
-    // Filter messages by thread AND user ownership
+  useEffect(() => {
     if (!threadId) return;
     let mounted = true;
     setMessagesLoading(true);
@@ -68,47 +66,31 @@ useEffect(() => {
     setPendingAssistantIndex(null);
     pendingAssistantIndexRef.current = null;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      // SECURITY: Verify thread belongs to user before loading messages
-      if (!userId) {
+      try {
+        const { data, error } = await supabase
+          .from("messages")
+          .select("*")
+          .eq("conversation_id", threadId)
+          .order("created_at", { ascending: true });
+        if (error) {
+          console.error("load messages", error);
+          if (mounted) {
+            setMessagesLoadError("Could not load this tutor thread. Please retry.");
+            setMessagesLoading(false);
+          }
+          return;
+        }
         if (mounted) {
-          setMessagesLoadError("Thread not found or access denied.");
+          setMessages((data as Message[]) ?? []);
           setMessagesLoading(false);
         }
-        return;
-      }
-      const { data: threadCheck } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("id", threadId)
-        .eq("user_id", userId)
-        .single();
-      if (!threadCheck) {
-        if (mounted) {
-          setMessagesLoadError("Thread not found or access denied.");
-          setMessagesLoading(false);
-        }
-        return;
-      }
-      const { data, error } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("conversation_id", threadId)
-        .order("created_at", { ascending: true });
-      if (error) {
-        console.error("load messages", error);
+      } catch (err) {
+        console.error("load messages error", err);
         if (mounted) {
           setMessagesLoadError("Could not load this tutor thread. Please retry.");
           setMessagesLoading(false);
         }
-        return;
       }
-      if (mounted) {
-        setMessages((data as Message[]) ?? []);
-        setMessagesLoading(false);
-      }
-      // mark thread selected in UI maybe; no routing change here
     })();
     return () => {
       mounted = false;
@@ -116,7 +98,6 @@ useEffect(() => {
   }, [threadId]);
 
   useEffect(() => {
-    // simple scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
@@ -131,14 +112,12 @@ useEffect(() => {
     setInput("");
     setSending(true);
 
-    // optimistic user message
     const userMsg: Message = {
       conversation_id: threadId,
       role: "user",
       content: text,
       created_at: new Date().toISOString(),
     };
-    // Create placeholder assistant message that we'll stream into
     const assistantPlaceholder: Message = {
       conversation_id: threadId,
       role: "assistant",
@@ -164,9 +143,7 @@ useEffect(() => {
     };
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       const res = await fetchWithTimeout(
         "/api/chat",
@@ -206,10 +183,7 @@ useEffect(() => {
               reject(new Error("Tutor response timed out while streaming."));
             }, 25000);
           });
-          const { value, done: doneReading } = await Promise.race([
-            reader.read(),
-            stalledReadPromise,
-          ]);
+          const { value, done: doneReading } = await Promise.race([reader.read(), stalledReadPromise]);
           if (stalledReadTimer) clearTimeout(stalledReadTimer);
           done = doneReading;
           if (value) {
@@ -223,12 +197,9 @@ useEffect(() => {
           throw new Error("Tutor returned an empty response. Please try again.");
         }
       }
-
-      // server is responsible for persisting the assistant response and user message
     } catch (err) {
       const message = getErrorMessage(err, "Failed to send message");
       setChatError(message);
-      // Replace assistant placeholder with a visible failure so UI never looks stuck.
       setMessages((m) => {
         const copy = [...m];
         const idx =
@@ -251,9 +222,7 @@ useEffect(() => {
 
   const createNewThread = async () => {
     const title = "New thread";
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     const userId = session?.user?.id;
     if (!userId) return;
     const { data, error } = await supabase
@@ -271,7 +240,6 @@ useEffect(() => {
     setThreadsOpen(false);
   };
 
-  // ── Thread list panel (reused in both desktop sidebar and mobile drawer) ──
   const ThreadList = (
     <div className="flex h-full flex-col">
       <div className="mb-4 flex items-center justify-between">
@@ -321,7 +289,6 @@ useEffect(() => {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] lg:h-screen flex-col lg:flex-row bg-background text-foreground">
-      {/* Mobile backdrop */}
       {threadsOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
@@ -329,12 +296,10 @@ useEffect(() => {
         />
       )}
 
-      {/* Desktop thread sidebar */}
       <aside className="hidden lg:flex lg:w-64 flex-col border-r border-border bg-sidebar p-4 overflow-hidden">
         {ThreadList}
       </aside>
 
-      {/* Mobile thread slide-over drawer */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out lg:hidden ${
           threadsOpen ? "translate-x-0" : "-translate-x-full"
@@ -352,9 +317,7 @@ useEffect(() => {
         {ThreadList}
       </aside>
 
-      {/* Main chat column */}
       <main className="flex flex-1 flex-col overflow-hidden">
-        {/* Mobile sub-header */}
         <div className="flex items-center gap-3 border-b border-border bg-sidebar px-4 py-3 lg:hidden">
           <button
             onClick={() => setThreadsOpen(true)}
@@ -365,20 +328,13 @@ useEffect(() => {
           </button>
         </div>
 
-        {/* Messages area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messagesLoading && (
             <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
               <span className="flex gap-1 items-center text-muted-foreground">
-                <span className="animate-bounce" style={{ animationDelay: "0ms" }}>
-                  •
-                </span>
-                <span className="animate-bounce" style={{ animationDelay: "150ms" }}>
-                  •
-                </span>
-                <span className="animate-bounce" style={{ animationDelay: "300ms" }}>
-                  •
-                </span>
+                <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
+                <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
+                <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
               </span>
               <p className="text-sm text-muted-foreground">Loading thread messages…</p>
             </div>
@@ -411,10 +367,7 @@ useEffect(() => {
           {!messagesLoading &&
             !messagesLoadError &&
             messages.map((m, idx) => (
-              <div
-                key={idx}
-                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-              >
+              <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     m.role === "user"
@@ -425,15 +378,9 @@ useEffect(() => {
                   {m.content ||
                     (sending && idx === pendingAssistantIndex ? (
                       <span className="flex gap-1 items-center text-muted-foreground">
-                        <span className="animate-bounce" style={{ animationDelay: "0ms" }}>
-                          •
-                        </span>
-                        <span className="animate-bounce" style={{ animationDelay: "150ms" }}>
-                          •
-                        </span>
-                        <span className="animate-bounce" style={{ animationDelay: "300ms" }}>
-                          •
-                        </span>
+                        <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
+                        <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
+                        <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
                       </span>
                     ) : (
                       <span className="text-xs text-muted-foreground">
@@ -446,7 +393,6 @@ useEffect(() => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Sticky input bar */}
         <div className="border-t border-border bg-background p-3 sm:p-4">
           <div className="flex items-end gap-2 sm:gap-3">
             <textarea
