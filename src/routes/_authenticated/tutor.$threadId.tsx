@@ -39,18 +39,25 @@ function TutorThread() {
     let mounted = true;
     (async () => {
       try {
+        // Debug logging
+        console.log("[TutorThread] threads effect running, supabase client ready");
+
         const sessionPromise = supabase.auth.getSession();
+        console.log("[TutorThread] getSession called, awaiting...");
+
         const { data: { session }, error: sessionError } = await withTimeout(
           sessionPromise,
           5000,
           "Session fetch timed out"
         ).catch((e) => {
-          console.error("session timeout:", e);
+          console.error("[TutorThread] session timeout:", e);
           return { data: { session: null }, error: e };
         });
 
+        console.log("[TutorThread] session result:", { hasSession: !!session, sessionError });
+
         if (sessionError) {
-          console.error("session error:", sessionError);
+          console.error("[TutorThread] session error:", sessionError);
           if (mounted) {
             setThreads([]);
             setThreadsLoadError(`Authentication error: ${sessionError.message}. Please sign in again.`);
@@ -71,13 +78,13 @@ function TutorThread() {
           .eq("user_id", userId)
           .order("updated_at", { ascending: false });
         if (error) {
-          console.error("load threads", error);
+          console.error("[TutorThread] load threads error:", error);
           if (mounted) setThreadsLoadError(`Failed to load sessions: ${error.message}`);
           return;
         }
         if (mounted && data) setThreads(data as Thread[]);
       } catch (e) {
-        console.error("thread load exception:", e);
+        console.error("[TutorThread] thread load exception:", e);
         if (mounted) setThreadsLoadError("Failed to connect to server. Check your network.");
       } finally {
         if (mounted) setThreadsLoading(false);
@@ -92,8 +99,11 @@ function TutorThread() {
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
+    console.log("[TutorThread] messages effect:", { threadId, threadsLoading, threadsCount: threads.length });
+
     // If no threadId, stop loading
     if (!threadId) {
+      console.log("[TutorThread] no threadId, stopping");
       setMessagesLoading(false);
       return;
     }
@@ -101,12 +111,16 @@ function TutorThread() {
     // If we're still loading threads, keep messages loading too
     // The effect will re-run when threadsLoading becomes false
     if (threadsLoading) {
+      console.log("[TutorThread] waiting for threads...");
       setMessagesLoading(true);
       return;
     }
 
+    console.log("[TutorThread] loading messages for thread:", threadId);
+
     // No threads loaded means user has no threads (or no auth)
     if (threads.length === 0) {
+      console.log("[TutorThread] threads empty, showing empty state");
       setMessagesLoading(false);
       setMessages([]);
       setMessagesLoadError(null);
@@ -115,6 +129,7 @@ function TutorThread() {
 
     // Check if thread belongs to user
     const threadBelongsToUser = threads.some((t) => t.id === threadId);
+    console.log("[TutorThread] thread belongs to user:", threadBelongsToUser);
     if (!threadBelongsToUser) {
       setMessagesLoading(false);
       setMessagesLoadError("Thread not found or access denied.");
@@ -128,6 +143,7 @@ function TutorThread() {
 
     timeoutId = setTimeout(() => {
       if (mounted) {
+        console.log("[TutorThread] messages timeout reached");
         setMessagesLoading(false);
         setMessagesLoadError("Loading timed out. The database may be unavailable.");
       }
@@ -135,6 +151,7 @@ function TutorThread() {
 
     (async () => {
       try {
+        console.log("[TutorThread] fetching messages from DB...");
         const { data, error } = await supabase
           .from("messages")
           .select("*")
@@ -145,18 +162,19 @@ function TutorThread() {
 
         if (mounted) {
           if (error) {
-            console.error("load messages error:", error);
+            console.error("[TutorThread] load messages error:", error);
             setMessagesLoadError(`Database error: ${error.message}`);
             setMessagesLoading(false);
             return;
           }
+          console.log("[TutorThread] messages loaded:", data?.length ?? 0);
           setMessages((data ?? []) as Message[]);
           setMessagesLoading(false);
         }
       } catch (e) {
         clearTimeout(timeoutId);
         if (mounted) {
-          console.error("load messages exception:", e);
+          console.error("[TutorThread] load messages exception:", e);
           setMessagesLoadError("Connection failed. Try refreshing.");
           setMessagesLoading(false);
         }
