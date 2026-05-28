@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { createTextStreamResponse, streamText } from "ai";
+import { streamText } from "ai";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
@@ -196,13 +196,18 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
             messages: aiMessages,
             timeout: 120000,
             onChunk: async ({ chunk }) => {
+              console.log("[streamText:onChunk]", chunk.type);
               if (chunk.type === "text-delta" || chunk.type === "reasoning-delta") {
                 assistantText += chunk.text;
               } else if (chunk.type === "tool-input-delta") {
                 assistantText += chunk.delta;
               }
             },
+            onError: (error) => {
+              console.error("[streamText:onError]", error);
+            },
             onFinish: async () => {
+              console.log("[streamText:onFinish] text length:", assistantText.length);
               const safeText =
                 assistantText.trim() ||
                 "Sorry, I could not generate a response right now. Please try again.";
@@ -238,8 +243,7 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
             },
           });
 
-          return createTextStreamResponse({
-            textStream: streamResult.textStream,
+          return streamResult.toTextStreamResponse({
             headers: {
               "cache-control": "no-cache",
             },
