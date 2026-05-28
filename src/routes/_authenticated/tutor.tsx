@@ -57,10 +57,15 @@ function TutorIndex() {
         12000,
       );
 
+      // Debug: Log response for network issues
+      console.log("[TutorIndex] thread response:", { status: res.status, ok: res.ok });
+
       let json: any;
       try {
         json = await res.json();
-      } catch {
+        console.log("[TutorIndex] thread response JSON:", json);
+      } catch (parseErr) {
+        console.error("[TutorIndex] Failed to parse response:", parseErr);
         json = {};
       }
 
