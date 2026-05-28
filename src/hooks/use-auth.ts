@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/async";
 
 export type AppRole = "student" | "teacher" | "admin";
 
@@ -54,6 +55,10 @@ export function useAuth(): AuthState {
             if (active) setRoles((r ?? []).map((x) => x.role as AppRole));
           });
       }
+    }).catch((e) => {
+      console.error("getSession error:", e);
+      if (!active) return;
+      setLoading(false);
     });
 
     return () => {

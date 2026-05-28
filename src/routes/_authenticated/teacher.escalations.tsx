@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { supabase } from "@/integrations/supabase/client";
+import { authenticateRequest } from "@/lib/api-auth";
 import { ShieldAlert, CheckCircle2, MessageSquare, Clock, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -22,23 +23,29 @@ type Escalation = {
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
 const listEscalations = createServerFn({ method: "GET" }).handler(async () => {
-  // SECURITY: Check if user is teacher/admin
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized: Not authenticated");
+  // SECURITY: Use proper SSR auth via request header
+  const request = getRequest();
+  let authResult;
+  try {
+    authResult = await authenticateRequest(request);
+  } catch (err) {
+    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
   }
-  
-  const { data: roleCheck } = await supabaseAdmin
+
+  const { userId } = authResult;
+
+  // SECURITY: Verify teacher/admin role before returning escalations
+  const { data: roleCheck, error: roleError } = await supabaseAdmin
     .from('user_roles')
     .select('role')
-    .eq('user_id', session.user.id)
+    .eq('user_id', userId)
     .in('role', ['teacher', 'admin'])
     .single();
-  
-  if (!roleCheck) {
+
+  if (roleError || !roleCheck) {
     throw new Error("Forbidden: Teacher access required");
   }
-  
+
   const { data, error } = await supabaseAdmin
     .from("escalations")
     .select("*")
@@ -51,24 +58,29 @@ const resolveEscalation = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id: z.string(), expertAnswer: z.string() }))
   .handler(async ({ data }) => {
     const { id, expertAnswer } = data;
-    
-    // SECURITY: Check if user is teacher/admin
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) {
-      throw new Error("Unauthorized: Not authenticated");
+
+    // SECURITY: Use proper SSR auth via request header
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
     }
-    
+
+    const { userId } = authResult;
+
     const { data: roleCheck } = await supabaseAdmin
       .from('user_roles')
       .select('role')
-      .eq('user_id', session.user.id)
+      .eq('user_id', userId)
       .in('role', ['teacher', 'admin'])
       .single();
-    
+
     if (!roleCheck) {
       throw new Error("Forbidden: Teacher access required");
     }
-    
+
     const { error } = await supabaseAdmin
       .from("escalations")
       .update({ status: "resolved", detail: expertAnswer } as any)
@@ -80,22 +92,6 @@ const resolveEscalation = createServerFn({ method: "POST" })
 
 export const Route = createFileRoute("/_authenticated/teacher/escalations")({
   head: () => ({ meta: [{ title: "Escalations — GilaniAI" }] }),
-  beforeLoad: async () => {
-    // SECURITY: Check teacher role before allowing access
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) return;
-    
-    const { data: roleCheck } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', session.user.id)
-      .in('role', ['teacher', 'admin'])
-      .single();
-    
-    if (!roleCheck) {
-      throw redirect({ to: "/dashboard" });
-    }
-  },
   loader: () => listEscalations(),
   component: EscalationsPage,
 });

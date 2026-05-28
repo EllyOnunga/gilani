@@ -7,12 +7,29 @@ import {
   ShieldAlert, LogOut, GraduationCap, Settings, Menu, X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
+import { authenticateRequest } from "@/lib/api-auth";
+
+const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
+  const request = getRequest();
+  try {
+    const auth = await authenticateRequest(request);
+    return { authenticated: true };
+  } catch {
+    return { authenticated: false };
+  }
+});
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) {
-      throw redirect({ to: "/login", search: { redirect: location.href } });
+    // For SSR: check auth via request header; for client: check via useAuth hook
+    if (typeof window === "undefined") {
+      // Server-side check
+      const { authenticated } = await requireAuth();
+      if (!authenticated) {
+        throw redirect({ to: "/login", search: { redirect: location.href } });
+      }
     }
   },
   component: AuthedShell,

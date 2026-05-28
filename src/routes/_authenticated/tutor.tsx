@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchWithTimeout, getErrorMessage } from "@/lib/async";
+import { fetchWithTimeout, getErrorMessage, withTimeout } from "@/lib/async";
 
 export const Route = createFileRoute("/_authenticated/tutor")({
   component: TutorIndex,
@@ -18,9 +18,9 @@ function TutorIndex() {
     setError(null);
     setLoading(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const sessionPromise = supabase.auth.getSession();
+      const { data: { session } } = await withTimeout(sessionPromise, 5000, "Session timed out")
+        .catch(() => ({ data: { session: null } }));
       const token = session?.access_token;
 
       const res = await fetchWithTimeout(

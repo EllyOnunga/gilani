@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { supabase } from "@/integrations/supabase/client";
+import { authenticateRequest } from "@/lib/api-auth";
 import { Settings, UserCheck, Loader2, Shield, GraduationCap, User } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -20,22 +21,26 @@ type Profile = {
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
 const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
-  // SECURITY: Check if user is admin via middleware
-  // This route should only be accessible through the _authenticated layout which checks roles
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized: Not authenticated");
+  // SECURITY: Use proper SSR auth via request header
+  const request = getRequest();
+  let authResult;
+  try {
+    authResult = await authenticateRequest(request);
+  } catch (err) {
+    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
   }
-  
+
+  const { userId } = authResult;
+
   // SECURITY: Verify admin role before returning all profiles
-  const { data: roleCheck } = await supabaseAdmin
+  const { data: roleCheck, error: roleError } = await supabaseAdmin
     .from('user_roles')
     .select('role')
-    .eq('user_id', session.user.id)
+    .eq('user_id', userId)
     .eq('role', 'admin')
     .single();
-  
-  if (!roleCheck) {
+
+  if (roleError || !roleCheck) {
     throw new Error("Forbidden: Admin access required");
   }
 
@@ -61,29 +66,34 @@ const updateRole = createServerFn({ method: "POST" })
   .inputValidator(z.object({ userId: z.string(), role: z.string() }))
   .handler(async ({ data }) => {
     const { userId, role } = data;
-    
-    // SECURITY: Check if user is admin
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) {
-      throw new Error("Unauthorized: Not authenticated");
+
+    // SECURITY: Use proper SSR auth via request header
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
     }
-    
+
+    const { userId: adminUserId } = authResult;
+
     const { data: roleCheck } = await supabaseAdmin
       .from('user_roles')
       .select('role')
-      .eq('user_id', session.user.id)
+      .eq('user_id', adminUserId)
       .eq('role', 'admin')
       .single();
-    
+
     if (!roleCheck) {
       throw new Error("Forbidden: Admin access required");
     }
-    
+
     // SECURITY: Prevent self-demotion from admin
-    if (session.user.id === userId && role !== "admin") {
+    if (adminUserId === userId && role !== "admin") {
       throw new Error("Cannot remove your own admin role");
     }
-    
+
     // Upsert into user_roles
     const { error } = await supabaseAdmin
       .from("user_roles")
@@ -95,23 +105,10 @@ const updateRole = createServerFn({ method: "POST" })
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   head: () => ({ meta: [{ title: "Admin — Users & Roles — GilaniAI" }] }),
-  beforeLoad: async () => {
-    // SECURITY: Check admin role before allowing access
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user?.id) return;
-    
-    const { data: roleCheck } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', session.user.id)
-      .eq('role', 'admin')
-      .single();
-    
-    if (!roleCheck) {
-      throw redirect({ to: "/dashboard" });
-    }
+  loader: async () => {
+    const data = await listProfiles();
+    return data as Profile[];
   },
-  loader: () => listProfiles(),
   component: AdminUsersPage,
 });
 
@@ -127,12 +124,12 @@ const ROLE_META: Record<Role, { icon: typeof User; color: string }> = {
 };
 
 function AdminUsersPage() {
-  const initial = Route.useLoaderData() as Profile[];
-  const [profiles, setProfiles] = useState<Profile[]>(initial);
+  const profiles = (Route.useLoaderData() as Profile[]) || [];
+  const [profileState, setProfileState] = useState<Profile[]>(profiles);
   const [updating, setUpdating] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const filtered = profiles.filter((p) => {
+  const filtered = profileState.filter((p) => {
     const q = search.toLowerCase();
     return (
       !q ||
@@ -145,7 +142,7 @@ function AdminUsersPage() {
     setUpdating(userId);
     try {
       await updateRole({ data: { userId, role } });
-      setProfiles((prev) =>
+      setProfileState((prev) =>
         prev.map((p) => (p.id === userId ? { ...p, role } : p))
       );
       toast.success(`Role updated to ${role}`);
@@ -157,7 +154,7 @@ function AdminUsersPage() {
   };
 
   const counts = ROLES.reduce((acc, r) => {
-    acc[r] = profiles.filter((p) => p.role === r).length;
+    acc[r] = profileState.filter((p) => p.role === r).length;
     return acc;
   }, {} as Record<Role, number>);
 
