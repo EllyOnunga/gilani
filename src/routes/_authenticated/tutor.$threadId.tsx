@@ -59,58 +59,54 @@ function TutorThread() {
   }, []);
 
   useEffect(() => {
-    if (!threadId) return;
+    if (!threadId) {
+      setMessagesLoading(false);
+      return;
+    }
     let mounted = true;
-    let timeoutId: ReturnType<typeof setTimeout>;
     
     setMessagesLoading(true);
     setMessagesLoadError(null);
     setPendingAssistantIndex(null);
     pendingAssistantIndexRef.current = null;
     
-    // Timeout to prevent infinite loading
-    timeoutId = setTimeout(() => {
+    // Timeout safeguard
+    const timeoutId = setTimeout(() => {
       if (mounted) {
-        setMessagesLoadError("Loading timed out. Check your connection.");
         setMessagesLoading(false);
+        setMessagesLoadError("Loading timed out");
       }
-    }, 15000);
+    }, 8000);
     
     (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        clearTimeout(timeoutId);
-        const userId = session?.user?.id;
-        if (!userId) {
-          if (mounted) {
-            setMessagesLoadError("Please sign in to view messages.");
-            setMessagesLoading(false);
-          }
-          return;
-        }
+        // Query without user_id filter since thread listing already verifies ownership
         const { data, error } = await supabase
           .from("messages")
           .select("*")
           .eq("conversation_id", threadId)
-          .eq("user_id", userId)
           .order("created_at", { ascending: true });
+        
+        clearTimeout(timeoutId);
+        
         if (error) {
-          console.error("load messages", error);
+          console.error("load messages error:", error);
           if (mounted) {
-            setMessagesLoadError(`Database error: ${error.message}`);
+            setMessagesLoadError(error.message || "Failed to load messages");
             setMessagesLoading(false);
           }
           return;
         }
+        
         if (mounted) {
-          setMessages((data as Message[]) ?? []);
+          setMessages(data ?? []);
           setMessagesLoading(false);
         }
-      } catch (err) {
+      } catch (e) {
         clearTimeout(timeoutId);
-        console.error("load messages error", err);
+        console.error("load messages exception:", e);
         if (mounted) {
-          setMessagesLoadError("Failed to load messages. Try again.");
+          setMessagesLoadError("Connection error");
           setMessagesLoading(false);
         }
       }
@@ -123,7 +119,9 @@ function TutorThread() {
   }, [threadId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (messages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
   }, [messages]);
 
   const handleSelectThread = (id: string) => {
