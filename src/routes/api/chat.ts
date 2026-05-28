@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { generateText } from "ai";
+import { createTextStreamResponse, streamText } from "ai";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
@@ -188,46 +188,59 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
               : [{ role: "user" as const, content: "Habari! What can you help me with today?" }]),
           ];
 
-          const { text: assistantText } = await withTimeout(
-            generateText({ model, messages: aiMessages }),
-            30000,
-            "AI response timed out"
-          );
+          let assistantText = "";
+          let assistantPersisted = false;
 
-          const safeText =
-            assistantText?.trim() ||
-            "Sorry, I could not generate a response right now. Please try again.";
+          const streamResult = streamText({
+            model,
+            messages: aiMessages,
+            timeout: 120000,
+            onChunk: async ({ chunk }) => {
+              if (chunk.type === "text-delta" || chunk.type === "reasoning-delta") {
+                assistantText += chunk.text;
+              } else if (chunk.type === "tool-input-delta") {
+                assistantText += chunk.delta;
+              }
+            },
+            onFinish: async () => {
+              const safeText =
+                assistantText.trim() ||
+                "Sorry, I could not generate a response right now. Please try again.";
 
-          try {
-            const assistantParts = [{ type: "text", text: safeText }];
-            await supabaseAdmin.from("messages").insert({
-              conversation_id: threadId,
-              role: "assistant",
-              content: safeText,
-              parts: JSON.stringify(assistantParts),
-              confidence: 0.9,
-              user_id: userId,
-            });
-            await supabaseAdmin.from("audit_logs").insert({
-              action: "tutor.message",
-              payload: { threadId, confidence: 0.9 },
-            });
+              try {
+                const assistantParts = [{ type: "text", text: safeText }];
+                await supabaseAdmin.from("messages").insert({
+                  conversation_id: threadId,
+                  role: "assistant",
+                  content: safeText,
+                  parts: JSON.stringify(assistantParts),
+                  confidence: 0.9,
+                  user_id: userId,
+                });
+                await supabaseAdmin.from("audit_logs").insert({
+                  action: "tutor.message",
+                  payload: { threadId, confidence: 0.9 },
+                });
 
-            const lowered = safeText.toLowerCase();
-            if (DISTRESS_KEYWORDS.some((k) => lowered.includes(k))) {
-              await supabaseAdmin.from("escalations").insert({
-                conversation_id: threadId,
-                reason: "distress_keyword",
-                user_id: userId,
-              });
-            }
-          } catch (persistError) {
-            console.error("Failed to persist assistant message", persistError);
-          }
+                const lowered = safeText.toLowerCase();
+                if (DISTRESS_KEYWORDS.some((k) => lowered.includes(k))) {
+                  await supabaseAdmin.from("escalations").insert({
+                    conversation_id: threadId,
+                    reason: "distress_keyword",
+                    user_id: userId,
+                  });
+                }
 
-          return new Response(safeText, {
+                assistantPersisted = true;
+              } catch (persistError) {
+                console.error("Failed to persist assistant message", persistError);
+              }
+            },
+          });
+
+          return createTextStreamResponse({
+            textStream: streamResult.textStream,
             headers: {
-              "content-type": "text/plain; charset=utf-8",
               "cache-control": "no-cache",
             },
           });
