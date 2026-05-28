@@ -3,10 +3,30 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth";
 
+function validateEnvVars() {
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    const missing = [
+      ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
+      ...(!SUPABASE_SERVICE_ROLE_KEY ? ["SUPABASE_SERVICE_ROLE_KEY"] : []),
+    ];
+    return { error: `Missing Supabase server env vars: ${missing.join(", ")}` };
+  }
+  return null;
+}
+
 export const Route = createFileRoute("/api/tutor/threads")({
   server: {
     handlers: {
       POST: async () => {
+        const envError = validateEnvVars();
+        if (envError) {
+          return new Response(JSON.stringify({ error: envError.error }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
         try {
           const request = getRequest();
           let authResult;
@@ -52,6 +72,13 @@ export const Route = createFileRoute("/api/tutor/threads")({
         }
       },
       GET: async () => {
+        const envError = validateEnvVars();
+        if (envError) {
+          return new Response(JSON.stringify({ error: envError.error }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
         try {
           const request = getRequest();
           let authResult;
