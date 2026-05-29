@@ -162,20 +162,48 @@ function RootComponent() {
     const handleGlobalError = (event: ErrorEvent) => {
       const message = event.message || "";
       const filename = event.filename || "";
+      
+      // Case 1: Syntax error (unexpected '<') from HTML fallback when JS file 404s
       if (
         message.includes("Unexpected token '<'") &&
         (filename.includes("/assets/") || filename.includes(".js"))
       ) {
         safeReload("Outdated chunk HTML parsing error");
+        return;
+      }
+
+      // Case 2: Static asset resource load error (e.g., <script src="..."> or <link href="..."> failed to load)
+      const target = event.target as any;
+      if (target && (target.tagName === "SCRIPT" || target.tagName === "LINK")) {
+        const url = target.src || target.href || "";
+        if (url.includes("/assets/") || url.endsWith(".js") || url.endsWith(".css")) {
+          safeReload(`Failed to load asset resource: ${url}`);
+        }
+      }
+    };
+
+    // Case 3: Dynamic import() promise rejections
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      const message = reason instanceof Error ? reason.message : String(reason);
+      
+      if (
+        message.includes("dynamically imported module") ||
+        message.includes("Failed to fetch dynamically") ||
+        message.includes("Failed to fetch") && (window.location.pathname !== "/tutor" && window.location.pathname !== "/notes")
+      ) {
+        safeReload(`Dynamic import rejection: ${message}`);
       }
     };
 
     window.addEventListener("vite:preloadError", handlePreloadError);
     window.addEventListener("error", handleGlobalError, true);
+    window.addEventListener("unhandledrejection", handleUnhandledRejection);
 
     return () => {
       window.removeEventListener("vite:preloadError", handlePreloadError);
       window.removeEventListener("error", handleGlobalError, true);
+      window.removeEventListener("unhandledrejection", handleUnhandledRejection);
     };
   }, []);
 
