@@ -186,7 +186,7 @@ ${notesContext}
 Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate) or clear formal language.`;
 
           const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-            "gemini-2.5-flash",
+            "gemini-2.0-flash",
           );
 
           const aiMessages = [
@@ -209,7 +209,9 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
           const streamResult = streamText({
             model,
             messages: aiMessages,
-            timeout: 120000,
+            maxRetries: 1,
+            temperature: 0.7,
+            timeout: 25000,
             onError: (error) => {
               console.error("[streamText:onError]", error);
             },
@@ -271,11 +273,19 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
           // switch to .toDataStreamResponse() to enable reasoning/thought 
           // visualization on the frontend and prevent protocol-related hangs 
           // in newer versions of the useChat hook.
-          return streamResult.toTextStreamResponse({
-            headers: {
-              "cache-control": "no-cache",
-            },
-          });
+          try {
+            return streamResult.toTextStreamResponse({
+              headers: {
+                "cache-control": "no-cache",
+              },
+            });
+          } catch (streamErr) {
+            console.error("[API Chat] Stream response error:", streamErr);
+            return new Response(
+              JSON.stringify({ error: "The AI model could not generate a response. Please try again." }),
+              { status: 500, headers: { "Content-Type": "application/json" } },
+            );
+          }
         } catch (error) {
           return new Response(
             JSON.stringify({

@@ -43,6 +43,22 @@ function TutorThread() {
     });
   }, []);
 
+  // Safety net: force all loading states off after 10s regardless of what else is happening.
+  // Prevents permanent spinner when auth refresh fails or DB is slow.
+  useEffect(() => {
+    const safety = setTimeout(() => {
+      setMessagesLoading((prev) => {
+        if (prev) console.warn("[TutorThread] Safety timeout: forcing messagesLoading off");
+        return false;
+      });
+      setThreadsLoading((prev) => {
+        if (prev) console.warn("[TutorThread] Safety timeout: forcing threadsLoading off");
+        return false;
+      });
+    }, 10000);
+    return () => clearTimeout(safety);
+  }, []);
+
   // ✅ Fixed: transport is memoized — no new object on every render,
   //    and re-creates only when threadId or authToken changes
   const transport = useMemo(

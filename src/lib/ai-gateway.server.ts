@@ -15,9 +15,14 @@ export const createGoogleAiProvider = (apiKey?: string) => {
 
   return {
     chatModel: (modelId?: string) => {
-      let cleanModelId = modelId ? modelId.replace(/^google\//, "") : "gemini-1.5-flash";
-      if (cleanModelId.includes("2.5-flash")) {
-        cleanModelId = "gemini-1.5-flash";
+      let cleanModelId = modelId ? modelId.replace(/^google\//, "") : "gemini-2.0-flash";
+      // Remap deprecated / unavailable models to current stable Gemini 2.0 Flash
+      if (
+        cleanModelId === "gemini-1.5-flash" ||
+        cleanModelId === "gemini-1.5-flash-latest" ||
+        cleanModelId.includes("2.5-flash")
+      ) {
+        cleanModelId = "gemini-2.0-flash";
       }
       return google(cleanModelId);
     },
