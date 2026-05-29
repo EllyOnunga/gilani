@@ -62,15 +62,18 @@ export const Route = createFileRoute("/api/chat")({
           const hasOpenAi = !!process.env.OPENAI_API_KEY;
 
           if (!hasValidGemini && !hasGroq && !hasOpenAi) {
+            const geminiInvalid = geminiKey && geminiKey.startsWith("AQ.");
             return new Response(
               JSON.stringify({
-                error: "Missing AI provider configuration. Please configure GEMINI_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY environment variable.",
+                error: geminiInvalid
+                  ? "Your GEMINI_API_KEY is expired or invalid (starts with 'AQ.'). Please get a fresh key from https://aistudio.google.com/ or set GROQ_API_KEY / OPENAI_API_KEY as alternatives."
+                  : "Missing AI provider configuration. Please configure GEMINI_API_KEY (from https://aistudio.google.com/), GROQ_API_KEY, or OPENAI_API_KEY environment variable.",
               }),
               { status: 500, headers: { "Content-Type": "application/json" } },
             );
           }
 
-          const LOVABLE_API_KEY = geminiKey;
+          // No explicit key needed — gateway auto-detects Groq > OpenAI > Gemini from env
 
           const SUPABASE_URL = process.env.SUPABASE_URL;
           const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -145,16 +148,12 @@ export const Route = createFileRoute("/api/chat")({
 
           if (latestMessageContent) {
             try {
-              const embeddingModel = createLovableAiGatewayProvider(LOVABLE_API_KEY).textEmbeddingModel(
-                "google/text-embedding-004",
-              );
+              // Use gateway's default embedding model (auto-selects by active provider)
+              const embeddingModel = createLovableAiGatewayProvider().textEmbeddingModel();
               const { embedding } = await withTimeout(
                 embed({
                   model: embeddingModel,
                   value: latestMessageContent,
-                  providerOptions: {
-                    google: { taskType: "RETRIEVAL_QUERY" as const },
-                  },
                 }),
                 15000,
                 "Embedding generation timed out"
@@ -217,11 +216,13 @@ ${notesContext}
     : ""
 }
 
-Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate) or clear formal language.`;
+Engage in a friendly, encouraging, and clear language using the following strict language priority hierarchy:
+- Primary Language (English): Always use English as your primary language of instruction, formal academic definitions, and structured syllabus explanations to ensure exam-readiness.
+- Secondary Language (Swahili / Sheng): Integrate Swahili or casual Sheng phrases naturally and secondary to English to build strong rapport, make learning accessible, and encourage the student when they are struggling.
+- Tertiary Language (Native Kenyan Languages): You may use local native languages (such as Gikuyu, Dholuo, Luhya, Kamba, etc.) very sparingly and tertiary to Swahili, only if explicitly requested by the student or to illustrate specific cultural examples.`;
 
-          const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-            "gemini-2.0-flash",
-          );
+          // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
+          const model = createLovableAiGatewayProvider().chatModel("gemini-2.0-flash");
 
           // AI SDK v6: messages are UIMessage objects with parts[]
           // We need to convert them to the model message format

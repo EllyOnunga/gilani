@@ -44,10 +44,8 @@ const ingestNote = createServerFn({ method: "POST" })
       throw new Error("Title and content are required");
     }
     
-    const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
-    const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-      "gemini-1.5-flash",
-    );
+    // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
+    const model = createLovableAiGatewayProvider().chatModel("gemini-1.5-flash");
 
     // Ask the AI for a summary and key concepts
     const { generateText } = await import("ai");
@@ -87,19 +85,16 @@ ${content.slice(0, 8000)}`,
     }
     for (let i = 0; i < chunks.length; i++) {
       let embedding: number[] | null = null;
-try {
-         const { embed } = await import("ai");
-         const embeddingModel = createLovableAiGatewayProvider(LOVABLE_API_KEY).textEmbeddingModel(
-           "google/text-embedding-004",
-         );
-         const res = await embed({
-           model: embeddingModel,
-           value: chunks[i],
-           providerOptions: {
-             google: { taskType: "RETRIEVAL_DOCUMENT" as const },
-           },
-         });
-         embedding = res.embedding;
+      try {
+        const { embed } = await import("ai");
+        // textEmbeddingModel() without a model ID will use the provider's default:
+        // OpenAI -> text-embedding-3-small, Gemini -> text-embedding-004
+        const embeddingModel = createLovableAiGatewayProvider().textEmbeddingModel();
+        const res = await embed({
+          model: embeddingModel,
+          value: chunks[i],
+        });
+        embedding = res.embedding;
       } catch (err) {
         console.error("Failed to generate embedding for chunk " + i, err);
       }

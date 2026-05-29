@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageCircle, Plus, X, Send, Loader2, ShieldAlert, CheckCircle2, Clock } from "lucide-react";
+import { MessageCircle, Plus, X, Send, Loader2, ShieldAlert, CheckCircle2, Clock, Brain } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { withTimeout } from "@/lib/async";
@@ -308,12 +308,83 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     }
   }, [messages]);
 
+  // 🔴 Real-time: listen for escalation status changes on this thread
+  useEffect(() => {
+    if (!threadId) return;
+    const channel = supabase
+      .channel(`escalation-status-${threadId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "escalations",
+          filter: `conversation_id=eq.${threadId}`,
+        },
+        (payload) => {
+          const newStatus = (payload.new as any)?.status;
+          if (newStatus) {
+            setEscalationStatus(newStatus);
+            if (newStatus === "resolved") {
+              toast.success("A teacher has reviewed your conversation and responded!", {
+                duration: 6000,
+              });
+            } else if (newStatus === "in_review") {
+              toast.info("A teacher is now reviewing your conversation.", { duration: 4000 });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [threadId]);
+
+  // 🔴 Real-time: listen for new teacher messages (assistant role) inserted into this thread
+  useEffect(() => {
+    if (!threadId || messagesLoading) return;
+    const channel = supabase
+      .channel(`messages-${threadId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${threadId}`,
+        },
+        (payload) => {
+          const msg = payload.new as any;
+          // Only append if this is a teacher-injected assistant message (not from the AI stream)
+          if (msg?.role === "assistant" && msg?.content?.includes("Teacher Review:")) {
+            const teacherMsg = {
+              id: msg.id ?? crypto.randomUUID(),
+              role: "assistant" as const,
+              parts: [{ type: "text" as const, text: msg.content || "" }],
+            };
+            setMessages((prev) => {
+              const alreadyExists = prev.some((m) => m.id === teacherMsg.id);
+              if (alreadyExists) return prev;
+              return [...prev, teacherMsg];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [threadId, messagesLoading]);
+
   // ✅ Fixed: use full typed route path with params
   const handleSelectThread = (id: string) => {
     navigate({
       to: "/tutor/$threadId",
       params: { threadId: id },
-    });
+    } as any);
   };
 
   const createNewThread = async () => {
@@ -337,11 +408,10 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     setThreads((prev) => [{ id: newId, title: "New thread" }, ...prev]);
     setThreadsOpen(false);
 
-    // ✅ Fixed: use full typed route path with params
     navigate({
       to: "/tutor/$threadId",
       params: { threadId: newId },
-    });
+    } as any);
   };
 
   const ThreadList = (
@@ -437,6 +507,25 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           </button>
         </div>
 
+        {/* AI Thinking progress bar — visible at the very top of the chat when streaming */}
+        <div
+          className={`overflow-hidden transition-all duration-500 ease-in-out ${
+            status === "streaming" ? "max-h-10 opacity-100" : "max-h-0 opacity-0"
+          }`}
+        >
+          <div className="flex items-center gap-2 border-b border-primary/20 bg-primary/5 px-4 py-2">
+            <Brain className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
+            <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-semibold">
+              GilaniAI is formulating your answer…
+            </p>
+            <div className="ml-auto flex gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          </div>
+        </div>
+
         {/* Chat header */}
         <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3.5 sm:px-6">
           <div className="min-w-0">
@@ -487,7 +576,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
               <p>{threadsLoadError}</p>
               <button
-                onClick={() => navigate({ to: "/_authenticated/login" } as any)}
+                onClick={() => navigate({ to: "/login" } as any)}
                 className="mt-2 underline underline-offset-2 hover:text-destructive/80"
               >
                 Sign in
@@ -510,7 +599,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
               <p>{messagesLoadError}</p>
               <button
-                onClick={() => navigate({ to: "/tutor" })}
+                onClick={() => navigate({ to: "/tutor" } as any)}
                 className="mt-2 underline underline-offset-2 hover:text-destructive/80"
               >
                 Start a new session
@@ -567,15 +656,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                       );
                     }
 
-                    // No text yet — show streaming dots or error
-                    if (status === "streaming" && idx === messages.length - 1) {
-                      return (
-                        <span className="flex gap-1 items-center text-muted-foreground">
-                          <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
-                          <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
-                          <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
-                        </span>
-                      );
+                    // No text yet — show thinking indicator for the last assistant message while streaming
+                    if (status === "streaming" && m.role === "assistant" && idx === messages.length - 1) {
+                      return <AiThinkingIndicator />;
                     }
 
                     return (
@@ -600,6 +683,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               value={input}
               onChange={handleInputChange}
               placeholder="Ask a question… (Enter to send)"
+              disabled={status === "streaming"}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -613,14 +697,52 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
               title="Send"
             >
-              <Send className="h-4 w-4" />
+              {status === "streaming" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </button>
           </div>
           <p className="mt-1.5 font-mono text-[10px] text-muted-foreground text-center">
-            Shift+Enter for new line
+            {status === "streaming" ? (
+              <span className="text-primary/70">GilaniAI is thinking… please wait</span>
+            ) : (
+              "Shift+Enter for new line"
+            )}
           </p>
         </div>
       </main>
+    </div>
+  );
+}
+
+function AiThinkingIndicator() {
+  const steps = [
+    "Consulting Kenyan national curriculum standards...",
+    "Reviewing context from your uploaded study notes...",
+    "Brainstorming relevant real-world illustrations...",
+    "Structuring step-by-step Socratic pedagogical guidance...",
+    "Polishing primary English and secondary Swahili definitions...",
+  ];
+  const [stepIdx, setStepIdx] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStepIdx((prev) => (prev + 1) % steps.length);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-2 p-1.5 animate-pulse min-w-[200px]">
+      <div className="flex gap-1.5 items-center text-primary font-mono text-[10px] uppercase tracking-widest font-bold">
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+        <span>GilaniAI is formulating your response</span>
+      </div>
+      <p className="text-xs text-muted-foreground italic font-sans transition-all duration-300">
+        ✨ {steps[stepIdx]}
+      </p>
     </div>
   );
 }

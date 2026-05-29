@@ -2,8 +2,9 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 /**
- * Creates an AI provider dynamically selecting Google, Groq, or OpenAI
- * depending on what keys are present.
+ * Creates an AI provider dynamically selecting Groq, OpenAI, or Google Gemini
+ * depending on what environment keys are present.
+ * Priority: Groq > OpenAI > Gemini (last)
  * Drop-in replacement for the old Lovable AI Gateway provider.
  */
 export const createGoogleAiProvider = (apiKey?: string) => {
@@ -14,13 +15,16 @@ export const createGoogleAiProvider = (apiKey?: string) => {
   // Check if Gemini key is valid (not empty and not the expired/invalid AQ. format)
   const isValidGeminiKey = geminiKey && geminiKey.trim() !== "" && !geminiKey.startsWith("AQ.");
 
-  let activeProvider: "google" | "groq" | "openai" = "google";
-
+  // Priority: Groq > OpenAI > Gemini (last)
+  let activeProvider: "google" | "groq" | "openai";
   if (groqKey) {
     activeProvider = "groq";
   } else if (openaiKey) {
     activeProvider = "openai";
   } else if (isValidGeminiKey) {
+    activeProvider = "google";
+  } else {
+    // No valid provider — default to google and let the API throw a clear error
     activeProvider = "google";
   }
 

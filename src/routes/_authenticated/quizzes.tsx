@@ -41,10 +41,8 @@ const generateQuiz = createServerFn({ method: "POST" })
       throw new Error("Question count must be between 1 and 50");
     }
     
-    const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
-    const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-      "gemini-1.5-flash",
-    );
+    // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
+    const model = createLovableAiGatewayProvider().chatModel("gemini-1.5-flash");
     const { generateText } = await import("ai");
     const { text } = await generateText({
       model,

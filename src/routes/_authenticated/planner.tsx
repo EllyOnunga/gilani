@@ -63,10 +63,8 @@ const generatePlan = createServerFn({ method: "POST" })
       }
     }
 
-    const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
-    const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-      "gemini-1.5-flash",
-    );
+    // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
+    const model = createLovableAiGatewayProvider().chatModel("gemini-1.5-flash");
     const { generateText } = await import("ai");
 
     const today = new Date().toISOString().split("T")[0];
