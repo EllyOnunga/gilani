@@ -42,6 +42,43 @@ function TutorIndex() {
         throw new Error("Authentication timed out. Please refresh and try again.");
       }
 
+      const userId = session?.user?.id;
+      if (userId) {
+        // Query the most recent existing thread to keep the chat threaded (wrapped in timeout to prevent hangs)
+        try {
+          const { data: existingThreads } = await withTimeout(
+            Promise.resolve(
+              supabase
+                .from("conversations")
+                .select("id")
+                .eq("user_id", userId)
+                .order("updated_at", { ascending: false })
+                .limit(1)
+            ),
+            5000,
+            "Thread lookup timed out"
+          ) as any;
+
+          if (existingThreads && existingThreads.length > 0) {
+            const threadId = existingThreads[0].id;
+            console.log("[TutorIndex] Navigating to existing most recent thread:", threadId);
+            try {
+              await navigate({
+                to: "/tutor/$threadId",
+                params: { threadId },
+              } as any);
+              return;
+            } catch (navErr) {
+              console.error("[TutorIndex] navigation to existing failed:", navErr);
+              window.location.href = `/tutor/${threadId}`;
+              return;
+            }
+          }
+        } catch (fetchErr) {
+          console.warn("[TutorIndex] Existing thread check timed out or failed:", fetchErr);
+        }
+      }
+
       const token = session?.access_token;
 
       const res = await fetchWithTimeout(

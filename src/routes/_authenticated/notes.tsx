@@ -130,7 +130,8 @@ type Note = {
 export const Route = createFileRoute("/_authenticated/notes")({
   head: () => ({ meta: [{ title: "Study Notes — GilaniAI" }] }),
   loader: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const res = await supabase.auth.getSession();
+    const session = res?.data?.session;
     if (!session?.user?.id) return [];
     return listNotes({ data: { userId: session.user.id } });
   },
@@ -155,9 +156,8 @@ function NotesPage() {
     }
     setSaving(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const res = await supabase.auth.getSession();
+      const session = res?.data?.session;
       if (!session) {
         toast.error("Not signed in");
         return;

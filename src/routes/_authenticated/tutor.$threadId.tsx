@@ -35,8 +35,11 @@ function TutorThread() {
   const [authToken, setAuthToken] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then((res) => {
+      const session = res?.data?.session;
       if (session?.access_token) setAuthToken(session.access_token);
+    }).catch((err) => {
+      console.error("[TutorThread] Failed to get auth session:", err);
     });
   }, []);
 
@@ -80,17 +83,20 @@ function TutorThread() {
     (async () => {
       try {
         const sessionPromise = supabase.auth.getSession();
-        const { data: { session }, error: sessionError } = await withTimeout(
+        const sessionResult = await withTimeout(
           sessionPromise,
           5000,
           "Session fetch timed out"
         ).catch((e) => {
           console.error("[TutorThread] session timeout:", e);
           return { data: { session: null }, error: e };
-        });
+        }) as any;
+
+        const session = sessionResult?.data?.session;
+        const sessionError = sessionResult?.error;
 
         if (sessionError) {
-          if (mounted) setThreadsLoadError(`Authentication error: ${sessionError.message}. Please sign in again.`);
+          if (mounted) setThreadsLoadError(`Authentication error: ${sessionError.message || sessionError}. Please sign in again.`);
           return;
         }
 
@@ -100,11 +106,17 @@ function TutorThread() {
           return;
         }
 
-        const { data, error } = await supabase
-          .from("conversations")
-          .select("id,title,updated_at")
-          .eq("user_id", userId)
-          .order("updated_at", { ascending: false });
+        const { data, error } = await withTimeout(
+          Promise.resolve(
+            supabase
+              .from("conversations")
+              .select("id,title,updated_at")
+              .eq("user_id", userId)
+              .order("updated_at", { ascending: false })
+          ),
+          8000,
+          "Database connection timed out"
+        ) as any;
 
         if (error) {
           if (mounted) setThreadsLoadError(`Failed to load sessions: ${error.message}`);
@@ -216,7 +228,8 @@ function TutorThread() {
   };
 
   const createNewThread = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const sessionRes = await supabase.auth.getSession();
+    const session = sessionRes?.data?.session;
     const userId = session?.user?.id;
     if (!userId) return;
 

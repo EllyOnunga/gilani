@@ -164,9 +164,8 @@ function QuizzesPage() {
     setIsGenerating(true);
     setPhase("loading");
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const res = await supabase.auth.getSession();
+      const session = res?.data?.session;
       if (!session) {
         toast.error("Not signed in");
         setIsGenerating(false);
@@ -246,9 +245,8 @@ function QuizzesPage() {
       .map((q) => q.question.slice(0, 60));
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const res = await supabase.auth.getSession();
+      const session = res?.data?.session;
       if (session && quizId) {
         await withTimeout(
           saveAttempt({

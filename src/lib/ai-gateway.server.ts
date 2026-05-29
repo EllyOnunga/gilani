@@ -1,27 +1,35 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
 /**
- * Lovable AI Gateway provider (OpenAI-compatible). Reads LOVABLE_API_KEY from env.
+ * Creates a Google Generative AI provider using GEMINI_API_KEY.
+ * Drop-in replacement for the old Lovable AI Gateway provider.
+ *
  * Usage:
- *   const gateway = createLovableAiGatewayProvider();
- *   const model = gateway.chatModel("google/gemini-2.5-flash");
- *   const embed = gateway.textEmbeddingModel("google/text-embedding-004");
+ *   const gateway = createGoogleAiProvider();
+ *   const model = gateway.chatModel("gemini-1.5-flash");
+ *   const embed = gateway.textEmbeddingModel();
  */
-export const createLovableAiGatewayProvider = (lovableApiKey?: string) => {
-  const apiKey = lovableApiKey || process.env.LOVABLE_API_KEY || "";
-
-  const provider = createOpenAICompatible({
-    name: "lovable",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    headers: {
-      "Lovable-API-Key": apiKey,
-      "X-Lovable-AIG-SDK": "vercel-ai-sdk",
-    },
-  });
+export const createGoogleAiProvider = (apiKey?: string) => {
+  const key = apiKey || process.env.GEMINI_API_KEY || "";
+  const google = createGoogleGenerativeAI({ apiKey: key });
 
   return {
-    chatModel: (modelId?: string) => provider(modelId || "google/gemini-2.5-flash"),
-    textEmbeddingModel: (modelId?: string) =>
-      provider.textEmbeddingModel(modelId || "google/text-embedding-004"),
+    chatModel: (modelId?: string) => {
+      let cleanModelId = modelId ? modelId.replace(/^google\//, "") : "gemini-1.5-flash";
+      if (cleanModelId.includes("2.5-flash")) {
+        cleanModelId = "gemini-1.5-flash";
+      }
+      return google(cleanModelId);
+    },
+    textEmbeddingModel: (modelId?: string) => {
+      const cleanModelId = modelId ? modelId.replace(/^google\//, "") : "text-embedding-004";
+      return google.textEmbeddingModel(cleanModelId);
+    },
   };
 };
+
+/**
+ * @deprecated Use createGoogleAiProvider instead.
+ * Kept for backward compatibility — delegates to createGoogleAiProvider.
+ */
+export const createLovableAiGatewayProvider = createGoogleAiProvider;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -133,9 +133,8 @@ function PlannerPage() {
     setLoading(true);
     setError(null);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const res = await supabase.auth.getSession();
+      const session = res?.data?.session;
       if (!session) return;
       const existing = await withTimeout(
         loadPlan({ data: session.user.id }),
@@ -151,18 +150,17 @@ function PlannerPage() {
     }
   };
 
-  // Call init on mount via useState initializer trick
-  useState(() => {
+  // Call init on mount
+  useEffect(() => {
     init();
-  });
+  }, []);
 
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const res = await supabase.auth.getSession();
+      const session = res?.data?.session;
       if (!session) {
         toast.error("Not signed in");
         return;

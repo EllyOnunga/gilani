@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -138,9 +138,8 @@ function AnalyticsPage() {
   const init = async () => {
     if (initialised) return;
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const authRes = await supabase.auth.getSession();
+      const session = authRes?.data?.session;
       if (session) {
         const res = await withTimeout(
           fetchAnalytics({ data: session.user.id }),
@@ -158,9 +157,9 @@ function AnalyticsPage() {
     }
   };
 
-  useState(() => {
+  useEffect(() => {
     init();
-  });
+  }, []);
 
   if (loading) {
     return (

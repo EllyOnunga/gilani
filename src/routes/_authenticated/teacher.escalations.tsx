@@ -95,7 +95,8 @@ function EscalationsPage() {
     let mounted = true;
     (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const authRes = await supabase.auth.getSession();
+        const session = authRes?.data?.session;
         if (!session?.user?.id) {
           if (mounted) setEscalations([]);
           return;
@@ -123,7 +124,8 @@ function EscalationsPage() {
     if (!answer.trim()) { toast.error("Please write an expert answer first."); return; }
     setSaving(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const authRes = await supabase.auth.getSession();
+      const session = authRes?.data?.session;
       if (!session?.user?.id) throw new Error("Not signed in");
       await resolveEscalation({ data: { id, expertAnswer: answer, userId: session.user.id } });
       setEscalations((prev) =>

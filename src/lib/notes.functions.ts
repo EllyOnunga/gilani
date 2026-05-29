@@ -1,5 +1,5 @@
 import { embedMany } from 'ai';
-import { google } from '@ai-sdk/google';
+import { createGoogleAiProvider } from './ai-gateway.server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -15,9 +15,11 @@ export async function processNoteEmbeddings(noteId: string, text: string) {
   // Simple chunking strategy for the hearth/parchment direction
   const chunks = text.match(/[\s\S]{1,1000}/g) || [];
 
+  const googleProvider = createGoogleAiProvider();
+
   // Use embedMany for efficient batch processing
   const { embeddings } = await embedMany({
-    model: google.embedding('text-embedding-004'),
+    model: googleProvider.textEmbeddingModel('text-embedding-004'),
     values: chunks,
     providerOptions: {
       google: {

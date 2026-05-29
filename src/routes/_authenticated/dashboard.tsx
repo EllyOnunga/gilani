@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
@@ -103,7 +103,8 @@ function Dashboard() {
   const init = async () => {
     if (initialised) return;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const authRes = await supabase.auth.getSession();
+      const session = authRes?.data?.session;
       if (session) {
         const res = await loadDashboardData({ data: session.user.id });
         setData(res);
@@ -115,7 +116,7 @@ function Dashboard() {
     }
   };
 
-  useState(() => { init(); });
+  useEffect(() => { init(); }, []);
 
   const streak = data?.streak ?? 0;
   const quizzesCompleted = data?.quizzesCompleted ?? 0;
