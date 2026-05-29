@@ -77,8 +77,9 @@ const id = json?.thread?.id;
          console.log("[TutorIndex] Navigating to thread:", id);
          // Navigate using the correct route path
          navigate({ 
-           to: `/tutor/${id}`,
-         } as any);
+           to: "/tutor/$threadId",
+           params: { threadId: id },
+         });
        } else {
          throw new Error("No thread ID returned from server");
        }

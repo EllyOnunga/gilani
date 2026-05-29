@@ -1,23 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, Plus, X, Send } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
-import { fetchWithTimeout, getErrorMessage, withTimeout } from "@/lib/async";
+import { withTimeout } from "@/lib/async";
+
+export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
+  component: TutorThread,
+});
 
 type Thread = {
   id: string;
   title?: string | null;
   updated_at?: string | null;
-};
-
-type Message = {
-  id?: string;
-  conversation_id: string;
-  role: "user" | "assistant";
-  content: string;
-  created_at?: string | null;
 };
 
 function TutorThread() {
@@ -30,12 +26,24 @@ function TutorThread() {
   const [threadsLoading, setThreadsLoading] = useState(true);
   const [threadsLoadError, setThreadsLoadError] = useState<string | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
+  const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
 const [authToken, setAuthToken] = useState<string | null>(null);
-  const [input, setInput] = useState("");
-  const authTokenRef = useRef(authToken);
-  authTokenRef.current = authToken;
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.access_token) setAuthToken(session.access_token);
+    });
+  }, []);
+
+  const transport = useMemo(
+    () => new TextStreamChatTransport({
+      api: "/api/chat",
+      body: { threadId },
+      headers: { Authorization: authToken ? `Bearer ${authToken}` : "" },
+    }),
+    [threadId, authToken]
+  );
 
   const {
     messages,
@@ -43,13 +51,9 @@ const [authToken, setAuthToken] = useState<string | null>(null);
     sendMessage,
     status,
   } = useChat({
-    transport: new TextStreamChatTransport({
-      api: "/api/chat",
-      body: { threadId },
-      headers: { Authorization: authTokenRef.current ? `Bearer ${authTokenRef.current}` : "" },
-    }),
+    transport,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
-    onFinish: (options) => {
+    onFinish: () => {
       setChatError(null);
     },
   });
@@ -90,22 +94,16 @@ const [authToken, setAuthToken] = useState<string | null>(null);
           return { data: { session: null }, error: e };
         });
 
-        console.log("[TutorThread] session result:", { hasSession: !!session, sessionError });
-
         if (sessionError) {
-          console.error("[TutorThread] session error:", sessionError);
-          if (mounted) {
-            setThreads([]);
+          if (mounted)
             setThreadsLoadError(`Authentication error: ${sessionError.message}. Please sign in again.`);
-          }
           return;
         }
+
         const userId = session?.user?.id;
         if (!userId) {
-          if (mounted) {
-            setThreads([]);
+          if (mounted) 
             setThreadsLoadError("Not authenticated. Please sign in.");
-          }
           return;
         }
         const { data, error } = await supabase
@@ -114,7 +112,6 @@ const [authToken, setAuthToken] = useState<string | null>(null);
           .eq("user_id", userId)
           .order("updated_at", { ascending: false });
         if (error) {
-          console.error("[TutorThread] load threads error:", error);
           if (mounted) setThreadsLoadError(`Failed to load sessions: ${error.message}`);
           return;
         }
@@ -232,7 +229,7 @@ const [authToken, setAuthToken] = useState<string | null>(null);
   }, [messages]);
 
   const handleSelectThread = (id: string) => {
-    navigate({ to: `/tutor/${id}` });
+    navigate({ to: "/tutor/$threadId", params: { threadId: id }, });
   };
 
   const createNewThread = async () => {
@@ -251,7 +248,7 @@ const [authToken, setAuthToken] = useState<string | null>(null);
     }
     const newId = (data as any).id;
     setThreads((t) => [{ id: newId, title }, ...t]);
-    navigate({ to: `/tutor/${newId}` });
+    navigate({ to: "/tutor/$threadId", params: { threadId: newId },  });
     setThreadsOpen(false);
   };
 
@@ -452,6 +449,3 @@ const [authToken, setAuthToken] = useState<string | null>(null);
   );
 }
 
-export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
-  component: TutorThread,
-});
