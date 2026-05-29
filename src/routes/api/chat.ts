@@ -6,6 +6,11 @@ import { authenticateRequest } from "@/lib/api-auth";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { withTimeout } from "@/lib/async";
 
+// Helper to convert embedding array to vector string format for Supabase pgvector
+function formatVectorForPgvector(embedding: number[]): string {
+  return `[${embedding.join(",")}]`;
+}
+
 const DISTRESS_KEYWORDS = ["suicide", "self-harm", "abuse", "hurt myself", "kill myself"];
 const DIGNITY_FILTER = ["bitch", "stupid", "idiot", "dumb"]; // Example boundary list
 
@@ -122,7 +127,7 @@ export const Route = createFileRoute("/api/chat")({
               );
 
 const { data: chunks, error: rpcErr } = await supabaseAdmin.rpc("match_note_chunks", {
-                query_embedding: JSON.stringify(embedding),
+                 query_embedding: formatVectorForPgvector(embedding as number[]),
                  match_user_id: userId,
                  match_count: 5,
                });
@@ -225,8 +230,8 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
                   parts: JSON.stringify(assistantParts),
                   confidence: 0.9,
                   user_id: userId,
-                  thought_signature: thoughtSignature as any,
-                } as any);
+                  thought_signature: thoughtSignature,
+                } as any); // Bypass static Database types for new column
                 await supabaseAdmin.from("audit_logs").insert({
                   action: "tutor.message",
                   payload: { threadId, confidence: 0.9 },

@@ -65,27 +65,28 @@ function TutorIndex() {
         json = await res.json();
         console.log("[TutorIndex] thread response JSON:", json);
       } catch (parseErr) {
-        console.error("[TutorIndex] Failed to parse response:", parseErr);
-        json = {};
+        throw new Error("Server returned an invalid response format. Check your API route.");
       }
 
       if (!res.ok) {
         throw new Error(json?.error || `Server returned status ${res.status}`);
       }
 
-      const id = json?.thread?.id;
-      if (id) {
-        const destination = `/tutor/${id}`;
-        navigate({ to: `/tutor/${id}` });
-        // Fallback for cases where client navigation does not transition on some mobile browsers.
-        setTimeout(() => {
-          if (window.location.pathname === "/tutor") {
-            window.location.assign(destination);
-          }
-        }, 800);
-      } else {
-        throw new Error("No thread ID returned from server");
-      }
+const id = json?.thread?.id;
+       if (id) {
+         try {
+           await navigate({ 
+             to: '/tutor/$threadId',
+             params: { threadId: id } 
+           } as any);
+         } catch (navErr) {
+           console.error("[TutorIndex] navigation failed:", navErr);
+           // Force redirect as fallback
+           window.location.href = `/tutor/${id}`;
+         }
+       } else {
+         throw new Error("No thread ID returned from server");
+       }
     } catch (err) {
       setError(getErrorMessage(err, "Failed to create study session"));
       setLoading(false);
