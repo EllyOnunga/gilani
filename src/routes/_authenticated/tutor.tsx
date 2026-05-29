@@ -75,11 +75,17 @@ function TutorIndex() {
 const id = json?.thread?.id;
        if (id) {
          console.log("[TutorIndex] Navigating to thread:", id);
-         // Navigate using the correct route path
-         navigate({ 
-           to: "/tutor/$threadId",
-           params: { threadId: id },
-         });
+         try {
+           await navigate({ 
+             to: '/tutor/$threadId',
+             params: { threadId: id } 
+           } as any);
+           console.log("[TutorIndex] Navigation completed");
+         } catch (navErr) {
+           console.error("[TutorIndex] navigation failed:", navErr);
+           // Force redirect as fallback
+           window.location.href = `/tutor/${id}`;
+         }
        } else {
          throw new Error("No thread ID returned from server");
        }

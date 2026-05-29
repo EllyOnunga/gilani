@@ -6,6 +6,7 @@ import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { withTimeout } from "@/lib/async";
 
+// ✅ Route declaration at module level (moved to bottom export, defined here for use in component)
 export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
   component: TutorThread,
 });
@@ -19,6 +20,7 @@ type Thread = {
 function TutorThread() {
   const { threadId } = Route.useParams();
   const navigate = useNavigate();
+
   const [threads, setThreads] = useState<Thread[]>([]);
   const [chatError, setChatError] = useState<string | null>(null);
   const [messagesLoading, setMessagesLoading] = useState(true);
@@ -29,70 +31,31 @@ function TutorThread() {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-<<<<<<< HEAD
-const [authToken, setAuthToken] = useState<string | null>(null);
+  // ✅ Fixed: authToken is now populated from Supabase session
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.access_token) setAuthToken(session.access_token);
     });
   }, []);
 
+  // ✅ Fixed: transport is memoized — no new object on every render,
+  //    and re-creates only when threadId or authToken changes
   const transport = useMemo(
-    () => new TextStreamChatTransport({
-      api: "/api/chat",
-      body: { threadId },
-      headers: { Authorization: authToken ? `Bearer ${authToken}` : "" },
-    }),
-    [threadId, authToken]
-=======
-  const [input, setInput] = useState("");
-  const authTokenRef = useRef<string | null>(null);
-
-  // Keep auth token fresh
-  useEffect(() => {
-    let mounted = true;
-    const sync = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (mounted) authTokenRef.current = data.session?.access_token ?? null;
-    };
-    sync();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      authTokenRef.current = session?.access_token ?? null;
-    });
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const transport = React.useMemo(
     () =>
       new TextStreamChatTransport({
         api: "/api/chat",
-        body: () => ({ threadId }),
-        headers: () => ({
-          Authorization: authTokenRef.current ? `Bearer ${authTokenRef.current}` : "",
-        }),
+        body: { threadId },
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
       }),
-    [threadId],
->>>>>>> 64ee17fc91c9db3957430e0a3e3f5ea897a993b6
+    [threadId, authToken]
   );
 
-  const {
-    messages,
-    setMessages,
-    sendMessage,
-    status,
-  } = useChat({
-<<<<<<< HEAD
-=======
-    id: threadId,
->>>>>>> 64ee17fc91c9db3957430e0a3e3f5ea897a993b6
+  const { messages, setMessages, sendMessage, status } = useChat({
     transport,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
-    onFinish: () => {
-      setChatError(null);
-    },
+    onFinish: () => setChatError(null),
   });
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -103,7 +66,6 @@ const [authToken, setAuthToken] = useState<string | null>(null);
     event?.preventDefault?.();
     const trimmedInput = input.trim();
     if (!trimmedInput) return;
-
     try {
       await sendMessage({ text: trimmedInput });
       setInput("");
@@ -112,16 +74,12 @@ const [authToken, setAuthToken] = useState<string | null>(null);
     }
   };
 
+  // Load sidebar thread list
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        // Debug logging
-        console.log("[TutorThread] threads effect running, supabase client ready");
-
         const sessionPromise = supabase.auth.getSession();
-        console.log("[TutorThread] getSession called, awaiting...");
-
         const { data: { session }, error: sessionError } = await withTimeout(
           sessionPromise,
           5000,
@@ -132,22 +90,22 @@ const [authToken, setAuthToken] = useState<string | null>(null);
         });
 
         if (sessionError) {
-          if (mounted)
-            setThreadsLoadError(`Authentication error: ${sessionError.message}. Please sign in again.`);
+          if (mounted) setThreadsLoadError(`Authentication error: ${sessionError.message}. Please sign in again.`);
           return;
         }
 
         const userId = session?.user?.id;
         if (!userId) {
-          if (mounted) 
-            setThreadsLoadError("Not authenticated. Please sign in.");
+          if (mounted) setThreadsLoadError("Not authenticated. Please sign in.");
           return;
         }
+
         const { data, error } = await supabase
           .from("conversations")
           .select("id,title,updated_at")
           .eq("user_id", userId)
           .order("updated_at", { ascending: false });
+
         if (error) {
           if (mounted) setThreadsLoadError(`Failed to load sessions: ${error.message}`);
           return;
@@ -160,46 +118,32 @@ const [authToken, setAuthToken] = useState<string | null>(null);
         if (mounted) setThreadsLoading(false);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
+  // Load messages for the current thread
   useEffect(() => {
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    console.log("[TutorThread] messages effect:", { threadId, threadsLoading, threadsCount: threads.length });
-
-    // If no threadId, stop loading
     if (!threadId) {
-      console.log("[TutorThread] no threadId, stopping");
       setMessagesLoading(false);
       return;
     }
 
-    // If we're still loading threads, keep messages loading too
-    // The effect will re-run when threadsLoading becomes false
     if (threadsLoading) {
-      console.log("[TutorThread] waiting for threads...");
       setMessagesLoading(true);
       return;
     }
 
-    console.log("[TutorThread] loading messages for thread:", threadId);
-
-    // No threads loaded means user has no threads (or no auth)
     if (threads.length === 0) {
-      console.log("[TutorThread] threads empty, showing empty state");
       setMessagesLoading(false);
       setMessages([]);
       setMessagesLoadError(null);
       return;
     }
 
-    // Check if thread belongs to user
     const threadBelongsToUser = threads.some((t) => t.id === threadId);
-    console.log("[TutorThread] thread belongs to user:", threadBelongsToUser);
     if (!threadBelongsToUser) {
       setMessagesLoading(false);
       setMessagesLoadError("Thread not found or access denied.");
@@ -211,7 +155,6 @@ const [authToken, setAuthToken] = useState<string | null>(null);
 
     timeoutId = setTimeout(() => {
       if (mounted) {
-        console.log("[TutorThread] messages timeout reached");
         setMessagesLoading(false);
         setMessagesLoadError("Loading timed out. The database may be unavailable.");
       }
@@ -219,7 +162,6 @@ const [authToken, setAuthToken] = useState<string | null>(null);
 
     (async () => {
       try {
-        console.log("[TutorThread] fetching messages from DB...");
         const { data, error } = await supabase
           .from("messages")
           .select("*")
@@ -230,23 +172,22 @@ const [authToken, setAuthToken] = useState<string | null>(null);
 
         if (mounted) {
           if (error) {
-            console.error("[TutorThread] load messages error:", error);
             setMessagesLoadError(`Database error: ${error.message}`);
             setMessagesLoading(false);
             return;
           }
-          console.log("[TutorThread] messages loaded:", data?.length ?? 0);
-          setMessages((data ?? []).map(m => ({
-            id: m.id ?? crypto.randomUUID(),
-            role: m.role as "user" | "assistant",
-            parts: [{ type: "text" as const, text: m.content || "" }],
-          })));
+          setMessages(
+            (data ?? []).map((m) => ({
+              id: m.id ?? crypto.randomUUID(),
+              role: m.role as "user" | "assistant",
+              parts: [{ type: "text" as const, text: m.content || "" }],
+            }))
+          );
           setMessagesLoading(false);
         }
       } catch (e) {
         clearTimeout(timeoutId);
         if (mounted) {
-          console.error("[TutorThread] load messages exception:", e);
           setMessagesLoadError("Connection failed. Try refreshing.");
           setMessagesLoading(false);
         }
@@ -259,34 +200,46 @@ const [authToken, setAuthToken] = useState<string | null>(null);
     };
   }, [threadId, threadsLoading, threads]);
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     if (messages.length > 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messages]);
 
+  // ✅ Fixed: use full typed route path with params
   const handleSelectThread = (id: string) => {
-    navigate({ to: "/tutor/$threadId", params: { threadId: id }, });
+    navigate({
+      to: "/_authenticated/tutor/$threadId",
+      params: { threadId: id },
+    });
   };
 
   const createNewThread = async () => {
-    const title = "New thread";
     const { data: { session } } = await supabase.auth.getSession();
     const userId = session?.user?.id;
     if (!userId) return;
+
     const { data, error } = await supabase
       .from("conversations")
-      .insert([{ title, user_id: userId }])
+      .insert([{ title: "New thread", user_id: userId }])
       .select()
       .single();
+
     if (error) {
-      console.error("create thread", error);
+      console.error("[TutorThread] create thread error:", error);
       return;
     }
+
     const newId = (data as any).id;
-    setThreads((t) => [{ id: newId, title }, ...t]);
-    navigate({ to: "/tutor/$threadId", params: { threadId: newId },  });
+    setThreads((prev) => [{ id: newId, title: "New thread" }, ...prev]);
     setThreadsOpen(false);
+
+    // ✅ Fixed: use full typed route path with params
+    navigate({
+      to: "/_authenticated/tutor/$threadId",
+      params: { threadId: newId },
+    });
   };
 
   const ThreadList = (
@@ -327,7 +280,7 @@ const [authToken, setAuthToken] = useState<string | null>(null);
             )}
           </button>
         ))}
-        {threads.length === 0 && (
+        {threads.length === 0 && !threadsLoading && (
           <p className="text-xs text-muted-foreground text-center py-6 italic">
             No sessions yet. Start a new one!
           </p>
@@ -338,6 +291,7 @@ const [authToken, setAuthToken] = useState<string | null>(null);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] lg:h-screen flex-col lg:flex-row bg-background text-foreground">
+      {/* Mobile overlay */}
       {threadsOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
@@ -345,10 +299,12 @@ const [authToken, setAuthToken] = useState<string | null>(null);
         />
       )}
 
+      {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:w-64 flex-col border-r border-border bg-sidebar p-4 overflow-hidden">
         {ThreadList}
       </aside>
 
+      {/* Mobile sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out lg:hidden ${
           threadsOpen ? "translate-x-0" : "-translate-x-full"
@@ -366,7 +322,9 @@ const [authToken, setAuthToken] = useState<string | null>(null);
         {ThreadList}
       </aside>
 
+      {/* Main chat area */}
       <main className="flex flex-1 flex-col overflow-hidden">
+        {/* Mobile top bar */}
         <div className="flex items-center gap-3 border-b border-border bg-sidebar px-4 py-3 lg:hidden">
           <button
             onClick={() => setThreadsOpen(true)}
@@ -377,44 +335,49 @@ const [authToken, setAuthToken] = useState<string | null>(null);
           </button>
         </div>
 
-<div className="flex-1 overflow-y-auto p-4 space-y-4">
-           {threadsLoadError && (
-             <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
-               <p>{threadsLoadError}</p>
-               <button
-                 onClick={() => navigate({ to: "/login" })}
-                 className="mt-2 underline underline-offset-2 hover:text-destructive/80"
-               >
-                 Sign in
-               </button>
-             </div>
-           )}
-           {messagesLoading && (
-             <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
-               <span className="flex gap-1 items-center text-muted-foreground">
-                 <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
-                 <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
-                 <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
-               </span>
-               <p className="text-sm text-muted-foreground">Loading thread messages…</p>
-             </div>
-           )}
-           {!messagesLoading && messagesLoadError && (
-             <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
-               <p>{messagesLoadError}</p>
-               <button
-                 onClick={() => navigate({ to: "/tutor" })}
-                 className="mt-2 underline underline-offset-2 hover:text-destructive/80"
-               >
-                 Start a new session
-               </button>
-             </div>
-           )}
+        {/* Messages area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {threadsLoadError && (
+            <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+              <p>{threadsLoadError}</p>
+              <button
+                onClick={() => navigate({ to: "/_authenticated/login" } as any)}
+                className="mt-2 underline underline-offset-2 hover:text-destructive/80"
+              >
+                Sign in
+              </button>
+            </div>
+          )}
+
+          {messagesLoading && (
+            <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
+              <span className="flex gap-1 items-center text-muted-foreground">
+                <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
+                <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
+                <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
+              </span>
+              <p className="text-sm text-muted-foreground">Loading thread messages…</p>
+            </div>
+          )}
+
+          {!messagesLoading && messagesLoadError && (
+            <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+              <p>{messagesLoadError}</p>
+              <button
+                onClick={() => navigate({ to: "/_authenticated/tutor" })}
+                className="mt-2 underline underline-offset-2 hover:text-destructive/80"
+              >
+                Start a new session
+              </button>
+            </div>
+          )}
+
           {chatError && (
             <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-destructive">
               {chatError}
             </div>
           )}
+
           {!messagesLoading && !messagesLoadError && messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
               <MessageCircle className="h-10 w-10 text-muted-foreground/40" />
@@ -424,19 +387,23 @@ const [authToken, setAuthToken] = useState<string | null>(null);
               </p>
             </div>
           )}
+
           {!messagesLoading &&
             !messagesLoadError &&
             messages.map((m, idx) => (
-              <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                key={m.id ?? idx}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
                 <div
                   className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     m.role === "user"
                       ? "bg-primary text-primary-foreground rounded-tr-sm"
                       : "bg-card border border-border text-foreground rounded-tl-sm"
                   }`}
->
-                   {m.parts?.map((p) => p.type === "text" ? p.text : "").join("") ||
-                     (status === "streaming" && idx === messages.length - 1 ? (
+                >
+                  {m.parts?.map((p) => (p.type === "text" ? p.text : "")).join("") ||
+                    (status === "streaming" && idx === messages.length - 1 ? (
                       <span className="flex gap-1 items-center text-muted-foreground">
                         <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
                         <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
@@ -450,9 +417,11 @@ const [authToken, setAuthToken] = useState<string | null>(null);
                 </div>
               </div>
             ))}
+
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Input area */}
         <div className="border-t border-border bg-background p-3 sm:p-4">
           <div className="flex items-end gap-2 sm:gap-3">
             <textarea
@@ -468,12 +437,12 @@ const [authToken, setAuthToken] = useState<string | null>(null);
                 }
               }}
             />
-<button
-               onClick={(e) => submit(e as any)}
-               disabled={status === "streaming" || !input.trim()}
-               className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
-               title="Send"
-             >
+            <button
+              onClick={(e) => submit(e as any)}
+              disabled={status === "streaming" || !input.trim()}
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
+              title="Send"
+            >
               <Send className="h-4 w-4" />
             </button>
           </div>
@@ -485,4 +454,3 @@ const [authToken, setAuthToken] = useState<string | null>(null);
     </div>
   );
 }
-
