@@ -29,6 +29,7 @@ function TutorThread() {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+<<<<<<< HEAD
 const [authToken, setAuthToken] = useState<string | null>(null);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -43,6 +44,38 @@ const [authToken, setAuthToken] = useState<string | null>(null);
       headers: { Authorization: authToken ? `Bearer ${authToken}` : "" },
     }),
     [threadId, authToken]
+=======
+  const [input, setInput] = useState("");
+  const authTokenRef = useRef<string | null>(null);
+
+  // Keep auth token fresh
+  useEffect(() => {
+    let mounted = true;
+    const sync = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (mounted) authTokenRef.current = data.session?.access_token ?? null;
+    };
+    sync();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      authTokenRef.current = session?.access_token ?? null;
+    });
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const transport = React.useMemo(
+    () =>
+      new TextStreamChatTransport({
+        api: "/api/chat",
+        body: () => ({ threadId }),
+        headers: () => ({
+          Authorization: authTokenRef.current ? `Bearer ${authTokenRef.current}` : "",
+        }),
+      }),
+    [threadId],
+>>>>>>> 64ee17fc91c9db3957430e0a3e3f5ea897a993b6
   );
 
   const {
@@ -51,6 +84,10 @@ const [authToken, setAuthToken] = useState<string | null>(null);
     sendMessage,
     status,
   } = useChat({
+<<<<<<< HEAD
+=======
+    id: threadId,
+>>>>>>> 64ee17fc91c9db3957430e0a3e3f5ea897a993b6
     transport,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
     onFinish: () => {
