@@ -210,7 +210,7 @@ function TutorThread() {
   // ✅ Fixed: use full typed route path with params
   const handleSelectThread = (id: string) => {
     navigate({
-      to: "/_authenticated/tutor/$threadId",
+      to: "/tutor/$threadId",
       params: { threadId: id },
     });
   };
@@ -237,7 +237,7 @@ function TutorThread() {
 
     // ✅ Fixed: use full typed route path with params
     navigate({
-      to: "/_authenticated/tutor/$threadId",
+      to: "/tutor/$threadId",
       params: { threadId: newId },
     });
   };
@@ -364,7 +364,7 @@ function TutorThread() {
             <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
               <p>{messagesLoadError}</p>
               <button
-                onClick={() => navigate({ to: "/_authenticated/tutor" })}
+                onClick={() => navigate({ to: "/tutor" })}
                 className="mt-2 underline underline-offset-2 hover:text-destructive/80"
               >
                 Start a new session
