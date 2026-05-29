@@ -449,18 +449,42 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                       : "bg-card border border-border text-foreground rounded-tl-sm"
                   }`}
                 >
-                  {m.parts?.map((p) => (p.type === "text" ? p.text : "")).join("") ||
-                    (status === "streaming" && idx === messages.length - 1 ? (
-                      <span className="flex gap-1 items-center text-muted-foreground">
-                        <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
-                        <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
-                        <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
-                      </span>
-                    ) : (
+                  {(() => {
+                    // Primary: accumulate text from parts[] (AI SDK v6 UIMessage format,
+                    // populated by TextStreamChatTransport during streaming and by setMessages
+                    // when loading from DB)
+                    const partsText = m.parts
+                      ?.filter((p: any) => p.type === "text")
+                      .map((p: any) => p.text || "")
+                      .join("") || "";
+
+                    // Fallback: m.content getter (UIMessage.finalStep.content)
+                    // covers edge cases where parts may be empty/missing
+                    const displayText = partsText || (m as any).content || "";
+
+                    if (displayText) {
+                      return (
+                        <span className="whitespace-pre-wrap">{displayText}</span>
+                      );
+                    }
+
+                    // No text yet — show streaming dots or error
+                    if (status === "streaming" && idx === messages.length - 1) {
+                      return (
+                        <span className="flex gap-1 items-center text-muted-foreground">
+                          <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
+                          <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
+                          <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
+                        </span>
+                      );
+                    }
+
+                    return (
                       <span className="text-xs text-muted-foreground">
                         No response generated. Please resend your question.
                       </span>
-                    ))}
+                    );
+                  })()}
                 </div>
               </div>
             ))}
