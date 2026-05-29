@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageCircle, Plus, X, Send } from "lucide-react";
+import { MessageCircle, Plus, X, Send, Loader2 } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { withTimeout } from "@/lib/async";
@@ -18,6 +18,36 @@ type Thread = {
 };
 
 function TutorThread() {
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then((res) => {
+      if (!active) return;
+      const session = res?.data?.session;
+      if (session?.access_token) setAuthToken(session.access_token);
+      setAuthLoading(false);
+    }).catch((err) => {
+      console.error("[TutorThread] Failed to get auth session:", err);
+      if (active) setAuthLoading(false);
+    });
+    return () => { active = false; };
+  }, []);
+
+  if (authLoading) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center bg-background text-foreground">
+        <Loader2 className="h-6 w-6 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground font-medium">Verifying credentials…</p>
+      </div>
+    );
+  }
+
+  return <TutorThreadInner authToken={authToken} />;
+}
+
+function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const { threadId } = Route.useParams();
   const navigate = useNavigate();
 
@@ -30,18 +60,6 @@ function TutorThread() {
   const [threadsOpen, setThreadsOpen] = useState(false);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  // ✅ Fixed: authToken is now populated from Supabase session
-  const [authToken, setAuthToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then((res) => {
-      const session = res?.data?.session;
-      if (session?.access_token) setAuthToken(session.access_token);
-    }).catch((err) => {
-      console.error("[TutorThread] Failed to get auth session:", err);
-    });
-  }, []);
 
   // Safety net: force all loading states off after 10s regardless of what else is happening.
   // Prevents permanent spinner when auth refresh fails or DB is slow.
