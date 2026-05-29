@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
@@ -11,6 +11,7 @@ export const Route = createFileRoute("/_authenticated/tutor")({
 
 function TutorIndex() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const startedRef = useRef(false);
@@ -137,10 +138,18 @@ const id = json?.thread?.id;
   };
 
   useEffect(() => {
+    const isExactTutor = location.pathname === "/tutor" || location.pathname === "/tutor/";
+    if (!isExactTutor) return;
+
     if (startedRef.current) return;
     startedRef.current = true;
     createSession();
-  }, []);
+  }, [location.pathname]);
+
+  const isExactTutor = location.pathname === "/tutor" || location.pathname === "/tutor/";
+  if (!isExactTutor) {
+    return <Outlet />;
+  }
 
   if (error) {
     const isServiceRoleError =
