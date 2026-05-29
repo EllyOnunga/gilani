@@ -1,29 +1,27 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
+/**
+ * Lovable AI Gateway provider (OpenAI-compatible). Reads LOVABLE_API_KEY from env.
+ * Usage:
+ *   const gateway = createLovableAiGatewayProvider();
+ *   const model = gateway.chatModel("google/gemini-2.5-flash");
+ *   const embed = gateway.textEmbeddingModel("google/text-embedding-004");
+ */
 export const createLovableAiGatewayProvider = (lovableApiKey?: string) => {
-  const apiKey = process.env.GEMINI_API_KEY || lovableApiKey || process.env.LOVABLE_API_KEY;
+  const apiKey = lovableApiKey || process.env.LOVABLE_API_KEY || "";
 
-  const google = createGoogleGenerativeAI({
-    apiKey: apiKey || "",
+  const provider = createOpenAICompatible({
+    name: "lovable",
+    baseURL: "https://ai.gateway.lovable.dev/v1",
+    headers: {
+      "Lovable-API-Key": apiKey,
+      "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+    },
   });
 
-  const createEmbeddingModel = (modelId?: string) => {
-    const embModel = google.textEmbeddingModel(modelId || "google/text-embedding-004");
-    return {
-      ...embModel,
-      doEmbed: async (params: any) => {
-        const result = await embModel.doEmbed(params);
-        return {
-          ...result,
-          embeddings: result.embeddings.map((emb: number[]) => emb.slice(0, 768)),
-        };
-      },
-    };
-  };
-
   return {
-    chatModel: (modelId?: string) => google(modelId || "gemini-2.5-flash"),
-    textEmbeddingModel: (modelId?: string) => createEmbeddingModel(modelId) as any,
+    chatModel: (modelId?: string) => provider(modelId || "google/gemini-2.5-flash"),
+    textEmbeddingModel: (modelId?: string) =>
+      provider.textEmbeddingModel(modelId || "google/text-embedding-004"),
   };
 };
-

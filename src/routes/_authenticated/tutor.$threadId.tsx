@@ -32,10 +32,37 @@ function TutorThread() {
   const [threadsOpen, setThreadsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-const [authToken, setAuthToken] = useState<string | null>(null);
   const [input, setInput] = useState("");
-  const authTokenRef = useRef(authToken);
-  authTokenRef.current = authToken;
+  const authTokenRef = useRef<string | null>(null);
+
+  // Keep auth token fresh
+  useEffect(() => {
+    let mounted = true;
+    const sync = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (mounted) authTokenRef.current = data.session?.access_token ?? null;
+    };
+    sync();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      authTokenRef.current = session?.access_token ?? null;
+    });
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const transport = React.useMemo(
+    () =>
+      new TextStreamChatTransport({
+        api: "/api/chat",
+        body: () => ({ threadId }),
+        headers: () => ({
+          Authorization: authTokenRef.current ? `Bearer ${authTokenRef.current}` : "",
+        }),
+      }),
+    [threadId],
+  );
 
   const {
     messages,
@@ -43,13 +70,10 @@ const [authToken, setAuthToken] = useState<string | null>(null);
     sendMessage,
     status,
   } = useChat({
-    transport: new TextStreamChatTransport({
-      api: "/api/chat",
-      body: { threadId },
-      headers: { Authorization: authTokenRef.current ? `Bearer ${authTokenRef.current}` : "" },
-    }),
+    id: threadId,
+    transport,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
-    onFinish: (options) => {
+    onFinish: () => {
       setChatError(null);
     },
   });
