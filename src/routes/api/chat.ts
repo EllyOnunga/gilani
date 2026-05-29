@@ -41,6 +41,14 @@ export const Route = createFileRoute("/api/chat")({
           const body = await request.json().catch(() => ({}));
           const { threadId, messages } = body as { threadId?: string; messages?: any[] };
 
+          console.log("[API Chat] userId:", userId, "| threadId:", threadId, "| messages count:", messages?.length ?? 0);
+          // Log the last message structure for debugging
+          const _lastMsgDebug = messages?.[messages.length - 1];
+          console.log("[API Chat] lastMessage role:", _lastMsgDebug?.role, "| has parts:", Array.isArray(_lastMsgDebug?.parts), "| has content:", typeof _lastMsgDebug?.content);
+          if (Array.isArray(_lastMsgDebug?.parts)) {
+            console.log("[API Chat] lastMessage parts:", JSON.stringify(_lastMsgDebug.parts).slice(0, 200));
+          }
+
           if (!threadId) {
             return new Response(JSON.stringify({ error: "threadId required" }), {
               status: 400,
@@ -107,6 +115,7 @@ export const Route = createFileRoute("/api/chat")({
 
           if (lastMessage && lastMessage.role === "user") {
             const userText = extractTextFromMessage(lastMessage);
+            console.log("[API Chat] extracted userText:", JSON.stringify(userText));
             await supabaseAdmin.from("messages").insert({
               conversation_id: threadId,
               role: "user",
@@ -125,6 +134,7 @@ export const Route = createFileRoute("/api/chat")({
           const curriculum = profile?.curriculum || "KCSE";
 
           const latestMessageContent = extractTextFromMessage(lastMessage);
+          console.log("[API Chat] latestMessageContent for RAG:", JSON.stringify(latestMessageContent));
           let notesContext = "";
 
           if (latestMessageContent) {
@@ -229,6 +239,8 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
             }) || []),
           ];
 
+          console.log("[API Chat] aiMessages count:", aiMessages.length, "| roles:", aiMessages.map(m => `${m.role}(${Array.isArray(m.content) ? (m.content as any[]).map((c:any)=>c.text?.slice(0,30)).join('|') : String(m.content).slice(0,30)})`).join(', '));
+
           const streamResult = streamText({
             model,
             messages: aiMessages,
@@ -292,10 +304,7 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
             },
           });
 
-          // Note: If you upgrade the 'ai' package to 3.1+, 
-          // switch to .toDataStreamResponse() to enable reasoning/thought 
-          // visualization on the frontend and prevent protocol-related hangs 
-          // in newer versions of the useChat hook.
+          console.log("[API Chat] Returning toTextStreamResponse");
           try {
             return streamResult.toTextStreamResponse({
               headers: {
