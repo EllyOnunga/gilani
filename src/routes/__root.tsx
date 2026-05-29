@@ -137,6 +137,48 @@ function AuthInvalidator() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const safeReload = (reason: string) => {
+      const reloadKey = "gilaniai_last_chunk_reload";
+      const lastReload = sessionStorage.getItem(reloadKey);
+      const now = Date.now();
+
+      // Limit auto-reloads to once every 15 seconds to avoid loops in offline mode or server issues
+      if (!lastReload || now - parseInt(lastReload, 10) > 15000) {
+        sessionStorage.setItem(reloadKey, now.toString());
+        console.warn(`[GilaniAI] Reloading page due to: ${reason}`);
+        window.location.reload();
+      } else {
+        console.error(`[GilaniAI] Chunk load failure detected but reload rate-limited: ${reason}`);
+      }
+    };
+
+    const handlePreloadError = () => {
+      safeReload("Vite preload error (outdated assets after redeployment)");
+    };
+
+    const handleGlobalError = (event: ErrorEvent) => {
+      const message = event.message || "";
+      const filename = event.filename || "";
+      if (
+        message.includes("Unexpected token '<'") &&
+        (filename.includes("/assets/") || filename.includes(".js"))
+      ) {
+        safeReload("Outdated chunk HTML parsing error");
+      }
+    };
+
+    window.addEventListener("vite:preloadError", handlePreloadError);
+    window.addEventListener("error", handleGlobalError, true);
+
+    return () => {
+      window.removeEventListener("vite:preloadError", handlePreloadError);
+      window.removeEventListener("error", handleGlobalError, true);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthInvalidator />
