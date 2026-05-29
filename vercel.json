@@ -2,5 +2,9 @@
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": ".vercel/output",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "rewrites": [
+    { "source": "/manifest.json", "destination": "/manifest.json" },
+    { "source": "/favicon.svg", "destination": "/favicon.svg" }
+  ]
 }

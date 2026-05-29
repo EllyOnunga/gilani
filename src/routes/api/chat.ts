@@ -126,13 +126,13 @@ export const Route = createFileRoute("/api/chat")({
                 "Embedding generation timed out"
               );
 
-const { data: chunks, error: rpcErr } = await supabaseAdmin.rpc("match_note_chunks", {
-                 query_embedding: formatVectorForPgvector(embedding as number[]),
+const { data: chunks, error } = await supabaseAdmin.rpc("match_note_chunks", {
+                 query_embedding: `[${(embedding as number[]).join(",")}]`,
                  match_user_id: userId,
                  match_count: 5,
                });
 
-              if (rpcErr) throw rpcErr;
+               if (error) throw error;
 
               if (chunks && chunks.length > 0) {
                 notesContext = chunks.map((c: any) => c.content).join("\n---\n");
