@@ -27,9 +27,11 @@ function TutorIndex() {
 
       // Check if Supabase client has valid credentials BEFORE trying to get session
       const hasSupabaseUrl = !!import.meta.env.VITE_SUPABASE_URL;
-      const hasSupabaseKey = !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const hasSupabaseKey =
+        !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+        !!import.meta.env.VITE_SUPABASE_ANON_KEY;
       if (!hasSupabaseUrl || !hasSupabaseKey) {
-        throw new Error("Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in deployment settings.");
+        throw new Error("Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY) in deployment settings.");
       }
 
       const sessionPromise = supabase.auth.getSession();
