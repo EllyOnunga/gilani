@@ -122,7 +122,7 @@ export const Route = createFileRoute("/api/chat")({
               );
 
 const { data: chunks, error: rpcErr } = await supabaseAdmin.rpc("match_note_chunks", {
-                query_embedding: `[${embedding.join(",")}]`,
+                query_embedding: JSON.stringify(embedding),
                  match_user_id: userId,
                  match_count: 5,
                });
@@ -225,7 +225,7 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
                   parts: JSON.stringify(assistantParts),
                   confidence: 0.9,
                   user_id: userId,
-                  thought_signature: thoughtSignature as string | null,
+                  thought_signature: thoughtSignature as any,
                 } as any);
                 await supabaseAdmin.from("audit_logs").insert({
                   action: "tutor.message",
@@ -262,6 +262,10 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
             },
           });
 
+          // Note: If you upgrade the 'ai' package to 3.1+, 
+          // switch to .toDataStreamResponse() to enable reasoning/thought 
+          // visualization on the frontend and prevent protocol-related hangs 
+          // in newer versions of the useChat hook.
           return streamResult.toTextStreamResponse({
             headers: {
               "cache-control": "no-cache",
