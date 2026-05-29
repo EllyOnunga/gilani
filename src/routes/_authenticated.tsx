@@ -196,7 +196,16 @@ function AuthedShell() {
             </p>
             <Link
               to="/tutor"
-              onClick={() => setSidebarOpen(false)}
+              onClick={(e) => {
+                setSidebarOpen(false);
+                const isTutorThread = path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
+                if (isTutorThread) {
+                  e.preventDefault();
+                  window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
+                } else {
+                  toast.info("Please select or create a study session first, then click the Escalate button in the chat header.");
+                }
+              }}
               className="mt-3 block w-full rounded bg-foreground py-2 text-center text-[11px] font-bold uppercase tracking-wider text-background hover:bg-foreground/90"
             >
               Escalate now

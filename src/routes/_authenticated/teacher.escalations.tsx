@@ -62,11 +62,32 @@ const resolveEscalation = createServerFn({ method: "POST" })
       throw new Error("Forbidden: Teacher access required");
     }
 
+    // Fetch the escalation to get conversation and user info
+    const { data: esc, error: escErr } = await supabaseAdmin
+      .from("escalations")
+      .select("conversation_id, user_id")
+      .eq("id", id)
+      .single();
+    if (escErr) throw new Error(escErr.message);
+
     const { error } = await supabaseAdmin
       .from("escalations")
       .update({ status: "resolved", detail: expertAnswer } as any)
       .eq("id", id);
     if (error) throw new Error(error.message);
+
+    // Sync response to messages table as a teacher review message
+    if (esc?.conversation_id) {
+      const teacherText = `👨‍🏫 **Teacher Review:**\n${expertAnswer}`;
+      const { error: msgErr } = await supabaseAdmin.from("messages").insert({
+        conversation_id: esc.conversation_id,
+        role: "assistant",
+        content: teacherText,
+        parts: JSON.stringify([{ type: "text", text: teacherText }]),
+        user_id: esc.user_id, // Associate with student's user ID so RLS lets them view it
+      } as any);
+      if (msgErr) console.error("Failed to sync teacher response to messages table:", msgErr.message);
+    }
   });
 
 // ─── Route ─────────────────────────────────────────────────────────────────────

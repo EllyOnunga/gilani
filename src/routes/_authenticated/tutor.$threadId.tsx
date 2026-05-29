@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageCircle, Plus, X, Send, Loader2 } from "lucide-react";
+import { MessageCircle, Plus, X, Send, Loader2, ShieldAlert, CheckCircle2, Clock } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { withTimeout } from "@/lib/async";
+import { toast } from "sonner";
 
 // ✅ Route declaration at module level (moved to bottom export, defined here for use in component)
 export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
@@ -59,6 +60,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const [threadsLoadError, setThreadsLoadError] = useState<string | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [escalationStatus, setEscalationStatus] = useState<"open" | "in_review" | "resolved" | null>(null);
+  const [escalating, setEscalating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // Safety net: force all loading states off after 10s regardless of what else is happening.
@@ -110,6 +113,48 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       console.error("[TutorThread] submit error:", error);
     }
   };
+
+  const handleEscalate = async () => {
+    if (!threadId) return;
+    setEscalating(true);
+    try {
+      const sessionRes = await supabase.auth.getSession();
+      const session = sessionRes?.data?.session;
+      const userId = session?.user?.id;
+      if (!userId) throw new Error("Not logged in");
+
+      const { error } = await supabase.from("escalations").insert({
+        conversation_id: threadId,
+        user_id: userId,
+        reason: "student_request",
+        status: "open",
+        detail: "Student manually requested teacher review.",
+      });
+
+      if (error) throw error;
+
+      setEscalationStatus("open");
+      toast.success("Conversation successfully escalated to a teacher!");
+    } catch (err: any) {
+      console.error("Failed to escalate:", err);
+      toast.error(err?.message || "Failed to escalate conversation.");
+    } finally {
+      setEscalating(false);
+    }
+  };
+
+  // Listen for global manual escalation events (e.g. from the sidebar layout)
+  useEffect(() => {
+    const handleGlobalEscalate = () => {
+      if (!escalationStatus && !escalating && !messagesLoading) {
+        handleEscalate();
+      }
+    };
+    window.addEventListener("custom:trigger-escalation", handleGlobalEscalate);
+    return () => {
+      window.removeEventListener("custom:trigger-escalation", handleGlobalEscalate);
+    };
+  }, [handleEscalate, escalationStatus, escalating, messagesLoading]);
 
   // Load sidebar thread list
   useEffect(() => {
@@ -167,7 +212,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     return () => { mounted = false; };
   }, []);
 
-  // Load messages for the current thread
+  // Load messages and active escalation status for the current thread
   useEffect(() => {
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -208,27 +253,37 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from("messages")
-          .select("*")
-          .eq("conversation_id", threadId)
-          .order("created_at", { ascending: true });
+        const [messagesRes, escalationRes] = await Promise.all([
+          supabase
+            .from("messages")
+            .select("*")
+            .eq("conversation_id", threadId)
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("escalations")
+            .select("status")
+            .eq("conversation_id", threadId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ]);
 
         clearTimeout(timeoutId);
 
         if (mounted) {
-          if (error) {
-            setMessagesLoadError(`Database error: ${error.message}`);
+          if (messagesRes.error) {
+            setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
             setMessagesLoading(false);
             return;
           }
           setMessages(
-            (data ?? []).map((m) => ({
+            (messagesRes.data ?? []).map((m) => ({
               id: m.id ?? crypto.randomUUID(),
               role: m.role as "user" | "assistant",
               parts: [{ type: "text" as const, text: m.content || "" }],
             }))
           );
+          setEscalationStatus((escalationRes.data?.status as any) || null);
           setMessagesLoading(false);
         }
       } catch (e) {
@@ -380,6 +435,50 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             <MessageCircle className="h-3.5 w-3.5 text-primary" />
             Study Sessions
           </button>
+        </div>
+
+        {/* Chat header */}
+        <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3.5 sm:px-6">
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold truncate">
+              {threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
+            </h2>
+            <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground mt-0.5">
+              Curriculum Grounded Assistant
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {escalationStatus === "open" && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-wider text-amber-700">
+                <Clock className="h-3 w-3 animate-pulse" /> Review Pending
+              </span>
+            )}
+            {escalationStatus === "in_review" && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-wider text-blue-700">
+                <Clock className="h-3 w-3 animate-pulse" /> Teacher Reviewing
+              </span>
+            )}
+            {escalationStatus === "resolved" && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-wider text-green-700">
+                <CheckCircle2 className="h-3 w-3" /> Reviewed
+              </span>
+            )}
+            {!escalationStatus && threadId && (
+              <button
+                onClick={handleEscalate}
+                disabled={escalating || messagesLoading}
+                className="flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider hover:bg-accent disabled:opacity-50 transition-colors"
+                title="Escalate this study session to a human teacher for review"
+              >
+                {escalating ? (
+                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                ) : (
+                  <ShieldAlert className="h-3 w-3 text-red-500" />
+                )}
+                Escalate
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Messages area */}
