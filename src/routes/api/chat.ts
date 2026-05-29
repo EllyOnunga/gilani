@@ -88,12 +88,30 @@ export const Route = createFileRoute("/api/chat")({
           }
 
           const lastMessage = messages?.[messages.length - 1];
+
+          // AI SDK v6: UIMessage has parts[] not .content
+          // Extract text from parts array (TextStreamChatTransport sends UIMessage format)
+          const extractTextFromMessage = (msg: any): string => {
+            if (!msg) return "";
+            // v6 UIMessage format: parts array
+            if (Array.isArray(msg.parts)) {
+              return msg.parts
+                .filter((p: any) => p.type === "text")
+                .map((p: any) => p.text || "")
+                .join("")
+                .trim();
+            }
+            // fallback: legacy .content string
+            return (msg.content as string) || "";
+          };
+
           if (lastMessage && lastMessage.role === "user") {
+            const userText = extractTextFromMessage(lastMessage);
             await supabaseAdmin.from("messages").insert({
               conversation_id: threadId,
               role: "user",
-              content: lastMessage.content || null,
-              parts: JSON.stringify([{ type: "text", text: lastMessage.content || "" }]),
+              content: (userText || null) as any,
+              parts: JSON.stringify([{ type: "text", text: userText }]),
               user_id: userId,
             });
           }
@@ -106,7 +124,7 @@ export const Route = createFileRoute("/api/chat")({
 
           const curriculum = profile?.curriculum || "KCSE";
 
-          const latestMessageContent = lastMessage?.content || "";
+          const latestMessageContent = extractTextFromMessage(lastMessage);
           let notesContext = "";
 
           if (latestMessageContent) {
@@ -189,21 +207,26 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
             "gemini-2.0-flash",
           );
 
+          // AI SDK v6: messages are UIMessage objects with parts[]
+          // We need to convert them to the model message format
           const aiMessages = [
             { role: "system" as const, content: systemPrompt },
-            ...(messages?.map((m: any) => ({
-              role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
-              content: [
-                {
-                  type: "text" as const,
-                  text: m.content || "",
-                  // Critical for Gemini 3: Preserve thought signatures at the part level
-                  providerOptions: (m.thoughtSignature || m.thought_signature) 
-                    ? { google: { thoughtSignature: m.thoughtSignature || m.thought_signature } } 
-                    : undefined
-                }
-              ],
-            })) || []),
+            ...(messages?.map((m: any) => {
+              const textContent = extractTextFromMessage(m);
+              return {
+                role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
+                content: [
+                  {
+                    type: "text" as const,
+                    text: textContent,
+                    // Preserve thought signatures for Gemini
+                    providerOptions: (m.thoughtSignature || m.thought_signature)
+                      ? { google: { thoughtSignature: m.thoughtSignature || m.thought_signature } }
+                      : undefined,
+                  },
+                ],
+              };
+            }) || []),
           ];
 
           const streamResult = streamText({
