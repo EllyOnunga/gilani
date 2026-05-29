@@ -46,7 +46,7 @@ const ingestNote = createServerFn({ method: "POST" })
     
     const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
     const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-      "gemini-2.5-flash",
+      "gemini-1.5-flash",
     );
 
     // Ask the AI for a summary and key concepts
@@ -87,16 +87,19 @@ ${content.slice(0, 8000)}`,
     }
     for (let i = 0; i < chunks.length; i++) {
       let embedding: number[] | null = null;
-      try {
-        const { embed } = await import("ai");
-        const embeddingModel = createLovableAiGatewayProvider(LOVABLE_API_KEY).textEmbeddingModel(
-          "google/text-embedding-004",
-        );
-        const res = await embed({
-          model: embeddingModel,
-          value: chunks[i],
-        });
-        embedding = res.embedding;
+try {
+         const { embed } = await import("ai");
+         const embeddingModel = createLovableAiGatewayProvider(LOVABLE_API_KEY).textEmbeddingModel(
+           "google/text-embedding-004",
+         );
+         const res = await embed({
+           model: embeddingModel,
+           value: chunks[i],
+           providerOptions: {
+             google: { taskType: "RETRIEVAL_DOCUMENT" as const },
+           },
+         });
+         embedding = res.embedding;
       } catch (err) {
         console.error("Failed to generate embedding for chunk " + i, err);
       }
@@ -105,7 +108,7 @@ ${content.slice(0, 8000)}`,
         note_id: (note as any).id,
         content: chunks[i],
         user_id: userId,
-        embedding: embedding ? (JSON.stringify(embedding) as any) : null,
+        embedding: embedding ? JSON.stringify(embedding) : null,
       });
     }
 

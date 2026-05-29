@@ -1,12 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { streamText } from "ai";
+import { streamText, embed } from "ai";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { withTimeout } from "@/lib/async";
 
 const DISTRESS_KEYWORDS = ["suicide", "self-harm", "abuse", "hurt myself", "kill myself"];
+const DIGNITY_FILTER = ["bitch", "stupid", "idiot", "dumb"]; // Example boundary list
+
+function checkDignityViolation(text: string): boolean {
+  const lowered = text.toLowerCase();
+  return DIGNITY_FILTER.some(word => lowered.includes(word));
+}
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -47,7 +53,6 @@ export const Route = createFileRoute("/api/chat")({
             );
           }
 
-          // Validate Supabase server client early
           const SUPABASE_URL = process.env.SUPABASE_URL;
           const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
           if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -77,7 +82,6 @@ export const Route = createFileRoute("/api/chat")({
             });
           }
 
-          // Only persist the latest user message if it's new
           const lastMessage = messages?.[messages.length - 1];
           if (lastMessage && lastMessage.role === "user") {
             await supabaseAdmin.from("messages").insert({
@@ -89,7 +93,6 @@ export const Route = createFileRoute("/api/chat")({
             });
           }
 
-          // 1. Retrieve the user's profile to inspect their selected curriculum (KCSE or CBC)
           const { data: profile } = await supabaseAdmin
             .from("profiles")
             .select("curriculum")
@@ -98,24 +101,28 @@ export const Route = createFileRoute("/api/chat")({
 
           const curriculum = profile?.curriculum || "KCSE";
 
-          // 2. Retrieve curriculum-specific study notes chunks uploaded by this user
           const latestMessageContent = lastMessage?.content || "";
           let notesContext = "";
 
           if (latestMessageContent) {
             try {
-              const { embed } = await import("ai");
               const embeddingModel = createLovableAiGatewayProvider(LOVABLE_API_KEY).textEmbeddingModel(
                 "google/text-embedding-004",
               );
-const { embedding } = await withTimeout(
-                 embed({ model: embeddingModel, value: latestMessageContent }),
-                 15000,
-                 "Embedding generation timed out"
-               );
+              const { embedding } = await withTimeout(
+                embed({
+                  model: embeddingModel,
+                  value: latestMessageContent,
+                  providerOptions: {
+                    google: { taskType: "RETRIEVAL_QUERY" as const },
+                  },
+                }),
+                15000,
+                "Embedding generation timed out"
+              );
 
-               const { data: chunks, error: rpcErr } = await supabaseAdmin.rpc("match_note_chunks", {
-                 query_embedding: embedding as unknown as string,
+const { data: chunks, error: rpcErr } = await supabaseAdmin.rpc("match_note_chunks", {
+                query_embedding: `[${embedding.join(",")}]`,
                  match_user_id: userId,
                  match_count: 5,
                });
@@ -127,7 +134,6 @@ const { embedding } = await withTimeout(
               }
             } catch (err) {
               console.error("Vector RAG search failed, falling back to keyword search:", err);
-              // Fall back to keyword search
               const { data: chunks } = await supabaseAdmin
                 .from("note_chunks")
                 .select("content")
@@ -140,16 +146,15 @@ const { embedding } = await withTimeout(
                   .split(/\s+/)
                   .filter((w: string) => w.length > 3);
                 const matched = chunks
-                  .filter((c) => words.some((w: string) => c.content.toLowerCase().includes(w)))
+                  .filter((c: any) => words.some((w: string) => c.content.toLowerCase().includes(w)))
                   .slice(0, 3);
 
                 const selectedChunks = matched.length > 0 ? matched : chunks.slice(0, 2);
-                notesContext = selectedChunks.map((c) => c.content).join("\n---\n");
+                notesContext = selectedChunks.map((c: any) => c.content).join("\n---\n");
               }
             }
           }
 
-          // 3. System prompt dynamically customized to curriculum format and ethics
           const systemPrompt = `You are GilaniAI, a supportive, highly knowledgeable, and ethical AI study assistant for Kenyan secondary school students.
 You dynamically adjust your pedagogical style based on the student's curriculum: ${curriculum}.
 
@@ -176,43 +181,43 @@ ${notesContext}
 Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate) or clear formal language.`;
 
           const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-            "gemini-1.5-flash",
+            "gemini-3-flash-preview",
           );
 
           const aiMessages = [
             { role: "system" as const, content: systemPrompt },
             ...(messages?.map((m: any) => ({
-              role: m.role as "user" | "assistant",
-              content: m.content || "",
+              role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
+              content: [
+                {
+                  type: "text" as const,
+                  text: m.content || "",
+                  // Critical for Gemini 3: Preserve thought signatures at the part level
+                  providerOptions: (m.thoughtSignature || m.thought_signature) 
+                    ? { google: { thoughtSignature: m.thoughtSignature || m.thought_signature } } 
+                    : undefined
+                }
+              ],
             })) || []),
           ];
-
-          let assistantText = "";
-          let assistantPersisted = false;
 
           const streamResult = streamText({
             model,
             messages: aiMessages,
             timeout: 120000,
-            onChunk: async ({ chunk }) => {
-              console.log("[streamText:onChunk]", chunk.type);
-              if (chunk.type === "text-delta" || chunk.type === "reasoning-delta") {
-                assistantText += chunk.text;
-              } else if (chunk.type === "tool-input-delta") {
-                assistantText += chunk.delta;
-              }
-            },
             onError: (error) => {
               console.error("[streamText:onError]", error);
             },
-            onFinish: async () => {
+            onFinish: async ({ text: assistantText, providerMetadata }) => {
               console.log("[streamText:onFinish] text length:", assistantText.length);
               const safeText =
                 assistantText.trim() ||
                 "Sorry, I could not generate a response right now. Please try again.";
 
               try {
-                const assistantParts = [{ type: "text", text: safeText }];
+                const assistantParts = [{ type: "text" as const, text: safeText }];
+                const thoughtSignature = (providerMetadata as any)?.google?.thoughtSignature || null;
+                
                 await supabaseAdmin.from("messages").insert({
                   conversation_id: threadId,
                   role: "assistant",
@@ -220,33 +225,48 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
                   parts: JSON.stringify(assistantParts),
                   confidence: 0.9,
                   user_id: userId,
-                });
+                  thought_signature: thoughtSignature as string | null,
+                } as any);
                 await supabaseAdmin.from("audit_logs").insert({
                   action: "tutor.message",
                   payload: { threadId, confidence: 0.9 },
                 });
 
-                const lowered = safeText.toLowerCase();
-                if (DISTRESS_KEYWORDS.some((k) => lowered.includes(k))) {
+                const safety = (providerMetadata as any)?.google?.safetyRatings;
+                if (Array.isArray(safety) && safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")) {
                   await supabaseAdmin.from("escalations").insert({
                     conversation_id: threadId,
-                    reason: "distress_keyword",
+                    reason: "Safety probability threshold exceeded",
+                    status: "pending",
                     user_id: userId,
                   });
+                } else {
+                  const lowered = safeText.toLowerCase();
+                  if (DISTRESS_KEYWORDS.some((k) => lowered.includes(k))) {
+                    await supabaseAdmin.from("escalations").insert({
+                      conversation_id: threadId,
+                      reason: "distress_keyword",
+                      user_id: userId,
+                    });
+                  } else if (checkDignityViolation(safeText)) {
+                    await supabaseAdmin.from("escalations").insert({
+                      conversation_id: threadId,
+                      reason: "dignity_violation",
+                      user_id: userId,
+                    });
+                  }
                 }
-
-                assistantPersisted = true;
               } catch (persistError) {
                 console.error("Failed to persist assistant message", persistError);
               }
             },
           });
 
-return streamResult.toTextStreamResponse({
-             headers: {
-               "cache-control": "no-cache",
-             },
-           });
+          return streamResult.toTextStreamResponse({
+            headers: {
+              "cache-control": "no-cache",
+            },
+          });
         } catch (error) {
           return new Response(
             JSON.stringify({
