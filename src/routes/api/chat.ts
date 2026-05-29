@@ -77,13 +77,14 @@ export const Route = createFileRoute("/api/chat")({
             });
           }
 
-          const userParts = messages?.filter((m: any) => m.role === "user") || [];
-          for (const m of userParts) {
+          // Only persist the latest user message if it's new
+          const lastMessage = messages?.[messages.length - 1];
+          if (lastMessage && lastMessage.role === "user") {
             await supabaseAdmin.from("messages").insert({
               conversation_id: threadId,
               role: "user",
-              content: m.content || null,
-              parts: JSON.stringify([{ type: "text", text: m.content || "" }]),
+              content: lastMessage.content || null,
+              parts: JSON.stringify([{ type: "text", text: lastMessage.content || "" }]),
               user_id: userId,
             });
           }
@@ -98,26 +99,26 @@ export const Route = createFileRoute("/api/chat")({
           const curriculum = profile?.curriculum || "KCSE";
 
           // 2. Retrieve curriculum-specific study notes chunks uploaded by this user
-          const latestMessageContent = userParts[userParts.length - 1]?.content || "";
+          const latestMessageContent = lastMessage?.content || "";
           let notesContext = "";
 
           if (latestMessageContent) {
             try {
               const { embed } = await import("ai");
-              const embeddingModel = createLovableAiGatewayProvider(
-                LOVABLE_API_KEY,
-              ).textEmbeddingModel("google/text-embedding-004");
-              const { embedding } = await withTimeout(
-                embed({ model: embeddingModel, value: latestMessageContent }),
-                15000,
-                "Embedding generation timed out"
+              const embeddingModel = createLovableAiGatewayProvider(LOVABLE_API_KEY).textEmbeddingModel(
+                "google/text-embedding-004",
               );
+const { embedding } = await withTimeout(
+                 embed({ model: embeddingModel, value: latestMessageContent }),
+                 15000,
+                 "Embedding generation timed out"
+               );
 
-              const { data: chunks, error: rpcErr } = await supabaseAdmin.rpc("match_note_chunks", {
-                query_embedding: JSON.stringify(embedding),
-                match_user_id: userId,
-                match_count: 5,
-              });
+               const { data: chunks, error: rpcErr } = await supabaseAdmin.rpc("match_note_chunks", {
+                 query_embedding: embedding as unknown as string,
+                 match_user_id: userId,
+                 match_count: 5,
+               });
 
               if (rpcErr) throw rpcErr;
 
@@ -175,17 +176,15 @@ ${notesContext}
 Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate) or clear formal language.`;
 
           const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-    "gemini-2.5-flash",
-  );
+            "gemini-1.5-flash",
+          );
 
           const aiMessages = [
             { role: "system" as const, content: systemPrompt },
-            ...(userParts.length
-              ? userParts.map((message: any) => ({
-                  role: "user" as const,
-                  content: message.content || "",
-                }))
-              : [{ role: "user" as const, content: "Habari! What can you help me with today?" }]),
+            ...(messages?.map((m: any) => ({
+              role: m.role as "user" | "assistant",
+              content: m.content || "",
+            })) || []),
           ];
 
           let assistantText = "";
@@ -243,11 +242,11 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
             },
           });
 
-          return streamResult.toTextStreamResponse({
-            headers: {
-              "cache-control": "no-cache",
-            },
-          });
+return streamResult.toTextStreamResponse({
+             headers: {
+               "cache-control": "no-cache",
+             },
+           });
         } catch (error) {
           return new Response(
             JSON.stringify({

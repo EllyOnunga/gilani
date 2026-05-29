@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, Plus, X, Send } from "lucide-react";
+import { useChat } from "@ai-sdk/react";
+import { TextStreamChatTransport } from "ai";
 import { fetchWithTimeout, getErrorMessage, withTimeout } from "@/lib/async";
 
 type Thread = {
@@ -22,18 +24,52 @@ function TutorThread() {
   const { threadId } = Route.useParams();
   const navigate = useNavigate();
   const [threads, setThreads] = useState<Thread[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
   const [threadsLoading, setThreadsLoading] = useState(true);
   const [threadsLoadError, setThreadsLoadError] = useState<string | null>(null);
-  const [pendingAssistantIndex, setPendingAssistantIndex] = useState<number | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const pendingAssistantIndexRef = useRef<number | null>(null);
+
+const [authToken, setAuthToken] = useState<string | null>(null);
+  const [input, setInput] = useState("");
+  const authTokenRef = useRef(authToken);
+  authTokenRef.current = authToken;
+
+  const {
+    messages,
+    setMessages,
+    sendMessage,
+    status,
+  } = useChat({
+    transport: new TextStreamChatTransport({
+      api: "/api/chat",
+      body: { threadId },
+      headers: { Authorization: authTokenRef.current ? `Bearer ${authTokenRef.current}` : "" },
+    }),
+    onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
+    onFinish: (options) => {
+      setChatError(null);
+    },
+  });
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(event.target.value);
+  };
+
+  const submit = async (event?: { preventDefault?: () => void }) => {
+    event?.preventDefault?.();
+    const trimmedInput = input.trim();
+    if (!trimmedInput) return;
+
+    try {
+      await sendMessage({ text: trimmedInput });
+      setInput("");
+    } catch (error) {
+      console.error("[TutorThread] submit error:", error);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -138,8 +174,6 @@ function TutorThread() {
 
     setMessagesLoading(true);
     setMessagesLoadError(null);
-    setPendingAssistantIndex(null);
-    pendingAssistantIndexRef.current = null;
 
     timeoutId = setTimeout(() => {
       if (mounted) {
@@ -168,7 +202,11 @@ function TutorThread() {
             return;
           }
           console.log("[TutorThread] messages loaded:", data?.length ?? 0);
-          setMessages((data ?? []) as Message[]);
+          setMessages((data ?? []).map(m => ({
+            id: m.id ?? crypto.randomUUID(),
+            role: m.role as "user" | "assistant",
+            parts: [{ type: "text" as const, text: m.content || "" }],
+          })));
           setMessagesLoading(false);
         }
       } catch (e) {
@@ -195,121 +233,6 @@ function TutorThread() {
 
   const handleSelectThread = (id: string) => {
     navigate({ to: `/tutor/${id}` });
-  };
-
-  const handleSend = async () => {
-    if (!input.trim() || !threadId || sending) return;
-    setChatError(null);
-    const text = input;
-    setInput("");
-    setSending(true);
-
-    const userMsg: Message = {
-      conversation_id: threadId,
-      role: "user",
-      content: text,
-      created_at: new Date().toISOString(),
-    };
-    const assistantPlaceholder: Message = {
-      conversation_id: threadId,
-      role: "assistant",
-      content: "",
-      created_at: new Date().toISOString(),
-    };
-    setMessages((m) => {
-      const next = [...m, userMsg, assistantPlaceholder];
-      const nextPending = next.length - 1;
-      pendingAssistantIndexRef.current = nextPending;
-      setPendingAssistantIndex(nextPending);
-      return next;
-    });
-
-    const updateAssistantPlaceholder = (content: string) => {
-      setMessages((m) => {
-        const copy = [...m];
-        const idx =
-          pendingAssistantIndexRef.current ?? copy.map((x) => x.role).lastIndexOf("assistant");
-        if (idx >= 0) copy[idx] = { ...copy[idx], content };
-        return copy;
-      });
-    };
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      const res = await fetchWithTimeout(
-        "/api/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ threadId, messages: [{ role: "user", content: text }] }),
-        },
-        120000,
-      );
-
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        const message =
-          typeof payload?.error === "string"
-            ? payload.error
-            : `Chat request failed with status ${res.status}`;
-        throw new Error(message);
-      }
-
-      if (!res.body) {
-        const full = await res.text();
-        updateAssistantPlaceholder(full);
-      } else {
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let done = false;
-        let assistantText = "";
-        let stalledReadTimer: ReturnType<typeof setTimeout> | undefined;
-
-        while (!done) {
-          const stalledReadPromise = new Promise<never>((_, reject) => {
-            stalledReadTimer = setTimeout(() => {
-              reject(new Error("Tutor response timed out while streaming."));
-            }, 25000);
-          });
-          const { value, done: doneReading } = await Promise.race([reader.read(), stalledReadPromise]);
-          if (stalledReadTimer) clearTimeout(stalledReadTimer);
-          done = doneReading;
-          if (value) {
-            const chunk = decoder.decode(value);
-            assistantText += chunk;
-            updateAssistantPlaceholder(assistantText);
-          }
-        }
-
-        if (!assistantText.trim()) {
-          throw new Error("Tutor returned an empty response. Please try again.");
-        }
-      }
-    } catch (err) {
-      const message = getErrorMessage(err, "Failed to send message");
-      setChatError(message);
-      setMessages((m) => {
-        const copy = [...m];
-        const idx =
-          pendingAssistantIndexRef.current ?? copy.map((x) => x.role).lastIndexOf("assistant");
-        if (idx >= 0) {
-          copy[idx] = {
-            ...copy[idx],
-            content: `Sorry, I could not respond right now. ${message}`,
-          };
-        }
-        return copy;
-      });
-      console.error("send error", err);
-    } finally {
-      setSending(false);
-      pendingAssistantIndexRef.current = null;
-      setPendingAssistantIndex(null);
-    }
   };
 
   const createNewThread = async () => {
@@ -477,9 +400,9 @@ function TutorThread() {
                       ? "bg-primary text-primary-foreground rounded-tr-sm"
                       : "bg-card border border-border text-foreground rounded-tl-sm"
                   }`}
-                >
-                  {m.content ||
-                    (sending && idx === pendingAssistantIndex ? (
+>
+                   {m.parts?.map((p) => p.type === "text" ? p.text : "").join("") ||
+                     (status === "streaming" && idx === messages.length - 1 ? (
                       <span className="flex gap-1 items-center text-muted-foreground">
                         <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
                         <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
@@ -502,21 +425,21 @@ function TutorThread() {
               className="flex-1 min-h-[44px] max-h-36 resize-none rounded-xl border border-border bg-card px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed"
               rows={1}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               placeholder="Ask a question… (Enter to send)"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  handleSend();
+                  submit(e);
                 }
               }}
             />
-            <button
-              onClick={handleSend}
-              disabled={sending || !input.trim()}
-              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
-              title="Send"
-            >
+<button
+               onClick={(e) => submit(e as any)}
+               disabled={status === "streaming" || !input.trim()}
+               className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
+               title="Send"
+             >
               <Send className="h-4 w-4" />
             </button>
           </div>
