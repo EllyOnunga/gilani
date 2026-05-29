@@ -56,15 +56,21 @@ export const Route = createFileRoute("/api/chat")({
             });
           }
 
-          const LOVABLE_API_KEY = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY;
-          if (!LOVABLE_API_KEY) {
+          const geminiKey = process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
+          const hasValidGemini = geminiKey && !geminiKey.startsWith("AQ.");
+          const hasGroq = !!process.env.GROQ_API_KEY;
+          const hasOpenAi = !!process.env.OPENAI_API_KEY;
+
+          if (!hasValidGemini && !hasGroq && !hasOpenAi) {
             return new Response(
               JSON.stringify({
-                error: "Missing GEMINI_API_KEY or LOVABLE_API_KEY environment variable",
+                error: "Missing AI provider configuration. Please configure GEMINI_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY environment variable.",
               }),
               { status: 500, headers: { "Content-Type": "application/json" } },
             );
           }
+
+          const LOVABLE_API_KEY = geminiKey;
 
           const SUPABASE_URL = process.env.SUPABASE_URL;
           const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -311,20 +317,29 @@ Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate)
                 "cache-control": "no-cache",
               },
             });
-          } catch (streamErr) {
-            console.error("[API Chat] Stream response error:", streamErr);
+          } catch (streamErr: any) {
+            console.error("[API Chat] Stream response error:", streamErr?.message || streamErr);
+            const isQuota = streamErr?.statusCode === 429 || String(streamErr?.message).includes("quota") || String(streamErr?.message).includes("RESOURCE_EXHAUSTED");
             return new Response(
-              JSON.stringify({ error: "The AI model could not generate a response. Please try again." }),
-              { status: 500, headers: { "Content-Type": "application/json" } },
+              JSON.stringify({
+                error: isQuota
+                  ? "AI quota exceeded. The Gemini API free tier limit has been reached. Please try again later."
+                  : "The AI model could not generate a response. Please try again.",
+              }),
+              { status: isQuota ? 429 : 500, headers: { "Content-Type": "application/json" } },
             );
           }
-        } catch (error) {
+        } catch (error: any) {
+          console.error("[API Chat] Top-level error:", error?.message || error);
+          const isQuota = error?.statusCode === 429 || String(error?.message).includes("quota") || String(error?.message).includes("RESOURCE_EXHAUSTED");
           return new Response(
             JSON.stringify({
-              error: error instanceof Error ? error.message : "Failed to process chat request",
+              error: isQuota
+                ? "AI quota exceeded. Please try again later."
+                : error instanceof Error ? error.message : "Failed to process chat request",
             }),
             {
-              status: 500,
+              status: isQuota ? 429 : 500,
               headers: { "Content-Type": "application/json" },
             },
           );
