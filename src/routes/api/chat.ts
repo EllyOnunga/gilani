@@ -186,7 +186,7 @@ ${notesContext}
 Engage in a friendly, encouraging Swahili-English (Sheng-infused if appropriate) or clear formal language.`;
 
           const model = createLovableAiGatewayProvider(LOVABLE_API_KEY).chatModel(
-            "gemini-3-flash-preview",
+            "google/gemini-2.5-flash",
           );
 
           const aiMessages = [
