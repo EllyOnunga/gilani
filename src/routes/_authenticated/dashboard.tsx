@@ -100,23 +100,20 @@ function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [initialised, setInitialised] = useState(false);
 
-  const init = async () => {
-    if (initialised) return;
-    try {
-      const authRes = await supabase.auth.getSession();
-      const session = authRes?.data?.session;
-      if (session) {
-        const res = await loadDashboardData({ data: session.user.id });
-        setData(res);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setInitialised(true);
-    }
-  };
+  useEffect(() => {
+    if (!user?.id || initialised) return;
 
-  useEffect(() => { init(); }, []);
+    (async () => {
+      try {
+        const res = await loadDashboardData({ data: user.id });
+        setData(res);
+      } catch (err) {
+        console.error("[Dashboard] load error:", err);
+      } finally {
+        setInitialised(true);
+      }
+    })();
+  }, [user?.id, initialised]);
 
   const streak = data?.streak ?? 0;
   const quizzesCompleted = data?.quizzesCompleted ?? 0;
