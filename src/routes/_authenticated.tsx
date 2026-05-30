@@ -112,8 +112,17 @@ function AuthedShell() {
     navigate({ to: "/" });
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const shouldLock = sidebarOpen;
+    document.body.style.overflow = shouldLock ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
   return (
-    <div className="flex min-h-screen w-full flex-col lg:flex-row bg-background text-foreground">
+    <div className="flex min-h-screen w-full flex-col overflow-x-hidden lg:flex-row bg-background text-foreground">
       {/* Mobile Top Navigation Header */}
       <header className="flex h-16 w-full items-center justify-between border-b border-border bg-sidebar px-4 lg:hidden sticky top-0 z-30">
         <button

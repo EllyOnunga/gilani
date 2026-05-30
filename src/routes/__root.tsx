@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -150,6 +150,20 @@ function AuthInvalidator() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [toasterPos, setToasterPos] = useState<"top-right" | "top-center">("top-right");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const update = () => {
+      const isMobile = window.matchMedia("(max-width: 640px)").matches;
+      setToasterPos(isMobile ? "top-center" : "top-right");
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -165,7 +179,9 @@ function RootComponent() {
         console.warn(`[GilaniAI] Reloading page due to: ${reason}`);
         window.location.reload();
       } else {
-        console.error(`[GilaniAI] Chunk load failure detected but reload rate-limited: ${reason}`);
+        console.error(
+          `[GilaniAI] Chunk load failure detected but reload rate-limited: ${reason}`
+        );
       }
     };
 
@@ -176,7 +192,7 @@ function RootComponent() {
     const handleGlobalError = (event: ErrorEvent) => {
       const message = event.message || "";
       const filename = event.filename || "";
-      
+
       // Case 1: Syntax error (unexpected '<') from HTML fallback when JS file 404s
       if (
         message.includes("Unexpected token '<'") &&
@@ -200,11 +216,13 @@ function RootComponent() {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       const reason = event.reason;
       const message = reason instanceof Error ? reason.message : String(reason);
-      
+
       if (
         message.includes("dynamically imported module") ||
         message.includes("Failed to fetch dynamically") ||
-        message.includes("Failed to fetch") && (window.location.pathname !== "/tutor" && window.location.pathname !== "/notes")
+        (message.includes("Failed to fetch") &&
+          window.location.pathname !== "/tutor" &&
+          window.location.pathname !== "/notes")
       ) {
         safeReload(`Dynamic import rejection: ${message}`);
       }
@@ -225,7 +243,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthInvalidator />
       <Outlet />
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position={toasterPos} />
     </QueryClientProvider>
   );
 }

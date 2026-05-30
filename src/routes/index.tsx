@@ -40,10 +40,10 @@ function Landing() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-20">
+      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <section className="animate-in-slide">
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
-            Ethical Learning · KCSE · CBC
+            Ethical Learning · KCSE · CBC - IGCSE
           </p>
           <h1 className="mt-4 max-w-3xl font-serif text-5xl leading-tight tracking-tight text-balance md:text-6xl">
             A tutor that knows your syllabus —{" "}
