@@ -368,25 +368,6 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       return;
     }
 
-    if (threadsLoading) {
-      setMessagesLoading(true);
-      return;
-    }
-
-    if (threads.length === 0) {
-      setMessagesLoading(false);
-      setMessages([]);
-      setMessagesLoadError(null);
-      return;
-    }
-
-    const threadBelongsToUser = threads.some((t) => t.id === threadId);
-    if (!threadBelongsToUser) {
-      setMessagesLoading(false);
-      setMessagesLoadError("Thread not found or access denied.");
-      return;
-    }
-
     setMessagesLoading(true);
     setMessagesLoadError(null);
 
@@ -445,8 +426,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threadId, threadsLoading]);
+  }, [threadId]);
 
   // Scroll to bottom on new messages
   useEffect(() => {

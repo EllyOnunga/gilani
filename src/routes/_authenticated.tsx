@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   MessageCircle, BookOpenText, ListChecks, CalendarDays, BarChart3,
   ShieldAlert, LogOut, GraduationCap, Settings, Menu, X,
+  Sun, Moon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createServerFn } from "@tanstack/react-start";
@@ -55,6 +56,10 @@ function AuthedShell() {
   const { roles, user, loading } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return document.documentElement.classList.contains("dark");
+  });
 
   useEffect(() => {
     if (loading) return;
@@ -62,6 +67,33 @@ function AuthedShell() {
       navigate({ to: "/login", search: { redirect: window.location.href } });
     }
   }, [loading, user, navigate]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedTheme = localStorage.getItem("theme");
+      if (!storedTheme) {
+        localStorage.setItem("theme", "dark");
+        document.documentElement.classList.add("dark");
+        setIsDark(true);
+      } else {
+        const hasDark = storedTheme === "dark";
+        document.documentElement.classList.toggle("dark", hasDark);
+        setIsDark(hasDark);
+      }
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("theme", nextDark ? "dark" : "light");
+      document.documentElement.classList.toggle("dark", nextDark);
+      toast.success(nextDark ? "Dark theme active 🌙" : "Light theme active ☀️", {
+        duration: 1500,
+      });
+    }
+  };
 
   if (loading || !user) {
     return (
@@ -91,16 +123,25 @@ function AuthedShell() {
         >
           <Menu className="h-6 w-6" />
         </button>
-        <Link to="/dashboard" className="text-center">
+        <Link to="/dashboard" className="text-center flex-1">
           <h1 className="font-serif text-xl font-bold italic tracking-tight text-primary">GilaniAI</h1>
         </Link>
-        <button
-          onClick={signOut}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground"
-          title="Sign out"
-        >
-          <LogOut className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={toggleTheme}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground transition-colors"
+            title="Toggle Theme"
+          >
+            {isDark ? <Sun className="h-5 w-5 text-amber-500" /> : <Moon className="h-5 w-5" />}
+          </button>
+          <button
+            onClick={signOut}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground transition-colors"
+            title="Sign out"
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
+        </div>
       </header>
 
       {/* Sidebar Backdrop Overlay for Mobile */}
@@ -212,12 +253,25 @@ function AuthedShell() {
             </Link>
           </div>
           <div className="flex items-center justify-between px-1">
-            <p className="truncate text-xs text-muted-foreground" title={user?.email ?? ""}>
+            <p className="truncate text-xs text-muted-foreground mr-2" title={user?.email ?? ""}>
               {user?.email}
             </p>
-            <button onClick={signOut} className="text-muted-foreground hover:text-foreground" title="Sign out">
-              <LogOut className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={toggleTheme}
+                className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-black/5 transition-colors"
+                title="Toggle Theme"
+              >
+                {isDark ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4" />}
+              </button>
+              <button
+                onClick={signOut}
+                className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-black/5 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

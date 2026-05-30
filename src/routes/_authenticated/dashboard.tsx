@@ -211,16 +211,16 @@ function Dashboard() {
             ].map((item, idx) => {
               const Icon = item.icon;
               return (
-                <CarouselItem key={idx} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 animate-in-slide">
+                <CarouselItem key={idx} className="pl-4 basis-[85%] sm:basis-1/2 md:basis-1/3 animate-in-slide">
                   <Link
                     to={item.to as any}
-                    className="group block h-full rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:scale-[1.01] flex flex-col justify-between"
+                    className="group block h-full rounded-xl border border-border bg-card p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:scale-[1.01] flex flex-col justify-between"
                   >
                     <div>
                       <div className={`p-3 rounded-lg w-fit bg-gradient-to-br ${item.accent} transition-transform duration-300 group-hover:scale-110`}>
                         <Icon className="h-5 w-5" />
                       </div>
-                      <h4 className="mt-4 font-serif text-lg font-bold group-hover:text-primary transition-colors flex items-center gap-1.5">
+                      <h4 className="mt-4 font-serif text-base sm:text-lg font-bold group-hover:text-primary transition-colors flex items-center gap-1.5">
                         {item.title}
                         <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                       </h4>
@@ -292,9 +292,9 @@ function Dashboard() {
             ) : (
               <div className="space-y-2">
                 {weakTopics.map((topic, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-red-100 bg-red-50/50">
-                    <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                    <span className="text-xs text-red-800 font-medium truncate">{topic}</span>
+                  <div key={idx} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-red-200/50 dark:border-red-900/35 bg-red-50/50 dark:bg-red-950/20">
+                    <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                    <span className="text-xs text-red-800 dark:text-red-200 font-medium truncate">{topic}</span>
                   </div>
                 ))}
               </div>
