@@ -192,9 +192,15 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         );
       }
 
-      await sendMessage({ text: finalMessage });
+      // Clear textbox and attachment instantly for real-time responsiveness
       setInput("");
-      setAttachedFile(null); // Reset attachment state on success
+      setAttachedFile(null);
+
+      // Trigger sendMessage in the background without blocking the UI
+      sendMessage({ text: finalMessage }).catch((error) => {
+        console.error("[TutorThread] sendMessage background error:", error);
+        toast.error("Failed to send message. Please try again.");
+      });
     } catch (error) {
       console.error("[TutorThread] submit error:", error);
     }
@@ -763,6 +769,22 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                 </div>
               </div>
             ))}
+
+          {/* Virtual Assistant thinking bubble during early stream request phase */}
+          {status === "streaming" && messages[messages.length - 1]?.role === "user" && (
+            <div className="flex justify-start animate-in-slide">
+              <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-card border border-border text-foreground rounded-tl-sm w-full">
+                <div className="flex flex-col w-full">
+                  <ThoughtAccordion
+                    messageId="temp-thinking-indicator"
+                    isLastMessage={true}
+                    isStreaming={true}
+                    messageText=""
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div ref={messagesEndRef} />
         </div>
