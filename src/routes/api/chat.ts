@@ -154,6 +154,7 @@ export const Route = createFileRoute("/api/chat")({
                 embed({
                   model: embeddingModel,
                   value: latestMessageContent,
+                  maxRetries: 0,
                 }),
                 15000,
                 "Embedding generation timed out"

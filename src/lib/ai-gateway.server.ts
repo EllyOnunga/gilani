@@ -8,9 +8,19 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
  * Drop-in replacement for the old Lovable AI Gateway provider.
  */
 export const createGoogleAiProvider = (apiKey?: string) => {
-  const geminiKey = apiKey || process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "";
-  const groqKey = process.env.GROQ_API_KEY || "";
-  const openaiKey = process.env.OPENAI_API_KEY || "";
+  const stripQuotes = (str: string): string => {
+    let s = str.trim();
+    if (s.startsWith('"') && s.endsWith('"')) {
+      s = s.slice(1, -1);
+    } else if (s.startsWith("'") && s.endsWith("'")) {
+      s = s.slice(1, -1);
+    }
+    return s;
+  };
+
+  const geminiKey = stripQuotes(apiKey || process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "");
+  const groqKey = stripQuotes(process.env.GROQ_API_KEY || "");
+  const openaiKey = stripQuotes(process.env.OPENAI_API_KEY || "");
 
   // Check if Gemini key is valid (not empty and not the expired/invalid AQ. format)
   const isValidGeminiKey = geminiKey && geminiKey.trim() !== "" && !geminiKey.startsWith("AQ.");

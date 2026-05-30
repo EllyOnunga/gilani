@@ -95,6 +95,7 @@ ${content.slice(0, 8000)}`,
         const res = await embed({
           model: embeddingModel,
           value: chunk,
+          maxRetries: 0,
         });
         embedding = res.embedding;
       } catch (err) {
