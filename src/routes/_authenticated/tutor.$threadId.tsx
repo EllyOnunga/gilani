@@ -445,7 +445,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [threadId, threadsLoading, threads]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadId, threadsLoading]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
