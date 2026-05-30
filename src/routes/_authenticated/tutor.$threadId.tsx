@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageCircle, Plus, X, Send, Loader2, ShieldAlert, CheckCircle2, Clock, Brain } from "lucide-react";
+import { MessageCircle, Plus, X, Send, Loader2, ShieldAlert, CheckCircle2, Clock, Brain, Paperclip, Trash2, FileText } from "lucide-react";
+import { parseDocument } from "@/lib/document-parser";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { withTimeout } from "@/lib/async";
@@ -64,6 +65,28 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const [escalating, setEscalating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  // Client-side file attachment states
+  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; size: number } | null>(null);
+  const [parsingFile, setParsingFile] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setParsingFile(true);
+      const file = e.target.files[0];
+      const toastId = toast.loading(`Extracting text from ${file.name}...`);
+      try {
+        const parsed = await parseDocument(file);
+        setAttachedFile(parsed);
+        toast.success("Document attached successfully!", { id: toastId });
+      } catch (err: any) {
+        toast.error(err.message || "Failed to attach document", { id: toastId });
+      } finally {
+        setParsingFile(false);
+        e.target.value = ""; // Reset element value
+      }
+    }
+  };
+
   // Safety net: force all loading states off after 10s regardless of what else is happening.
   // Prevents permanent spinner when auth refresh fails or DB is slow.
   useEffect(() => {
@@ -107,8 +130,14 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     const trimmedInput = input.trim();
     if (!trimmedInput) return;
     try {
-      await sendMessage({ text: trimmedInput });
+      let finalMessage = trimmedInput;
+      if (attachedFile) {
+        // Build structured context using standard XML tags for optimal AI reasoning
+        finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${attachedFile.text}\n</DocumentContent>\n\nStudent Query: ${trimmedInput}`;
+      }
+      await sendMessage({ text: finalMessage });
       setInput("");
+      setAttachedFile(null); // Reset attachment state on success
     } catch (error) {
       console.error("[TutorThread] submit error:", error);
     }
@@ -676,14 +705,59 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 
         {/* Input area */}
         <div className="border-t border-border bg-background p-3 sm:p-4">
+          {/* Attached file preview */}
+          {attachedFile && (
+            <div className="mb-2.5 flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 animate-in-slide">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText className="h-4 w-4 flex-shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold truncate text-foreground">{attachedFile.name}</p>
+                  <p className="font-mono text-[9px] text-muted-foreground mt-0.5">
+                    {(attachedFile.size / 1024).toFixed(1)} KB • Document text loaded
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAttachedFile(null)}
+                className="rounded-md p-1 hover:bg-accent text-muted-foreground hover:text-destructive transition-colors"
+                title="Remove attachment"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-end gap-2 sm:gap-3">
+            {/* Paperclip Button */}
+            <input
+              type="file"
+              id="chat-file-attachment"
+              className="hidden"
+              accept=".pdf,.docx,.txt,.md,.csv"
+              onChange={handleFileChange}
+              disabled={status === "streaming" || parsingFile}
+            />
+            <label
+              htmlFor="chat-file-attachment"
+              className={`flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-xl border border-border bg-card shadow-sm hover:bg-accent transition-colors ${
+                status === "streaming" || parsingFile ? "opacity-50 pointer-events-none" : ""
+              }`}
+              title="Attach a document (PDF, DOCX, TXT, MD, CSV)"
+            >
+              {parsingFile ? (
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              ) : (
+                <Paperclip className="h-4 w-4 text-muted-foreground" />
+              )}
+            </label>
+
             <textarea
               className="flex-1 min-h-[44px] max-h-36 resize-none rounded-xl border border-border bg-card px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed"
               rows={1}
               value={input}
               onChange={handleInputChange}
               placeholder="Ask a question… (Enter to send)"
-              disabled={status === "streaming"}
+              disabled={status === "streaming" || parsingFile}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -693,7 +767,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             />
             <button
               onClick={(e) => submit(e as any)}
-              disabled={status === "streaming" || !input.trim()}
+              disabled={status === "streaming" || parsingFile || !input.trim()}
               className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
               title="Send"
             >

@@ -13,7 +13,9 @@ import {
   Tag,
   FileText,
   X,
+  Upload,
 } from "lucide-react";
+import { parseDocument } from "@/lib/document-parser";
 import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
@@ -83,28 +85,40 @@ ${content.slice(0, 8000)}`,
     for (let i = 0; i < content.length; i += chunkSize) {
       chunks.push(content.slice(i, i + chunkSize));
     }
-    for (let i = 0; i < chunks.length; i++) {
+
+    // Parallelize embedding generation to dramatically reduce execution duration
+    const chunkPromises = chunks.map(async (chunk, index) => {
       let embedding: number[] | null = null;
       try {
         const { embed } = await import("ai");
-        // textEmbeddingModel() without a model ID will use the provider's default:
-        // OpenAI -> text-embedding-3-small, Gemini -> text-embedding-004
         const embeddingModel = createLovableAiGatewayProvider().textEmbeddingModel();
         const res = await embed({
           model: embeddingModel,
-          value: chunks[i],
+          value: chunk,
         });
         embedding = res.embedding;
       } catch (err) {
-        console.error("Failed to generate embedding for chunk " + i, err);
+        console.error(`Failed to generate embedding for chunk ${index}`, err);
       }
 
-      await supabaseAdmin.from("note_chunks").insert({
+      return {
         note_id: (note as any).id,
-        content: chunks[i],
+        content: chunk,
         user_id: userId,
         embedding: embedding ? JSON.stringify(embedding) : null,
-      });
+      };
+    });
+
+    const chunkData = await Promise.all(chunkPromises);
+
+    // Bulk insert chunks in a single query to eliminate database write bottlenecks
+    const { error: chunksErr } = await supabaseAdmin
+      .from("note_chunks")
+      .insert(chunkData);
+
+    if (chunksErr) {
+      console.error("Failed to bulk insert note chunks:", chunksErr);
+      throw new Error(`Failed to save note chunks: ${chunksErr.message}`);
     }
 
     return note as any;
@@ -143,6 +157,45 @@ function NotesPage() {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  
+  // Drag and drop states for document parser
+  const [parsingFile, setParsingFile] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleFileDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await handleFileParsing(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      await handleFileParsing(e.target.files[0]);
+    }
+  };
+
+  const handleFileParsing = async (file: File) => {
+    setParsingFile(true);
+    const toastId = toast.loading(`Extracting text from ${file.name}...`);
+    try {
+      const parsed = await parseDocument(file);
+      
+      // Auto pre-fill title and content
+      const baseName = parsed.name.replace(/\.[^/.]+$/, ""); // Remove extension
+      setTitle(baseName);
+      setContent(parsed.text);
+      
+      toast.success("Document text extracted successfully!", { id: toastId });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to extract text from document", { id: toastId });
+    } finally {
+      setParsingFile(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
@@ -159,7 +212,7 @@ function NotesPage() {
       }
       const note = await withTimeout(
         ingestNote({ data: { title, content, userId: session.user.id } }),
-        30000,
+        120000,
         "Saving note timed out. Please try again.",
       );
       setNotes((prev) => [note as Note, ...prev]);
@@ -202,6 +255,45 @@ function NotesPage() {
         <div className="animate-in-slide rounded-xl border border-border bg-card p-6 shadow-sm">
           <h3 className="font-serif text-xl mb-4">Add Study Note</h3>
           <div className="space-y-4">
+            {/* Document Upload Zone */}
+            <div
+              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); }}
+              onDrop={handleFileDrop}
+              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all ${
+                dragActive
+                  ? "border-primary bg-primary/5 scale-[0.99]"
+                  : "border-border bg-background hover:bg-accent/30 hover:border-muted-foreground/50"
+              }`}
+            >
+              <input
+                type="file"
+                id="notes-file-upload"
+                className="hidden"
+                accept=".pdf,.docx,.txt,.md,.csv"
+                onChange={handleFileChange}
+                disabled={parsingFile}
+              />
+              <label
+                htmlFor="notes-file-upload"
+                className="flex cursor-pointer flex-col items-center gap-2 text-sm text-muted-foreground w-full h-full py-2"
+              >
+                {parsingFile ? (
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                ) : (
+                  <Upload className="h-8 w-8 text-primary/70 animate-pulse" />
+                )}
+                <div>
+                  <span className="font-semibold text-primary underline underline-offset-2">Click to upload</span>{" "}
+                  or drag and drop a document
+                </div>
+                <div className="font-mono text-[10px] text-muted-foreground/80">
+                  Supports PDF, DOCX, TXT, MD, CSV (Max 10MB)
+                </div>
+              </label>
+            </div>
+
             <div>
               <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-1 block">
                 Title
