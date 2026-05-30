@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageCircle, Plus, X, Send, Loader2, ShieldAlert, CheckCircle2, Clock, Brain, Paperclip, Trash2, FileText } from "lucide-react";
+import { MessageCircle, Plus, X, Send, Loader2, ShieldAlert, CheckCircle2, Clock, Brain, Paperclip, Trash2, FileText, ChevronUp, ChevronDown } from "lucide-react";
 import { parseDocument } from "@/lib/document-parser";
 import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
@@ -87,6 +87,37 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     }
   };
 
+  const handleDeleteThread = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this study session? This will permanently erase all chat logs."
+    );
+    if (!confirmDelete) return;
+
+    const toastId = toast.loading("Deleting session...");
+    try {
+      const { error } = await supabase
+        .from("conversations")
+        .delete()
+        .eq("id", id);
+        
+      if (error) throw error;
+      
+      setThreads((prev) => prev.filter((t) => t.id !== id));
+      toast.success("Session deleted successfully!", { id: toastId });
+      
+      // If we deleted the active thread, navigate back to tutor home
+      if (id === threadId) {
+        navigate({ to: "/tutor" } as any);
+      }
+    } catch (err: any) {
+      console.error("Failed to delete thread:", err);
+      toast.error(err.message || "Failed to delete session", { id: toastId });
+    }
+  };
+
   // Safety net: force all loading states off after 10s regardless of what else is happening.
   // Prevents permanent spinner when auth refresh fails or DB is slow.
   useEffect(() => {
@@ -135,6 +166,32 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         // Build structured context using standard XML tags for optimal AI reasoning
         finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${attachedFile.text}\n</DocumentContent>\n\nStudent Query: ${trimmedInput}`;
       }
+
+      // If this is the FIRST message in the thread (i.e. messages.length === 0)
+      // and the current thread title is "New thread" or "Untitled"
+      const currentThread = threads.find((t) => t.id === threadId);
+      if (messages.length === 0 && (!currentThread?.title || currentThread.title === "New thread")) {
+        // Derive a beautiful title from user input (up to 32 chars)
+        let derivedTitle = trimmedInput;
+        if (derivedTitle.length > 32) {
+          derivedTitle = derivedTitle.slice(0, 29) + "...";
+        }
+        
+        // Non-blocking background database update to keep UI fast
+        supabase
+          .from("conversations")
+          .update({ title: derivedTitle })
+          .eq("id", threadId)
+          .then(({ error }) => {
+            if (error) console.error("Failed to update thread title:", error);
+          });
+          
+        // Update local sidebar threads state instantly
+        setThreads((prev) =>
+          prev.map((t) => (t.id === threadId ? { ...t, title: derivedTitle } : t))
+        );
+      }
+
       await sendMessage({ text: finalMessage });
       setInput("");
       setAttachedFile(null); // Reset attachment state on success
@@ -458,28 +515,40 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       </div>
       <div className="flex-1 overflow-y-auto space-y-1">
         {threads.map((t) => (
-          <button
+          <div
             key={t.id}
-            onClick={() => {
-              handleSelectThread(t.id);
-              setThreadsOpen(false);
-            }}
-            className={`w-full text-left rounded-lg px-3 py-2.5 transition-colors ${
+            className={`group relative flex items-center justify-between rounded-lg transition-colors ${
               t.id === threadId
                 ? "bg-primary/10 text-primary font-semibold"
                 : "hover:bg-accent text-foreground"
             }`}
           >
-            <div className="text-sm truncate">{t.title || "Untitled"}</div>
-            {t.updated_at && (
-              <div className="text-[10px] font-mono text-muted-foreground mt-0.5">
-                {new Date(t.updated_at).toLocaleDateString("en-KE", {
-                  day: "numeric",
-                  month: "short",
-                })}
-              </div>
-            )}
-          </button>
+            <button
+              onClick={() => {
+                handleSelectThread(t.id);
+                setThreadsOpen(false);
+              }}
+              className="flex-1 text-left px-3 py-2.5 min-w-0 pr-10"
+            >
+              <div className="text-sm truncate">{t.title || "Untitled"}</div>
+              {t.updated_at && (
+                <div className="text-[10px] font-mono text-muted-foreground mt-0.5">
+                  {new Date(t.updated_at).toLocaleDateString("en-KE", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </div>
+              )}
+            </button>
+            
+            <button
+              onClick={(e) => handleDeleteThread(t.id, e)}
+              className="absolute right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+              title="Delete conversation"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         ))}
         {threads.length === 0 && !threadsLoading && (
           <p className="text-xs text-muted-foreground text-center py-6 italic">
@@ -536,24 +605,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           </button>
         </div>
 
-        {/* AI Thinking progress bar — visible at the very top of the chat when streaming */}
-        <div
-          className={`overflow-hidden transition-all duration-500 ease-in-out ${
-            status === "streaming" ? "max-h-10 opacity-100" : "max-h-0 opacity-0"
-          }`}
-        >
-          <div className="flex items-center gap-2 border-b border-primary/20 bg-primary/5 px-4 py-2">
-            <Brain className="h-3.5 w-3.5 text-primary animate-pulse flex-shrink-0" />
-            <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-semibold">
-              GilaniAI is formulating your answer…
-            </p>
-            <div className="ml-auto flex gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-          </div>
-        </div>
+        {/* AI Thinking indicator removed in favor of inline ThoughtAccordion */}
 
         {/* Chat header */}
         <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3.5 sm:px-6">
@@ -679,21 +731,33 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                     // covers edge cases where parts may be empty/missing
                     const displayText = partsText || (m as any).content || "";
 
-                    if (displayText) {
+                    if (m.role === "assistant") {
+                      const isLast = idx === messages.length - 1;
+                      const isStreamActive = status === "streaming";
+                      
                       return (
-                        <span className="whitespace-pre-wrap">{displayText}</span>
+                        <div className="flex flex-col w-full">
+                          <ThoughtAccordion
+                            messageId={m.id || String(idx)}
+                            isLastMessage={isLast}
+                            isStreaming={isStreamActive}
+                            messageText={displayText}
+                          />
+                          {displayText ? (
+                            <span className="whitespace-pre-wrap mt-1">{displayText}</span>
+                          ) : (
+                            isLast && isStreamActive ? null : (
+                              <span className="text-xs text-muted-foreground italic mt-1">
+                                No response generated. Please resend your question.
+                              </span>
+                            )
+                          )}
+                        </div>
                       );
                     }
 
-                    // No text yet — show thinking indicator for the last assistant message while streaming
-                    if (status === "streaming" && m.role === "assistant" && idx === messages.length - 1) {
-                      return <AiThinkingIndicator />;
-                    }
-
                     return (
-                      <span className="text-xs text-muted-foreground">
-                        No response generated. Please resend your question.
-                      </span>
+                      <span className="whitespace-pre-wrap">{displayText}</span>
                     );
                   })()}
                 </div>
@@ -792,6 +856,23 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 }
 
 function AiThinkingIndicator() {
+  return null; // Deprecated, replaced by inline ThoughtAccordion
+}
+
+interface ThoughtAccordionProps {
+  messageId: string;
+  isLastMessage: boolean;
+  isStreaming: boolean;
+  messageText: string;
+}
+
+function ThoughtAccordion({ messageId, isLastMessage, isStreaming, messageText }: ThoughtAccordionProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const [hasStartedGenerating, setHasStartedGenerating] = useState(false);
+  const [finalDuration, setFinalDuration] = useState<number | null>(null);
+
+  // Cycling pedagogical steps for visual feedback
   const steps = [
     "Consulting Kenyan national curriculum standards...",
     "Reviewing context from your uploaded study notes...",
@@ -799,24 +880,96 @@ function AiThinkingIndicator() {
     "Structuring step-by-step Socratic pedagogical guidance...",
     "Polishing primary English and secondary Swahili definitions...",
   ];
-  const [stepIdx, setStepIdx] = useState(0);
 
+  // Derive a stable, realistic historical duration for past messages based on their text content
+  const historicalDuration = useMemo(() => {
+    // Generate a pseudo-random but stable number between 3 and 7 based on the message ID
+    let hash = 0;
+    for (let i = 0; i < messageId.length; i++) {
+      hash = messageId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs((hash % 5) + 3);
+  }, [messageId]);
+
+  // Keep track of the active ticking timer for the currently streaming message
   useEffect(() => {
-    const timer = setInterval(() => {
-      setStepIdx((prev) => (prev + 1) % steps.length);
-    }, 2500);
-    return () => clearInterval(timer);
-  }, []);
+    if (!isStreaming || !isLastMessage) return;
+
+    if (messageText.trim() !== "") {
+      // Once text starts streaming, freeze the duration
+      if (!hasStartedGenerating) {
+        setHasStartedGenerating(true);
+        setFinalDuration(seconds || 1);
+        setIsOpen(false); // Auto-collapse when writing begins!
+      }
+      return;
+    }
+
+    // Expand thought box by default while thinking
+    setIsOpen(true);
+
+    const interval = setInterval(() => {
+      setSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isStreaming, isLastMessage, messageText, hasStartedGenerating, seconds]);
+
+  const duration = finalDuration !== null ? finalDuration : (isStreaming && isLastMessage && !hasStartedGenerating ? seconds : historicalDuration);
+  const activeStepIdx = Math.min(Math.floor(duration / 1.5), steps.length - 1);
+  const isThinking = isStreaming && isLastMessage && !hasStartedGenerating;
 
   return (
-    <div className="flex flex-col gap-2 p-1.5 animate-pulse min-w-[200px]">
-      <div className="flex gap-1.5 items-center text-primary font-mono text-[10px] uppercase tracking-widest font-bold">
-        <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-        <span>GilaniAI is formulating your response</span>
-      </div>
-      <p className="text-xs text-muted-foreground italic font-sans transition-all duration-300">
-        ✨ {steps[stepIdx]}
-      </p>
+    <div className="bg-muted/30 border border-border/50 rounded-xl p-3 my-1.5 w-full select-none transition-all duration-300">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between text-left font-sans text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          {isThinking ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+          ) : (
+            <Brain className="h-3.5 w-3.5 text-primary/70" />
+          )}
+          <span className="font-semibold uppercase tracking-wider font-mono text-[9px]">
+            {isThinking
+              ? `Thinking process (${duration}s...)`
+              : `Thought process (${duration}s)`}
+          </span>
+        </div>
+        <ChevronUp
+          className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-300 ${
+            isOpen ? "" : "rotate-180"
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="mt-3 border-t border-border/40 pt-2.5 font-mono text-[10px] text-muted-foreground/80 space-y-2 animate-in-slide">
+          <div className="space-y-1.5">
+            {steps.map((step, idx) => {
+              const completed = idx < activeStepIdx;
+              const active = idx === activeStepIdx && isThinking;
+              
+              let statusSymbol = "•";
+              if (completed) statusSymbol = "✓";
+              else if (active) statusSymbol = "⚡";
+
+              return (
+                <div
+                  key={idx}
+                  className={`flex items-start gap-2 transition-colors duration-300 ${
+                    completed ? "text-primary/70 font-semibold" : ""
+                  } ${active ? "text-primary animate-pulse font-bold" : ""}`}
+                >
+                  <span className="w-3 flex-shrink-0 text-center">{statusSymbol}</span>
+                  <span>{step}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
