@@ -83,6 +83,15 @@ function AuthedShell() {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const shouldLock = sidebarOpen;
+    document.body.style.overflow = shouldLock ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
   const toggleTheme = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
@@ -112,14 +121,7 @@ function AuthedShell() {
     navigate({ to: "/" });
   };
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const shouldLock = sidebarOpen;
-    document.body.style.overflow = shouldLock ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [sidebarOpen]);
+  
 
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden lg:flex-row bg-background text-foreground">

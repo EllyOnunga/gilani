@@ -1,7 +1,23 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
-
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+
+const csrfMiddleware = createMiddleware().server(async ({ next, request }) => {
+  if (request.method !== "GET") {
+    const origin = request.headers.get("origin");
+    const host = request.headers.get("host");
+
+    if (!origin || !host) {
+      return new Response("Forbidden: missing origin", { status: 403 });
+    }
+
+    const originHost = new URL(origin).host;
+    if (originHost !== host) {
+      return new Response("Forbidden: CSRF check failed", { status: 403 });
+    }
+  }
+  return next();
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -19,6 +35,6 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [errorMiddleware],
+  requestMiddleware: [csrfMiddleware, errorMiddleware], // csrf first
   functionMiddleware: [attachSupabaseAuth],
 }));
