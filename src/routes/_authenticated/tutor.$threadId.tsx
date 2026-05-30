@@ -118,6 +118,56 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     }
   };
 
+  // Curriculum profiles state
+  const [curriculum, setCurriculum] = useState<string>("KCSE");
+
+  // Load student's saved curriculum from profiles
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const sessionRes = await supabase.auth.getSession();
+        const userId = sessionRes?.data?.session?.user?.id;
+        if (!userId) return;
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("curriculum")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (mounted && data?.curriculum) {
+          setCurriculum(data.curriculum);
+        }
+      } catch (err) {
+        console.error("Failed to load user curriculum profile:", err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  const handleCurriculumChange = async (newVal: string) => {
+    setCurriculum(newVal);
+    const toastId = toast.loading(`Updating curriculum to ${newVal}...`);
+    try {
+      const sessionRes = await supabase.auth.getSession();
+      const userId = sessionRes?.data?.session?.user?.id;
+      if (!userId) throw new Error("Not logged in");
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ curriculum: newVal })
+        .eq("id", userId);
+
+      if (error) throw error;
+      toast.success(`Curriculum switched to ${newVal}!`, { id: toastId });
+    } catch (err: any) {
+      console.error("Failed to update curriculum profile:", err);
+      toast.error(err.message || "Failed to update curriculum", { id: toastId });
+    }
+  };
+
   // Safety net: force all loading states off after 10s regardless of what else is happening.
   // Prevents permanent spinner when auth refresh fails or DB is slow.
   useEffect(() => {
@@ -624,6 +674,19 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Curriculum Selector Dropdown */}
+            <select
+              value={curriculum}
+              onChange={(e) => handleCurriculumChange(e.target.value)}
+              className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-accent transition-colors"
+              title="Select your study curriculum standards"
+            >
+              <option value="KCSE">KCSE (KNEC)</option>
+              <option value="CBC">CBC Curriculum</option>
+              <option value="8-4-4">8-4-4 Standards</option>
+              <option value="IGCSE Cambridge">IGCSE Cambridge</option>
+              <option value="IGCSE Edexcel">IGCSE Edexcel</option>
+            </select>
             {escalationStatus === "open" && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-wider text-amber-700">
                 <Clock className="h-3 w-3 animate-pulse" /> Review Pending
