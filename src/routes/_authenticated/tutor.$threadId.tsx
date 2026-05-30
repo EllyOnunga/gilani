@@ -204,6 +204,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     onFinish: () => setChatError(null),
   });
 
+  const isPending = status === "submitted" || status === "streaming";
+
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
   };
@@ -804,7 +806,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 
                     if (m.role === "assistant") {
                       const isLast = idx === messages.length - 1;
-                      const isStreamActive = status === "streaming";
+                      const isStreamActive = isPending;
                       
                       return (
                         <div className="flex flex-col w-full">
@@ -843,7 +845,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             ))}
 
           {/* Virtual Assistant thinking bubble during early stream request phase */}
-          {status === "streaming" && messages[messages.length - 1]?.role === "user" && (
+          {isPending && messages[messages.length - 1]?.role === "user" && (
             <div className="flex justify-start animate-in-slide">
               <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-card border border-border text-foreground rounded-tl-sm w-full">
                 <div className="flex flex-col w-full">
@@ -893,12 +895,12 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               className="hidden"
               accept=".pdf,.docx,.txt,.md,.csv"
               onChange={handleFileChange}
-              disabled={status === "streaming" || parsingFile}
+              disabled={isPending || parsingFile}
             />
             <label
               htmlFor="chat-file-attachment"
               className={`flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-xl border border-border bg-card shadow-sm hover:bg-accent transition-colors ${
-                status === "streaming" || parsingFile ? "opacity-50 pointer-events-none" : ""
+                isPending || parsingFile ? "opacity-50 pointer-events-none" : ""
               }`}
               title="Attach a document (PDF, DOCX, TXT, MD, CSV)"
             >
@@ -915,7 +917,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               value={input}
               onChange={handleInputChange}
               placeholder="Ask a question… (Enter to send)"
-              disabled={status === "streaming" || parsingFile}
+              disabled={isPending || parsingFile}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -925,11 +927,11 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             />
             <button
               onClick={(e) => submit(e as any)}
-              disabled={status === "streaming" || parsingFile || !input.trim()}
+              disabled={isPending || parsingFile || !input.trim()}
               className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
               title="Send"
             >
-              {status === "streaming" ? (
+              {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
@@ -937,7 +939,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             </button>
           </div>
           <p className="mt-1.5 font-mono text-[10px] text-muted-foreground text-center">
-            {status === "streaming" ? (
+            {isPending ? (
               <span className="text-primary/70">GilaniAI is thinking… please wait</span>
             ) : (
               "Shift+Enter for new line"
