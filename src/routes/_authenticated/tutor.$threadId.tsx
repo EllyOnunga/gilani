@@ -104,6 +104,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   >(null);
   const [escalating, setEscalating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
   // Custom dialog state for session deleting (prevents window.confirm)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -446,14 +447,18 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             setMessagesLoading(false);
             return;
           }
-          setMessages(
-            (messagesRes.data ?? []).map((m) => ({
-              id: m.id ?? crypto.randomUUID(),
-              role: m.role as "user" | "assistant",
-              parts: [{ type: "text" as const, text: m.content || "" }],
-              createdAt: m.created_at ? new Date(m.created_at) : new Date(),
-            })),
-          );
+          console.log("[Messages] loaded count:", messagesRes.data?.length, "for thread:", threadId);
+          if (!mounted) return;
+          if (messagesRes.data && messagesRes.data.length > 0) {
+            setMessages(
+              messagesRes.data.map((m) => ({
+                id: m.id ?? crypto.randomUUID(),
+                role: m.role as "user" | "assistant",
+                parts: [{ type: "text" as const, text: m.content || "" }],
+                createdAt: m.created_at ? new Date(m.created_at) : new Date(),
+              })),
+            );
+          }
           setEscalationStatus((escalationRes.data?.status as any) || null);
           setMessagesLoading(false);
         }
@@ -892,28 +897,38 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             </select>
 
             {/* Export Button */}
-            <div className="relative group">
+            <div className="relative">
               <button
+                onClick={() => setExportMenuOpen((v) => !v)}
                 className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:bg-accent transition-colors"
                 title="Export conversation"
               >
                 <FileDown className="h-3.5 w-3.5" />
                 Export
               </button>
-              <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col w-36 rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden">
-                <button
-                  onClick={exportAsPDF}
-                  className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent transition-colors"
-                >
-                  <Download className="h-3.5 w-3.5" /> Export as PDF
-                </button>
-                <button
-                  onClick={exportAsWord}
-                  className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent transition-colors"
-                >
-                  <Download className="h-3.5 w-3.5" /> Export as Word
-                </button>
-              </div>
+              {exportMenuOpen && (
+                <>
+                  {/* Backdrop to close on outside click */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setExportMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 flex flex-col w-36 rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden">
+                    <button
+                      onClick={() => { exportAsPDF(); setExportMenuOpen(false); }}
+                      className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent transition-colors"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Export as PDF
+                    </button>
+                    <button
+                      onClick={() => { exportAsWord(); setExportMenuOpen(false); }}
+                      className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent transition-colors"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Export as Word
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
             {escalationStatus === "open" && (

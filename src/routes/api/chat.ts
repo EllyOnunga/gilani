@@ -277,6 +277,7 @@ For every user query, run these mental loops:
   - Display/block math (on its own line): double dollar signs $$like this$$
   - This rule has NO exceptions. If you use [ ] or ( ) for math, you are wrong.
 - **Supporting Evidence**: For every major concept, provide at least one direct quote or key definition from the referenced textbook, formatted in blockquote markdown like: > "Newton's First Law states that an object remains at rest or in uniform motion unless acted upon by an external force." — *KLB Physics Form 3, pg. 120*
+- **Chemical Equations**: ALWAYS render chemical equations using LaTeX. Use \ce{} command for chemical formulas and equations: $\ce{H2O}$, $\ce{CO2}$, $\ce{H2 + O2 -> H2O}$. For display block: $$\ce{6CO2 + 6H2O -> C6H12O6 + 6O2}$$. NEVER write chemical equations in plain text like "H2O" or "CO2". Always use $\ce{}$ notation.
 
 === ACCURACY & ANTI-HALLUCINATION PROTOCOL ===
 - NEVER fabricate textbook page numbers, authors, or ISBN numbers. If unsure of exact page, say "approximately pg. X" or "refer to Chapter Y".
