@@ -606,6 +606,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     const newId = (data as any).id;
     setThreads((prev) => [{ id: newId, title: "New thread" }, ...prev]);
     setThreadsOpen(false);
+    setMessages([]);
 
     navigate({
       to: "/tutor/$threadId",
