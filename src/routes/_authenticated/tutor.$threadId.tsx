@@ -220,7 +220,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     transport,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
     onFinish: () => {
-      setChatError(null)
+      setChatError(null);
     },
   });
   const { messages: messagesRaw, setMessages, sendMessage, status, reload } = chatHelpers;
@@ -421,6 +421,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     }, 5000);
 
     (async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
       try {
         const [messagesRes, escalationRes] = await Promise.all([
           supabase
@@ -469,7 +470,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [threadId]);
+  }, [threadId, setMessages]);
 
   // Smart Scroll to bottom: only scroll when user is already at the bottom or sent a query
   useEffect(() => {
