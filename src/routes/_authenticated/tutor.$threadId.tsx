@@ -36,6 +36,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import "katex/dist/katex.min.css";
+import "katex/dist/contrib/mhchem.min.js";
 
 // Route declaration
 export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
