@@ -28,7 +28,10 @@ import { TextStreamChatTransport } from "ai";
 import { withTimeout } from "@/lib/async";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
+import "katex/dist/katex.min.css";
 
 // Route declaration
 export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
@@ -886,7 +889,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                           {displayText ? (
                             <div className="mt-1 prose-ai relative">
                               <ReactMarkdown
-                                remarkPlugins={[remarkGfm]}
+                                remarkPlugins={[remarkGfm, remarkMath]}
+                                rehypePlugins={[rehypeKatex]}
                                 components={markdownComponents}
                               >
                                 {displayText}
