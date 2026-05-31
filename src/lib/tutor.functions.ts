@@ -33,9 +33,11 @@ export async function getThreadMessages(threadId: string) {
 }
 
 export async function deleteThread(threadId: string) {
-  // remove messages then conversation
-  await supabaseAdmin.from('messages').delete().eq('conversation_id', threadId);
-  const { error } = await supabaseAdmin.from('conversations').delete().eq('id', threadId);
+  const { error } = await supabaseAdmin
+    .from('conversations')
+    .delete()
+    .eq('id', threadId);
+
   if (error) throw error;
   return true;
 }
