@@ -29,10 +29,11 @@ function TutorIndex() {
       // Check if Supabase client has valid credentials BEFORE trying to get session
       const hasSupabaseUrl = !!import.meta.env.VITE_SUPABASE_URL;
       const hasSupabaseKey =
-        !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-        !!import.meta.env.VITE_SUPABASE_ANON_KEY;
+        !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || !!import.meta.env.VITE_SUPABASE_ANON_KEY;
       if (!hasSupabaseUrl || !hasSupabaseKey) {
-        throw new Error("Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY) in deployment settings.");
+        throw new Error(
+          "Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY) in deployment settings.",
+        );
       }
 
       const sessionPromise = supabase.auth.getSession();
@@ -49,18 +50,18 @@ function TutorIndex() {
       if (userId) {
         // Query the most recent existing thread to keep the chat threaded (wrapped in timeout to prevent hangs)
         try {
-          const { data: existingThreads } = await withTimeout(
+          const { data: existingThreads } = (await withTimeout(
             Promise.resolve(
               supabase
                 .from("conversations")
                 .select("id")
                 .eq("user_id", userId)
                 .order("updated_at", { ascending: false })
-                .limit(1)
+                .limit(1),
             ),
             5000,
-            "Thread lookup timed out"
-          ) as any;
+            "Thread lookup timed out",
+          )) as any;
 
           if (existingThreads && existingThreads.length > 0) {
             const threadId = existingThreads[0].id;
@@ -112,23 +113,23 @@ function TutorIndex() {
         throw new Error(json?.error || `Server returned status ${res.status}`);
       }
 
-const id = json?.thread?.id;
-       if (id) {
-         console.log("[TutorIndex] Navigating to thread:", id);
-         try {
-           await navigate({ 
-             to: '/tutor/$threadId',
-             params: { threadId: id } 
-           } as any);
-           console.log("[TutorIndex] Navigation completed");
-         } catch (navErr) {
-           console.error("[TutorIndex] navigation failed:", navErr);
-           // Force redirect as fallback
-           window.location.href = `/tutor/${id}`;
-         }
-       } else {
-         throw new Error("No thread ID returned from server");
-       }
+      const id = json?.thread?.id;
+      if (id) {
+        console.log("[TutorIndex] Navigating to thread:", id);
+        try {
+          await navigate({
+            to: "/tutor/$threadId",
+            params: { threadId: id },
+          } as any);
+          console.log("[TutorIndex] Navigation completed");
+        } catch (navErr) {
+          console.error("[TutorIndex] navigation failed:", navErr);
+          // Force redirect as fallback
+          window.location.href = `/tutor/${id}`;
+        }
+      } else {
+        throw new Error("No thread ID returned from server");
+      }
     } catch (err) {
       setError(getErrorMessage(err, "Failed to create study session"));
       setLoading(false);

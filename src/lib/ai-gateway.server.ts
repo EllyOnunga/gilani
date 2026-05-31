@@ -18,7 +18,9 @@ export const createGoogleAiProvider = (apiKey?: string) => {
     return s;
   };
 
-  const geminiKey = stripQuotes(apiKey || process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "");
+  const geminiKey = stripQuotes(
+    apiKey || process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "",
+  );
   const groqKey = stripQuotes(process.env.GROQ_API_KEY || "");
   const openaiKey = stripQuotes(process.env.OPENAI_API_KEY || "");
 
@@ -49,9 +51,10 @@ export const createGoogleAiProvider = (apiKey?: string) => {
     return {
       chatModel: (modelId?: string) => {
         // Default to llama-3.3-70b-versatile for Groq
-        const cleanModelId = modelId && !modelId.includes("gemini") && !modelId.includes("google") 
-          ? modelId.replace(/^groq\//, "") 
-          : "llama-3.3-70b-versatile";
+        const cleanModelId =
+          modelId && !modelId.includes("gemini") && !modelId.includes("google")
+            ? modelId.replace(/^groq\//, "")
+            : "llama-3.3-70b-versatile";
         console.log(`[AI Gateway] Using Groq chat model: ${cleanModelId}`);
         return groq.chatModel(cleanModelId);
       },
@@ -69,7 +72,9 @@ export const createGoogleAiProvider = (apiKey?: string) => {
           const google = createGoogleGenerativeAI({ apiKey: geminiKey });
           return google.textEmbeddingModel("text-embedding-004");
         }
-        throw new Error("No embedding provider available for Groq. Please configure OPENAI_API_KEY or GEMINI_API_KEY.");
+        throw new Error(
+          "No embedding provider available for Groq. Please configure OPENAI_API_KEY or GEMINI_API_KEY.",
+        );
       },
     };
   }
@@ -82,16 +87,18 @@ export const createGoogleAiProvider = (apiKey?: string) => {
     });
     return {
       chatModel: (modelId?: string) => {
-        const cleanModelId = modelId && !modelId.includes("gemini") && !modelId.includes("google")
-          ? modelId.replace(/^openai\//, "")
-          : "gpt-4o-mini";
+        const cleanModelId =
+          modelId && !modelId.includes("gemini") && !modelId.includes("google")
+            ? modelId.replace(/^openai\//, "")
+            : "gpt-4o-mini";
         console.log(`[AI Gateway] Using OpenAI chat model: ${cleanModelId}`);
         return openai.chatModel(cleanModelId);
       },
       textEmbeddingModel: (modelId?: string) => {
-        const cleanModelId = modelId && !modelId.includes("google")
-          ? modelId.replace(/^openai\//, "")
-          : "text-embedding-3-small";
+        const cleanModelId =
+          modelId && !modelId.includes("google")
+            ? modelId.replace(/^openai\//, "")
+            : "text-embedding-3-small";
         return openai.textEmbeddingModel(cleanModelId);
       },
     };

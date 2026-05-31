@@ -11,7 +11,7 @@ export const assignUserRole = createServerFn({ method: "POST" })
     z.object({
       userId: z.string(),
       role: z.enum(["student", "teacher", "admin"]),
-    })
+    }),
   )
   .handler(async ({ data }) => {
     const { userId, role } = data;
@@ -30,12 +30,10 @@ export const assignUserRole = createServerFn({ method: "POST" })
       }
 
       // 2. Insert selected role
-      const { error: insertError } = await supabaseAdmin
-        .from("user_roles")
-        .insert({
-          user_id: userId,
-          role: role,
-        });
+      const { error: insertError } = await supabaseAdmin.from("user_roles").insert({
+        user_id: userId,
+        role: role,
+      });
 
       if (insertError) {
         console.error("[assignUserRole] Role insertion failed:", insertError);

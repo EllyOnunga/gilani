@@ -26,7 +26,7 @@ function RegisterPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    
+
     // 1. Sign up user
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -58,7 +58,9 @@ function RegisterPage() {
   };
 
   const onGoogle = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
     if (result.error) return toast.error("Google sign-in failed");
     if (result.redirected) return;
     navigate({ to: "/dashboard" });
@@ -67,10 +69,14 @@ function RegisterPage() {
   return (
     <div className="min-h-screen grid place-items-center bg-background px-4 py-8">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-md">
-        <Link to="/" className="font-serif text-xl font-bold italic text-primary">GilaniAI</Link>
+        <Link to="/" className="font-serif text-xl font-bold italic text-primary">
+          GilaniAI
+        </Link>
         <h1 className="mt-6 font-serif text-3xl font-bold">Create your account</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Free for students. Powerful tools for teachers and admins.</p>
-        
+        <p className="mt-1 text-sm text-muted-foreground">
+          Free for students. Powerful tools for teachers and admins.
+        </p>
+
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
             <label className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
@@ -94,37 +100,67 @@ function RegisterPage() {
             </div>
           </div>
 
-          <input required placeholder="Your name" value={displayName} onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 animate-in-slide" />
-          
-          <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 animate-in-slide" />
-          
+          <input
+            required
+            placeholder="Your name"
+            value={displayName}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 animate-in-slide"
+          />
+
+          <input
+            type="email"
+            required
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 animate-in-slide"
+          />
+
           <div className="relative animate-in-slide">
-            <input type={showPassword ? "text" : "password"} required minLength={6} placeholder="Password (min 6 chars)" value={password} onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40" />
-            <button type="button" onClick={() => setShowPassword(!showPassword)}
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={6}
+              placeholder="Password (min 6 chars)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-md border border-border bg-background px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              title={showPassword ? "Hide password" : "Show password"}>
+              title={showPassword ? "Hide password" : "Show password"}
+            >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          
-          <button disabled={busy} className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 animate-in-slide">
+
+          <button
+            disabled={busy}
+            className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 animate-in-slide"
+          >
             {busy ? "Creating…" : "Create account"}
           </button>
         </form>
-        
+
         <div className="my-4 flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
           <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
         </div>
-        
-        <button onClick={onGoogle} className="w-full rounded-md border border-border bg-background py-2.5 text-sm font-medium hover:bg-accent animate-in-slide">
+
+        <button
+          onClick={onGoogle}
+          className="w-full rounded-md border border-border bg-background py-2.5 text-sm font-medium hover:bg-accent animate-in-slide"
+        >
           Continue with Google
         </button>
-        
+
         <p className="mt-6 text-sm text-muted-foreground">
-          Already have an account? <Link to="/login" className="font-medium text-primary hover:underline">Sign in</Link>
+          Already have an account?{" "}
+          <Link to="/login" className="font-medium text-primary hover:underline">
+            Sign in
+          </Link>
         </p>
       </div>
     </div>

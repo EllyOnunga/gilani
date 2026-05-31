@@ -21,7 +21,9 @@ export function useAuth(): AuthState {
   useEffect(() => {
     let active = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, s) => {
       if (!active) return;
       setSession(s);
       setUser(s?.user ?? null);
@@ -41,25 +43,28 @@ export function useAuth(): AuthState {
       }
     });
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-      if (data.session?.user) {
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.session.user.id)
-          .then(({ data: r }) => {
-            if (active) setRoles((r ?? []).map((x) => x.role as AppRole));
-          });
-      }
-    }).catch((e) => {
-      console.error("getSession error:", e);
-      if (!active) return;
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!active) return;
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        setLoading(false);
+        if (data.session?.user) {
+          supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.session.user.id)
+            .then(({ data: r }) => {
+              if (active) setRoles((r ?? []).map((x) => x.role as AppRole));
+            });
+        }
+      })
+      .catch((e) => {
+        console.error("getSession error:", e);
+        if (!active) return;
+        setLoading(false);
+      });
 
     return () => {
       active = false;

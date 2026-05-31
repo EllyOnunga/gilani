@@ -24,23 +24,20 @@ export const Route = createFileRoute("/api/tutor/threads")({
 
           if (error) throw error;
 
-          return new Response(
-            JSON.stringify({ thread: { id: thread.id } }),
-            { 
-              status: 200, 
-              headers: { "Content-Type": "application/json" } 
-            }
-          );
+          return new Response(JSON.stringify({ thread: { id: thread.id } }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
         } catch (error) {
           console.error("[API Tutor Threads] Error:", error);
           return new Response(
-            JSON.stringify({ 
-              error: error instanceof Error ? error.message : "Failed to create thread" 
+            JSON.stringify({
+              error: error instanceof Error ? error.message : "Failed to create thread",
             }),
-            { 
-              status: 500, 
-              headers: { "Content-Type": "application/json" } 
-            }
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            },
           );
         }
       },

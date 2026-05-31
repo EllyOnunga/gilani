@@ -16,7 +16,7 @@ const DIGNITY_FILTER = ["bitch", "stupid", "idiot", "dumb"]; // Example boundary
 
 function checkDignityViolation(text: string): boolean {
   const lowered = text.toLowerCase();
-  return DIGNITY_FILTER.some(word => lowered.includes(word));
+  return DIGNITY_FILTER.some((word) => lowered.includes(word));
 }
 
 export const Route = createFileRoute("/api/chat")({
@@ -41,12 +41,29 @@ export const Route = createFileRoute("/api/chat")({
           const body = await request.json().catch(() => ({}));
           const { threadId, messages } = body as { threadId?: string; messages?: any[] };
 
-          console.log("[API Chat] userId:", userId, "| threadId:", threadId, "| messages count:", messages?.length ?? 0);
+          console.log(
+            "[API Chat] userId:",
+            userId,
+            "| threadId:",
+            threadId,
+            "| messages count:",
+            messages?.length ?? 0,
+          );
           // Log the last message structure for debugging
           const _lastMsgDebug = messages?.[messages.length - 1];
-          console.log("[API Chat] lastMessage role:", _lastMsgDebug?.role, "| has parts:", Array.isArray(_lastMsgDebug?.parts), "| has content:", typeof _lastMsgDebug?.content);
+          console.log(
+            "[API Chat] lastMessage role:",
+            _lastMsgDebug?.role,
+            "| has parts:",
+            Array.isArray(_lastMsgDebug?.parts),
+            "| has content:",
+            typeof _lastMsgDebug?.content,
+          );
           if (Array.isArray(_lastMsgDebug?.parts)) {
-            console.log("[API Chat] lastMessage parts:", JSON.stringify(_lastMsgDebug.parts).slice(0, 200));
+            console.log(
+              "[API Chat] lastMessage parts:",
+              JSON.stringify(_lastMsgDebug.parts).slice(0, 200),
+            );
           }
 
           if (!threadId) {
@@ -143,7 +160,10 @@ export const Route = createFileRoute("/api/chat")({
           const curriculum = profile?.curriculum || "KCSE";
 
           const latestMessageContent = extractTextFromMessage(lastMessage);
-          console.log("[API Chat] latestMessageContent for RAG:", JSON.stringify(latestMessageContent));
+          console.log(
+            "[API Chat] latestMessageContent for RAG:",
+            JSON.stringify(latestMessageContent),
+          );
           let notesContext = "";
 
           if (latestMessageContent) {
@@ -157,16 +177,16 @@ export const Route = createFileRoute("/api/chat")({
                   maxRetries: 0,
                 }),
                 15000,
-                "Embedding generation timed out"
+                "Embedding generation timed out",
               );
 
-const { data: chunks, error } = await supabaseAdmin.rpc("match_note_chunks", {
-                 query_embedding: `[${(embedding as number[]).join(",")}]`,
-                 match_user_id: userId,
-                 match_count: 5,
-               });
+              const { data: chunks, error } = await supabaseAdmin.rpc("match_note_chunks", {
+                query_embedding: `[${(embedding as number[]).join(",")}]`,
+                match_user_id: userId,
+                match_count: 5,
+              });
 
-               if (error) throw error;
+              if (error) throw error;
 
               if (chunks && chunks.length > 0) {
                 notesContext = chunks.map((c: any) => c.content).join("\n---\n");
@@ -185,7 +205,9 @@ const { data: chunks, error } = await supabaseAdmin.rpc("match_note_chunks", {
                   .split(/\s+/)
                   .filter((w: string) => w.length > 3);
                 const matched = chunks
-                  .filter((c: any) => words.some((w: string) => c.content.toLowerCase().includes(w)))
+                  .filter((c: any) =>
+                    words.some((w: string) => c.content.toLowerCase().includes(w)),
+                  )
                   .slice(0, 3);
 
                 const selectedChunks = matched.length > 0 ? matched : chunks.slice(0, 2);
@@ -269,16 +291,29 @@ ${notesContext}
                     type: "text" as const,
                     text: textContent,
                     // Preserve thought signatures for Gemini
-                    providerOptions: (m.thoughtSignature || m.thought_signature)
-                      ? { google: { thoughtSignature: m.thoughtSignature || m.thought_signature } }
-                      : undefined,
+                    providerOptions:
+                      m.thoughtSignature || m.thought_signature
+                        ? {
+                            google: { thoughtSignature: m.thoughtSignature || m.thought_signature },
+                          }
+                        : undefined,
                   },
                 ],
               };
             }) || []),
           ];
 
-          console.log("[API Chat] aiMessages count:", aiMessages.length, "| roles:", aiMessages.map(m => `${m.role}(${Array.isArray(m.content) ? (m.content as any[]).map((c:any)=>c.text?.slice(0,30)).join('|') : String(m.content).slice(0,30)})`).join(', '));
+          console.log(
+            "[API Chat] aiMessages count:",
+            aiMessages.length,
+            "| roles:",
+            aiMessages
+              .map(
+                (m) =>
+                  `${m.role}(${Array.isArray(m.content) ? (m.content as any[]).map((c: any) => c.text?.slice(0, 30)).join("|") : String(m.content).slice(0, 30)})`,
+              )
+              .join(", "),
+          );
 
           const streamResult = streamText({
             model,
@@ -297,8 +332,9 @@ ${notesContext}
 
               try {
                 const assistantParts = [{ type: "text" as const, text: safeText }];
-                const thoughtSignature = (providerMetadata as any)?.google?.thoughtSignature || null;
-                
+                const thoughtSignature =
+                  (providerMetadata as any)?.google?.thoughtSignature || null;
+
                 await supabaseAdmin.from("messages").insert({
                   conversation_id: threadId,
                   role: "assistant",
@@ -314,7 +350,10 @@ ${notesContext}
                 });
 
                 const safety = (providerMetadata as any)?.google?.safetyRatings;
-                if (Array.isArray(safety) && safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")) {
+                if (
+                  Array.isArray(safety) &&
+                  safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")
+                ) {
                   await supabaseAdmin.from("escalations").insert({
                     conversation_id: threadId,
                     reason: "Safety probability threshold exceeded",
@@ -352,7 +391,10 @@ ${notesContext}
             });
           } catch (streamErr: any) {
             console.error("[API Chat] Stream response error:", streamErr?.message || streamErr);
-            const isQuota = streamErr?.statusCode === 429 || String(streamErr?.message).includes("quota") || String(streamErr?.message).includes("RESOURCE_EXHAUSTED");
+            const isQuota =
+              streamErr?.statusCode === 429 ||
+              String(streamErr?.message).includes("quota") ||
+              String(streamErr?.message).includes("RESOURCE_EXHAUSTED");
             return new Response(
               JSON.stringify({
                 error: isQuota
@@ -364,12 +406,17 @@ ${notesContext}
           }
         } catch (error: any) {
           console.error("[API Chat] Top-level error:", error?.message || error);
-          const isQuota = error?.statusCode === 429 || String(error?.message).includes("quota") || String(error?.message).includes("RESOURCE_EXHAUSTED");
+          const isQuota =
+            error?.statusCode === 429 ||
+            String(error?.message).includes("quota") ||
+            String(error?.message).includes("RESOURCE_EXHAUSTED");
           return new Response(
             JSON.stringify({
               error: isQuota
                 ? "AI quota exceeded. Please try again later."
-                : error instanceof Error ? error.message : "Failed to process chat request",
+                : error instanceof Error
+                  ? error.message
+                  : "Failed to process chat request",
             }),
             {
               status: isQuota ? 429 : 500,

@@ -139,7 +139,9 @@ function AuthInvalidator() {
   const router = useRouter();
   const queryClient = useQueryClient();
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
       router.invalidate();
       queryClient.invalidateQueries();
     });
@@ -179,9 +181,7 @@ function RootComponent() {
         console.warn(`[GilaniAI] Reloading page due to: ${reason}`);
         window.location.reload();
       } else {
-        console.error(
-          `[GilaniAI] Chunk load failure detected but reload rate-limited: ${reason}`
-        );
+        console.error(`[GilaniAI] Chunk load failure detected but reload rate-limited: ${reason}`);
       }
     };
 

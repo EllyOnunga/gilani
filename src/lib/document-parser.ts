@@ -39,14 +39,15 @@ async function getPdfJsLib(): Promise<any> {
 
   // Load the core PDF.js library
   await loadExternalScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js");
-  
+
   const pdfjsLib = window.pdfjsLib;
   if (!pdfjsLib) {
     throw new Error("PDF.js library was not initialized correctly.");
   }
 
   // Set the worker source path
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
   return pdfjsLib;
 }
 
@@ -56,7 +57,9 @@ async function getPdfJsLib(): Promise<any> {
 async function getMammoth(): Promise<any> {
   if (window.mammoth) return window.mammoth;
 
-  await loadExternalScript("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js");
+  await loadExternalScript(
+    "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js",
+  );
 
   const mammoth = window.mammoth;
   if (!mammoth) {
@@ -80,7 +83,9 @@ export interface ExtractedDocument {
  */
 export async function parseDocument(file: File): Promise<ExtractedDocument> {
   if (file.size > MAX_FILE_SIZE) {
-    throw new Error(`File exceeds the maximum size limit of 10MB (Size: ${(file.size / 1024 / 1024).toFixed(1)}MB).`);
+    throw new Error(
+      `File exceeds the maximum size limit of 10MB (Size: ${(file.size / 1024 / 1024).toFixed(1)}MB).`,
+    );
   }
 
   const name = file.name;
@@ -107,10 +112,8 @@ export async function parseDocument(file: File): Promise<ExtractedDocument> {
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const textContent = await page.getTextContent();
-          const pageText = textContent.items
-            .map((item: any) => item.str || "")
-            .join(" ");
-          
+          const pageText = textContent.items.map((item: any) => item.str || "").join(" ");
+
           fullText += pageText + "\n";
         }
 
@@ -136,7 +139,7 @@ export async function parseDocument(file: File): Promise<ExtractedDocument> {
 
       default:
         throw new Error(
-          `Unsupported file type (.${extension}). Please upload a PDF, DOCX, TXT, MD, or CSV file.`
+          `Unsupported file type (.${extension}). Please upload a PDF, DOCX, TXT, MD, or CSV file.`,
         );
     }
   } catch (err: any) {

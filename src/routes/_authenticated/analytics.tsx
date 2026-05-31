@@ -219,8 +219,8 @@ function AnalyticsPage() {
         </p>
         <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Performance Insights</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Track your learning trajectory, practice quiz performance, and mastery levels across syllabus
-          subjects.
+          Track your learning trajectory, practice quiz performance, and mastery levels across
+          syllabus subjects.
         </p>
       </header>
 
@@ -258,8 +258,18 @@ function AnalyticsPage() {
             icon: BarChart3,
             desc: "Concept mastery",
           },
-          { label: "Study Streak", value: `${streak} Day${streak === 1 ? "" : "s"}`, icon: Calendar, desc: "Active consistency" },
-          { label: "Notes Uploaded", value: `${notesCount} Note${notesCount === 1 ? "" : "s"}`, icon: BookOpen, desc: "Syllabus grounding" },
+          {
+            label: "Study Streak",
+            value: `${streak} Day${streak === 1 ? "" : "s"}`,
+            icon: Calendar,
+            desc: "Active consistency",
+          },
+          {
+            label: "Notes Uploaded",
+            value: `${notesCount} Note${notesCount === 1 ? "" : "s"}`,
+            icon: BookOpen,
+            desc: "Syllabus grounding",
+          },
         ].map((c) => (
           <div key={c.label} className="rounded-xl border border-border bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between mb-2">

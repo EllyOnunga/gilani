@@ -40,12 +40,12 @@ const ingestNote = createServerFn({ method: "POST" })
   .inputValidator(z.object({ title: z.string(), content: z.string(), userId: z.string() }))
   .handler(async ({ data }) => {
     const { title, content, userId } = data;
-    
+
     // SECURITY: Validate that title and content aren't empty strings
     if (!title.trim() || !content.trim()) {
       throw new Error("Title and content are required");
     }
-    
+
     // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
     const model = createLovableAiGatewayProvider().chatModel("gemini-1.5-flash");
 
@@ -113,9 +113,7 @@ ${content.slice(0, 8000)}`,
     const chunkData = await Promise.all(chunkPromises);
 
     // Bulk insert chunks in a single query to eliminate database write bottlenecks
-    const { error: chunksErr } = await supabaseAdmin
-      .from("note_chunks")
-      .insert(chunkData);
+    const { error: chunksErr } = await supabaseAdmin.from("note_chunks").insert(chunkData);
 
     if (chunksErr) {
       console.error("Failed to bulk insert note chunks:", chunksErr);
@@ -158,7 +156,7 @@ function NotesPage() {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
-  
+
   // Drag and drop states for document parser
   const [parsingFile, setParsingFile] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -184,12 +182,12 @@ function NotesPage() {
     const toastId = toast.loading(`Extracting text from ${file.name}...`);
     try {
       const parsed = await parseDocument(file);
-      
+
       // Auto pre-fill title and content
       const baseName = parsed.name.replace(/\.[^/.]+$/, ""); // Remove extension
       setTitle(baseName);
       setContent(parsed.text);
-      
+
       toast.success("Document text extracted successfully!", { id: toastId });
     } catch (err: any) {
       toast.error(err.message || "Failed to extract text from document", { id: toastId });
@@ -258,9 +256,21 @@ function NotesPage() {
           <div className="space-y-4">
             {/* Document Upload Zone */}
             <div
-              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
-              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
-              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(true);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(false);
+              }}
               onDrop={handleFileDrop}
               className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all ${
                 dragActive
@@ -286,7 +296,9 @@ function NotesPage() {
                   <Upload className="h-8 w-8 text-primary/70 animate-pulse" />
                 )}
                 <div>
-                  <span className="font-semibold text-primary underline underline-offset-2">Click to upload</span>{" "}
+                  <span className="font-semibold text-primary underline underline-offset-2">
+                    Click to upload
+                  </span>{" "}
                   or drag and drop a document
                 </div>
                 <div className="font-mono text-[10px] text-muted-foreground/80">

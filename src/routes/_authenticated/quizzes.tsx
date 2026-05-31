@@ -32,7 +32,7 @@ const generateQuiz = createServerFn({ method: "POST" })
   .inputValidator(z.object({ topic: z.string(), count: z.number(), userId: z.string() }))
   .handler(async ({ data }) => {
     const { topic, count, userId } = data;
-    
+
     // SECURITY: Validate inputs
     if (!topic.trim()) {
       throw new Error("Topic is required");
@@ -40,7 +40,7 @@ const generateQuiz = createServerFn({ method: "POST" })
     if (count < 1 || count > 50) {
       throw new Error("Question count must be between 1 and 50");
     }
-    
+
     // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
     const model = createLovableAiGatewayProvider().chatModel("gemini-1.5-flash");
     const { generateText } = await import("ai");

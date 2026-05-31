@@ -10,7 +10,7 @@ export async function calculateUserStreakAndStats(userId: string) {
     const [quizzesRes, messagesRes, notesRes] = await Promise.all([
       supabaseAdmin.from("quiz_attempts").select("created_at").eq("user_id", userId),
       supabaseAdmin.from("messages").select("created_at").eq("user_id", userId),
-      supabaseAdmin.from("notes").select("created_at").eq("user_id", userId)
+      supabaseAdmin.from("notes").select("created_at").eq("user_id", userId),
     ]);
 
     const activeDates = new Set<string>();
@@ -61,14 +61,14 @@ export async function calculateUserStreakAndStats(userId: string) {
     return {
       streak,
       notesCount: notesRes.data?.length ?? 0,
-      quizzesCount: quizzesRes.data?.length ?? 0
+      quizzesCount: quizzesRes.data?.length ?? 0,
     };
   } catch (err) {
     console.error("[calculateUserStreakAndStats] error:", err);
     return {
       streak: 0,
       notesCount: 0,
-      quizzesCount: 0
+      quizzesCount: 0,
     };
   }
 }

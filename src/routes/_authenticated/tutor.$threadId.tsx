@@ -1,10 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  MessageCircle, Plus, X, Send, Loader2, ShieldAlert, CheckCircle2, 
-  Clock, Brain, Paperclip, Trash2, FileText, ChevronUp, ChevronDown, 
-  ExternalLink, Copy, RefreshCw, Search 
+import {
+  MessageCircle,
+  Plus,
+  X,
+  Send,
+  Loader2,
+  ShieldAlert,
+  CheckCircle2,
+  Clock,
+  Brain,
+  Paperclip,
+  Trash2,
+  FileText,
+  ChevronUp,
+  ChevronDown,
+  ExternalLink,
+  Copy,
+  RefreshCw,
+  Search,
 } from "lucide-react";
 import { parseDocument } from "@/lib/document-parser";
 import { deleteThread } from "@/lib/tutor.functions";
@@ -32,16 +47,21 @@ function TutorThread() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then((res) => {
-      if (!active) return;
-      const session = res?.data?.session;
-      if (session?.access_token) setAuthToken(session.access_token);
-      setAuthLoading(false);
-    }).catch((err) => {
-      console.error("[TutorThread] Failed to get auth session:", err);
-      if (active) setAuthLoading(false);
-    });
-    return () => { active = false; };
+    supabase.auth
+      .getSession()
+      .then((res) => {
+        if (!active) return;
+        const session = res?.data?.session;
+        if (session?.access_token) setAuthToken(session.access_token);
+        setAuthLoading(false);
+      })
+      .catch((err) => {
+        console.error("[TutorThread] Failed to get auth session:", err);
+        if (active) setAuthLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (authLoading) {
@@ -68,10 +88,12 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const [threadsLoadError, setThreadsLoadError] = useState<string | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [escalationStatus, setEscalationStatus] = useState<"open" | "in_review" | "resolved" | null>(null);
+  const [escalationStatus, setEscalationStatus] = useState<
+    "open" | "in_review" | "resolved" | null
+  >(null);
   const [escalating, setEscalating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Custom dialog state for session deleting (prevents window.confirm)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -80,7 +102,11 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Client-side file attachment states
-  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; size: number } | null>(null);
+  const [attachedFile, setAttachedFile] = useState<{
+    name: string;
+    text: string;
+    size: number;
+  } | null>(null);
   const [parsingFile, setParsingFile] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +153,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         console.error("Failed to load user curriculum profile:", err);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleCurriculumChange = async (newVal: string) => {
@@ -174,7 +202,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         body: { threadId },
         headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
       }),
-    [threadId, authToken]
+    [threadId, authToken],
   );
 
   const chatHelpers: any = useChat({
@@ -189,7 +217,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
-    
+
     // Auto-resize textarea logic
     event.target.style.height = "auto";
     event.target.style.height = `${event.target.scrollHeight}px`;
@@ -206,12 +234,15 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       }
 
       const currentThread = threads.find((t) => t.id === threadId);
-      if (messages.length === 0 && (!currentThread?.title || currentThread.title === "New thread")) {
+      if (
+        messages.length === 0 &&
+        (!currentThread?.title || currentThread.title === "New thread")
+      ) {
         let derivedTitle = trimmedInput;
         if (derivedTitle.length > 32) {
           derivedTitle = derivedTitle.slice(0, 29) + "...";
         }
-        
+
         supabase
           .from("conversations")
           .update({ title: derivedTitle })
@@ -219,9 +250,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           .then(({ error }) => {
             if (error) console.error("Failed to update thread title:", error);
           });
-          
+
         setThreads((prev) =>
-          prev.map((t) => (t.id === threadId ? { ...t, title: derivedTitle } : t))
+          prev.map((t) => (t.id === threadId ? { ...t, title: derivedTitle } : t)),
         );
       }
 
@@ -289,20 +320,23 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     (async () => {
       try {
         const sessionPromise = supabase.auth.getSession();
-        const sessionResult = await withTimeout(
+        const sessionResult = (await withTimeout(
           sessionPromise,
           5000,
-          "Session fetch timed out"
+          "Session fetch timed out",
         ).catch((e) => {
           console.error("[TutorThread] session timeout:", e);
           return { data: { session: null }, error: e };
-        }) as any;
+        })) as any;
 
         const session = sessionResult?.data?.session;
         const sessionError = sessionResult?.error;
 
         if (sessionError) {
-          if (mounted) setThreadsLoadError(`Authentication error: ${sessionError.message || sessionError}. Please sign in again.`);
+          if (mounted)
+            setThreadsLoadError(
+              `Authentication error: ${sessionError.message || sessionError}. Please sign in again.`,
+            );
           return;
         }
 
@@ -312,17 +346,17 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           return;
         }
 
-        const { data, error } = await withTimeout(
+        const { data, error } = (await withTimeout(
           Promise.resolve(
             supabase
               .from("conversations")
               .select("id,title,updated_at")
               .eq("user_id", userId)
-              .order("updated_at", { ascending: false })
+              .order("updated_at", { ascending: false }),
           ),
           8000,
-          "Database connection timed out"
-        ) as any;
+          "Database connection timed out",
+        )) as any;
 
         if (error) {
           if (mounted) setThreadsLoadError(`Failed to load sessions: ${error.message}`);
@@ -336,7 +370,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         if (mounted) setThreadsLoading(false);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Load messages and active escalation status for the current thread
@@ -390,7 +426,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               role: m.role as "user" | "assistant",
               parts: [{ type: "text" as const, text: m.content || "" }],
               createdAt: m.created_at ? new Date(m.created_at) : new Date(),
-            }))
+            })),
           );
           setEscalationStatus((escalationRes.data?.status as any) || null);
           setMessagesLoading(false);
@@ -452,7 +488,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               toast.info("A teacher is now reviewing your conversation.", { duration: 4000 });
             }
           }
-        }
+        },
       )
       .subscribe();
 
@@ -489,7 +525,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               return [...prev, teacherMsg];
             });
           }
-        }
+        },
       )
       .subscribe();
 
@@ -536,7 +572,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const filteredThreads = useMemo(() => {
     if (!searchQuery.trim()) return threads;
     return threads.filter((t) =>
-      (t.title || "Untitled").toLowerCase().includes(searchQuery.toLowerCase())
+      (t.title || "Untitled").toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [threads, searchQuery]);
 
@@ -593,7 +629,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                 </div>
               )}
             </button>
-            
+
             {/* Delete confirm trigger (Replaces native window.confirm) */}
             <button
               onClick={(e) => {
@@ -737,9 +773,15 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           {messagesLoading && (
             <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
               <span className="flex gap-1 items-center text-muted-foreground">
-                <span className="animate-bounce" style={{ animationDelay: "0ms" }}>•</span>
-                <span className="animate-bounce" style={{ animationDelay: "150ms" }}>•</span>
-                <span className="animate-bounce" style={{ animationDelay: "300ms" }}>•</span>
+                <span className="animate-bounce" style={{ animationDelay: "0ms" }}>
+                  •
+                </span>
+                <span className="animate-bounce" style={{ animationDelay: "150ms" }}>
+                  •
+                </span>
+                <span className="animate-bounce" style={{ animationDelay: "300ms" }}>
+                  •
+                </span>
               </span>
               <p className="text-sm text-muted-foreground">Loading thread messages…</p>
             </div>
@@ -769,15 +811,16 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               <MessageCircle className="h-10 w-10 text-primary/65" />
               <h3 className="font-serif text-2xl font-bold">Start a study session</h3>
               <p className="text-xs text-muted-foreground">
-                Choose a starter question below or ask GilaniAI anything about your KCSE/CBC curriculum standards.
+                Choose a starter question below or ask GilaniAI anything about your KCSE/CBC
+                curriculum standards.
               </p>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full pt-4">
                 {[
                   "Explain Photosynthesis",
                   "Solve a quadratic equation",
                   "Describe Newton's Laws of Motion",
-                  "Analyze Kiswahili Fasihi notes"
+                  "Analyze Kiswahili Fasihi notes",
                 ].map((prompt) => (
                   <button
                     key={prompt}
@@ -811,17 +854,18 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                   }`}
                 >
                   {(() => {
-                    const partsText = m.parts
-                      ?.filter((p: any) => p.type === "text")
-                      .map((p: any) => p.text || "")
-                      .join("") || "";
+                    const partsText =
+                      m.parts
+                        ?.filter((p: any) => p.type === "text")
+                        .map((p: any) => p.text || "")
+                        .join("") || "";
 
                     const displayText = partsText || (m as any).content || "";
 
                     if (m.role === "assistant") {
                       const isLast = idx === messages.length - 1;
                       const isStreamActive = isPending;
-                      
+
                       return (
                         <div className="flex flex-col w-full">
                           <ThoughtAccordion
@@ -838,18 +882,16 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                               >
                                 {displayText}
                               </ReactMarkdown>
-                              
+
                               {/* Per-token typing blinking cursor */}
                               {isLast && isStreamActive && (
                                 <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-primary/70 animate-cursor-blink align-middle" />
                               )}
                             </div>
-                          ) : (
-                            isLast && isStreamActive ? null : (
-                              <span className="text-xs text-muted-foreground italic mt-1">
-                                No response generated. Please resend your question.
-                              </span>
-                            )
+                          ) : isLast && isStreamActive ? null : (
+                            <span className="text-xs text-muted-foreground italic mt-1">
+                              No response generated. Please resend your question.
+                            </span>
                           )}
 
                           {/* Action Bar inside assistant bubble on hover */}
@@ -880,15 +922,20 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                       );
                     }
 
-                    return (
-                      <span className="whitespace-pre-wrap">{displayText}</span>
-                    );
+                    return <span className="whitespace-pre-wrap">{displayText}</span>;
                   })()}
                 </div>
 
                 {/* Micro Timestamp Hover Tooltip */}
-                <div className={`absolute -bottom-5 ${m.role === "user" ? "right-2" : "left-2"} opacity-0 group-hover:opacity-100 transition-opacity duration-250 text-[9px] text-muted-foreground font-mono bg-background border border-border/60 px-1.5 py-0.5 rounded shadow-sm pointer-events-none z-10`}>
-                  {(m as any).createdAt ? new Date((m as any).createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                <div
+                  className={`absolute -bottom-5 ${m.role === "user" ? "right-2" : "left-2"} opacity-0 group-hover:opacity-100 transition-opacity duration-250 text-[9px] text-muted-foreground font-mono bg-background border border-border/60 px-1.5 py-0.5 rounded shadow-sm pointer-events-none z-10`}
+                >
+                  {(m as any).createdAt
+                    ? new Date((m as any).createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "Just now"}
                 </div>
               </div>
             ))}
@@ -919,7 +966,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               <div className="flex items-center gap-2 min-w-0">
                 <FileText className="h-4 w-4 flex-shrink-0 text-primary" />
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold truncate text-foreground">{attachedFile.name}</p>
+                  <p className="text-xs font-semibold truncate text-foreground">
+                    {attachedFile.name}
+                  </p>
                   <p className="font-mono text-[9px] text-muted-foreground mt-0.5">
                     {(attachedFile.size / 1024).toFixed(1)} KB • Document text loaded
                   </p>
@@ -965,7 +1014,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               rows={1}
               value={input}
               onChange={handleInputChange}
-              placeholder={isPending ? "Waiting for response..." : "Ask a question… (Enter to send)"}
+              placeholder={
+                isPending ? "Waiting for response..." : "Ask a question… (Enter to send)"
+              }
               disabled={isPending || parsingFile}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -974,7 +1025,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                 }
               }}
             />
-            
+
             <button
               onClick={(e) => submit(e as any)}
               disabled={isPending || parsingFile || !input.trim()}
@@ -993,7 +1044,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           <div className="flex items-center justify-between mt-1.5 px-1 min-h-[14px]">
             <p className="font-mono text-[9px] text-muted-foreground">
               {isPending ? (
-                <span className="text-primary/75 animate-pulse font-bold">GilaniAI is thinking… please wait</span>
+                <span className="text-primary/75 animate-pulse font-bold">
+                  GilaniAI is thinking… please wait
+                </span>
               ) : (
                 "Shift+Enter for new line"
               )}
@@ -1013,7 +1066,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4">
             <h3 className="font-serif text-lg font-bold text-foreground">Delete Study Session?</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Are you sure you want to permanently delete this study session? This will erase all message history and cannot be undone.
+              Are you sure you want to permanently delete this study session? This will erase all
+              message history and cannot be undone.
             </p>
             <div className="flex gap-2 justify-end pt-1">
               <button
@@ -1082,17 +1136,9 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       {children}
     </h4>
   ),
-  p: ({ children }) => (
-    <p className="text-sm leading-relaxed mb-2 last:mb-0">
-      {children}
-    </p>
-  ),
-  strong: ({ children }) => (
-    <strong className="font-semibold text-foreground">{children}</strong>
-  ),
-  em: ({ children }) => (
-    <em className="italic text-muted-foreground">{children}</em>
-  ),
+  p: ({ children }) => <p className="text-sm leading-relaxed mb-2 last:mb-0">{children}</p>,
+  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+  em: ({ children }) => <em className="italic text-muted-foreground">{children}</em>,
   a: ({ href, children }) => (
     <a
       href={href}
@@ -1130,16 +1176,18 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       )}
     </figure>
   ),
-  ul: ({ children }) => (
-    <ul className="list-none pl-0 my-2 space-y-1">{children}</ul>
-  ),
+  ul: ({ children }) => <ul className="list-none pl-0 my-2 space-y-1">{children}</ul>,
   ol: ({ children }) => (
-    <ol className="list-decimal pl-5 my-2 space-y-1 marker:text-primary marker:font-semibold">{children}</ol>
+    <ol className="list-decimal pl-5 my-2 space-y-1 marker:text-primary marker:font-semibold">
+      {children}
+    </ol>
   ),
   li: ({ children, node, ...props }: any) => {
     const isOrdered = node?.parent?.type === "element" && node?.parent?.tagName === "ol";
     return (
-      <li className={`text-sm leading-relaxed flex items-start gap-2 ${isOrdered ? "list-item" : ""}`}>
+      <li
+        className={`text-sm leading-relaxed flex items-start gap-2 ${isOrdered ? "list-item" : ""}`}
+      >
         {!isOrdered && (
           <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary/60" />
         )}
@@ -1163,9 +1211,7 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       </code>
     ),
   pre: ({ children }) => (
-    <pre className="my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">
-      {children}
-    </pre>
+    <pre className="my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">{children}</pre>
   ),
   hr: () => <hr className="my-3 border-border/60" />,
   table: ({ children }) => (
@@ -1181,9 +1227,7 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
   th: ({ children }) => (
     <th className="px-3 py-2 text-left text-xs font-bold text-muted-foreground">{children}</th>
   ),
-  td: ({ children }) => (
-    <td className="px-3 py-2 text-sm">{children}</td>
-  ),
+  td: ({ children }) => <td className="px-3 py-2 text-sm">{children}</td>,
 };
 
 interface ThoughtAccordionProps {
@@ -1193,7 +1237,12 @@ interface ThoughtAccordionProps {
   messageText: string;
 }
 
-function ThoughtAccordion({ messageId, isLastMessage, isStreaming, messageText }: ThoughtAccordionProps) {
+function ThoughtAccordion({
+  messageId,
+  isLastMessage,
+  isStreaming,
+  messageText,
+}: ThoughtAccordionProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [hasStartedGenerating, setHasStartedGenerating] = useState(false);
@@ -1236,7 +1285,12 @@ function ThoughtAccordion({ messageId, isLastMessage, isStreaming, messageText }
     return () => clearInterval(interval);
   }, [isStreaming, isLastMessage, messageText, hasStartedGenerating, seconds]);
 
-  const duration = finalDuration !== null ? finalDuration : (isStreaming && isLastMessage && !hasStartedGenerating ? seconds : historicalDuration);
+  const duration =
+    finalDuration !== null
+      ? finalDuration
+      : isStreaming && isLastMessage && !hasStartedGenerating
+        ? seconds
+        : historicalDuration;
   const activeStepIdx = Math.min(Math.floor(duration / 1.5), steps.length - 1);
   const isThinking = isStreaming && isLastMessage && !hasStartedGenerating;
 
@@ -1253,9 +1307,7 @@ function ThoughtAccordion({ messageId, isLastMessage, isStreaming, messageText }
             <Brain className="h-3.5 w-3.5 text-primary/70" />
           )}
           <span className="font-semibold uppercase tracking-wider font-mono text-[9px]">
-            {isThinking
-              ? `Thinking process (${duration}s...)`
-              : `Thought process (${duration}s)`}
+            {isThinking ? `Thinking process (${duration}s...)` : `Thought process (${duration}s)`}
           </span>
         </div>
         <ChevronUp
@@ -1271,7 +1323,7 @@ function ThoughtAccordion({ messageId, isLastMessage, isStreaming, messageText }
             {steps.map((step, idx) => {
               const completed = idx < activeStepIdx;
               const active = idx === activeStepIdx && isThinking;
-              
+
               let statusSymbol = "•";
               if (completed) statusSymbol = "✓";
               else if (active) statusSymbol = "⚡";

@@ -1,6 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from '@/integrations/supabase/types'
-import { supabaseAdmin } from '@/integrations/supabase/client.server'
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export async function authenticateRequest(request: Request) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -13,56 +13,53 @@ export async function authenticateRequest(request: Request) {
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
-      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY
-        ? ['SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY)']
-        : []),
+      ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
+      ...(!SUPABASE_PUBLISHABLE_KEY ? ["SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY)"] : []),
     ];
     throw new Response(
-      JSON.stringify({ error: `Missing Supabase environment variable(s): ${missing.join(', ')}` }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: `Missing Supabase environment variable(s): ${missing.join(", ")}` }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Response(
-      JSON.stringify({ error: 'Unauthorized: No valid Bearer token provided' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    );
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new Response(JSON.stringify({ error: "Unauthorized: No valid Bearer token provided" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  const token = authHeader.replace('Bearer ', '');
+  const token = authHeader.replace("Bearer ", "");
   if (!token) {
-    throw new Response(
-      JSON.stringify({ error: 'Unauthorized: Token is empty' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    );
+    throw new Response(JSON.stringify({ error: "Unauthorized: Token is empty" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  const supabaseClient = createClient<Database>(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      auth: {
-        storage: undefined,
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    }
-  );
+    },
+    auth: {
+      storage: undefined,
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
 
   const { data, error } = await supabaseClient.auth.getUser(token);
   if (error || !data?.user) {
-    console.error('[API Auth Error] Token verification failed:', error?.message || 'No user returned');
+    console.error(
+      "[API Auth Error] Token verification failed:",
+      error?.message || "No user returned",
+    );
     throw new Response(
-      JSON.stringify({ error: `Unauthorized: ${error?.message || 'Invalid token claims'}` }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: `Unauthorized: ${error?.message || "Invalid token claims"}` }),
+      { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
 
@@ -73,12 +70,12 @@ export async function authenticateRequest(request: Request) {
   };
 }
 
-export async function requireRole(userId: string, role: 'teacher' | 'admin'): Promise<boolean> {
+export async function requireRole(userId: string, role: "teacher" | "admin"): Promise<boolean> {
   const { data, error } = await supabaseAdmin
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', userId)
-    .eq('role', role)
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", role)
     .single();
   return !error && !!data;
 }

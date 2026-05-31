@@ -34,10 +34,10 @@ const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
 
   // SECURITY: Verify admin role before returning all profiles
   const { data: roleCheck, error: roleError } = await supabaseAdmin
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', userId)
-    .eq('role', 'admin')
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
     .single();
 
   if (roleError || !roleCheck) {
@@ -79,10 +79,10 @@ const updateRole = createServerFn({ method: "POST" })
     const { userId: adminUserId } = authResult;
 
     const { data: roleCheck } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', adminUserId)
-      .eq('role', 'admin')
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", adminUserId)
+      .eq("role", "admin")
       .single();
 
     if (!roleCheck) {
@@ -131,20 +131,14 @@ function AdminUsersPage() {
 
   const filtered = profileState.filter((p) => {
     const q = search.toLowerCase();
-    return (
-      !q ||
-      p.display_name?.toLowerCase().includes(q) ||
-      p.role.toLowerCase().includes(q)
-    );
+    return !q || p.display_name?.toLowerCase().includes(q) || p.role.toLowerCase().includes(q);
   });
 
   const handleRoleChange = async (userId: string, role: string) => {
     setUpdating(userId);
     try {
       await updateRole({ data: { userId, role } });
-      setProfileState((prev) =>
-        prev.map((p) => (p.id === userId ? { ...p, role } : p))
-      );
+      setProfileState((prev) => prev.map((p) => (p.id === userId ? { ...p, role } : p)));
       toast.success(`Role updated to ${role}`);
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to update role");
@@ -153,10 +147,13 @@ function AdminUsersPage() {
     }
   };
 
-  const counts = ROLES.reduce((acc, r) => {
-    acc[r] = profileState.filter((p) => p.role === r).length;
-    return acc;
-  }, {} as Record<Role, number>);
+  const counts = ROLES.reduce(
+    (acc, r) => {
+      acc[r] = profileState.filter((p) => p.role === r).length;
+      return acc;
+    },
+    {} as Record<Role, number>,
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8 lg:p-12">
@@ -176,10 +173,15 @@ function AdminUsersPage() {
         {ROLES.map((r) => {
           const { icon: Icon, color } = ROLE_META[r];
           return (
-            <div key={r} className="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
+            <div
+              key={r}
+              className="rounded-xl border border-border bg-card p-4 shadow-sm text-center"
+            >
               <Icon className={`mx-auto h-5 w-5 mb-2 ${color.split(" ")[0]}`} />
               <p className="font-serif text-3xl font-bold">{counts[r]}</p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">{r}s</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">
+                {r}s
+              </p>
             </div>
           );
         })}
@@ -227,11 +229,16 @@ function AdminUsersPage() {
                 const meta = ROLE_META[p.role as Role] ?? ROLE_META.student;
                 const isUpdating = updating === p.id;
                 return (
-                  <tr key={p.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                  <tr
+                    key={p.id}
+                    className="border-b border-border/50 hover:bg-accent/30 transition-colors"
+                  >
                     <td className="px-5 py-3">
                       <div>
                         <p className="font-semibold">{p.display_name ?? "—"}</p>
-                        <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id.slice(0, 8)}…</p>
+                        <p className="font-mono text-[10px] text-muted-foreground">
+                          ID: {p.id.slice(0, 8)}…
+                        </p>
                       </div>
                     </td>
                     <td className="px-5 py-3">
@@ -250,7 +257,9 @@ function AdminUsersPage() {
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${meta.color}`}>
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${meta.color}`}
+                        >
                           {p.role}
                         </span>
                         <div className="relative">
@@ -264,7 +273,9 @@ function AdminUsersPage() {
                               title="Change role"
                             >
                               {ROLES.map((r) => (
-                                <option key={r} value={r}>{r}</option>
+                                <option key={r} value={r}>
+                                  {r}
+                                </option>
                               ))}
                             </select>
                           )}
@@ -287,7 +298,8 @@ function AdminUsersPage() {
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
         <Settings className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-amber-800 leading-relaxed">
-          <strong>Admin note:</strong> Role changes take effect immediately. Teachers gain access to the Escalations panel. Admins have full platform access.
+          <strong>Admin note:</strong> Role changes take effect immediately. Teachers gain access to
+          the Escalations panel. Admins have full platform access.
         </p>
       </div>
     </div>

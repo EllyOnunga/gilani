@@ -27,7 +27,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 type DashboardData = {
@@ -98,7 +97,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { user } = useAuth();
-  const name = (user?.user_metadata?.display_name as string) || user?.email?.split("@")[0] || "Student";
+  const name =
+    (user?.user_metadata?.display_name as string) || user?.email?.split("@")[0] || "Student";
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [initialised, setInitialised] = useState(false);
@@ -128,7 +128,9 @@ function Dashboard() {
       {/* Welcome Header */}
       <header className="animate-in-slide flex items-end justify-between flex-wrap gap-4">
         <div>
-          <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Dashboard</p>
+          <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
+            Dashboard
+          </p>
           <h2 className="mt-1 max-w-2xl font-serif text-3xl sm:text-4xl text-balance">
             Habari, <span className="capitalize">{name}</span>. Ready to study?
           </h2>
@@ -151,14 +153,13 @@ function Dashboard() {
 
       {/* Study Suite Carousel */}
       <section className="animate-in-slide [animation-delay:50ms] w-full">
-        <Carousel
-          opts={{ align: "start" }}
-          className="w-full relative"
-        >
+        <Carousel opts={{ align: "start" }} className="w-full relative">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-serif text-2xl font-semibold">Your Study Suite</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Explore curriculum tools and practice systems</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Explore curriculum tools and practice systems
+              </p>
             </div>
             <div className="flex gap-2">
               <CarouselPrevious className="static translate-y-0 h-9 w-9 border-border/80 bg-background/50 hover:bg-background" />
@@ -170,7 +171,8 @@ function Dashboard() {
             {[
               {
                 title: "Socratic AI Tutor",
-                description: "Curriculum-grounded Socratic explanations & direct teacher escalations.",
+                description:
+                  "Curriculum-grounded Socratic explanations & direct teacher escalations.",
                 icon: MessageCircle,
                 to: "/tutor",
                 accent: "from-blue-500/20 to-indigo-500/10 text-blue-600 dark:text-blue-400",
@@ -186,7 +188,8 @@ function Dashboard() {
               },
               {
                 title: "Practice Quizzes",
-                description: "Generate customized practice tests tuned to your weak subject topics.",
+                description:
+                  "Generate customized practice tests tuned to your weak subject topics.",
                 icon: ListChecks,
                 to: "/quizzes",
                 accent: "from-orange-500/20 to-red-500/10 text-orange-600 dark:text-orange-400",
@@ -194,7 +197,8 @@ function Dashboard() {
               },
               {
                 title: "Syllabus Planner",
-                description: "Create personalized study schedules and keep track of daily revision.",
+                description:
+                  "Create personalized study schedules and keep track of daily revision.",
                 icon: CalendarDays,
                 to: "/planner",
                 accent: "from-violet-500/20 to-purple-500/10 text-violet-600 dark:text-violet-400",
@@ -202,7 +206,8 @@ function Dashboard() {
               },
               {
                 title: "Performance Analytics",
-                description: "Track mastery score progress, daily streaks, and flagged focus items.",
+                description:
+                  "Track mastery score progress, daily streaks, and flagged focus items.",
                 icon: BarChart3,
                 to: "/analytics",
                 accent: "from-pink-500/20 to-rose-500/10 text-pink-600 dark:text-pink-400",
@@ -211,13 +216,18 @@ function Dashboard() {
             ].map((item, idx) => {
               const Icon = item.icon;
               return (
-                <CarouselItem key={idx} className="pl-4 basis-[85%] sm:basis-1/2 md:basis-1/3 animate-in-slide">
+                <CarouselItem
+                  key={idx}
+                  className="pl-4 basis-[85%] sm:basis-1/2 md:basis-1/3 animate-in-slide"
+                >
                   <Link
                     to={item.to as any}
                     className="group block h-full rounded-xl border border-border bg-card p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:scale-[1.01] flex flex-col justify-between"
                   >
                     <div>
-                      <div className={`p-3 rounded-lg w-fit bg-gradient-to-br ${item.accent} transition-transform duration-300 group-hover:scale-110`}>
+                      <div
+                        className={`p-3 rounded-lg w-fit bg-gradient-to-br ${item.accent} transition-transform duration-300 group-hover:scale-110`}
+                      >
                         <Icon className="h-5 w-5" />
                       </div>
                       <h4 className="mt-4 font-serif text-base sm:text-lg font-bold group-hover:text-primary transition-colors flex items-center gap-1.5">
@@ -249,7 +259,9 @@ function Dashboard() {
         {/* Dynamic Study Plan Widget */}
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Recent Planner Tasks</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Recent Planner Tasks
+            </p>
             <h3 className="font-serif text-xl mt-2 mb-4">Today's Schedule</h3>
 
             {plannerTasks.length === 0 ? (
@@ -259,20 +271,28 @@ function Dashboard() {
             ) : (
               <div className="space-y-3">
                 {plannerTasks.map((t, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border/50">
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border/50"
+                  >
                     <CheckCircle2 className="h-4.5 w-4.5 text-muted-foreground/60 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold">{t.subject}</p>
                       <p className="text-[11px] text-muted-foreground truncate">{t.task}</p>
                     </div>
-                    <span className="font-mono text-[10px] text-muted-foreground">{t.duration}</span>
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      {t.duration}
+                    </span>
                   </div>
                 ))}
               </div>
             )}
           </div>
           {plannerTasks.length > 0 && (
-            <Link to="/planner" className="text-xs font-semibold text-primary mt-4 inline-block hover:underline">
+            <Link
+              to="/planner"
+              className="text-xs font-semibold text-primary mt-4 inline-block hover:underline"
+            >
               View full calendar plan →
             </Link>
           )}
@@ -281,7 +301,9 @@ function Dashboard() {
         {/* Weak Topics / Mastery Widget */}
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Focus Concepts</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Focus Concepts
+            </p>
             <h3 className="font-serif text-xl mt-2 mb-4">Target Revision</h3>
 
             {weakTopics.length === 0 ? (
@@ -292,16 +314,24 @@ function Dashboard() {
             ) : (
               <div className="space-y-2">
                 {weakTopics.map((topic, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-red-200/50 dark:border-red-900/35 bg-red-50/50 dark:bg-red-950/20">
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2.5 p-2.5 rounded-lg border border-red-200/50 dark:border-red-900/35 bg-red-50/50 dark:bg-red-950/20"
+                  >
                     <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-                    <span className="text-xs text-red-800 dark:text-red-200 font-medium truncate">{topic}</span>
+                    <span className="text-xs text-red-800 dark:text-red-200 font-medium truncate">
+                      {topic}
+                    </span>
                   </div>
                 ))}
               </div>
             )}
           </div>
           {weakTopics.length > 0 && (
-            <Link to="/analytics" className="text-xs font-semibold text-primary mt-4 inline-block hover:underline">
+            <Link
+              to="/analytics"
+              className="text-xs font-semibold text-primary mt-4 inline-block hover:underline"
+            >
               View detailed performance analytics →
             </Link>
           )}

@@ -1,11 +1,28 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Outlet, redirect, Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  Link,
+  useRouterState,
+  useNavigate,
+} from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  MessageCircle, BookOpenText, ListChecks, CalendarDays, BarChart3,
-  ShieldAlert, LogOut, GraduationCap, Settings, Menu, X,
-  Sun, Moon,
+  MessageCircle,
+  BookOpenText,
+  ListChecks,
+  CalendarDays,
+  BarChart3,
+  ShieldAlert,
+  LogOut,
+  GraduationCap,
+  Settings,
+  Menu,
+  X,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createServerFn } from "@tanstack/react-start";
@@ -121,8 +138,6 @@ function AuthedShell() {
     navigate({ to: "/" });
   };
 
-  
-
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden lg:flex-row bg-background text-foreground">
       {/* Mobile Top Navigation Header */}
@@ -135,7 +150,9 @@ function AuthedShell() {
           <Menu className="h-6 w-6" />
         </button>
         <Link to="/dashboard" className="text-center flex-1">
-          <h1 className="font-serif text-xl font-bold italic tracking-tight text-primary">GilaniAI</h1>
+          <h1 className="font-serif text-xl font-bold italic tracking-tight text-primary">
+            GilaniAI
+          </h1>
         </Link>
         <div className="flex items-center gap-1.5">
           <button
@@ -172,7 +189,9 @@ function AuthedShell() {
         {/* Brand logo & Mobile Close Button */}
         <div className="flex items-center justify-between mb-8">
           <Link to="/dashboard" onClick={() => setSidebarOpen(false)} className="block">
-            <h1 className="font-serif text-2xl font-bold italic tracking-tight text-primary">GilaniAI</h1>
+            <h1 className="font-serif text-2xl font-bold italic tracking-tight text-primary">
+              GilaniAI
+            </h1>
             <p className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Ethical Learning / KCSE-CBC
             </p>
@@ -231,7 +250,9 @@ function AuthedShell() {
                 to={"/admin/users" as any}
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
-                  path.startsWith("/admin") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
+                  path.startsWith("/admin")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-black/5"
                 }`}
               >
                 <Settings className="h-4 w-4" /> Users & Roles
@@ -250,12 +271,15 @@ function AuthedShell() {
               to="/tutor"
               onClick={(e) => {
                 setSidebarOpen(false);
-                const isTutorThread = path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
+                const isTutorThread =
+                  path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
                 if (isTutorThread) {
                   e.preventDefault();
                   window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
                 } else {
-                  toast.info("Please select or create a study session first, then click the Escalate button in the chat header.");
+                  toast.info(
+                    "Please select or create a study session first, then click the Escalate button in the chat header.",
+                  );
                 }
               }}
               className="mt-3 block w-full rounded bg-foreground py-2 text-center text-[11px] font-bold uppercase tracking-wider text-background hover:bg-foreground/90"
@@ -293,4 +317,3 @@ function AuthedShell() {
     </div>
   );
 }
-

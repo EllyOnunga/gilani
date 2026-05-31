@@ -3,7 +3,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { ShieldAlert, CheckCircle2, MessageSquare, Clock, AlertTriangle, Loader2 } from "lucide-react";
+import {
+  ShieldAlert,
+  CheckCircle2,
+  MessageSquare,
+  Clock,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -24,27 +31,27 @@ type Escalation = {
 const listEscalations = createServerFn({ method: "POST" })
   .inputValidator(z.object({ userId: z.string() }))
   .handler(async ({ data }) => {
-  const { userId } = data;
+    const { userId } = data;
 
-  // SECURITY: Verify teacher/admin role before returning escalations
-  const { data: roleCheck, error: roleError } = await supabaseAdmin
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', userId)
-    .in('role', ['teacher', 'admin'])
-    .single();
+    // SECURITY: Verify teacher/admin role before returning escalations
+    const { data: roleCheck, error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["teacher", "admin"])
+      .single();
 
-  if (roleError || !roleCheck) {
-    throw new Error("Forbidden: Teacher access required");
-  }
+    if (roleError || !roleCheck) {
+      throw new Error("Forbidden: Teacher access required");
+    }
 
-  const { data: escalationsData, error } = await supabaseAdmin
-    .from("escalations")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return (escalationsData ?? []) as any[];
-});
+    const { data: escalationsData, error } = await supabaseAdmin
+      .from("escalations")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (escalationsData ?? []) as any[];
+  });
 
 const resolveEscalation = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id: z.string(), expertAnswer: z.string(), userId: z.string() }))
@@ -52,10 +59,10 @@ const resolveEscalation = createServerFn({ method: "POST" })
     const { id, expertAnswer, userId } = data;
 
     const { data: roleCheck } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .in('role', ['teacher', 'admin'])
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["teacher", "admin"])
       .single();
 
     if (!roleCheck) {
@@ -86,7 +93,8 @@ const resolveEscalation = createServerFn({ method: "POST" })
         parts: JSON.stringify([{ type: "text", text: teacherText }]),
         user_id: esc.user_id, // Associate with student's user ID so RLS lets them view it
       } as any);
-      if (msgErr) console.error("Failed to sync teacher response to messages table:", msgErr.message);
+      if (msgErr)
+        console.error("Failed to sync teacher response to messages table:", msgErr.message);
     }
   });
 
@@ -101,7 +109,10 @@ export const Route = createFileRoute("/_authenticated/teacher/escalations")({
 
 const REASON_LABELS: Record<string, { label: string; color: string }> = {
   distress_keyword: { label: "Distress keyword", color: "text-red-600 bg-red-50 border-red-200" },
-  student_request: { label: "Student request", color: "text-amber-600 bg-amber-50 border-amber-200" },
+  student_request: {
+    label: "Student request",
+    color: "text-amber-600 bg-amber-50 border-amber-200",
+  },
   low_confidence: { label: "Low confidence", color: "text-blue-600 bg-blue-50 border-blue-200" },
 };
 
@@ -142,7 +153,10 @@ function EscalationsPage() {
   };
 
   const handleResolve = async (id: string) => {
-    if (!answer.trim()) { toast.error("Please write an expert answer first."); return; }
+    if (!answer.trim()) {
+      toast.error("Please write an expert answer first.");
+      return;
+    }
     setSaving(true);
     try {
       const authRes = await supabase.auth.getSession();
@@ -150,7 +164,7 @@ function EscalationsPage() {
       if (!session?.user?.id) throw new Error("Not signed in");
       await resolveEscalation({ data: { id, expertAnswer: answer, userId: session.user.id } });
       setEscalations((prev) =>
-        prev.map((e) => e.id === id ? { ...e, status: "resolved", detail: answer } : e)
+        prev.map((e) => (e.id === id ? { ...e, status: "resolved", detail: answer } : e)),
       );
       setActiveId(null);
       toast.success("Escalation resolved.");
@@ -184,10 +198,15 @@ function EscalationsPage() {
           { label: "Pending", value: pending.length, icon: Clock },
           { label: "Resolved", value: resolved.length, icon: CheckCircle2 },
         ].map(({ label, value, icon: Icon }) => (
-          <div key={label} className="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
+          <div
+            key={label}
+            className="rounded-xl border border-border bg-card p-4 shadow-sm text-center"
+          >
             <Icon className="mx-auto h-5 w-5 text-primary mb-2" />
             <p className="font-serif text-3xl font-bold">{value}</p>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{label}</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+              {label}
+            </p>
           </div>
         ))}
       </div>
@@ -216,7 +235,10 @@ function EscalationsPage() {
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Pending ({pending.length})
           </p>
           {pending.map((esc) => {
-            const reasonMeta = REASON_LABELS[esc.reason] ?? { label: esc.reason, color: "text-muted-foreground bg-muted border-border" };
+            const reasonMeta = REASON_LABELS[esc.reason] ?? {
+              label: esc.reason,
+              color: "text-muted-foreground bg-muted border-border",
+            };
             const isOpen = activeId === esc.id;
             return (
               <div
@@ -226,7 +248,9 @@ function EscalationsPage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between p-4 sm:p-5">
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${reasonMeta.color}`}>
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${reasonMeta.color}`}
+                      >
                         {reasonMeta.label}
                       </span>
                       <span className="font-mono text-[10px] text-muted-foreground">
@@ -234,13 +258,11 @@ function EscalationsPage() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {esc.created_at
-                        ? new Date(esc.created_at).toLocaleString("en-KE")
-                        : "—"}
+                      {esc.created_at ? new Date(esc.created_at).toLocaleString("en-KE") : "—"}
                     </p>
                   </div>
                   <button
-                    onClick={() => isOpen ? setActiveId(null) : open(esc.id)}
+                    onClick={() => (isOpen ? setActiveId(null) : open(esc.id))}
                     className="flex-shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-accent transition-colors"
                   >
                     {isOpen ? "Collapse" : "Respond"}
@@ -304,7 +326,8 @@ function EscalationsPage() {
               </div>
               {esc.detail && (
                 <p className="text-xs text-muted-foreground italic leading-relaxed">
-                  "{esc.detail.slice(0, 200)}{esc.detail.length > 200 ? "…" : ""}"
+                  "{esc.detail.slice(0, 200)}
+                  {esc.detail.length > 200 ? "…" : ""}"
                 </p>
               )}
             </div>
