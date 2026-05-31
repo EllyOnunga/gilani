@@ -22,7 +22,7 @@ import {
   Search,
 } from "lucide-react";
 import { parseDocument } from "@/lib/document-parser";
-import { deleteThreadFn } from "@/lib/tutor.server-fns";
+import { deleteThreadFn, generateThreadTitleFn } from "@/lib/tutor.server-fns";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { withTimeout } from "@/lib/async";
@@ -236,24 +236,36 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       const currentThread = threads.find((t) => t.id === threadId);
       if (
         messages.length === 0 &&
-        (!currentThread?.title || currentThread.title === "New thread")
+        (!currentThread?.title ||
+          currentThread.title === "New thread" ||
+          currentThread.title === "New tutor session")
       ) {
-        let derivedTitle = trimmedInput;
-        if (derivedTitle.length > 32) {
-          derivedTitle = derivedTitle.slice(0, 29) + "...";
-        }
-
-        supabase
-          .from("conversations")
-          .update({ title: derivedTitle })
-          .eq("id", threadId)
-          .then(({ error }) => {
-            if (error) console.error("Failed to update thread title:", error);
-          });
-
-        setThreads((prev) =>
-          prev.map((t) => (t.id === threadId ? { ...t, title: derivedTitle } : t)),
-        );
+        generateThreadTitleFn({ data: trimmedInput }).then((derivedTitle) => {
+          supabase
+            .from("conversations")
+            .update({ title: derivedTitle })
+            .eq("id", threadId)
+            .then(({ error }) => {
+              if (error) console.error("Failed to update thread title:", error);
+            });
+          setThreads((prev) =>
+            prev.map((t) =>
+              t.id === threadId ? { ...t, title: derivedTitle } : t,
+            ),
+          );
+        }).catch(() => {
+          const fallback =
+            trimmedInput.slice(0, 29) + (trimmedInput.length > 29 ? "..." : "");
+          supabase
+            .from("conversations")
+            .update({ title: fallback })
+            .eq("id", threadId);
+          setThreads((prev) =>
+            prev.map((t) =>
+              t.id === threadId ? { ...t, title: fallback } : t,
+            ),
+          );
+        });
       }
 
       // Clear textbox and attachment instantly, and reset height
@@ -607,8 +619,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           <div
             key={t.id}
             className={`group relative flex items-center justify-between rounded-lg transition-colors ${t.id === threadId
-                ? "bg-primary/10 text-primary font-semibold"
-                : "hover:bg-accent text-foreground"
+              ? "bg-primary/10 text-primary font-semibold"
+              : "hover:bg-accent text-foreground"
               }`}
           >
             <button
@@ -846,8 +858,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               >
                 <div
                   className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed relative ${m.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-tr-sm"
-                      : "bg-card border border-border text-foreground rounded-tl-sm"
+                    ? "bg-primary text-primary-foreground rounded-tr-sm"
+                    : "bg-card border border-border text-foreground rounded-tl-sm"
                     }`}
                 >
                   {(() => {
