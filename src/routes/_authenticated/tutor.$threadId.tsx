@@ -22,7 +22,7 @@ import {
   Search,
 } from "lucide-react";
 import { parseDocument } from "@/lib/document-parser";
-import { deleteThread } from "@/lib/tutor.functions";
+import { deleteThreadFn } from "@/lib/tutor.server-fns";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { withTimeout } from "@/lib/async";
@@ -606,11 +606,10 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         {filteredThreads.map((t) => (
           <div
             key={t.id}
-            className={`group relative flex items-center justify-between rounded-lg transition-colors ${
-              t.id === threadId
+            className={`group relative flex items-center justify-between rounded-lg transition-colors ${t.id === threadId
                 ? "bg-primary/10 text-primary font-semibold"
                 : "hover:bg-accent text-foreground"
-            }`}
+              }`}
           >
             <button
               onClick={() => {
@@ -670,9 +669,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 
       {/* Mobile sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out lg:hidden ${
-          threadsOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out lg:hidden ${threadsOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="mb-4 flex items-center justify-between">
           <span className="font-serif text-lg font-bold text-primary">Sessions</span>
@@ -847,11 +845,10 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                 style={{ justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}
               >
                 <div
-                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed relative ${
-                    m.role === "user"
+                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed relative ${m.role === "user"
                       ? "bg-primary text-primary-foreground rounded-tr-sm"
                       : "bg-card border border-border text-foreground rounded-tl-sm"
-                  }`}
+                    }`}
                 >
                   {(() => {
                     const partsText =
@@ -932,9 +929,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                 >
                   {(m as any).createdAt
                     ? new Date((m as any).createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
                     : "Just now"}
                 </div>
               </div>
@@ -996,9 +993,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             />
             <label
               htmlFor="chat-file-attachment"
-              className={`flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-xl border border-border bg-card shadow-sm hover:bg-accent transition-colors ${
-                isPending || parsingFile ? "opacity-50 pointer-events-none" : ""
-              }`}
+              className={`flex h-11 w-11 flex-shrink-0 cursor-pointer items-center justify-center rounded-xl border border-border bg-card shadow-sm hover:bg-accent transition-colors ${isPending || parsingFile ? "opacity-50 pointer-events-none" : ""
+                }`}
               title="Attach a document (PDF, DOCX, TXT, MD, CSV)"
             >
               {parsingFile ? (
@@ -1085,7 +1081,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                     // Uses server-side deleteThread which explicitly removes
                     // messages then the conversation via supabaseAdmin.
                     // (Schema also has ON DELETE CASCADE as a safety net.)
-                    await deleteThread(id!);
+                    await deleteThreadFn({ data: id! });
 
                     setThreads((prev) => prev.filter((t) => t.id !== id));
                     toast.success("Session deleted successfully!", { id: toastId });
@@ -1311,9 +1307,8 @@ function ThoughtAccordion({
           </span>
         </div>
         <ChevronUp
-          className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-300 ${
-            isOpen ? "" : "rotate-180"
-          }`}
+          className={`h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-300 ${isOpen ? "" : "rotate-180"
+            }`}
         />
       </button>
 
@@ -1331,9 +1326,8 @@ function ThoughtAccordion({
               return (
                 <div
                   key={idx}
-                  className={`flex items-start gap-2 transition-colors duration-300 ${
-                    completed ? "text-primary/70 font-semibold" : ""
-                  } ${active ? "text-primary animate-pulse font-bold" : ""}`}
+                  className={`flex items-start gap-2 transition-colors duration-300 ${completed ? "text-primary/70 font-semibold" : ""
+                    } ${active ? "text-primary animate-pulse font-bold" : ""}`}
                 >
                   <span className="w-3 flex-shrink-0 text-center">{statusSymbol}</span>
                   <span>{step}</span>
