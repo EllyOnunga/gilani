@@ -46,7 +46,7 @@ const NAV = [
   { to: "/dashboard" as any, label: "Dashboard", icon: GraduationCap },
   { to: "/tutor" as any, label: "Tutor Chat", icon: MessageCircle },
   { to: "/notes" as any, label: "Study Notes", icon: BookOpenText },
-  { to: "/quizzes" as any, label: "Mock Quizzes", icon: ListChecks },
+  { to: "/quizzes" as any, label: "Practice Quizzes", icon: ListChecks },
   { to: "/planner" as any, label: "Planner", icon: CalendarDays },
   { to: "/analytics" as any, label: "Analytics", icon: BarChart3 },
 ] as const;

@@ -78,8 +78,11 @@ const loadDashboardData = createServerFn({ method: "GET" })
       }));
     }
 
+    const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils");
+    const { streak } = await calculateUserStreakAndStats(userId);
+
     return {
-      streak: quizCount > 0 ? 3 : 0, // simple streak simulation based on active use
+      streak,
       quizzesCompleted: quizCount,
       weakTopics: Array.from(weakSet).slice(0, 4),
       plannerTasks,
@@ -182,7 +185,7 @@ function Dashboard() {
                 cta: "Summarise notes",
               },
               {
-                title: "Mock Quizzes",
+                title: "Practice Quizzes",
                 description: "Generate customized practice tests tuned to your weak subject topics.",
                 icon: ListChecks,
                 to: "/quizzes",

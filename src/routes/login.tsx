@@ -45,8 +45,8 @@ function LoginPage() {
     <div className="min-h-screen grid place-items-center bg-background px-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-8">
         <Link to="/" className="font-serif text-xl font-bold italic text-primary">GilaniAI</Link>
-        <h1 className="mt-6 font-serif text-3xl">Welcome back</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Pick up where you left off.</p>
+        <h1 className="mt-6 font-serif text-3xl font-bold">Unified Portal Login</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Secure access for students, teachers, and administrators.</p>
         <form onSubmit={onSubmit} className="mt-6 space-y-3">
           <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40" />

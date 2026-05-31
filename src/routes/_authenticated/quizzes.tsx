@@ -116,7 +116,7 @@ const saveAttempt = createServerFn({ method: "POST" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/quizzes")({
-  head: () => ({ meta: [{ title: "Mock Quizzes — GilaniAI" }] }),
+  head: () => ({ meta: [{ title: "Practice Quizzes — GilaniAI" }] }),
   component: QuizzesPage,
 });
 
@@ -277,7 +277,7 @@ function QuizzesPage() {
       <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12">
         <header className="animate-in-slide">
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
-            Mock Quizzes
+            Practice Quizzes
           </p>
           <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Test Your Knowledge</h2>
           <p className="mt-2 text-sm text-muted-foreground">

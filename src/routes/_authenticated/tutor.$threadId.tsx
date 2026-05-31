@@ -1,16 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageCircle, Plus, X, Send, Loader2, ShieldAlert, CheckCircle2, Clock, Brain, Paperclip, Trash2, FileText, ChevronUp, ChevronDown, ExternalLink } from "lucide-react";
+import { 
+  MessageCircle, Plus, X, Send, Loader2, ShieldAlert, CheckCircle2, 
+  Clock, Brain, Paperclip, Trash2, FileText, ChevronUp, ChevronDown, 
+  ExternalLink, Copy, RefreshCw, Search 
+} from "lucide-react";
 import { parseDocument } from "@/lib/document-parser";
-import { useChat } from "@ai-sdk/react";
+import { deleteThread } from "@/lib/tutor.functions";
+import { useChat, type UIMessage } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { withTimeout } from "@/lib/async";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-// ✅ Route declaration at module level (moved to bottom export, defined here for use in component)
+// Route declaration
 export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
   component: TutorThread,
 });
@@ -65,7 +70,14 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const [input, setInput] = useState("");
   const [escalationStatus, setEscalationStatus] = useState<"open" | "in_review" | "resolved" | null>(null);
   const [escalating, setEscalating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Custom dialog state for session deleting (prevents window.confirm)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Client-side file attachment states
   const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; size: number } | null>(null);
@@ -86,37 +98,6 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         setParsingFile(false);
         e.target.value = ""; // Reset element value
       }
-    }
-  };
-
-  const handleDeleteThread = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this study session? This will permanently erase all chat logs."
-    );
-    if (!confirmDelete) return;
-
-    const toastId = toast.loading("Deleting session...");
-    try {
-      const { error } = await supabase
-        .from("conversations")
-        .delete()
-        .eq("id", id);
-        
-      if (error) throw error;
-      
-      setThreads((prev) => prev.filter((t) => t.id !== id));
-      toast.success("Session deleted successfully!", { id: toastId });
-      
-      // If we deleted the active thread, navigate back to tutor home
-      if (id === threadId) {
-        navigate({ to: "/tutor" } as any);
-      }
-    } catch (err: any) {
-      console.error("Failed to delete thread:", err);
-      toast.error(err.message || "Failed to delete session", { id: toastId });
     }
   };
 
@@ -171,7 +152,6 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   };
 
   // Safety net: force all loading states off after 10s regardless of what else is happening.
-  // Prevents permanent spinner when auth refresh fails or DB is slow.
   useEffect(() => {
     const safety = setTimeout(() => {
       setMessagesLoading((prev) => {
@@ -186,8 +166,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     return () => clearTimeout(safety);
   }, []);
 
-  // ✅ Fixed: transport is memoized — no new object on every render,
-  //    and re-creates only when threadId or authToken changes
+  // transport is memoized
   const transport = useMemo(
     () =>
       new TextStreamChatTransport({
@@ -198,16 +177,22 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     [threadId, authToken]
   );
 
-  const { messages, setMessages, sendMessage, status } = useChat({
+  const chatHelpers: any = useChat({
     transport,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
     onFinish: () => setChatError(null),
   });
+  const { messages: messagesRaw, setMessages, sendMessage, status, reload } = chatHelpers;
+  const messages = messagesRaw as UIMessage[];
 
   const isPending = status === "submitted" || status === "streaming";
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
+    
+    // Auto-resize textarea logic
+    event.target.style.height = "auto";
+    event.target.style.height = `${event.target.scrollHeight}px`;
   };
 
   const submit = async (event?: { preventDefault?: () => void }) => {
@@ -217,21 +202,16 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     try {
       let finalMessage = trimmedInput;
       if (attachedFile) {
-        // Build structured context using standard XML tags for optimal AI reasoning
         finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${attachedFile.text}\n</DocumentContent>\n\nStudent Query: ${trimmedInput}`;
       }
 
-      // If this is the FIRST message in the thread (i.e. messages.length === 0)
-      // and the current thread title is "New thread" or "Untitled"
       const currentThread = threads.find((t) => t.id === threadId);
       if (messages.length === 0 && (!currentThread?.title || currentThread.title === "New thread")) {
-        // Derive a beautiful title from user input (up to 32 chars)
         let derivedTitle = trimmedInput;
         if (derivedTitle.length > 32) {
           derivedTitle = derivedTitle.slice(0, 29) + "...";
         }
         
-        // Non-blocking background database update to keep UI fast
         supabase
           .from("conversations")
           .update({ title: derivedTitle })
@@ -240,18 +220,19 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             if (error) console.error("Failed to update thread title:", error);
           });
           
-        // Update local sidebar threads state instantly
         setThreads((prev) =>
           prev.map((t) => (t.id === threadId ? { ...t, title: derivedTitle } : t))
         );
       }
 
-      // Clear textbox and attachment instantly for real-time responsiveness
+      // Clear textbox and attachment instantly, and reset height
       setInput("");
       setAttachedFile(null);
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
 
-      // Trigger sendMessage in the background without blocking the UI
-      sendMessage({ text: finalMessage }).catch((error) => {
+      sendMessage({ text: finalMessage }).catch((error: unknown) => {
         console.error("[TutorThread] sendMessage background error:", error);
         toast.error("Failed to send message. Please try again.");
       });
@@ -289,7 +270,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     }
   };
 
-  // Listen for global manual escalation events (e.g. from the sidebar layout)
+  // Listen for global manual escalation events
   useEffect(() => {
     const handleGlobalEscalate = () => {
       if (!escalationStatus && !escalating && !messagesLoading) {
@@ -408,6 +389,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               id: m.id ?? crypto.randomUUID(),
               role: m.role as "user" | "assistant",
               parts: [{ type: "text" as const, text: m.content || "" }],
+              createdAt: m.created_at ? new Date(m.created_at) : new Date(),
             }))
           );
           setEscalationStatus((escalationRes.data?.status as any) || null);
@@ -428,14 +410,24 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     };
   }, [threadId]);
 
-  // Scroll to bottom on new messages
+  // Smart Scroll to bottom: only scroll when user is already at the bottom or sent a query
   useEffect(() => {
-    if (messages.length > 0) {
+    const container = scrollContainerRef.current;
+    if (!container || messages.length === 0) return;
+
+    const threshold = 150; // px
+    const isAtBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
+
+    const lastMessage = messages[messages.length - 1];
+    const justSent = lastMessage?.role === "user";
+
+    if (isAtBottom || justSent) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messages]);
 
-  // 🔴 Real-time: listen for escalation status changes on this thread
+  // Real-time escalation status changes
   useEffect(() => {
     if (!threadId) return;
     const channel = supabase
@@ -469,7 +461,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     };
   }, [threadId]);
 
-  // 🔴 Real-time: listen for new teacher messages (assistant role) inserted into this thread
+  // Real-time teacher messages
   useEffect(() => {
     if (!threadId || messagesLoading) return;
     const channel = supabase
@@ -484,14 +476,14 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         },
         (payload) => {
           const msg = payload.new as any;
-          // Only append if this is a teacher-injected assistant message (not from the AI stream)
           if (msg?.role === "assistant" && msg?.content?.includes("Teacher Review:")) {
             const teacherMsg = {
               id: msg.id ?? crypto.randomUUID(),
               role: "assistant" as const,
               parts: [{ type: "text" as const, text: msg.content || "" }],
+              createdAt: msg.created_at ? new Date(msg.created_at) : new Date(),
             };
-            setMessages((prev) => {
+            setMessages((prev: UIMessage[]) => {
               const alreadyExists = prev.some((m) => m.id === teacherMsg.id);
               if (alreadyExists) return prev;
               return [...prev, teacherMsg];
@@ -506,7 +498,6 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     };
   }, [threadId, messagesLoading]);
 
-  // ✅ Fixed: use full typed route path with params
   const handleSelectThread = (id: string) => {
     navigate({
       to: "/tutor/$threadId",
@@ -541,6 +532,14 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     } as any);
   };
 
+  // Filter threads by search query
+  const filteredThreads = useMemo(() => {
+    if (!searchQuery.trim()) return threads;
+    return threads.filter((t) =>
+      (t.title || "Untitled").toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [threads, searchQuery]);
+
   const ThreadList = (
     <div className="flex h-full flex-col">
       <div className="mb-4 flex items-center justify-between">
@@ -554,8 +553,21 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           <Plus className="h-3 w-3" /> New
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto space-y-1">
-        {threads.map((t) => (
+
+      {/* Sidebar Thread Search Input */}
+      <div className="relative mb-3 flex-shrink-0">
+        <input
+          type="text"
+          placeholder="Search sessions..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded-lg border border-border bg-background pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/60"
+        />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-1 pr-1">
+        {filteredThreads.map((t) => (
           <div
             key={t.id}
             className={`group relative flex items-center justify-between rounded-lg transition-colors ${
@@ -582,8 +594,13 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               )}
             </button>
             
+            {/* Delete confirm trigger (Replaces native window.confirm) */}
             <button
-              onClick={(e) => handleDeleteThread(t.id, e)}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setDeleteConfirmId(t.id);
+              }}
               className="absolute right-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
               title="Delete conversation"
             >
@@ -591,9 +608,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             </button>
           </div>
         ))}
-        {threads.length === 0 && !threadsLoading && (
+        {filteredThreads.length === 0 && !threadsLoading && (
           <p className="text-xs text-muted-foreground text-center py-6 italic">
-            No sessions yet. Start a new one!
+            No sessions match.
           </p>
         )}
       </div>
@@ -645,8 +662,6 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             Study Sessions
           </button>
         </div>
-
-        {/* AI Thinking indicator removed in favor of inline ThoughtAccordion */}
 
         {/* Chat header */}
         <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3.5 sm:px-6">
@@ -706,9 +721,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         </div>
 
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {threadsLoadError && (
-            <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+            <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive animate-in-slide">
               <p>{threadsLoadError}</p>
               <button
                 onClick={() => navigate({ to: "/login" } as any)}
@@ -748,41 +763,59 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             </div>
           )}
 
+          {/* Socratic Suggested Starter Prompts empty state */}
           {!messagesLoading && !messagesLoadError && messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full gap-3 py-12 text-center">
-              <MessageCircle className="h-10 w-10 text-muted-foreground/40" />
-              <p className="font-serif text-xl text-muted-foreground">Start a conversation</p>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Ask GilaniAI anything about your KCSE or CBC curriculum.
+            <div className="flex flex-col items-center justify-center min-h-[70%] max-w-md mx-auto gap-4 py-8 text-center animate-in-slide">
+              <MessageCircle className="h-10 w-10 text-primary/65" />
+              <h3 className="font-serif text-2xl font-bold">Start a study session</h3>
+              <p className="text-xs text-muted-foreground">
+                Choose a starter question below or ask GilaniAI anything about your KCSE/CBC curriculum standards.
               </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full pt-4">
+                {[
+                  "Explain Photosynthesis",
+                  "Solve a quadratic equation",
+                  "Describe Newton's Laws of Motion",
+                  "Analyze Kiswahili Fasihi notes"
+                ].map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => {
+                      setInput(prompt);
+                      textareaRef.current?.focus();
+                    }}
+                    className="text-left rounded-xl border border-border bg-card p-3.5 hover:border-primary/50 hover:bg-primary/5 transition-all text-xs font-bold text-foreground shadow-sm hover:scale-[1.01]"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
+          {/* Message bubbles */}
           {!messagesLoading &&
             !messagesLoadError &&
-            messages.map((m, idx) => (
+            messages.map((m, idx: number) => (
               <div
                 key={m.id ?? idx}
-                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                className="flex relative group justify-start"
+                style={{ justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}
               >
                 <div
-                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed relative ${
                     m.role === "user"
                       ? "bg-primary text-primary-foreground rounded-tr-sm"
                       : "bg-card border border-border text-foreground rounded-tl-sm"
                   }`}
                 >
                   {(() => {
-                    // Primary: accumulate text from parts[] (AI SDK v6 UIMessage format,
-                    // populated by TextStreamChatTransport during streaming and by setMessages
-                    // when loading from DB)
                     const partsText = m.parts
                       ?.filter((p: any) => p.type === "text")
                       .map((p: any) => p.text || "")
                       .join("") || "";
 
-                    // Fallback: m.content getter (UIMessage.finalStep.content)
-                    // covers edge cases where parts may be empty/missing
                     const displayText = partsText || (m as any).content || "";
 
                     if (m.role === "assistant") {
@@ -798,13 +831,18 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                             messageText={displayText}
                           />
                           {displayText ? (
-                            <div className="mt-1 prose-ai">
+                            <div className="mt-1 prose-ai relative">
                               <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 components={markdownComponents}
                               >
                                 {displayText}
                               </ReactMarkdown>
+                              
+                              {/* Per-token typing blinking cursor */}
+                              {isLast && isStreamActive && (
+                                <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-primary/70 animate-cursor-blink align-middle" />
+                              )}
                             </div>
                           ) : (
                             isLast && isStreamActive ? null : (
@@ -812,6 +850,31 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                                 No response generated. Please resend your question.
                               </span>
                             )
+                          )}
+
+                          {/* Action Bar inside assistant bubble on hover */}
+                          {displayText && !isStreamActive && (
+                            <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-border/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(displayText);
+                                  toast.success("Copied to clipboard!");
+                                }}
+                                className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-muted"
+                                title="Copy answer"
+                              >
+                                <Copy className="h-3 w-3" /> Copy
+                              </button>
+                              {isLast && (
+                                <button
+                                  onClick={() => reload()}
+                                  className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-muted"
+                                  title="Regenerate this response"
+                                >
+                                  <RefreshCw className="h-3 w-3" /> Retry
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       );
@@ -822,13 +885,18 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                     );
                   })()}
                 </div>
+
+                {/* Micro Timestamp Hover Tooltip */}
+                <div className={`absolute -bottom-5 ${m.role === "user" ? "right-2" : "left-2"} opacity-0 group-hover:opacity-100 transition-opacity duration-250 text-[9px] text-muted-foreground font-mono bg-background border border-border/60 px-1.5 py-0.5 rounded shadow-sm pointer-events-none z-10`}>
+                  {(m as any).createdAt ? new Date((m as any).createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                </div>
               </div>
             ))}
 
           {/* Virtual Assistant thinking bubble during early stream request phase */}
           {isPending && messages[messages.length - 1]?.role === "user" && (
             <div className="flex justify-start animate-in-slide">
-              <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-card border border-border text-foreground rounded-tl-sm w-full">
+              <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-card border border-border text-foreground rounded-tl-sm w-full animate-pulse">
                 <div className="flex flex-col w-full">
                   <ThoughtAccordion
                     messageId="temp-thinking-indicator"
@@ -846,7 +914,6 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 
         {/* Input area */}
         <div className="border-t border-border bg-background p-3 sm:p-4">
-          {/* Attached file preview */}
           {attachedFile && (
             <div className="mb-2.5 flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 animate-in-slide">
               <div className="flex items-center gap-2 min-w-0">
@@ -893,11 +960,12 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             </label>
 
             <textarea
-              className="flex-1 min-h-[44px] max-h-36 resize-none rounded-xl border border-border bg-card px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed"
+              ref={textareaRef}
+              className="flex-1 min-h-[44px] max-h-36 resize-none rounded-xl border border-border bg-card px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring leading-relaxed disabled:opacity-50 disabled:cursor-not-allowed"
               rows={1}
               value={input}
               onChange={handleInputChange}
-              placeholder="Ask a question… (Enter to send)"
+              placeholder={isPending ? "Waiting for response..." : "Ask a question… (Enter to send)"}
               disabled={isPending || parsingFile}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -906,6 +974,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                 }
               }}
             />
+            
             <button
               onClick={(e) => submit(e as any)}
               disabled={isPending || parsingFile || !input.trim()}
@@ -919,15 +988,70 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               )}
             </button>
           </div>
-          <p className="mt-1.5 font-mono text-[10px] text-muted-foreground text-center">
-            {isPending ? (
-              <span className="text-primary/70">GilaniAI is thinking… please wait</span>
-            ) : (
-              "Shift+Enter for new line"
+
+          {/* Premium Character Count and Status Hint Bar */}
+          <div className="flex items-center justify-between mt-1.5 px-1 min-h-[14px]">
+            <p className="font-mono text-[9px] text-muted-foreground">
+              {isPending ? (
+                <span className="text-primary/75 animate-pulse font-bold">GilaniAI is thinking… please wait</span>
+              ) : (
+                "Shift+Enter for new line"
+              )}
+            </p>
+            {input.length > 0 && (
+              <span className="font-mono text-[9px] text-muted-foreground font-semibold">
+                {input.length} characters
+              </span>
             )}
-          </p>
+          </div>
         </div>
       </main>
+
+      {/* Premium Confirm Delete Modal Overlay (Replaces Native window.confirm) */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in-slide">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4">
+            <h3 className="font-serif text-lg font-bold text-foreground">Delete Study Session?</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Are you sure you want to permanently delete this study session? This will erase all message history and cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end pt-1">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="rounded-lg border border-border bg-background px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const id = deleteConfirmId;
+                  setDeleteConfirmId(null);
+                  const toastId = toast.loading("Deleting session...");
+                  try {
+                    // Uses server-side deleteThread which explicitly removes
+                    // messages then the conversation via supabaseAdmin.
+                    // (Schema also has ON DELETE CASCADE as a safety net.)
+                    await deleteThread(id!);
+
+                    setThreads((prev) => prev.filter((t) => t.id !== id));
+                    toast.success("Session deleted successfully!", { id: toastId });
+
+                    if (id === threadId) {
+                      navigate({ to: "/tutor" } as any);
+                    }
+                  } catch (err: any) {
+                    console.error("Failed to delete thread:", err);
+                    toast.error(err.message || "Failed to delete session", { id: toastId });
+                  }
+                }}
+                className="rounded-lg bg-destructive px-4 py-2 text-xs font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/90 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -936,11 +1060,8 @@ function AiThinkingIndicator() {
   return null; // Deprecated, replaced by inline ThoughtAccordion
 }
 
-// ─── Rich Markdown Renderer ──────────────────────────────────────────────────
-// Custom react-markdown component map: maps markdown elements to styled React
-// components. No raw asterisks or pound signs ever appear in the rendered UI.
+// Rich Markdown Renderer
 const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components"] = {
-  // ── Headings ──────────────────────────────────────────────────────────────
   h1: ({ children }) => (
     <h1 className="text-lg font-extrabold mt-4 mb-1.5 text-primary border-b border-primary/20 pb-1 leading-snug">
       {children}
@@ -961,23 +1082,17 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       {children}
     </h4>
   ),
-
-  // ── Paragraphs ────────────────────────────────────────────────────────────
   p: ({ children }) => (
     <p className="text-sm leading-relaxed mb-2 last:mb-0">
       {children}
     </p>
   ),
-
-  // ── Inline emphasis ───────────────────────────────────────────────────────
   strong: ({ children }) => (
     <strong className="font-semibold text-foreground">{children}</strong>
   ),
   em: ({ children }) => (
     <em className="italic text-muted-foreground">{children}</em>
   ),
-
-  // ── Links ─────────────────────────────────────────────────────────────────
   a: ({ href, children }) => (
     <a
       href={href}
@@ -989,8 +1104,6 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-70" />
     </a>
   ),
-
-  // ── Images ────────────────────────────────────────────────────────────────
   img: ({ src, alt }) => (
     <figure className="my-3">
       <img
@@ -1017,8 +1130,6 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       )}
     </figure>
   ),
-
-  // ── Lists ─────────────────────────────────────────────────────────────────
   ul: ({ children }) => (
     <ul className="list-none pl-0 my-2 space-y-1">{children}</ul>
   ),
@@ -1036,15 +1147,11 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       </li>
     );
   },
-
-  // ── Blockquotes ───────────────────────────────────────────────────────────
   blockquote: ({ children }) => (
     <blockquote className="border-l-4 border-primary/50 pl-3 my-2 bg-primary/5 rounded-r-lg py-1.5 text-sm text-muted-foreground italic">
       {children}
     </blockquote>
   ),
-
-  // ── Inline code ───────────────────────────────────────────────────────────
   code: ({ inline, children, ...props }: any) =>
     inline ? (
       <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px] text-primary">
@@ -1055,18 +1162,12 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
         {children}
       </code>
     ),
-
-  // ── Code blocks ───────────────────────────────────────────────────────────
   pre: ({ children }) => (
     <pre className="my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">
       {children}
     </pre>
   ),
-
-  // ── Horizontal rule ───────────────────────────────────────────────────────
   hr: () => <hr className="my-3 border-border/60" />,
-
-  // ── Tables ────────────────────────────────────────────────────────────────
   table: ({ children }) => (
     <div className="my-3 overflow-x-auto rounded-xl border border-border">
       <table className="min-w-full text-sm">{children}</table>
@@ -1098,7 +1199,6 @@ function ThoughtAccordion({ messageId, isLastMessage, isStreaming, messageText }
   const [hasStartedGenerating, setHasStartedGenerating] = useState(false);
   const [finalDuration, setFinalDuration] = useState<number | null>(null);
 
-  // Cycling pedagogical steps for visual feedback
   const steps = [
     "Consulting Kenyan national curriculum standards...",
     "Reviewing context from your uploaded study notes...",
@@ -1107,9 +1207,7 @@ function ThoughtAccordion({ messageId, isLastMessage, isStreaming, messageText }
     "Polishing primary English and secondary Swahili definitions...",
   ];
 
-  // Derive a stable, realistic historical duration for past messages based on their text content
   const historicalDuration = useMemo(() => {
-    // Generate a pseudo-random but stable number between 3 and 7 based on the message ID
     let hash = 0;
     for (let i = 0; i < messageId.length; i++) {
       hash = messageId.charCodeAt(i) + ((hash << 5) - hash);
@@ -1117,21 +1215,18 @@ function ThoughtAccordion({ messageId, isLastMessage, isStreaming, messageText }
     return Math.abs((hash % 5) + 3);
   }, [messageId]);
 
-  // Keep track of the active ticking timer for the currently streaming message
   useEffect(() => {
     if (!isStreaming || !isLastMessage) return;
 
     if (messageText.trim() !== "") {
-      // Once text starts streaming, freeze the duration
       if (!hasStartedGenerating) {
         setHasStartedGenerating(true);
         setFinalDuration(seconds || 1);
-        setIsOpen(false); // Auto-collapse when writing begins!
+        setIsOpen(false);
       }
       return;
     }
 
-    // Expand thought box by default while thinking
     setIsOpen(true);
 
     const interval = setInterval(() => {

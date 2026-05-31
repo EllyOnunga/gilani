@@ -46,12 +46,16 @@ const fetchAnalytics = createServerFn({ method: "GET" })
       .order("created_at", { ascending: true });
 
     if (!attempts || attempts.length === 0) {
+      const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils");
+      const { streak, notesCount } = await calculateUserStreakAndStats(userId);
       return {
         attemptsCount: 0,
         averageScore: 0,
         attemptsHistory: [],
         weakTopics: [],
         subjectMastery: [],
+        streak,
+        notesCount,
       };
     }
 
@@ -113,12 +117,17 @@ const fetchAnalytics = createServerFn({ method: "GET" })
       score: Math.round(data.totalScore / data.count),
     }));
 
+    const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils");
+    const { streak, notesCount } = await calculateUserStreakAndStats(userId);
+
     return {
       attemptsCount,
       averageScore,
       attemptsHistory,
       weakTopics,
       subjectMastery,
+      streak,
+      notesCount,
     };
   });
 
@@ -198,6 +207,8 @@ function AnalyticsPage() {
   const activeSubjectMastery = hasData ? data.subjectMastery : mockSubjectMastery;
   const attemptsCount = hasData ? data.attemptsCount : 5;
   const averageScore = hasData ? data.averageScore : 78;
+  const streak = data ? (data as any).streak : 3;
+  const notesCount = data ? (data as any).notesCount : 4;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8 lg:p-12">
@@ -208,7 +219,7 @@ function AnalyticsPage() {
         </p>
         <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Performance Insights</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Track your learning trajectory, mock quiz performance, and mastery levels across syllabus
+          Track your learning trajectory, practice quiz performance, and mastery levels across syllabus
           subjects.
         </p>
       </header>
@@ -219,7 +230,7 @@ function AnalyticsPage() {
           <div>
             <p className="text-xs font-semibold text-amber-800">Viewing Demonstration Analytics</p>
             <p className="text-xs text-amber-700 leading-relaxed mt-0.5">
-              You haven't completed enough practice quizzes yet. Take a few quizzes under **Mock
+              You haven't completed enough practice quizzes yet. Take a few quizzes under **Practice
               Quizzes** to populate your real-time academic dashboard.
             </p>
           </div>
@@ -247,8 +258,8 @@ function AnalyticsPage() {
             icon: BarChart3,
             desc: "Concept mastery",
           },
-          { label: "Study Streak", value: "3 Days", icon: Calendar, desc: "Active consistency" },
-          { label: "Notes Uploaded", value: "4 Notes", icon: BookOpen, desc: "Syllabus grounding" },
+          { label: "Study Streak", value: `${streak} Day${streak === 1 ? "" : "s"}`, icon: Calendar, desc: "Active consistency" },
+          { label: "Notes Uploaded", value: `${notesCount} Note${notesCount === 1 ? "" : "s"}`, icon: BookOpen, desc: "Syllabus grounding" },
         ].map((c) => (
           <div key={c.label} className="rounded-xl border border-border bg-card p-5 shadow-sm">
             <div className="flex items-center justify-between mb-2">
