@@ -557,7 +557,7 @@ ${notesContext}
             }`;
 
           // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
-          const model = createLovableAiGatewayProvider().chatModel("gemini-2.0-flash");
+          const model = createLovableAiGatewayProvider().chatModel();
 
           // AI SDK v6: messages are UIMessage objects with parts[]
           // We need to convert them to the model message format
@@ -649,12 +649,52 @@ ${notesContext}
                       reason: "distress_keyword",
                       user_id: userId,
                     });
+                    // Notify all teachers
+                    const { data: teachers } = await supabaseAdmin
+                      .from("user_roles")
+                      .select("user_id")
+                      .in("role", ["teacher", "admin"]);
+                    if (teachers && teachers.length > 0) {
+                      await (supabaseAdmin as any).from("notifications").insert(
+                        teachers.map(
+                          (t) =>
+                            ({
+                              user_id: t.user_id,
+                              title: "Urgent: Student Distress Detected",
+                              message:
+                                "A student may need immediate support. Please review the flagged conversation.",
+                              type: "warning",
+                              link: "/teacher/escalations",
+                            }) as any,
+                        ),
+                      );
+                    }
                   } else if (checkDignityViolation(safeText)) {
                     await supabaseAdmin.from("escalations").insert({
                       conversation_id: threadId,
                       reason: "dignity_violation",
                       user_id: userId,
                     });
+                    // Notify all teachers
+                    const { data: teachers } = await supabaseAdmin
+                      .from("user_roles")
+                      .select("user_id")
+                      .in("role", ["teacher", "admin"]);
+                    if (teachers && teachers.length > 0) {
+                      await (supabaseAdmin as any).from("notifications").insert(
+                        teachers.map(
+                          (t) =>
+                            ({
+                              user_id: t.user_id,
+                              title: "Dignity Violation Detected",
+                              message:
+                                "A conversation has been flagged for a dignity violation. Please review.",
+                              type: "warning",
+                              link: "/teacher/escalations",
+                            }) as any,
+                        ),
+                      );
+                    }
                   }
                 }
               } catch (persistError) {
@@ -675,11 +715,13 @@ ${notesContext}
             const isQuota =
               streamErr?.statusCode === 429 ||
               String(streamErr?.message).includes("quota") ||
-              String(streamErr?.message).includes("RESOURCE_EXHAUSTED");
+              String(streamErr?.message).includes("RESOURCE_EXHAUSTED") ||
+              String(streamErr?.message).includes("rate_limit_exceeded") ||
+              String(streamErr?.message).includes("Rate limit");
             return new Response(
               JSON.stringify({
                 error: isQuota
-                  ? "AI quota exceeded. The Gemini API free tier limit has been reached. Please try again later."
+                  ? "AI rate limit reached. The free tier daily limit has been reached. Please try again in a few minutes."
                   : "The AI model could not generate a response. Please try again.",
               }),
               { status: isQuota ? 429 : 500, headers: { "Content-Type": "application/json" } },
@@ -690,7 +732,9 @@ ${notesContext}
           const isQuota =
             error?.statusCode === 429 ||
             String(error?.message).includes("quota") ||
-            String(error?.message).includes("RESOURCE_EXHAUSTED");
+            String(error?.message).includes("RESOURCE_EXHAUSTED") ||
+            String(error?.message).includes("rate_limit_exceeded") ||
+            String(error?.message).includes("Rate limit");
           return new Response(
             JSON.stringify({
               error: isQuota

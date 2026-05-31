@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createResolutionNotification } from "@/lib/tutor.server-fns";
 import {
   ShieldAlert,
   CheckCircle2,
@@ -25,7 +26,6 @@ type Escalation = {
   created_at: string;
   user_id: string;
 };
-
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
 const listEscalations = createServerFn({ method: "POST" })
@@ -48,6 +48,7 @@ const listEscalations = createServerFn({ method: "POST" })
     const { data: escalationsData, error } = await supabaseAdmin
       .from("escalations")
       .select("*")
+      .or(`reviewer_id.eq.${userId},reviewer_id.is.null`)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return (escalationsData ?? []) as any[];
@@ -98,6 +99,30 @@ const resolveEscalation = createServerFn({ method: "POST" })
     }
   });
 
+const getConversationMessages = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ conversationId: z.string(), userId: z.string() }))
+  .handler(async ({ data }) => {
+    const { conversationId, userId } = data;
+
+    const { data: roleCheck } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["teacher", "admin"])
+      .single();
+
+    if (!roleCheck) throw new Error("Forbidden: Teacher access required");
+
+    const { data: messages, error } = await supabaseAdmin
+      .from("messages")
+      .select("role, content, created_at")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+
+    if (error) throw new Error(error.message);
+    return messages ?? [];
+  });
+
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/teacher/escalations")({
@@ -122,6 +147,8 @@ function EscalationsPage() {
   const [answer, setAnswer] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [convoMessages, setConvoMessages] = useState<any[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -146,10 +173,26 @@ function EscalationsPage() {
     };
   }, []);
 
-  const open = (id: string) => {
+  const open = async (id: string) => {
     setActiveId(id);
     const existing = escalations.find((e) => e.id === id);
     setAnswer(existing?.detail ?? "");
+    if (existing?.conversation_id) {
+      setLoadingMessages(true);
+      try {
+        const authRes = await supabase.auth.getSession();
+        const session = authRes?.data?.session;
+        if (!session?.user?.id) return;
+        const msgs = await getConversationMessages({
+          data: { conversationId: existing.conversation_id, userId: session.user.id },
+        });
+        setConvoMessages(msgs);
+      } catch (err: any) {
+        toast.error(err?.message ?? "Failed to load messages");
+      } finally {
+        setLoadingMessages(false);
+      }
+    }
   };
 
   const handleResolve = async (id: string) => {
@@ -168,6 +211,16 @@ function EscalationsPage() {
       );
       setActiveId(null);
       toast.success("Escalation resolved.");
+      // Notify student
+      const esc = escalations.find((e) => e.id === id);
+      if (esc?.conversation_id && esc?.user_id) {
+        await createResolutionNotification({
+          data: {
+            studentId: esc.user_id,
+            conversationId: esc.conversation_id,
+          },
+        });
+      }
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to resolve");
     } finally {
@@ -271,6 +324,43 @@ function EscalationsPage() {
 
                 {isOpen && (
                   <div className="border-t border-border px-5 pb-5 pt-4 space-y-3 animate-in-slide">
+                    {/* Conversation History */}
+                    <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground block">
+                      Conversation History
+                    </label>
+                    {loadingMessages ? (
+                      <div className="flex items-center gap-2 py-4">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        <span className="text-xs text-muted-foreground">Loading messages…</span>
+                      </div>
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto rounded-lg border border-border bg-muted/30 p-3 space-y-3">
+                        {convoMessages.length === 0 ? (
+                          <p className="text-xs text-muted-foreground italic">No messages found.</p>
+                        ) : (
+                          convoMessages.map((msg, i) => (
+                            <div
+                              key={i}
+                              className={`flex flex-col gap-0.5 ${msg.role === "user" ? "items-end" : "items-start"}`}
+                            >
+                              <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                                {msg.role === "user" ? "Student" : "GilaniAI"}
+                              </span>
+                              <div
+                                className={`rounded-lg px-3 py-2 text-xs max-w-[85%] leading-relaxed ${
+                                  msg.role === "user"
+                                    ? "bg-primary/10 text-foreground"
+                                    : "bg-card border border-border text-foreground"
+                                }`}
+                              >
+                                {msg.content}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+
                     <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground block">
                       Expert Answer
                     </label>

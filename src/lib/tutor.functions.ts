@@ -45,14 +45,12 @@ export async function escalateMessage(
   messageId?: string,
   reason?: string,
 ) {
-  const { error } = await supabaseAdmin
-    .from("escalations")
-    .insert({
-      conversation_id: threadId,
-      detail: messageId || null,
-      reason: reason || "manual",
-      user_id: userId,
-    });
+  const { error } = await supabaseAdmin.from("escalations").insert({
+    conversation_id: threadId,
+    detail: messageId || null,
+    reason: reason || "manual",
+    user_id: userId,
+  });
   if (error) throw error;
   return true;
 }

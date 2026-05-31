@@ -37,7 +37,7 @@ export const createGoogleAiProvider = (apiKey?: string) => {
     activeProvider = "google";
   } else {
     // No valid provider — default to google and let the API throw a clear error
-    activeProvider = "google";
+    activeProvider = "openai";
   }
 
   console.log(`[AI Gateway] Selected active provider: ${activeProvider}`);

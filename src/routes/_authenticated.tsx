@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth";
+import { NotificationBell } from "@/components/notifications";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
@@ -82,8 +83,17 @@ function AuthedShell() {
     if (loading) return;
     if (!user) {
       navigate({ to: "/login", search: { redirect: window.location.href } });
+      return;
     }
-  }, [loading, user, navigate]);
+    // Redirect teachers/admins to their section if landing on student dashboard
+    if (path === "/dashboard") {
+      if (roles.includes("admin")) {
+        navigate({ to: "/admin/users" as any });
+      } else if (roles.includes("teacher")) {
+        navigate({ to: "/teacher/escalations" as any });
+      }
+    }
+  }, [loading, user, roles, path, navigate]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -155,6 +165,7 @@ function AuthedShell() {
           </h1>
         </Link>
         <div className="flex items-center gap-1.5">
+          <NotificationBell userId={user.id} />
           <button
             onClick={toggleTheme}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground transition-colors"
@@ -292,6 +303,7 @@ function AuthedShell() {
               {user?.email}
             </p>
             <div className="flex items-center gap-1">
+              <NotificationBell userId={user.id} />
               <button
                 onClick={toggleTheme}
                 className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-black/5 transition-colors"

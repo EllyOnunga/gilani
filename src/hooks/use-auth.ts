@@ -28,7 +28,6 @@ export function useAuth(): AuthState {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        // defer role fetch to avoid deadlock in auth callback
         setTimeout(() => {
           supabase
             .from("user_roles")
@@ -45,19 +44,26 @@ export function useAuth(): AuthState {
 
     supabase.auth
       .getSession()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (!active) return;
         setSession(data.session);
         setUser(data.session?.user ?? null);
-        setLoading(false);
         if (data.session?.user) {
-          supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", data.session.user.id)
-            .then(({ data: r }) => {
-              if (active) setRoles((r ?? []).map((x) => x.role as AppRole));
-            });
+          try {
+            const { data: r } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", data.session.user.id);
+            if (active) {
+              setRoles((r ?? []).map((x) => x.role as AppRole));
+            }
+          } catch {
+            // roles fetch failed, continue without roles
+          } finally {
+            if (active) setLoading(false);
+          }
+        } else {
+          if (active) setLoading(false);
         }
       })
       .catch((e) => {

@@ -22,13 +22,18 @@ import {
   Search,
 } from "lucide-react";
 import { parseDocument } from "@/lib/document-parser";
-import { deleteThreadFn, generateThreadTitleFn } from "@/lib/tutor.server-fns";
+import {
+  deleteThreadFn,
+  generateThreadTitleFn,
+  lookupTeacherByEmail,
+  createEscalationNotification,
+} from "@/lib/tutor.server-fns";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { jsPDF } from "jspdf";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import { saveAs } from "file-saver";
-import { Mic, MicOff, Volume2, VolumeX, Download, FileDown } from "lucide-react";
+import { Mic, MicOff, Volume2, VolumeX, Download, FileDown, ListChecks, Timer } from "lucide-react";
 import { withTimeout } from "@/lib/async";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -106,6 +111,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const [escalating, setEscalating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [escalateModalOpen, setEscalateModalOpen] = useState(false);
+  const [teacherEmail, setTeacherEmail] = useState("");
+  const [escalateEmailError, setEscalateEmailError] = useState("");
 
   // Custom dialog state for session deleting (prevents window.confirm)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -121,6 +129,12 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     size: number;
   } | null>(null);
   const [parsingFile, setParsingFile] = useState(false);
+  const [timerMinutes, setTimerMinutes] = useState(25);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerMode, setTimerMode] = useState<"study" | "break">("study");
+  const [timerOpen, setTimerOpen] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -255,32 +269,26 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           currentThread.title === "New thread" ||
           currentThread.title === "New tutor session")
       ) {
-        generateThreadTitleFn({ data: trimmedInput }).then((derivedTitle) => {
-          supabase
-            .from("conversations")
-            .update({ title: derivedTitle })
-            .eq("id", threadId)
-            .then(({ error }) => {
-              if (error) console.error("Failed to update thread title:", error);
-            });
-          setThreads((prev) =>
-            prev.map((t) =>
-              t.id === threadId ? { ...t, title: derivedTitle } : t,
-            ),
-          );
-        }).catch(() => {
-          const fallback =
-            trimmedInput.slice(0, 29) + (trimmedInput.length > 29 ? "..." : "");
-          supabase
-            .from("conversations")
-            .update({ title: fallback })
-            .eq("id", threadId);
-          setThreads((prev) =>
-            prev.map((t) =>
-              t.id === threadId ? { ...t, title: fallback } : t,
-            ),
-          );
-        });
+        generateThreadTitleFn({ data: trimmedInput })
+          .then((derivedTitle) => {
+            supabase
+              .from("conversations")
+              .update({ title: derivedTitle })
+              .eq("id", threadId)
+              .then(({ error }) => {
+                if (error) console.error("Failed to update thread title:", error);
+              });
+            setThreads((prev) =>
+              prev.map((t) => (t.id === threadId ? { ...t, title: derivedTitle } : t)),
+            );
+          })
+          .catch(() => {
+            const fallback = trimmedInput.slice(0, 29) + (trimmedInput.length > 29 ? "..." : "");
+            supabase.from("conversations").update({ title: fallback }).eq("id", threadId);
+            setThreads((prev) =>
+              prev.map((t) => (t.id === threadId ? { ...t, title: fallback } : t)),
+            );
+          });
       }
 
       // Clear textbox and attachment instantly, and reset height
@@ -299,7 +307,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     }
   };
 
-  const handleEscalate = async () => {
+  const handleEscalate = async (email?: string) => {
     if (!threadId) return;
     setEscalating(true);
     try {
@@ -308,18 +316,44 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       const userId = session?.user?.id;
       if (!userId) throw new Error("Not logged in");
 
+      let reviewerId: string | null = null;
+
+      if (email) {
+        // Look up teacher by email via profiles
+
+        try {
+          reviewerId = await lookupTeacherByEmail({ data: email });
+        } catch (err: any) {
+          setEscalateEmailError(err.message || "No teacher found with that email.");
+          setEscalating(false);
+          return;
+        }
+      }
+
       const { error } = await supabase.from("escalations").insert({
         conversation_id: threadId,
         user_id: userId,
         reason: "student_request",
         status: "open",
         detail: "Student manually requested teacher review.",
+        reviewer_id: reviewerId,
       });
-
       if (error) throw error;
-
+      await createEscalationNotification({
+        data: {
+          conversationId: threadId,
+          reviewerId: reviewerId,
+          studentId: userId,
+        },
+      });
       setEscalationStatus("open");
-      toast.success("Conversation successfully escalated to a teacher!");
+      setEscalateModalOpen(false);
+      setTeacherEmail("");
+      toast.success(
+        reviewerId
+          ? "Conversation escalated to your teacher!"
+          : "Conversation escalated to available teachers!",
+      );
     } catch (err: any) {
       console.error("Failed to escalate:", err);
       toast.error(err?.message || "Failed to escalate conversation.");
@@ -406,14 +440,15 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   useEffect(() => {
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const loadingThreadId = threadId; // capture at effect start
 
     if (!threadId) {
       setMessagesLoading(false);
       return;
     }
-
     setMessagesLoading(true);
     setMessagesLoadError(null);
+    setMessages([]);
 
     timeoutId = setTimeout(() => {
       if (mounted) {
@@ -423,7 +458,6 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     }, 5000);
 
     (async () => {
-      await new Promise((resolve) => setTimeout(resolve, 150));
       try {
         const [messagesRes, escalationRes] = await Promise.all([
           supabase
@@ -439,30 +473,29 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             .limit(1)
             .maybeSingle(),
         ]);
-
         clearTimeout(timeoutId);
 
-        if (mounted) {
-          if (messagesRes.error) {
-            setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
-            setMessagesLoading(false);
-            return;
-          }
-          console.log("[Messages] loaded count:", messagesRes.data?.length, "for thread:", threadId);
-          if (!mounted) return;
-          if (messagesRes.data && messagesRes.data.length > 0) {
-            setMessages(
-              messagesRes.data.map((m) => ({
-                id: m.id ?? crypto.randomUUID(),
-                role: m.role as "user" | "assistant",
-                parts: [{ type: "text" as const, text: m.content || "" }],
-                createdAt: m.created_at ? new Date(m.created_at) : new Date(),
-              })),
-            );
-          }
-          setEscalationStatus((escalationRes.data?.status as any) || null);
+        // Only update state if this is still the current thread
+        if (!mounted || loadingThreadId !== threadId) return;
+
+        if (messagesRes.error) {
+          setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
           setMessagesLoading(false);
+          return;
         }
+        console.log("[Messages] loaded count:", messagesRes.data?.length, "for thread:", threadId);
+        if (messagesRes.data && messagesRes.data.length > 0) {
+          setMessages(
+            messagesRes.data.map((m) => ({
+              id: m.id ?? crypto.randomUUID(),
+              role: m.role as "user" | "assistant",
+              parts: [{ type: "text" as const, text: m.content || "" }],
+              createdAt: m.created_at ? new Date(m.created_at) : new Date(),
+            })),
+          );
+        }
+        setEscalationStatus((escalationRes.data?.status as any) || null);
+        setMessagesLoading(false);
       } catch (e) {
         clearTimeout(timeoutId);
         if (mounted) {
@@ -471,7 +504,6 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         }
       }
     })();
-
     return () => {
       mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
@@ -733,7 +765,10 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const speakText = (text: string) => {
     if (!ttsEnabled) return;
     window.speechSynthesis.cancel();
-    const clean = text.replace(/[#*`$]/g, "").replace(/\$\$?[^$]+\$\$?/g, "equation").trim();
+    const clean = text
+      .replace(/[#*`$]/g, "")
+      .replace(/\$\$?[^$]+\$\$?/g, "equation")
+      .trim();
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.lang = "en-KE";
     utterance.rate = 0.95;
@@ -780,7 +815,10 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       doc.setTextColor(40);
       const lines = doc.splitTextToSize(clean, maxWidth);
       lines.forEach((line: string) => {
-        if (y > 275) { doc.addPage(); y = 20; }
+        if (y > 275) {
+          doc.addPage();
+          y = 20;
+        }
         doc.text(line, margin, y);
         y += 5;
       });
@@ -800,7 +838,13 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         heading: HeadingLevel.HEADING_1,
       }),
       new Paragraph({
-        children: [new TextRun({ text: `Exported on ${new Date().toLocaleDateString()}`, color: "888888", size: 18 })],
+        children: [
+          new TextRun({
+            text: `Exported on ${new Date().toLocaleDateString()}`,
+            color: "888888",
+            size: 18,
+          }),
+        ],
       }),
       new Paragraph({ text: "" }),
     ];
@@ -812,7 +856,14 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 
       children.push(
         new Paragraph({
-          children: [new TextRun({ text: role, bold: true, color: m.role === "user" ? "1E64FF" : "0096FF", size: 20 })],
+          children: [
+            new TextRun({
+              text: role,
+              bold: true,
+              color: m.role === "user" ? "1E64FF" : "0096FF",
+              size: 20,
+            }),
+          ],
         }),
         new Paragraph({
           children: [new TextRun({ text: clean, size: 20 })],
@@ -827,6 +878,55 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     saveAs(blob, `${title.replace(/\s+/g, "-")}.docx`);
     toast.success("Word document exported successfully!");
   };
+
+  const startTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setTimerRunning(true);
+    timerRef.current = setInterval(() => {
+      setTimerSeconds((s) => {
+        if (s > 0) return s - 1;
+        setTimerMinutes((m) => {
+          if (m > 0) return m - 1;
+          // Timer finished
+          clearInterval(timerRef.current!);
+          setTimerRunning(false);
+          if (timerMode === "study") {
+            toast.success("🎉 Study session complete! Take a 5-minute break.", { duration: 6000 });
+            setTimerMode("break");
+            setTimerMinutes(5);
+            setTimerSeconds(0);
+          } else {
+            toast.success("⏰ Break over! Time to study.", { duration: 6000 });
+            setTimerMode("study");
+            setTimerMinutes(25);
+            setTimerSeconds(0);
+          }
+          return 0;
+        });
+        return 59;
+      });
+    }, 1000);
+  };
+
+  const pauseTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setTimerRunning(false);
+  };
+
+  const resetTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setTimerRunning(false);
+    setTimerMode("study");
+    setTimerMinutes(25);
+    setTimerSeconds(0);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] lg:h-screen flex-col lg:flex-row bg-background text-foreground">
@@ -898,6 +998,85 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               <option value="IGCSE Edexcel">IGCSE Edexcel</option>
             </select>
 
+            {/* Pomodoro Timer */}
+            <div className="relative">
+              <button
+                onClick={() => setTimerOpen((v) => !v)}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors ${timerRunning
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-card text-muted-foreground hover:bg-accent"
+                  }`}
+                title="Pomodoro Study Timer"
+              >
+                <Timer className="h-3.5 w-3.5" />
+                {timerRunning
+                  ? `${String(timerMinutes).padStart(2, "0")}:${String(timerSeconds).padStart(2, "0")}`
+                  : "Timer"}
+              </button>
+              {timerOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setTimerOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-2xl border border-border bg-card shadow-xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-border">
+                      <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {timerMode === "study" ? "📚 Study Session" : "☕ Break Time"}
+                      </p>
+                      <p className="font-serif text-3xl font-bold text-center mt-2 text-primary">
+                        {String(timerMinutes).padStart(2, "0")}:{String(timerSeconds).padStart(2, "0")}
+                      </p>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { timerRunning ? pauseTimer() : startTimer(); }}
+                          className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+                        >
+                          {timerRunning ? "Pause" : "Start"}
+                        </button>
+                        <button
+                          onClick={resetTimer}
+                          className="rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-accent transition-colors"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[15, 25, 45].map((min) => (
+                          <button
+                            key={min}
+                            onClick={() => {
+                              resetTimer();
+                              setTimerMinutes(min);
+                              setTimerSeconds(0);
+                            }}
+                            className={`rounded-lg border px-2 py-1.5 text-[10px] font-bold transition-colors ${timerMinutes === min && !timerRunning
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border hover:bg-accent"
+                              }`}
+                          >
+                            {min}m
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Generate Quiz Button */}
+            <button
+              onClick={() => {
+                const title = threads.find((t) => t.id === threadId)?.title || "";
+                navigate({ to: "/quizzes", search: { topic: title } } as any);
+              }}
+              className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:bg-accent transition-colors"
+              title="Generate a quiz from this session"
+            >
+              <ListChecks className="h-3.5 w-3.5" />
+              Quiz
+            </button>
+
             {/* Export Button */}
             <div className="relative">
               <button
@@ -911,19 +1090,22 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               {exportMenuOpen && (
                 <>
                   {/* Backdrop to close on outside click */}
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setExportMenuOpen(false)}
-                  />
+                  <div className="fixed inset-0 z-40" onClick={() => setExportMenuOpen(false)} />
                   <div className="absolute right-0 top-full mt-1 flex flex-col w-36 rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden">
                     <button
-                      onClick={() => { exportAsPDF(); setExportMenuOpen(false); }}
+                      onClick={() => {
+                        exportAsPDF();
+                        setExportMenuOpen(false);
+                      }}
                       className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent transition-colors"
                     >
                       <Download className="h-3.5 w-3.5" /> Export as PDF
                     </button>
                     <button
-                      onClick={() => { exportAsWord(); setExportMenuOpen(false); }}
+                      onClick={() => {
+                        exportAsWord();
+                        setExportMenuOpen(false);
+                      }}
                       className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent transition-colors"
                     >
                       <Download className="h-3.5 w-3.5" /> Export as Word
@@ -950,7 +1132,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             )}
             {!escalationStatus && threadId && (
               <button
-                onClick={handleEscalate}
+                onClick={() => setEscalateModalOpen(true)}
                 disabled={escalating || messagesLoading}
                 className="flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider hover:bg-accent disabled:opacity-50 transition-colors"
                 title="Escalate this study session to a human teacher for review"
@@ -1224,9 +1406,13 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               value={input}
               onChange={handleInputChange}
               placeholder={
-                isPending ? "Waiting for response..." : "Ask a question… (Enter to send)"
+                isPending
+                  ? "Waiting for response..."
+                  : chatError?.includes("rate limit") || chatError?.includes("quota")
+                    ? "AI rate limit reached. Please wait a few minutes..."
+                    : "Ask a question… (Enter to send)"
               }
-              disabled={isPending || parsingFile}
+              disabled={isPending || parsingFile || !!(chatError?.includes("rate limit") || chatError?.includes("quota"))}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -1265,7 +1451,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 
             <button
               onClick={(e) => submit(e as any)}
-              disabled={isPending || parsingFile || !input.trim()}
+              disabled={isPending || parsingFile || !input.trim() || !!(chatError?.includes("rate limit") || chatError?.includes("quota"))}
               className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
               title="Send"
             >
@@ -1296,6 +1482,57 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           </div>
         </div>
       </main>
+
+      {/* Escalate Modal */}
+      {escalateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4">
+            <h3 className="font-serif text-lg font-bold text-foreground">Escalate to Teacher</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Enter your teacher's email to send this conversation directly to them. Or leave blank
+              to escalate to any available teacher.
+            </p>
+            <div className="space-y-1.5">
+              <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Teacher Email (optional)
+              </label>
+              <input
+                type="email"
+                value={teacherEmail}
+                onChange={(e) => {
+                  setTeacherEmail(e.target.value);
+                  setEscalateEmailError("");
+                }}
+                placeholder="teacher@school.ac.ke"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              {escalateEmailError && (
+                <p className="text-xs text-destructive">{escalateEmailError}</p>
+              )}
+            </div>
+            <div className="flex gap-2 justify-end pt-1">
+              <button
+                onClick={() => {
+                  setEscalateModalOpen(false);
+                  setTeacherEmail("");
+                  setEscalateEmailError("");
+                }}
+                className="rounded-lg border border-border bg-background px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleEscalate(teacherEmail || undefined)}
+                disabled={escalating}
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-60 transition-colors"
+              >
+                {escalating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Escalate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Premium Confirm Delete Modal Overlay (Replaces Native window.confirm) */}
       {deleteConfirmId && (

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,9 +21,11 @@ import { getErrorMessage, withTimeout } from "@/lib/async";
 
 type MCQ = {
   question: string;
-  options: string[]; // exactly 4
-  correct: number; // 0-indexed
+  options: string[];
+  correct: number;
   explanation: string;
+  difficulty?: "easy" | "medium" | "hard";
+  subtopic?: string;
 };
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
@@ -42,15 +44,39 @@ const generateQuiz = createServerFn({ method: "POST" })
     }
 
     // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
-    const model = createLovableAiGatewayProvider().chatModel("gemini-1.5-flash");
+    const model = createLovableAiGatewayProvider().chatModel();
     const { generateText } = await import("ai");
     const { text } = await generateText({
       model,
-      prompt: `You are an expert KCSE/CBC examiner. Generate exactly ${count} multiple-choice questions on the topic: "${topic}".
-Return ONLY valid JSON (no markdown fences) with this exact shape:
-[{"question":"...","options":["A","B","C","D"],"correct":0,"explanation":"..."}]
-where "correct" is the 0-based index of the correct option.
-Make questions challenging but fair. Explanations should be concise and educational.`,
+      prompt: `You are a senior KCSE/CBC/IGCSE examiner with 20 years of experience setting high-quality exam questions for Kenyan students.
+
+Generate exactly ${count} multiple-choice questions on the topic: "${topic}".
+
+STRICT RULES:
+1. Questions must be curriculum-aligned to KCSE, CBC, or IGCSE standards where applicable.
+2. Vary difficulty: 30% easy, 50% medium, 20% hard (KCSE exam-style).
+3. Each question must test a DIFFERENT concept or sub-topic — no repetition.
+4. Wrong options (distractors) must be plausible and based on common student misconceptions.
+5. Explanations must: state why the correct answer is right, why common wrong answers are wrong, and cite the relevant concept or formula.
+6. For math/science questions: show the working or formula in the explanation.
+7. For essay subjects: reference specific facts, dates, or definitions.
+8. Questions should mirror actual KCSE past paper style and language.
+9. Never use "All of the above" or "None of the above" as options.
+10. Each option must be roughly the same length to avoid giving away the answer.
+
+Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape:
+[
+  {
+    "question": "Full question text here?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct": 0,
+    "explanation": "Detailed explanation here. The correct answer is A because... B is wrong because... The relevant formula/concept is...",
+    "difficulty": "easy|medium|hard",
+    "subtopic": "specific subtopic name"
+  }
+]
+
+where "correct" is the 0-based index of the correct option.`,
     });
 
     let questions: MCQ[] = [];
@@ -117,6 +143,9 @@ const saveAttempt = createServerFn({ method: "POST" })
 
 export const Route = createFileRoute("/_authenticated/quizzes")({
   head: () => ({ meta: [{ title: "Practice Quizzes — GilaniAI" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    topic: (search.topic as string) || "",
+  }),
   component: QuizzesPage,
 });
 
@@ -140,11 +169,6 @@ const TOPICS = [
 type Phase = "setup" | "loading" | "quiz" | "results";
 
 function QuizzesPage() {
-  const [phase, setPhase] = useState<Phase>("setup");
-  const [quizError, setQuizError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [topic, setTopic] = useState(TOPICS[0]);
-  const [customTopic, setCustomTopic] = useState("");
   const [questionCount, setQuestionCount] = useState(10);
   const [quizId, setQuizId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<MCQ[]>([]);
@@ -153,8 +177,20 @@ function QuizzesPage() {
   const [answered, setAnswered] = useState<boolean[]>([]);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [showExplain, setShowExplain] = useState(false);
+  const { topic: topicFromUrl } = Route.useSearch();
+  const [phase, setPhase] = useState<Phase>("setup");
+  const [quizError, setQuizError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [topic, setTopic] = useState(TOPICS[0]);
+  const [customTopic, setCustomTopic] = useState(topicFromUrl || "");
 
   const activeTopic = customTopic.trim() || topic;
+
+  useEffect(() => {
+    if (topicFromUrl) {
+      setCustomTopic(topicFromUrl);
+    }
+  }, [topicFromUrl]);
 
   const startQuiz = async () => {
     if (isGenerating) return;
