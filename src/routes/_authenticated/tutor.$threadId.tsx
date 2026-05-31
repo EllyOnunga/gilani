@@ -25,6 +25,10 @@ import { parseDocument } from "@/lib/document-parser";
 import { deleteThreadFn, generateThreadTitleFn } from "@/lib/tutor.server-fns";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
+import { jsPDF } from "jspdf";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
+import { saveAs } from "file-saver";
+import { Mic, MicOff, Volume2, VolumeX, Download, FileDown } from "lucide-react";
 import { withTimeout } from "@/lib/async";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -91,6 +95,10 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const [threadsLoadError, setThreadsLoadError] = useState<string | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const [escalationStatus, setEscalationStatus] = useState<
     "open" | "in_review" | "resolved" | null
   >(null);
@@ -211,7 +219,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const chatHelpers: any = useChat({
     transport,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
-    onFinish: () => setChatError(null),
+    onFinish: () => {
+      setChatError(null)
+    },
   });
   const { messages: messagesRaw, setMessages, sendMessage, status, reload } = chatHelpers;
   const messages = messagesRaw as UIMessage[];
@@ -478,6 +488,19 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     }
   }, [messages]);
 
+  // TTS: speak last assistant message when it arrives
+  useEffect(() => {
+    if (!ttsEnabled || !messages.length) return;
+    const last = messages[messages.length - 1];
+    if (last?.role === "assistant") {
+      const text =
+        (last.parts?.find((p: any) => p.type === "text") as any)?.text ||
+        (last as any).content ||
+        "";
+      speakText(text);
+    }
+  }, [messages, ttsEnabled]);
+
   // Real-time escalation status changes
   useEffect(() => {
     if (!threadId) return;
@@ -667,6 +690,136 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     </div>
   );
 
+  // --- SPEECH TO TEXT ---
+  const startListening = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition is not supported in your browser.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-KE";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => {
+      setIsListening(false);
+      toast.error("Microphone error. Please try again.");
+    };
+    recognition.onresult = (e: any) => {
+      const transcript = e.results[0][0].transcript;
+      setInput((prev) => (prev ? prev + " " + transcript : transcript));
+    };
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopListening = () => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  };
+
+  // --- TEXT TO SPEECH ---
+  const speakText = (text: string) => {
+    if (!ttsEnabled) return;
+    window.speechSynthesis.cancel();
+    const clean = text.replace(/[#*`$]/g, "").replace(/\$\$?[^$]+\$\$?/g, "equation").trim();
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = "en-KE";
+    utterance.rate = 0.95;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // --- EXPORT AS PDF ---
+  const exportAsPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    const maxWidth = pageWidth - margin * 2;
+    let y = 20;
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("GilaniAI Study Session", margin, y);
+    y += 8;
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(120);
+    doc.text(`Exported on ${new Date().toLocaleDateString()}`, margin, y);
+    y += 10;
+
+    doc.setDrawColor(200);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    messages.forEach((m: any) => {
+      const role = m.role === "user" ? "You" : "GilaniAI";
+      const text = m.parts?.find((p: any) => p.type === "text")?.text || m.content || "";
+      const clean = text.replace(/[#*`$]/g, "").trim();
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(m.role === "user" ? 30 : 0, m.role === "user" ? 100 : 150, 255);
+      doc.text(role, margin, y);
+      y += 5;
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(40);
+      const lines = doc.splitTextToSize(clean, maxWidth);
+      lines.forEach((line: string) => {
+        if (y > 275) { doc.addPage(); y = 20; }
+        doc.text(line, margin, y);
+        y += 5;
+      });
+      y += 4;
+    });
+
+    const title = threads.find((t) => t.id === threadId)?.title || "study-session";
+    doc.save(`${title.replace(/\s+/g, "-")}.pdf`);
+    toast.success("PDF exported successfully!");
+  };
+
+  // --- EXPORT AS WORD ---
+  const exportAsWord = async () => {
+    const children: Paragraph[] = [
+      new Paragraph({
+        text: "GilaniAI Study Session",
+        heading: HeadingLevel.HEADING_1,
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: `Exported on ${new Date().toLocaleDateString()}`, color: "888888", size: 18 })],
+      }),
+      new Paragraph({ text: "" }),
+    ];
+
+    messages.forEach((m: any) => {
+      const role = m.role === "user" ? "You" : "GilaniAI";
+      const text = m.parts?.find((p: any) => p.type === "text")?.text || m.content || "";
+      const clean = text.replace(/[#*`$]/g, "").trim();
+
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: role, bold: true, color: m.role === "user" ? "1E64FF" : "0096FF", size: 20 })],
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: clean, size: 20 })],
+        }),
+        new Paragraph({ text: "" }),
+      );
+    });
+
+    const doc = new Document({ sections: [{ children }] });
+    const blob = await Packer.toBlob(doc);
+    const title = threads.find((t) => t.id === threadId)?.title || "study-session";
+    saveAs(blob, `${title.replace(/\s+/g, "-")}.docx`);
+    toast.success("Word document exported successfully!");
+  };
+
   return (
     <div className="flex h-[calc(100vh-4rem)] lg:h-screen flex-col lg:flex-row bg-background text-foreground">
       {/* Mobile overlay */}
@@ -736,6 +889,32 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
               <option value="IGCSE Cambridge">IGCSE Cambridge</option>
               <option value="IGCSE Edexcel">IGCSE Edexcel</option>
             </select>
+
+            {/* Export Button */}
+            <div className="relative group">
+              <button
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:bg-accent transition-colors"
+                title="Export conversation"
+              >
+                <FileDown className="h-3.5 w-3.5" />
+                Export
+              </button>
+              <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col w-36 rounded-xl border border-border bg-card shadow-lg z-50 overflow-hidden">
+                <button
+                  onClick={exportAsPDF}
+                  className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent transition-colors"
+                >
+                  <Download className="h-3.5 w-3.5" /> Export as PDF
+                </button>
+                <button
+                  onClick={exportAsWord}
+                  className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent transition-colors"
+                >
+                  <Download className="h-3.5 w-3.5" /> Export as Word
+                </button>
+              </div>
+            </div>
+
             {escalationStatus === "open" && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-wider text-amber-700">
                 <Clock className="h-3 w-3 animate-pulse" /> Review Pending
@@ -918,7 +1097,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                                 className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-muted"
                                 title="Copy answer"
                               >
-                                <Copy className="h-3 w-3" /> Copy
+                                <Copy className="h-3 w-3" />
                               </button>
                               {isLast && (
                                 <button
@@ -926,7 +1105,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                                   className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-muted"
                                   title="Regenerate this response"
                                 >
-                                  <RefreshCw className="h-3 w-3" /> Retry
+                                  <RefreshCw className="h-3 w-3" />
                                 </button>
                               )}
                             </div>
@@ -1037,6 +1216,34 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
                 }
               }}
             />
+
+            {/* Mic Button */}
+            <button
+              onClick={isListening ? stopListening : startListening}
+              disabled={isPending || parsingFile}
+              className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border shadow-sm transition-colors ${isListening
+                ? "border-red-400 bg-red-50 text-red-500 animate-pulse"
+                : "border-border bg-card text-muted-foreground hover:bg-accent"
+                }`}
+              title={isListening ? "Stop listening" : "Speak your question"}
+            >
+              {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </button>
+
+            {/* TTS Toggle */}
+            <button
+              onClick={() => {
+                setTtsEnabled((v) => !v);
+                if (isSpeaking) window.speechSynthesis.cancel();
+              }}
+              className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border shadow-sm transition-colors ${ttsEnabled
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-card text-muted-foreground hover:bg-accent"
+                }`}
+              title={ttsEnabled ? "Disable text-to-speech" : "Enable text-to-speech"}
+            >
+              {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </button>
 
             <button
               onClick={(e) => submit(e as any)}
