@@ -14,7 +14,6 @@ function getKey(key: string | undefined): string {
   return (key || "").trim();
 }
 
-// ✅ FIXED: Updated validator to accept both old (AIza) and new (AQ) Google API key structures
 function isValidGeminiKey(key: string): boolean {
   return key !== "" && (key.startsWith("AIza") || key.startsWith("AQ"));
 }
@@ -33,22 +32,6 @@ function isRateLimitError(error: unknown): boolean {
 
 function createChatModel(provider: string): { model: any; name: string } | null {
   switch (provider) {
-    case "deepseek": {
-      const key = getKey(process.env.DEEPSEEK_API_KEY);
-      if (!key) return null;
-      const deepseek = createOpenAICompatible({
-        name: "deepseek",
-        baseURL: "https://api.deepseek.com/v1",
-        apiKey: key,
-      });
-      return { model: deepseek.chatModel("deepseek-chat"), name: "deepseek" };
-    }
-    case "gemini": {
-      const key = getKey(process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY);
-      if (!isValidGeminiKey(key)) return null;
-      const google = createGoogleGenerativeAI({ apiKey: key });
-      return { model: google("gemini-2.0-flash"), name: "gemini" };
-    }
     case "groq": {
       const key = getKey(process.env.GROQ_API_KEY);
       if (!key) return null;
@@ -69,20 +52,40 @@ function createChatModel(provider: string): { model: any; name: string } | null 
       });
       return { model: openai.chatModel("gpt-4o-mini"), name: "openai" };
     }
+    case "gemini": {
+      const key = getKey(process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY);
+      if (!isValidGeminiKey(key)) return null;
+      const google = createGoogleGenerativeAI({ apiKey: key });
+      return { model: google("gemini-2.0-flash"), name: "gemini" };
+    }
+    case "deepseek": {
+      const key = getKey(process.env.DEEPSEEK_API_KEY);
+      if (!key) return null;
+      const deepseek = createOpenAICompatible({
+        name: "deepseek",
+        baseURL: "https://api.deepseek.com/v1",
+        apiKey: key,
+      });
+      return { model: deepseek.chatModel("deepseek-chat"), name: "deepseek" };
+    }
     default:
       return null;
   }
 }
 
 function createEmbeddingModel(): { model: any; name: string } | null {
-  // Try Gemini first (free, high limits)
-  const geminiKey = getKey(process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY);
-  if (isValidGeminiKey(geminiKey)) {
-    const google = createGoogleGenerativeAI({ apiKey: geminiKey });
-    return { model: google.textEmbeddingModel("text-embedding-004"), name: "gemini" };
+  // Try Groq first for blazing fast open-source embeddings (keeps it close to your primary chat)
+  const groqKey = getKey(process.env.GROQ_API_KEY);
+  if (groqKey) {
+    const groq = createOpenAICompatible({
+      name: "groq",
+      baseURL: "https://api.groq.com/openai/v1",
+      apiKey: groqKey,
+    });
+    return { model: groq.textEmbeddingModel("bge-large-en-v1.5"), name: "groq" };
   }
-  
-  // Try OpenAI
+
+  // Try OpenAI as fallback
   const openaiKey = getKey(process.env.OPENAI_API_KEY);
   if (openaiKey) {
     const openai = createOpenAICompatible({
@@ -128,9 +131,9 @@ export const Route = createFileRoute("/api/chat")({
             });
           }
 
-          // ─── Select Chat Model ──────────────────────────────────────────
-          // Priority: DeepSeek → Gemini → Groq → OpenAI
-          const providerOrder = ["groq", "gemini", "deepseek", "openai"];
+          // ─── Select Chat Model (UPDATED PRIORITY ORDER) ──────────────────
+          // Priority: Groq → OpenAI → Gemini → DeepSeek
+          const providerOrder = ["groq", "openai", "gemini", "deepseek"];
           let model: any = null;
           let activeProvider: string = "";
 
@@ -145,7 +148,7 @@ export const Route = createFileRoute("/api/chat")({
 
           if (!model) {
             return new Response(
-              JSON.stringify({ error: "No AI provider configured. Set DEEPSEEK_API_KEY, GEMINI_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY." }),
+              JSON.stringify({ error: "No AI provider configured. Set GROQ_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, or DEEPSEEK_API_KEY." }),
               { status: 500, headers: { "Content-Type": "application/json" } },
             );
           }
@@ -243,8 +246,8 @@ export const Route = createFileRoute("/api/chat")({
           // ─── Build Prompt ───────────────────────────────────────────────
           const systemPrompt = buildSystemPrompt({ curriculum, notesContext });
 
+          // ✅ FIXED: Clean user/assistant messages array ONLY. No system parameters nested here.
           const aiMessages = [
-            { role: "system" as const, content: systemPrompt },
             ...(messages?.map((m: any) => {
               const textContent = extractText(m);
               return {
@@ -259,6 +262,7 @@ export const Route = createFileRoute("/api/chat")({
           // ─── Stream Response ────────────────────────────────────────────
           const streamResult = streamText({
             model,
+            system: systemPrompt, // ✅ FIXED: System prompt is placed safely at top-level configuration
             messages: aiMessages,
             maxRetries: 0,
             temperature: 0.7,
@@ -325,7 +329,7 @@ export const Route = createFileRoute("/api/chat")({
                 console.error("Failed to persist assistant message:", persistError);
               }
             },
-          });
+        });
 
           console.log("[API Chat] Returning stream response");
           return streamResult.toTextStreamResponse({

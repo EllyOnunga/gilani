@@ -26,12 +26,13 @@ const listNotes = createServerFn({ method: "GET" })
   .inputValidator(z.object({ userId: z.string() }))
   .handler(async ({ data }) => {
     const { userId } = data;
-    // SECURITY: Notes are already filtered by user_id - the userId comes from authenticated session
+    
     const { data: notes, error } = await supabaseAdmin
       .from("notes")
       .select("id, title, summary, key_concepts, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
+      
     if (error) throw new Error(error.message);
     return notes ?? [];
   });
@@ -41,130 +42,67 @@ const ingestNote = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { title, content, userId } = data;
 
-    // SECURITY: Validate that title and content aren't empty strings
     if (!title.trim() || !content.trim()) {
       throw new Error("Title and content are required");
     }
 
-    // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
     const model = createLovableAiGatewayProvider().chatModel("gemini-1.5-flash");
-
-    // Ask the AI for a summary and key concepts
     const { generateText } = await import("ai");
+    
+    // Optimized, clean prompt structure targeting core educational content structures
     const { text } = await generateText({
       model,
-      prompt: `You are an expert educational tutor and content creator for Kenyan high school students following the KCSE and CBC curricula. Your role is to create comprehensive, exam-ready study materials that help students master their subjects.
+      prompt: `You are an expert educational content creator for Kenyan (KCSE/CBC) and International (IGCSE) curricula. Your task is to process study materials or problem sets into high-quality study resources.
 
-Given the provided study notes or question paper, create a COMPLETE and THOROUGH study resource following these guidelines:
+Analyze the following input text and generate a structured response matching the requested JSON format exactly.
 
-## For Study Notes:
-1. **Comprehensive Summary**: Provide a detailed, well-structured summary covering ALL key areas from the notes. Break it down into logical sections with clear headings. Include:
-   - Main concepts and definitions
-   - Important theories, principles, and formulas
-   - Step-by-step explanations of processes
-   - Real-world applications and examples relevant to Kenya
-   - Common student misconceptions and clarifications
-   - Key terms with their definitions
+[Core Content Requirements]
+1. For Study Notes: Create a detailed markdown summary with headings, key terms highlighted in bold, local Kenyan examples, formulas with LaTeX if applicable ($formula$), and practical study tips (mnemonics, common exam angles). Extract ALL key concepts.
+2. For Question Papers: Provide clear step-by-step solutions for each question, including clear marking scheme indicators (e.g., [2 marks]), common student pitfalls, and alternative approaches.
+3. Include references to approved local and international textbooks (e.g., KLB, Longhorn) or open educational resources (KICD, Kenya Education Cloud).
 
-2. **Key Concepts**: Extract ALL significant concepts, not just 5. Include:
-   - Core terminology with brief definitions
-   - Important formulas and equations (using proper mathematical notation with LaTeX where applicable: $formula$)
-   - Scientific names, historical dates, or specific data points
-   - Acronyms and their full meanings
+[Formatting & Output Constraint]
+Return ONLY a valid JSON object. Do not include markdown code fences (\`\`\`json).
 
-3. **Study Tips**: Add practical study tips specific to this topic, including:
-   - Memory aids and mnemonics
-   - Common exam question types on this topic
-   - How to approach different question formats
-   - Cross-references to related topics in the syllabus
-
-## For Question Papers/Problem Sets:
-1. **Complete Solutions**: Provide detailed, step-by-step solutions for EVERY question, including:
-   - Clear marking of marks allocation per step (e.g., [2 marks])
-   - All working shown clearly with explanations
-   - Alternative solution methods where applicable
-   - Common mistakes to avoid
-   - Final answers highlighted or boxed
-
-2. **Explanatory Notes**: For each solution, include:
-   - The underlying concept being tested
-   - Why the specific approach was chosen
-   - How to verify the answer
-   - Links to related concepts for further study
-
-3. **Practice Enhancement**: 
-   - Suggest similar practice questions
-   - Provide tips for time management on similar questions
-   - Include memory aids for formulas used
-
-## Formatting Guidelines:
-- Use proper markdown formatting for readability:
-  - # for main headings, ## for subheadings, ### for sub-subheadings
-  - **bold** for key terms and important points
-  - *italic* for emphasis and examples
-  - \`code\` for formulas, chemical equations, or code snippets
-  - $$ for block mathematical equations
-  - - for bullet points
-  - 1. for numbered steps
-  - > for important notes and warnings
-  - Tables for comparisons and organized data
-- Use Kenyan curriculum terminology and references throughout
-- Include relevant external resources and references where helpful:
-  - Links to official KNEC resources
-  - Links to reputable Kenyan educational websites and YouTube channels
-  - Links to past KCSE papers, CBC, IGCSE Pearson Edexcel, IGCSE Cambridge and marking schemes
-  - References to approved textbooks (e.g., KLB, Longhorn, Moran)
-  - Online educational resources (e.g., KICD, Kenya Education Cloud, Save My Exams, Physics and Maths Tutor )
-- Add a "Further Reading" section with recommended resources
-
-## Quality Standards:
-- Ensure 100% accuracy of all facts, formulas, and solutions
-- Use age-appropriate language (Form 1-4 level, CBC, IGCSE CAMBRIDGE and IGCSE PEARSON EDEXCEL)
-- Include diagrams descriptions (in text) where visual aids would help
-- Relate concepts to Kenyan context and local examples
-- Maintain academic rigor while being student-friendly
-
-## Response Format:
-Return ONLY valid JSON (no markdown fences, no additional text) with this exact structure:
+[Target Schema]
 {
-  "title": "Clear, descriptive title for this study material",
+  "title": "Descriptive title",
   "type": "study_notes" or "question_paper",
   "subject": "Subject name",
-  "topic": "Specific topic name",
-  "form_level": "Form 1-4 or General",
-  "comprehensive_summary": "Complete markdown-formatted summary with all sections",
+  "topic": "Topic name",
+  "form_level": "Level classification",
+  "comprehensive_summary": "Complete markdown summary string",
   "key_concepts": [
-    {"concept": "Concept name", "definition": "Clear definition", "importance": "Why this matters"}
+    {"concept": "Name", "definition": "Clear description", "importance": "Why it matters"}
   ],
   "formulas_and_equations": [
-    {"name": "Formula name", "expression": "LaTeX formula", "explanation": "When and how to use"}
+    {"name": "Name", "expression": "LaTeX string", "explanation": "Usage rule"}
   ],
   "solutions": [
     {
       "question_number": 1,
-      "question_text": "Original question",
-      "solution": "Detailed step-by-step solution with markdown",
-      "marks_breakdown": "How marks are allocated",
-      "common_mistakes": "What to avoid",
-      "alternative_approach": "Another way to solve if applicable"
+      "question_text": "Text",
+      "solution": "Step-by-step markdown solution",
+      "marks_breakdown": "Allocation string",
+      "common_mistakes": "Pitfalls",
+      "alternative_approach": "Optional alternate method"
     }
   ],
-  "study_tips": ["Tip 1", "Tip 2"],
-  "common_exam_questions": ["Question type 1", "Question type 2"],
-  "related_topics": ["Related topic 1", "Related topic 2"],
+  "study_tips": ["Tip 1"],
+  "common_exam_questions": ["Question type 1"],
+  "related_topics": ["Topic 1"],
   "recommended_resources": [
-    {"name": "Resource name", "type": "textbook/website/video", "description": "What it covers", "link": "URL if available"}
+    {"name": "Resource name", "type": "textbook/website/video", "description": "Details", "link": "URL if available"}
   ],
   "quick_review_cards": [
-    {"front": "Question or prompt", "back": "Answer or explanation"}
+    {"front": "Question/Prompt", "back": "Answer/Explanation"}
   ]
 }
 
-Study material to process:
+Study material content to process:
 ${content.slice(0, 8000)}`,
     });
 
-    // Define the type for the parsed response
     interface StudyMaterialResponse {
       title: string;
       type: "study_notes" | "question_paper";
@@ -173,16 +111,8 @@ ${content.slice(0, 8000)}`,
       form_level: string;
       comprehensive_summary: string;
       summary?: string;
-      key_concepts: Array<{
-        concept: string;
-        definition: string;
-        importance: string;
-      }>;
-      formulas_and_equations: Array<{
-        name: string;
-        expression: string;
-        explanation: string;
-      }>;
+      key_concepts: Array<{ concept: string; definition: string; importance: string }>;
+      formulas_and_equations: Array<{ name: string; expression: string; explanation: string }>;
       solutions?: Array<{
         question_number: number;
         question_text: string;
@@ -194,25 +124,14 @@ ${content.slice(0, 8000)}`,
       study_tips: string[];
       common_exam_questions: string[];
       related_topics: string[];
-      recommended_resources: Array<{
-        name: string;
-        type: string;
-        description: string;
-        link?: string;
-      }>;
-      quick_review_cards: Array<{
-        front: string;
-        back: string;
-      }>;
+      recommended_resources: Array<{ name: string; type: string; description: string; link?: string }>;
+      quick_review_cards: Array<{ front: string; back: string }>;
     }
 
-    // Parse and handle the response
     let summary = "";
     let keyConcepts: string[] = [];
-    let studyMaterial: StudyMaterialResponse | null = null;
 
     try {
-      // Clean the response text - remove any markdown code fences if present
       let cleanText = text.trim();
       if (cleanText.startsWith("```json")) {
         cleanText = cleanText.replace(/^```json\s*/, "").replace(/\s*```$/, "");
@@ -221,50 +140,35 @@ ${content.slice(0, 8000)}`,
       }
 
       const parsed = JSON.parse(cleanText) as StudyMaterialResponse;
-      studyMaterial = parsed;
-
-      // Extract summary and key concepts for backward compatibility
       summary = parsed.comprehensive_summary || parsed.summary || "";
-
-      // Convert key concepts to flat array for backward compatibility
       keyConcepts = Array.isArray(parsed.key_concepts)
         ? parsed.key_concepts.map((kc) =>
-            typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
+            typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`
           )
         : [];
     } catch (error) {
       console.error("Failed to parse study material JSON:", error);
-      // Fallback: use the raw text as summary
       summary = text.slice(0, 1000);
       keyConcepts = [];
-      studyMaterial = null;
     }
 
-    // Now you can use the full study material object
-    if (studyMaterial) {
-      console.log("Title:", studyMaterial.title);
-      console.log("Subject:", studyMaterial.subject);
-      console.log("Topic:", studyMaterial.topic);
-      console.log("Summary:", studyMaterial.comprehensive_summary);
-      console.log("Study Tips:", studyMaterial.study_tips);
-      // ... use all other fields
-    }
-    // Insert note (column in DB is raw_text, not content)
+    // Insert note
     const { data: note, error: noteErr } = await supabaseAdmin
       .from("notes")
       .insert({ title, raw_text: content, summary, key_concepts: keyConcepts, user_id: userId })
       .select()
       .single();
+      
     if (noteErr) throw new Error(noteErr.message);
 
-    // Chunk and store (simple 500-char chunks)
+    // Split text into chunks
     const chunkSize = 500;
     const chunks: string[] = [];
     for (let i = 0; i < content.length; i += chunkSize) {
       chunks.push(content.slice(i, i + chunkSize));
     }
 
-    // Parallelize embedding generation to dramatically reduce execution duration
+    // Process embeddings in parallel
     const chunkPromises = chunks.map(async (chunk, index) => {
       let embedding: number[] | null = null;
       try {
@@ -290,9 +194,8 @@ ${content.slice(0, 8000)}`,
 
     const chunkData = await Promise.all(chunkPromises);
 
-    // Bulk insert chunks in a single query to eliminate database write bottlenecks
+    // Bulk insert chunks
     const { error: chunksErr } = await supabaseAdmin.from("note_chunks").insert(chunkData);
-
     if (chunksErr) {
       console.error("Failed to bulk insert note chunks:", chunksErr);
       throw new Error(`Failed to save note chunks: ${chunksErr.message}`);
@@ -335,7 +238,6 @@ function NotesPage() {
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  // Drag and drop states for document parser
   const [parsingFile, setParsingFile] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
@@ -360,12 +262,9 @@ function NotesPage() {
     const toastId = toast.loading(`Extracting text from ${file.name}...`);
     try {
       const parsed = await parseDocument(file);
-
-      // Auto pre-fill title and content
-      const baseName = parsed.name.replace(/\.[^/.]+$/, ""); // Remove extension
+      const baseName = parsed.name.replace(/\.[^/.]+$/, "");
       setTitle(baseName);
       setContent(parsed.text);
-
       toast.success("Document text extracted successfully!", { id: toastId });
     } catch (err: any) {
       toast.error(err.message || "Failed to extract text from document", { id: toastId });
@@ -414,8 +313,7 @@ function NotesPage() {
           </p>
           <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Upload &amp; Summarise</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Paste your class notes and GilaniAI will extract a summary and key concepts
-            automatically.
+            Paste your class notes and GilaniAI will extract a summary and key concepts automatically.
           </p>
         </div>
         <button
@@ -434,21 +332,9 @@ function NotesPage() {
           <div className="space-y-4">
             {/* Document Upload Zone */}
             <div
-              onDragEnter={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragActive(true);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragActive(true);
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragActive(false);
-              }}
+              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); }}
               onDrop={handleFileDrop}
               className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all ${
                 dragActive

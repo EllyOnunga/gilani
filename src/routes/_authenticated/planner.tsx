@@ -161,7 +161,6 @@ const generatePlan = createServerFn({ method: "POST" })
       }
     }
 
-    // Use gateway without explicit key
     const model = createLovableAiGatewayProvider().chatModel();
     const { generateText } = await import("ai");
 
@@ -170,12 +169,14 @@ const generatePlan = createServerFn({ method: "POST" })
     endDate.setDate(endDate.getDate() + 6);
     const endDateStr = endDate.toISOString().split("T")[0];
 
-    // Simplified prompt
-    const prompt = `Create a 7-day study plan for a ${curriculum} student. Today is ${today}.
+    // Highly structural, robust prompt optimized to completely avoid parse failures
+    const prompt = `You are an expert academic curriculum strategist. Create a highly structured 7-day study plan for a ${curriculum} student. 
+Today's start date is ${today}.
 
-Weak topics to focus on: ${weakTopics.length ? weakTopics.slice(0, 5).join(", ") : "General balanced study"}
+Weak target areas requiring high-priority focus: ${weakTopics.length ? weakTopics.slice(0, 5).join(", ") : "General balanced study blueprint"}.
 
-Return ONLY a JSON object (no markdown, no explanation) with this exact structure:
+CRITICAL: Return output strictly as raw executable JSON matching the architecture signature below. Do not wrap inside code block fences. Do not output conversational explanations.
+
 {
   "plan_metadata": {
     "start_date": "${today}",
@@ -184,97 +185,82 @@ Return ONLY a JSON object (no markdown, no explanation) with this exact structur
     "curriculum": "${curriculum}",
     "curriculum_details": {
       "type": "${curriculum}",
-      "specific_requirements": "Focus on weak areas and exam preparation"
+      "specific_requirements": "Targeted optimization of diagnostic performance gaps."
     },
-    "focus_areas": ["topic1", "topic2"],
-    "weekly_goal": "Improve understanding in key subjects",
-    "estimated_weekly_hours": "10 hours"
+    "focus_areas": ["Introduce target subject matters here"],
+    "weekly_goal": "Master foundational knowledge structures and enhance analytical execution.",
+    "estimated_weekly_hours": "12 hours"
   },
   "daily_plans": [
     {
       "date": "${today}",
       "day_of_week": "Monday",
-      "daily_focus": "Mathematics Focus",
+      "daily_focus": "Diagnostic subject alignment target",
       "curriculum_focus": "${curriculum}",
       "tasks": [
         {
-          "id": "task-1",
+          "id": "task-unique-hash-1",
           "date": "${today}",
-          "subject": "Mathematics",
-          "topic": "Algebra",
+          "subject": "Core Subject",
+          "topic": "Target Sub-Topic Area",
           "curriculum": "${curriculum}",
-          "task": "Solve 10 algebra problems from textbook",
+          "task": "Fully descriptive actionable learning task objectives.",
           "duration": "45 min",
           "priority": "high",
           "type": "practice",
-          "study_tip": "Write down each step clearly",
-          "tags": ["weak_area", "practice"]
-        },
-        {
-          "id": "task-2",
-          "date": "${today}",
-          "subject": "English",
-          "topic": "Comprehension",
-          "curriculum": "${curriculum}",
-          "task": "Read and answer questions on a comprehension passage",
-          "duration": "45 min",
-          "priority": "medium",
-          "type": "practice",
-          "tags": ["revision"]
+          "study_tip": "Strategic focus application strategy.",
+          "tags": ["weak_area", "revision"]
         }
       ],
-      "daily_quote": "Success is the sum of small efforts repeated day in and day out."
+      "daily_quote": "Consistency anchors mastery."
     }
   ]
 }
 
-Create 14 tasks total (2 per day for 7 days). Make tasks specific and actionable.`;
+Task Requirements:
+- Generate 14 tasks total distributed perfectly across the 7-day window (2 contextually coherent tasks per calendar day).
+- All items inside the tasks must feature uniquely identifiable text strings for their "id" parameters.`;
 
     console.log("Generating plan with prompt...");
     const { text } = await generateText({
       model,
       prompt: prompt,
-      temperature: 0.7,
+      temperature: 0.4, // Lowered temperature to heavily enforce structural compliance
     });
 
-    console.log("AI Response received:", text.substring(0, 200) + "...");
-
-    // Parse the AI response
+    // Advanced cleaning strategy to safely intercept string parsing anomalies
     let weeklyPlan: WeeklyPlanResponse;
     let items: PlanTask[] = [];
 
     try {
-      // Clean the response
-      let clean = text.trim();
+      let cleanJsonString = text.trim();
 
-      // Remove markdown code fences if present
-      if (clean.startsWith("```")) {
-        clean = clean.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+      // Clear any standard markdown wrapping artifacts
+      if (cleanJsonString.includes("```")) {
+        const firstMatch = cleanJsonString.indexOf("{");
+        const lastMatch = cleanJsonString.lastIndexOf("}");
+        if (firstMatch !== -1 && lastMatch !== -1) {
+          cleanJsonString = cleanJsonString.substring(firstMatch, lastMatch + 1);
+        }
       }
 
-      console.log("Cleaned response:", clean.substring(0, 200) + "...");
+      const parsed = JSON.parse(cleanJsonString);
 
-      const parsed = JSON.parse(clean);
-
-      // Handle the new comprehensive format
       if (parsed.daily_plans && Array.isArray(parsed.daily_plans)) {
         weeklyPlan = parsed as WeeklyPlanResponse;
 
-        // Flatten tasks from daily_plans
+        // Flatten tasks from daily_plans while strictly ensuring unique identifier integrity
         items = weeklyPlan.daily_plans.flatMap((day) =>
-          day.tasks.map((task) => ({
+          day.tasks.map((task, idx) => ({
             ...task,
             date: task.date || day.date,
-            id: task.id || crypto.randomUUID(),
+            id: task.id && task.id !== "task-1" && task.id !== "task-2" 
+              ? task.id 
+              : `${day.date}-task-${idx}-${Math.random().toString(36).substring(2, 7)}`,
           })),
         );
-
-        console.log(`Parsed ${items.length} tasks from daily_plans`);
       } else if (Array.isArray(parsed)) {
-        // Old flat array format
         items = parsed;
-        console.log(`Parsed ${items.length} tasks from flat array`);
-
         weeklyPlan = {
           plan_metadata: {
             start_date: today,
@@ -292,28 +278,23 @@ Create 14 tasks total (2 per day for 7 days). Make tasks specific and actionable
           daily_plans: [],
         };
       } else {
-        throw new Error("Response does not contain daily_plans array or tasks array");
+        throw new Error("Response schema does not align with valid structural patterns.");
       }
     } catch (parseError) {
       console.error("Failed to parse plan JSON:", parseError);
-      console.error("Raw text:", text);
-      throw new Error("Failed to generate plan. Please try again.");
+      throw new Error("Failed to parse study schedule layout engine parameters.");
     }
 
     if (items.length === 0) {
       throw new Error("No tasks were generated. Please try again.");
     }
 
-    // Wrap everything for storage
     const wrappedData = {
       items: items,
       plan_metadata: weeklyPlan.plan_metadata,
       daily_plans: weeklyPlan.daily_plans,
     };
 
-    console.log(`Saving ${items.length} tasks to database...`);
-
-    // Save to database
     const { data: plan, error } = await supabaseAdmin
       .from("study_plans")
       .insert({
@@ -329,7 +310,6 @@ Create 14 tasks total (2 per day for 7 days). Make tasks specific and actionable
       throw new Error(error.message);
     }
 
-    console.log("Plan saved successfully");
     return convertToStudyPlan(plan);
   });
 
@@ -392,7 +372,6 @@ function PlannerPage() {
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string>("");
 
-  // Load existing plan on mount
   useEffect(() => {
     const init = async () => {
       if (initialised) return;
@@ -408,7 +387,6 @@ function PlannerPage() {
           "Loading study plan timed out.",
         );
         if (existing) {
-          console.log("Loaded plan:", existing);
           setPlan(existing);
           setDebugInfo(`Loaded plan with ${existing.items?.length || 0} tasks`);
         }
@@ -420,7 +398,7 @@ function PlannerPage() {
       }
     };
     init();
-  }, []);
+  }, [initialised]);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -435,10 +413,9 @@ function PlannerPage() {
       }
       const newPlan = await withTimeout(
         generatePlan({ data: { userId: session.user.id } }),
-        120000, // Increased timeout to 2 minutes
+        120000,
         "Generating study plan timed out.",
       );
-      console.log("New plan generated:", newPlan);
       setPlan(newPlan);
       setCompleted(new Set());
       setDebugInfo(`Generated plan with ${newPlan?.items?.length || 0} tasks`);
@@ -453,19 +430,19 @@ function PlannerPage() {
     }
   };
 
-  const toggleTask = (key: string) => {
+  const toggleTask = (taskId: string) => {
     setCompleted((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
+      if (next.has(taskId)) {
+        next.delete(taskId);
       } else {
-        next.add(key);
+        next.add(taskId);
       }
       return next;
     });
   };
 
-  // Group tasks by date
+  // Group tasks cleanly by validated calendar dates
   const grouped: Record<string, PlanTask[]> = {};
   if (plan?.items && plan.items.length > 0) {
     for (const task of plan.items) {
@@ -580,7 +557,6 @@ function PlannerPage() {
               month: "short",
             });
 
-            // Find day plan metadata if available
             const dayPlan = plan?.daily_plans?.find((dp) => dp.date === date);
             const dayFocus = dayPlan?.daily_focus;
             const curriculumFocus = dayPlan?.curriculum_focus;
@@ -598,13 +574,13 @@ function PlannerPage() {
                   <p className="text-xs text-muted-foreground mb-2 italic">Focus: {dayFocus}</p>
                 )}
                 <div className="space-y-2">
-                  {tasks.map((task, i) => {
-                    const key = `${date}-${i}`;
-                    const done = completed.has(key);
+                  {tasks.map((task) => {
+                    const uniqueTaskId = task.id;
+                    const done = completed.has(uniqueTaskId);
                     return (
                       <button
-                        key={key}
-                        onClick={() => toggleTask(key)}
+                        key={uniqueTaskId}
+                        onClick={() => toggleTask(uniqueTaskId)}
                         className={`w-full flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${
                           done
                             ? "border-border/40 bg-muted/40 opacity-60"
@@ -661,7 +637,7 @@ function PlannerPage() {
         </div>
       )}
 
-      {/* Show message if plan exists but has no tasks */}
+      {/* Fallback state inside valid data scopes */}
       {plan && totalTasks === 0 && (
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
           <p className="text-sm text-muted-foreground">

@@ -1,3 +1,4 @@
+// app/routes/_authenticated/quizzes.tsx
 import { useState, useEffect, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
@@ -29,9 +30,9 @@ type MCQ = {
   options: string[];
   correct: number;
   explanation: string;
-  difficulty?: "easy" | "medium" | "hard";
-  subtopic?: string;
-  curriculum?: CurriculumType;
+  difficulty: "easy" | "medium" | "hard";
+  subtopic: string;
+  curriculum: CurriculumType;
 };
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
@@ -58,179 +59,64 @@ const generateQuiz = createServerFn({ method: "POST" })
 
     // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
     const model = createLovableAiGatewayProvider().chatModel();
-    const { generateText } = await import("ai");
+    const { generateObject } = await import("ai");
 
-    const { text } = await generateText({
+    // Enforce structured output generation using native SDK schema tooling
+    const { object } = await generateObject({
       model,
-      prompt: `You are a senior examiner with 20+ years of experience setting and marking high-quality exam questions for ${curriculum} students. You have deep expertise in curriculum design, assessment psychology, and common student learning patterns.
+      schema: z.object({
+        questions: z.array(
+          z.object({
+            question: z.string(),
+            options: z.array(z.string()).length(4),
+            correct: z.number().min(0).max(3),
+            explanation: z.string(),
+            difficulty: z.enum(["easy", "medium", "hard"]),
+            subtopic: z.string(),
+            curriculum: z.string(),
+          })
+        ),
+      }),
+      // FIX: Added the critical keyword "json" explicitly inside formatting directives
+      // to comply with responseFormat / structuredOutputs gateway API guardrails.
+      prompt: `You are a senior curriculum examiner specialized in ${curriculum}. Generate exactly ${count} unique multiple-choice questions on the topic: "${topic}".
 
-## YOUR TASK
-Generate exactly ${count} multiple-choice questions on the topic: "${topic}"
+## OUTPUT FORMAT
+CRITICAL: You must return the output strictly as a valid json object matching the provided structural validation schema. Do not wrap the response in markdown code blocks or backticks (e.g., do not use \`\`\`json). The response must be clean, raw json payload.
 
 ## STUDENT CONTEXT
-- Curriculum: ${curriculum}
-- Purpose: Formative assessment to identify knowledge gaps and reinforce learning
-- Difficulty distribution: 30% easy, 50% medium, 20% hard
+- Target Curriculum: ${curriculum}
+- Purpose: Formative assessment identifying knowledge gaps.
+- Difficulty mix: 30% easy, 50% medium, 20% hard.
 
-## CURRICULUM-SPECIFIC REQUIREMENTS
+## CURRICULUM-SPECIFIC GUIDELINES
+- **KCSE**: Align to KNEC syllabus/past papers (Form 1-4). Use Kenyan textbook references (KLB, Longhorn) and localized contexts (e.g., M-Pesa, localized geography, agriculture).
+- **CBC**: Focus on the 7 core competencies, scenario-based problem solving, and grade-appropriate practical tasks.
+- **IGCSE**: Use Cambridge command words (describe, explain, evaluate). Structure questions across Core/Extended tier logic matching assessments objectives AO1, AO2, and AO3.
 
-### For KCSE (Kenya Certificate of Secondary Education):
-- Follow KNEC examination format and syllabus requirements
-- Use Kenyan textbooks as reference: KLB, Longhorn, Moran, Oxford
-- Include practical application questions (Paper 3 style for sciences)
-- Use Kenyan context, examples, and local scenarios
-- Match Form 1-4 difficulty levels appropriately
-- Include composition/insha-style questions for languages
-- Reference specific KNEC past paper question styles
-
-### For CBC (Competency Based Curriculum):
-- Focus on competencies and practical application of knowledge
-- Include scenario-based and project-oriented questions
-- Test 7 core competencies: Communication, Critical Thinking, Creativity, Citizenship, Digital Literacy, Self-Efficacy, Collaboration
-- Use age-appropriate language based on grade level
-- Include real-world problem-solving scenarios
-- Reference CBC-approved learning materials
-
-### For IGCSE (Cambridge International):
-- Follow Cambridge assessment objectives (AO1: Knowledge, AO2: Application, AO3: Evaluation)
-- Use Cambridge-endorsed textbooks (Hodder, Cambridge University Press, Oxford)
-- Include international contexts and global perspectives
-- Use proper Cambridge command words (describe, explain, evaluate, discuss)
-- Include practical/alternative to practical questions for sciences
-- Distinguish between Core and Extended tier where applicable
-
-## QUESTION DESIGN PRINCIPLES
-
-### 1. Concept Coverage
-- Each question MUST test a UNIQUE concept, sub-topic, or skill
-- No repetition or rephrasing of the same underlying concept
-- Cover different cognitive domains:
-  - Knowledge & Recall: Facts, definitions, terminology
-  - Comprehension: Understanding concepts, interpreting data
-  - Application: Using knowledge in new situations
-  - Analysis: Breaking down complex ideas, identifying patterns
-  - Evaluation: Making judgments, comparing alternatives
-
-### 2. Question Structure & Language
-- Write in clear, concise, examination-standard English
-- Use active voice and precise terminology
-- Avoid ambiguous phrasing, double negatives, or trick questions
-- Include necessary context (scenarios, data, diagrams described in text)
-- For math/science: Include formulas and equations using LaTeX notation ($formula$)
-- Questions should be self-contained - no dependency on other questions
-- Match the reading level appropriate for the curriculum and level
-
-### 3. Option (Distractor) Design
-- Provide exactly 4 options (A, B, C, D) for each question
-- ALL options must be plausible and attractive to students with partial knowledge
-- Base distractors on documented common misconceptions and errors:
-  - Math: Common calculation errors, wrong formula application, unit confusion
-  - Sciences: Reversed cause-effect, confused processes, wrong scientific terms
-  - Languages: Common grammar errors, spelling mistakes, misinterpretation
-  - Humanities: Mixed-up dates, confused events, wrong geographical features
-- Options should be:
-  - Grammatically consistent with the question stem
-  - Approximately the same length and complexity
-  - Arranged in logical order (numerical, alphabetical, chronological)
-  - Mutually exclusive (no overlapping answers)
-- NEVER use: "All of the above", "None of the above", "A and B only"
-- Avoid obvious wrong answers or absurd options
-
-### 4. Correct Answer
-- Exactly ONE unambiguously correct answer per question
-- Randomize the position of correct answers (not always the same index)
-- The correct answer should require genuine understanding, not guesswork
-- For calculation questions: The correct answer must be among the options
-- The correct answer index is 0-based (0=A, 1=B, 2=C, 3=D)
-
-### 5. Explanation Quality
-Provide comprehensive explanations that serve as micro-lessons:
-
-**For each explanation, include:**
-1. ✅ Why the correct answer is right (with step-by-step working for math/science)
-2. ❌ Why each wrong option is incorrect (identify the specific misconception)
-3. 📚 The key concept, formula, or rule involved (with LaTeX for formulas)
-
-**For math/science explanations:**
-- Show ALL working steps clearly
-- Include formulas in LaTeX: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$
-- Explain WHY each step is taken
-- Include units and significant figures where relevant
-
-**For humanities/languages:**
-- Reference specific facts, dates, or sources
-- Explain historical/geographical context
-- Provide literary analysis where relevant
-- Include definitions of key terms used
-
-### 6. Difficulty Calibration
-- **Easy (30%):** Direct recall, basic concepts, straightforward application
-- **Medium (50%):** Application to unfamiliar contexts, multi-step problems, data interpretation
-- **Hard (20%):** Complex problem-solving, synthesis of multiple concepts, critical evaluation
-
-## RESPONSE FORMAT
-Return ONLY a valid JSON array (no markdown fences, no additional text). Each question object must have exactly these fields:
-
-[
-  {
-    "question": "Full question text with any necessary context or formulas in LaTeX",
-    "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
-    "correct": 0,
-    "explanation": "Detailed explanation covering: why correct answer is right, why wrong options are wrong, key concepts/formulas, and study tips",
-    "difficulty": "easy|medium|hard",
-    "subtopic": "Specific sub-topic being tested",
-    "curriculum": "${curriculum}"
-  }
-]
-
-## EXAMPLE (KCSE Mathematics, Medium):
-{
-  "question": "Solve for x: $2x^2 + 5x - 3 = 0$",
-  "options": ["$x = -3$ or $x = \\frac{1}{2}$", "$x = 3$ or $x = -\\frac{1}{2}$", "$x = -3$ or $x = -\\frac{1}{2}$", "$x = 1$ or $x = -\\frac{3}{2}$"],
-  "correct": 0,
-  "explanation": "✅ Correct Answer (A): $x = -3$ or $x = \\frac{1}{2}$\\n\\nUsing quadratic formula $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$ where $a=2$, $b=5$, $c=-3$:\\n1. Discriminant: $b^2 - 4ac = 25 - 4(2)(-3) = 25 + 24 = 49$\\n2. $x = \\frac{-5 \\pm 7}{4}$\\n3. $x = \\frac{-5+7}{4} = \\frac{1}{2}$ or $x = \\frac{-5-7}{4} = -3$\\n\\n❌ Option B: Sign errors in formula application\\n❌ Option C: Incorrect simplification of second root\\n❌ Option D: Wrong factoring attempt\\n\\n📚 Key Concept: Always use quadratic formula when factoring is difficult. Remember: $-b \\pm \\sqrt{b^2-4ac}$ over $2a$.",
-  "difficulty": "medium",
-  "subtopic": "Quadratic Formula",
-  "curriculum": "KCSE"
-}
-
-## FINAL INSTRUCTIONS
-1. Generate exactly ${count} questions
-2. Return ONLY the JSON array - no introduction, no conclusion, no markdown fences
-3. Ensure each question has ALL required fields
-4. Randomize correct answer positions (0, 1, 2, or 3)
-5. Double-check all calculations, facts, and explanations
-6. Questions must be ready for immediate use in a quiz application
-7. Tailor ALL content specifically for ${curriculum} curriculum
-
-Generate the questions now:`,
+## QUESTION & OPTION DESIGN
+1. **JSON Array Payload**: Ensure your generated response maps accurately onto the structured json questions schema definitions.
+2. **Formatting**: Wrap ALL math, chemical notation, and formulas cleanly using single-dollar sign delimiters like $x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$ or block expression delimiters $F = ma$. Do NOT use markdown code blocks or brackets [ ] for equations inside the json text keys.
+3. **Options**: Provide exactly 4 options (A, B, C, D). Ensure all distractors are plausible, tracking common misconceptions (calculation errors, reversed processes, or grammar slips).
+4. **Answers**: Exactly one clearly correct answer. Randomize correct answer index (0-based: 0=A, 1=B, 2=C, 3=D). Never use "All of the above" or "None of the above".
+5. **Explanation**: Format explanations strictly with:
+   - ✅ Correct Answer Explanation
+   - ❌ Distractor Breakdown
+   - 📚 Key Rule / Textbook reference`,
     });
 
-    let questions: MCQ[] = [];
-    try {
-      const clean = text
-        .replace(/```json/gi, "")
-        .replace(/```/g, "")
-        .trim();
-      questions = JSON.parse(clean);
-      if (!Array.isArray(questions)) throw new Error("not array");
+    const questions: MCQ[] = (object.questions || []).map((q) => ({
+      question: q.question,
+      options: q.options,
+      correct: q.correct,
+      explanation: q.explanation,
+      difficulty: q.difficulty,
+      subtopic: q.subtopic || topic,
+      curriculum: (q.curriculum || curriculum) as CurriculumType,
+    }));
 
-      // Validate and sanitize each question
-      questions = questions.map((q: any, idx: number) => ({
-        question: q.question || `Question ${idx + 1}`,
-        options:
-          Array.isArray(q.options) && q.options.length === 4
-            ? q.options
-            : ["Option A", "Option B", "Option C", "Option D"],
-        correct: typeof q.correct === "number" && q.correct >= 0 && q.correct <= 3 ? q.correct : 0,
-        explanation: q.explanation || "No explanation provided.",
-        difficulty: ["easy", "medium", "hard"].includes(q.difficulty) ? q.difficulty : "medium",
-        subtopic: q.subtopic || topic,
-        curriculum: q.curriculum || (curriculum as CurriculumType),
-      }));
-    } catch (parseError) {
-      console.error("Failed to parse quiz JSON:", parseError);
-      throw new Error("AI returned invalid quiz format. Please try again.");
+    if (questions.length === 0) {
+      throw new Error("No questions were generated by the AI agent.");
     }
 
     // Insert the generated quiz into the `quizzes` table
