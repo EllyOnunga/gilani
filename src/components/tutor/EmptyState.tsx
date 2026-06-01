@@ -24,8 +24,8 @@ export function EmptyState({ onPromptClick }: Props) {
           Welcome to GilaniAI Tutor
         </h3>
         <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
-          Your personal KCSE/CBC study assistant. Ask any question about your
-          curriculum and get step-by-step guidance.
+          Your personal KCSE/CBC study assistant. Ask any question about your curriculum and get
+          step-by-step guidance.
         </p>
       </div>
 

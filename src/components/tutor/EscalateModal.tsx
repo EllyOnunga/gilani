@@ -20,12 +20,10 @@ export function EscalateModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4 mb-safe">
-        <h3 className="font-serif text-lg font-bold text-foreground">
-          Escalate to Teacher
-        </h3>
+        <h3 className="font-serif text-lg font-bold text-foreground">Escalate to Teacher</h3>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Enter your teacher's email to send this conversation directly to them.
-          Or leave blank to escalate to any available teacher.
+          Enter your teacher's email to send this conversation directly to them. Or leave blank to
+          escalate to any available teacher.
         </p>
         <div className="space-y-1.5">
           <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">

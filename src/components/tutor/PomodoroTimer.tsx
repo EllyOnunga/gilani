@@ -95,7 +95,9 @@ export function PomodoroTimer() {
             <div className="p-3 space-y-2">
               <div className="flex gap-2">
                 <button
-                  onClick={() => { timerRunning ? pauseTimer() : startTimer(); }}
+                  onClick={() => {
+                    timerRunning ? pauseTimer() : startTimer();
+                  }}
                   className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   {timerRunning ? "Pause" : "Start"}

@@ -49,8 +49,7 @@ export function ChatInput({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const recognitionRef = useRef<any>(null);
 
-  const isRateLimited =
-    !!(chatError?.includes("rate limit") || chatError?.includes("quota"));
+  const isRateLimited = !!(chatError?.includes("rate limit") || chatError?.includes("quota"));
 
   // Auto-resize textarea
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -71,8 +70,7 @@ export function ChatInput({
   // Speech to text
   const startListening = () => {
     const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast.error("Speech recognition is not supported in your browser.");
       return;
@@ -124,9 +122,7 @@ export function ChatInput({
           <div className="flex items-center gap-2 min-w-0">
             <FileText className="h-4 w-4 flex-shrink-0 text-primary" />
             <div className="min-w-0">
-              <p className="text-xs font-semibold truncate text-foreground">
-                {attachedFile.name}
-              </p>
+              <p className="text-xs font-semibold truncate text-foreground">{attachedFile.name}</p>
               <p className="font-mono text-[9px] text-muted-foreground mt-0.5">
                 {(attachedFile.size / 1024).toFixed(1)} KB • Document text loaded
               </p>
@@ -141,6 +137,9 @@ export function ChatInput({
           </button>
         </div>
       )}
+      <div className="text-[10px] text-muted-foreground text-center px-4 py-1">
+        GilaniAI may produce inaccurate information. Verify with official sources.
+      </div>
 
       {/* Input row */}
       <div className="flex items-end gap-2">
@@ -178,8 +177,8 @@ export function ChatInput({
             isPending
               ? "Waiting for response..."
               : isRateLimited
-              ? "AI rate limit reached. Please wait a few minutes..."
-              : "Ask a question… (Enter to send)"
+                ? "AI rate limit reached. Please wait a few minutes..."
+                : "Ask a question… (Enter to send)"
           }
           disabled={isPending || parsingFile || isRateLimited}
           onKeyDown={handleKeyDown}
@@ -196,11 +195,7 @@ export function ChatInput({
           }`}
           title={isListening ? "Stop listening" : "Speak your question"}
         >
-          {isListening ? (
-            <MicOff className="h-4 w-4" />
-          ) : (
-            <Mic className="h-4 w-4" />
-          )}
+          {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
         </button>
 
         {/* TTS Toggle */}
@@ -216,11 +211,7 @@ export function ChatInput({
           }`}
           title={ttsEnabled ? "Disable text-to-speech" : "Enable text-to-speech"}
         >
-          {ttsEnabled ? (
-            <Volume2 className="h-4 w-4" />
-          ) : (
-            <VolumeX className="h-4 w-4" />
-          )}
+          {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
         </button>
 
         {/* Send Button */}
@@ -230,11 +221,7 @@ export function ChatInput({
           className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
           title="Send"
         >
-          {isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
+          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </button>
       </div>
 

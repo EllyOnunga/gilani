@@ -29,6 +29,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { NotificationBell } from "@/components/notifications";
+import { DisclaimerBanner } from "@/components/DisclaimerBanner";
+import { DisclaimerFooter } from "@/components/DisclaimerFooter";
+import { DisclaimerModal } from "@/components/DisclaimerModal";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
@@ -150,6 +153,9 @@ function AuthedShell() {
 
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden lg:flex-row bg-background text-foreground">
+      {/* Disclaimer Modal - shows once on first visit */}
+      <DisclaimerModal />
+
       {/* Mobile Top Navigation Header */}
       <header className="flex h-16 w-full items-center justify-between border-b border-border bg-sidebar px-4 lg:hidden sticky top-0 z-30">
         <button
@@ -182,6 +188,9 @@ function AuthedShell() {
           </button>
         </div>
       </header>
+
+      {/* Disclaimer Banner - dismissible warning */}
+      <DisclaimerBanner />
 
       {/* Sidebar Backdrop Overlay for Mobile */}
       {sidebarOpen && (

@@ -53,24 +53,202 @@ const ingestNote = createServerFn({ method: "POST" })
     const { generateText } = await import("ai");
     const { text } = await generateText({
       model,
-      prompt: `You are an expert educational summariser for Kenyan high school students (KCSE / CBC).
-Given the following study notes, return ONLY valid JSON (no markdown fences) with this exact shape:
-{"summary":"<2–4 sentence summary>","key_concepts":["concept1","concept2","concept3","concept4","concept5"]}
+      prompt: `You are an expert educational tutor and content creator for Kenyan high school students following the KCSE and CBC curricula. Your role is to create comprehensive, exam-ready study materials that help students master their subjects.
 
-NOTES:
+Given the provided study notes or question paper, create a COMPLETE and THOROUGH study resource following these guidelines:
+
+## For Study Notes:
+1. **Comprehensive Summary**: Provide a detailed, well-structured summary covering ALL key areas from the notes. Break it down into logical sections with clear headings. Include:
+   - Main concepts and definitions
+   - Important theories, principles, and formulas
+   - Step-by-step explanations of processes
+   - Real-world applications and examples relevant to Kenya
+   - Common student misconceptions and clarifications
+   - Key terms with their definitions
+
+2. **Key Concepts**: Extract ALL significant concepts, not just 5. Include:
+   - Core terminology with brief definitions
+   - Important formulas and equations (using proper mathematical notation with LaTeX where applicable: $formula$)
+   - Scientific names, historical dates, or specific data points
+   - Acronyms and their full meanings
+
+3. **Study Tips**: Add practical study tips specific to this topic, including:
+   - Memory aids and mnemonics
+   - Common exam question types on this topic
+   - How to approach different question formats
+   - Cross-references to related topics in the syllabus
+
+## For Question Papers/Problem Sets:
+1. **Complete Solutions**: Provide detailed, step-by-step solutions for EVERY question, including:
+   - Clear marking of marks allocation per step (e.g., [2 marks])
+   - All working shown clearly with explanations
+   - Alternative solution methods where applicable
+   - Common mistakes to avoid
+   - Final answers highlighted or boxed
+
+2. **Explanatory Notes**: For each solution, include:
+   - The underlying concept being tested
+   - Why the specific approach was chosen
+   - How to verify the answer
+   - Links to related concepts for further study
+
+3. **Practice Enhancement**: 
+   - Suggest similar practice questions
+   - Provide tips for time management on similar questions
+   - Include memory aids for formulas used
+
+## Formatting Guidelines:
+- Use proper markdown formatting for readability:
+  - # for main headings, ## for subheadings, ### for sub-subheadings
+  - **bold** for key terms and important points
+  - *italic* for emphasis and examples
+  - \`code\` for formulas, chemical equations, or code snippets
+  - $$ for block mathematical equations
+  - - for bullet points
+  - 1. for numbered steps
+  - > for important notes and warnings
+  - Tables for comparisons and organized data
+- Use Kenyan curriculum terminology and references throughout
+- Include relevant external resources and references where helpful:
+  - Links to official KNEC resources
+  - Links to reputable Kenyan educational websites and YouTube channels
+  - Links to past KCSE papers, CBC, IGCSE Pearson Edexcel, IGCSE Cambridge and marking schemes
+  - References to approved textbooks (e.g., KLB, Longhorn, Moran)
+  - Online educational resources (e.g., KICD, Kenya Education Cloud, Save My Exams, Physics and Maths Tutor )
+- Add a "Further Reading" section with recommended resources
+
+## Quality Standards:
+- Ensure 100% accuracy of all facts, formulas, and solutions
+- Use age-appropriate language (Form 1-4 level, CBC, IGCSE CAMBRIDGE and IGCSE PEARSON EDEXCEL)
+- Include diagrams descriptions (in text) where visual aids would help
+- Relate concepts to Kenyan context and local examples
+- Maintain academic rigor while being student-friendly
+
+## Response Format:
+Return ONLY valid JSON (no markdown fences, no additional text) with this exact structure:
+{
+  "title": "Clear, descriptive title for this study material",
+  "type": "study_notes" or "question_paper",
+  "subject": "Subject name",
+  "topic": "Specific topic name",
+  "form_level": "Form 1-4 or General",
+  "comprehensive_summary": "Complete markdown-formatted summary with all sections",
+  "key_concepts": [
+    {"concept": "Concept name", "definition": "Clear definition", "importance": "Why this matters"}
+  ],
+  "formulas_and_equations": [
+    {"name": "Formula name", "expression": "LaTeX formula", "explanation": "When and how to use"}
+  ],
+  "solutions": [
+    {
+      "question_number": 1,
+      "question_text": "Original question",
+      "solution": "Detailed step-by-step solution with markdown",
+      "marks_breakdown": "How marks are allocated",
+      "common_mistakes": "What to avoid",
+      "alternative_approach": "Another way to solve if applicable"
+    }
+  ],
+  "study_tips": ["Tip 1", "Tip 2"],
+  "common_exam_questions": ["Question type 1", "Question type 2"],
+  "related_topics": ["Related topic 1", "Related topic 2"],
+  "recommended_resources": [
+    {"name": "Resource name", "type": "textbook/website/video", "description": "What it covers", "link": "URL if available"}
+  ],
+  "quick_review_cards": [
+    {"front": "Question or prompt", "back": "Answer or explanation"}
+  ]
+}
+
+Study material to process:
 ${content.slice(0, 8000)}`,
     });
 
-    let summary = "";
-    let keyConcepts: string[] = [];
-    try {
-      const parsed = JSON.parse(text.trim());
-      summary = parsed.summary ?? "";
-      keyConcepts = Array.isArray(parsed.key_concepts) ? parsed.key_concepts : [];
-    } catch {
-      summary = text.slice(0, 400);
+    // Define the type for the parsed response
+    interface StudyMaterialResponse {
+      title: string;
+      type: "study_notes" | "question_paper";
+      subject: string;
+      topic: string;
+      form_level: string;
+      comprehensive_summary: string;
+      summary?: string;
+      key_concepts: Array<{
+        concept: string;
+        definition: string;
+        importance: string;
+      }>;
+      formulas_and_equations: Array<{
+        name: string;
+        expression: string;
+        explanation: string;
+      }>;
+      solutions?: Array<{
+        question_number: number;
+        question_text: string;
+        solution: string;
+        marks_breakdown: string;
+        common_mistakes: string;
+        alternative_approach?: string;
+      }>;
+      study_tips: string[];
+      common_exam_questions: string[];
+      related_topics: string[];
+      recommended_resources: Array<{
+        name: string;
+        type: string;
+        description: string;
+        link?: string;
+      }>;
+      quick_review_cards: Array<{
+        front: string;
+        back: string;
+      }>;
     }
 
+    // Parse and handle the response
+    let summary = "";
+    let keyConcepts: string[] = [];
+    let studyMaterial: StudyMaterialResponse | null = null;
+
+    try {
+      // Clean the response text - remove any markdown code fences if present
+      let cleanText = text.trim();
+      if (cleanText.startsWith("```json")) {
+        cleanText = cleanText.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+      } else if (cleanText.startsWith("```")) {
+        cleanText = cleanText.replace(/^```\s*/, "").replace(/\s*```$/, "");
+      }
+
+      const parsed = JSON.parse(cleanText) as StudyMaterialResponse;
+      studyMaterial = parsed;
+
+      // Extract summary and key concepts for backward compatibility
+      summary = parsed.comprehensive_summary || parsed.summary || "";
+
+      // Convert key concepts to flat array for backward compatibility
+      keyConcepts = Array.isArray(parsed.key_concepts)
+        ? parsed.key_concepts.map((kc) =>
+            typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
+          )
+        : [];
+    } catch (error) {
+      console.error("Failed to parse study material JSON:", error);
+      // Fallback: use the raw text as summary
+      summary = text.slice(0, 1000);
+      keyConcepts = [];
+      studyMaterial = null;
+    }
+
+    // Now you can use the full study material object
+    if (studyMaterial) {
+      console.log("Title:", studyMaterial.title);
+      console.log("Subject:", studyMaterial.subject);
+      console.log("Topic:", studyMaterial.topic);
+      console.log("Summary:", studyMaterial.comprehensive_summary);
+      console.log("Study Tips:", studyMaterial.study_tips);
+      // ... use all other fields
+    }
     // Insert note (column in DB is raw_text, not content)
     const { data: note, error: noteErr } = await supabaseAdmin
       .from("notes")

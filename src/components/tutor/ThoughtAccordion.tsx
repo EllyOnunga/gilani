@@ -75,9 +75,7 @@ export function ThoughtAccordion({
             <Brain className="h-3.5 w-3.5 text-primary/70" />
           )}
           <span className="font-semibold uppercase tracking-wider font-mono text-[9px]">
-            {isThinking
-              ? `Thinking process (${duration}s...)`
-              : `Thought process (${duration}s)`}
+            {isThinking ? `Thinking process (${duration}s...)` : `Thought process (${duration}s)`}
           </span>
         </div>
         <ChevronUp

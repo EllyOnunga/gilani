@@ -38,10 +38,7 @@ export function MessageList({
   }, [messages]);
 
   return (
-    <div
-      ref={scrollContainerRef}
-      className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4"
-    >
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
       {/* Loading state */}
       {messagesLoading && (
         <div className="flex flex-col items-center justify-center h-full gap-3">

@@ -5,6 +5,7 @@ import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchWithTimeout, getErrorMessage, withTimeout } from "@/lib/async";
 
+
 export const Route = createFileRoute("/_authenticated/tutor")({
   component: TutorIndex,
 });
@@ -149,7 +150,13 @@ function TutorIndex() {
 
   const isExactTutor = location.pathname === "/tutor" || location.pathname === "/tutor/";
   if (!isExactTutor) {
-    return <Outlet />;
+    return (
+      <div className="flex flex-col h-screen">
+        <div className="flex-1 overflow-hidden">
+          <Outlet />
+        </div>
+      </div>
+    );
   }
 
   if (error) {

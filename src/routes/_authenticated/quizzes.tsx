@@ -12,12 +12,17 @@ import {
   Trophy,
   RotateCcw,
   Loader2,
+  BookOpen,
+  GraduationCap,
+  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
+
+type CurriculumType = "KCSE" | "CBC" | "IGCSE";
 
 type MCQ = {
   question: string;
@@ -26,14 +31,22 @@ type MCQ = {
   explanation: string;
   difficulty?: "easy" | "medium" | "hard";
   subtopic?: string;
+  curriculum?: CurriculumType;
 };
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
 const generateQuiz = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ topic: z.string(), count: z.number(), userId: z.string() }))
+  .inputValidator(
+    z.object({
+      topic: z.string(),
+      count: z.number(),
+      userId: z.string(),
+      curriculum: z.string(),
+    }),
+  )
   .handler(async ({ data }) => {
-    const { topic, count, userId } = data;
+    const { topic, count, userId, curriculum } = data;
 
     // SECURITY: Validate inputs
     if (!topic.trim()) {
@@ -46,37 +59,151 @@ const generateQuiz = createServerFn({ method: "POST" })
     // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
     const model = createLovableAiGatewayProvider().chatModel();
     const { generateText } = await import("ai");
+
     const { text } = await generateText({
       model,
-      prompt: `You are a senior KCSE/CBC/IGCSE examiner with 20 years of experience setting high-quality exam questions for Kenyan students.
+      prompt: `You are a senior examiner with 20+ years of experience setting and marking high-quality exam questions for ${curriculum} students. You have deep expertise in curriculum design, assessment psychology, and common student learning patterns.
 
-Generate exactly ${count} multiple-choice questions on the topic: "${topic}".
+## YOUR TASK
+Generate exactly ${count} multiple-choice questions on the topic: "${topic}"
 
-STRICT RULES:
-1. Questions must be curriculum-aligned to KCSE, CBC, or IGCSE standards where applicable.
-2. Vary difficulty: 30% easy, 50% medium, 20% hard (KCSE exam-style).
-3. Each question must test a DIFFERENT concept or sub-topic — no repetition.
-4. Wrong options (distractors) must be plausible and based on common student misconceptions.
-5. Explanations must: state why the correct answer is right, why common wrong answers are wrong, and cite the relevant concept or formula.
-6. For math/science questions: show the working or formula in the explanation.
-7. For essay subjects: reference specific facts, dates, or definitions.
-8. Questions should mirror actual KCSE past paper style and language.
-9. Never use "All of the above" or "None of the above" as options.
-10. Each option must be roughly the same length to avoid giving away the answer.
+## STUDENT CONTEXT
+- Curriculum: ${curriculum}
+- Purpose: Formative assessment to identify knowledge gaps and reinforce learning
+- Difficulty distribution: 30% easy, 50% medium, 20% hard
 
-Return ONLY valid JSON (no markdown fences, no extra text) with this exact shape:
+## CURRICULUM-SPECIFIC REQUIREMENTS
+
+### For KCSE (Kenya Certificate of Secondary Education):
+- Follow KNEC examination format and syllabus requirements
+- Use Kenyan textbooks as reference: KLB, Longhorn, Moran, Oxford
+- Include practical application questions (Paper 3 style for sciences)
+- Use Kenyan context, examples, and local scenarios
+- Match Form 1-4 difficulty levels appropriately
+- Include composition/insha-style questions for languages
+- Reference specific KNEC past paper question styles
+
+### For CBC (Competency Based Curriculum):
+- Focus on competencies and practical application of knowledge
+- Include scenario-based and project-oriented questions
+- Test 7 core competencies: Communication, Critical Thinking, Creativity, Citizenship, Digital Literacy, Self-Efficacy, Collaboration
+- Use age-appropriate language based on grade level
+- Include real-world problem-solving scenarios
+- Reference CBC-approved learning materials
+
+### For IGCSE (Cambridge International):
+- Follow Cambridge assessment objectives (AO1: Knowledge, AO2: Application, AO3: Evaluation)
+- Use Cambridge-endorsed textbooks (Hodder, Cambridge University Press, Oxford)
+- Include international contexts and global perspectives
+- Use proper Cambridge command words (describe, explain, evaluate, discuss)
+- Include practical/alternative to practical questions for sciences
+- Distinguish between Core and Extended tier where applicable
+
+## QUESTION DESIGN PRINCIPLES
+
+### 1. Concept Coverage
+- Each question MUST test a UNIQUE concept, sub-topic, or skill
+- No repetition or rephrasing of the same underlying concept
+- Cover different cognitive domains:
+  - Knowledge & Recall: Facts, definitions, terminology
+  - Comprehension: Understanding concepts, interpreting data
+  - Application: Using knowledge in new situations
+  - Analysis: Breaking down complex ideas, identifying patterns
+  - Evaluation: Making judgments, comparing alternatives
+
+### 2. Question Structure & Language
+- Write in clear, concise, examination-standard English
+- Use active voice and precise terminology
+- Avoid ambiguous phrasing, double negatives, or trick questions
+- Include necessary context (scenarios, data, diagrams described in text)
+- For math/science: Include formulas and equations using LaTeX notation ($formula$)
+- Questions should be self-contained - no dependency on other questions
+- Match the reading level appropriate for the curriculum and level
+
+### 3. Option (Distractor) Design
+- Provide exactly 4 options (A, B, C, D) for each question
+- ALL options must be plausible and attractive to students with partial knowledge
+- Base distractors on documented common misconceptions and errors:
+  - Math: Common calculation errors, wrong formula application, unit confusion
+  - Sciences: Reversed cause-effect, confused processes, wrong scientific terms
+  - Languages: Common grammar errors, spelling mistakes, misinterpretation
+  - Humanities: Mixed-up dates, confused events, wrong geographical features
+- Options should be:
+  - Grammatically consistent with the question stem
+  - Approximately the same length and complexity
+  - Arranged in logical order (numerical, alphabetical, chronological)
+  - Mutually exclusive (no overlapping answers)
+- NEVER use: "All of the above", "None of the above", "A and B only"
+- Avoid obvious wrong answers or absurd options
+
+### 4. Correct Answer
+- Exactly ONE unambiguously correct answer per question
+- Randomize the position of correct answers (not always the same index)
+- The correct answer should require genuine understanding, not guesswork
+- For calculation questions: The correct answer must be among the options
+- The correct answer index is 0-based (0=A, 1=B, 2=C, 3=D)
+
+### 5. Explanation Quality
+Provide comprehensive explanations that serve as micro-lessons:
+
+**For each explanation, include:**
+1. ✅ Why the correct answer is right (with step-by-step working for math/science)
+2. ❌ Why each wrong option is incorrect (identify the specific misconception)
+3. 📚 The key concept, formula, or rule involved (with LaTeX for formulas)
+
+**For math/science explanations:**
+- Show ALL working steps clearly
+- Include formulas in LaTeX: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$
+- Explain WHY each step is taken
+- Include units and significant figures where relevant
+
+**For humanities/languages:**
+- Reference specific facts, dates, or sources
+- Explain historical/geographical context
+- Provide literary analysis where relevant
+- Include definitions of key terms used
+
+### 6. Difficulty Calibration
+- **Easy (30%):** Direct recall, basic concepts, straightforward application
+- **Medium (50%):** Application to unfamiliar contexts, multi-step problems, data interpretation
+- **Hard (20%):** Complex problem-solving, synthesis of multiple concepts, critical evaluation
+
+## RESPONSE FORMAT
+Return ONLY a valid JSON array (no markdown fences, no additional text). Each question object must have exactly these fields:
+
 [
   {
-    "question": "Full question text here?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "question": "Full question text with any necessary context or formulas in LaTeX",
+    "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
     "correct": 0,
-    "explanation": "Detailed explanation here. The correct answer is A because... B is wrong because... The relevant formula/concept is...",
+    "explanation": "Detailed explanation covering: why correct answer is right, why wrong options are wrong, key concepts/formulas, and study tips",
     "difficulty": "easy|medium|hard",
-    "subtopic": "specific subtopic name"
+    "subtopic": "Specific sub-topic being tested",
+    "curriculum": "${curriculum}"
   }
 ]
 
-where "correct" is the 0-based index of the correct option.`,
+## EXAMPLE (KCSE Mathematics, Medium):
+{
+  "question": "Solve for x: $2x^2 + 5x - 3 = 0$",
+  "options": ["$x = -3$ or $x = \\frac{1}{2}$", "$x = 3$ or $x = -\\frac{1}{2}$", "$x = -3$ or $x = -\\frac{1}{2}$", "$x = 1$ or $x = -\\frac{3}{2}$"],
+  "correct": 0,
+  "explanation": "✅ Correct Answer (A): $x = -3$ or $x = \\frac{1}{2}$\\n\\nUsing quadratic formula $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$ where $a=2$, $b=5$, $c=-3$:\\n1. Discriminant: $b^2 - 4ac = 25 - 4(2)(-3) = 25 + 24 = 49$\\n2. $x = \\frac{-5 \\pm 7}{4}$\\n3. $x = \\frac{-5+7}{4} = \\frac{1}{2}$ or $x = \\frac{-5-7}{4} = -3$\\n\\n❌ Option B: Sign errors in formula application\\n❌ Option C: Incorrect simplification of second root\\n❌ Option D: Wrong factoring attempt\\n\\n📚 Key Concept: Always use quadratic formula when factoring is difficult. Remember: $-b \\pm \\sqrt{b^2-4ac}$ over $2a$.",
+  "difficulty": "medium",
+  "subtopic": "Quadratic Formula",
+  "curriculum": "KCSE"
+}
+
+## FINAL INSTRUCTIONS
+1. Generate exactly ${count} questions
+2. Return ONLY the JSON array - no introduction, no conclusion, no markdown fences
+3. Ensure each question has ALL required fields
+4. Randomize correct answer positions (0, 1, 2, or 3)
+5. Double-check all calculations, facts, and explanations
+6. Questions must be ready for immediate use in a quiz application
+7. Tailor ALL content specifically for ${curriculum} curriculum
+
+Generate the questions now:`,
     });
 
     let questions: MCQ[] = [];
@@ -87,15 +214,30 @@ where "correct" is the 0-based index of the correct option.`,
         .trim();
       questions = JSON.parse(clean);
       if (!Array.isArray(questions)) throw new Error("not array");
-    } catch {
+
+      // Validate and sanitize each question
+      questions = questions.map((q: any, idx: number) => ({
+        question: q.question || `Question ${idx + 1}`,
+        options:
+          Array.isArray(q.options) && q.options.length === 4
+            ? q.options
+            : ["Option A", "Option B", "Option C", "Option D"],
+        correct: typeof q.correct === "number" && q.correct >= 0 && q.correct <= 3 ? q.correct : 0,
+        explanation: q.explanation || "No explanation provided.",
+        difficulty: ["easy", "medium", "hard"].includes(q.difficulty) ? q.difficulty : "medium",
+        subtopic: q.subtopic || topic,
+        curriculum: q.curriculum || (curriculum as CurriculumType),
+      }));
+    } catch (parseError) {
+      console.error("Failed to parse quiz JSON:", parseError);
       throw new Error("AI returned invalid quiz format. Please try again.");
     }
 
-    // Insert the generated quiz into the `quizzes` table so we have a persistent record & ID
+    // Insert the generated quiz into the `quizzes` table
     const { data: quiz, error } = await supabaseAdmin
       .from("quizzes")
       .insert({
-        topic,
+        topic: `${topic} (${curriculum})`,
         questions: questions as any,
         difficulty: "medium",
         user_id: userId,
@@ -152,21 +294,63 @@ export const Route = createFileRoute("/_authenticated/quizzes")({
 const TOPICS = [
   "Mathematics — Algebra",
   "Mathematics — Geometry",
+  "Mathematics — Calculus",
   "Biology — Photosynthesis",
   "Biology — Cell Division",
+  "Biology — Genetics",
   "Chemistry — Periodic Table",
   "Chemistry — Acids & Bases",
+  "Chemistry — Organic Chemistry",
   "Physics — Mechanics",
   "Physics — Electricity",
+  "Physics — Waves",
   "History & Government",
   "Geography — Physical Features",
+  "Geography — Human Geography",
   "English — Grammar",
+  "English — Comprehension",
   "Kiswahili — Fasihi",
+  "Kiswahili — Sarufi",
   "Computer Studies",
   "Business Studies",
+  "Agriculture",
+  "Home Science",
+  "Religious Education (CRE/IRE)",
 ];
 
 type Phase = "setup" | "loading" | "quiz" | "results";
+
+const CURRICULUM_BADGE: Record<string, { bg: string; text: string; icon: any }> = {
+  KCSE: {
+    bg: "bg-green-100 dark:bg-green-900/30",
+    text: "text-green-700 dark:text-green-400",
+    icon: BookOpen,
+  },
+  CBC: {
+    bg: "bg-blue-100 dark:bg-blue-900/30",
+    text: "text-blue-700 dark:text-blue-400",
+    icon: GraduationCap,
+  },
+  IGCSE: {
+    bg: "bg-purple-100 dark:bg-purple-900/30",
+    text: "text-purple-700 dark:text-purple-400",
+    icon: Globe,
+  },
+};
+
+function CurriculumBadge({ curriculum }: { curriculum: string }) {
+  const badge = CURRICULUM_BADGE[curriculum] || CURRICULUM_BADGE.KCSE;
+  const Icon = badge.icon;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${badge.bg} ${badge.text}`}
+    >
+      <Icon className="h-3 w-3" />
+      {curriculum}
+    </span>
+  );
+}
 
 function QuizzesPage() {
   const [questionCount, setQuestionCount] = useState(10);
@@ -183,8 +367,32 @@ function QuizzesPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [topic, setTopic] = useState(TOPICS[0]);
   const [customTopic, setCustomTopic] = useState(topicFromUrl || "");
+  const [curriculum, setCurriculum] = useState<CurriculumType>("KCSE");
 
   const activeTopic = customTopic.trim() || topic;
+
+  // Fetch user's curriculum preference
+  useEffect(() => {
+    const fetchCurriculum = async () => {
+      try {
+        const res = await supabase.auth.getSession();
+        const session = res?.data?.session;
+        if (session?.user?.id) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("curriculum")
+            .eq("id", session.user.id)
+            .maybeSingle();
+          if (profile?.curriculum) {
+            setCurriculum(profile.curriculum as CurriculumType);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch curriculum:", err);
+      }
+    };
+    fetchCurriculum();
+  }, []);
 
   useEffect(() => {
     if (topicFromUrl) {
@@ -206,36 +414,29 @@ function QuizzesPage() {
         setPhase("setup");
         return;
       }
-      let resWithTimeout: { quizId: string; questions: MCQ[] } | null = null;
-      const attempts = [45000, 60000];
-      for (let i = 0; i < attempts.length; i += 1) {
-        try {
-          resWithTimeout = await withTimeout(
-            generateQuiz({
-              data: { topic: activeTopic, count: questionCount, userId: session.user.id },
-            }),
-            attempts[i],
-            "Quiz generation timed out. Please try again.",
-          );
-          break;
-        } catch (attemptErr) {
-          if (i === attempts.length - 1) {
-            throw attemptErr;
-          }
-          toast.message("Quiz is taking longer than expected, retrying once…");
-        }
-      }
-      if (!resWithTimeout) {
-        throw new Error("Quiz generation failed. Please try again.");
-      }
-      setQuizId(resWithTimeout.quizId);
-      setQuestions(resWithTimeout.questions);
+
+      const result = await withTimeout(
+        generateQuiz({
+          data: {
+            topic: activeTopic,
+            count: questionCount,
+            userId: session.user.id,
+            curriculum: curriculum,
+          },
+        }),
+        90000, // 90 seconds timeout
+        "Quiz generation timed out. Please try with fewer questions or a different topic.",
+      );
+
+      setQuizId(result.quizId);
+      setQuestions(result.questions);
       setCurrent(0);
       setSelected(null);
-      setAnswered(new Array(resWithTimeout.questions.length).fill(false));
-      setUserAnswers(new Array(resWithTimeout.questions.length).fill(-1));
+      setAnswered(new Array(result.questions.length).fill(false));
+      setUserAnswers(new Array(result.questions.length).fill(-1));
       setShowExplain(false);
       setPhase("quiz");
+      toast.success(`Generated ${result.questions.length} questions!`);
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to generate quiz");
       setQuizError(message);
@@ -276,7 +477,7 @@ function QuizzesPage() {
     const score = userAnswers.filter((a, i) => a === questions[i]?.correct).length;
     const wrongTopics = questions
       .filter((_, i) => userAnswers[i] !== questions[i].correct)
-      .map((q) => q.question.slice(0, 60));
+      .map((q) => q.subtopic || q.question.slice(0, 60));
 
     try {
       const res = await supabase.auth.getSession();
@@ -312,12 +513,15 @@ function QuizzesPage() {
     return (
       <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12">
         <header className="animate-in-slide">
-          <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
-            Practice Quizzes
-          </p>
+          <div className="flex items-center gap-2 mb-2">
+            <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
+              Practice Quizzes
+            </p>
+            <CurriculumBadge curriculum={curriculum} />
+          </div>
           <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Test Your Knowledge</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            GilaniAI generates KCSE/CBC aligned MCQ questions and tracks your weak topics.
+            GilaniAI generates {curriculum}-aligned MCQ questions and tracks your weak topics.
           </p>
         </header>
 
@@ -327,6 +531,29 @@ function QuizzesPage() {
               {quizError} If this keeps happening, reduce question count or try another topic.
             </div>
           )}
+
+          {/* Curriculum Selector */}
+          <div>
+            <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2 block">
+              Curriculum
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["KCSE", "CBC", "IGCSE"] as CurriculumType[]).map((curr) => (
+                <button
+                  key={curr}
+                  onClick={() => setCurriculum(curr)}
+                  className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                    curriculum === curr
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:bg-accent"
+                  }`}
+                >
+                  {curr}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2 block">
               Choose Topic
@@ -396,10 +623,10 @@ function QuizzesPage() {
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p className="font-serif text-xl text-muted-foreground">Generating your quiz…</p>
         <p className="text-sm text-muted-foreground font-mono">
-          Crafting {questionCount} questions on {activeTopic}
+          Crafting {questionCount} {curriculum}-aligned questions on {activeTopic}
         </p>
         <p className="text-xs text-muted-foreground">
-          This can take up to a minute during high load.
+          This can take up to 90 seconds during high load.
         </p>
         <button
           onClick={() => {
@@ -408,7 +635,7 @@ function QuizzesPage() {
           }}
           className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
         >
-          Cancel and edit topic
+          Cancel
         </button>
       </div>
     );
@@ -430,7 +657,7 @@ function QuizzesPage() {
           <Trophy className="mx-auto h-14 w-14 text-primary mb-4" />
           <h2 className="font-serif text-3xl sm:text-4xl">{grade}</h2>
           <p className="mt-2 text-muted-foreground text-sm">
-            Topic: <strong>{activeTopic}</strong>
+            Topic: <strong>{activeTopic}</strong> • <CurriculumBadge curriculum={curriculum} />
           </p>
         </div>
 
@@ -443,7 +670,6 @@ function QuizzesPage() {
             {score} / {questions.length} correct
           </p>
 
-          {/* Score bar */}
           <div className="mt-6 h-3 rounded-full bg-muted overflow-hidden">
             <div
               className="h-full rounded-full bg-primary transition-all duration-1000"
@@ -462,7 +688,11 @@ function QuizzesPage() {
             return (
               <div
                 key={i}
-                className={`flex gap-3 p-3 rounded-lg ${correct ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}
+                className={`flex gap-3 p-3 rounded-lg ${
+                  correct
+                    ? "bg-green-50 border border-green-200"
+                    : "bg-red-50 border border-red-200"
+                }`}
               >
                 {correct ? (
                   <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -470,9 +700,29 @@ function QuizzesPage() {
                   <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium">{q.question}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium">{q.question}</p>
+                    {q.difficulty && (
+                      <span
+                        className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono uppercase ${
+                          q.difficulty === "easy"
+                            ? "bg-green-100 text-green-700"
+                            : q.difficulty === "hard"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {q.difficulty}
+                      </span>
+                    )}
+                  </div>
                   {!correct && (
                     <p className="text-xs text-muted-foreground mt-1">
+                      Your answer:{" "}
+                      <span className="font-semibold text-red-700">
+                        {q.options[userAnswers[i]]}
+                      </span>
+                      {" • "}
                       Correct:{" "}
                       <span className="font-semibold text-green-700">{q.options[q.correct]}</span>
                     </p>
@@ -508,7 +758,10 @@ function QuizzesPage() {
           <span>
             Question {current + 1} / {questions.length}
           </span>
-          <span>{activeTopic}</span>
+          <div className="flex items-center gap-2">
+            <span>{activeTopic}</span>
+            <CurriculumBadge curriculum={curriculum} />
+          </div>
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">
           <div
@@ -519,66 +772,86 @@ function QuizzesPage() {
       </div>
 
       {/* Question card */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-5">
-        <h3 className="font-serif text-xl leading-snug">{q.question}</h3>
-
-        <div className="space-y-3">
-          {q.options.map((opt, i) => {
-            let cls = "w-full text-left rounded-lg border px-4 py-3 text-sm transition-colors ";
-            if (!answered[current]) {
-              cls +=
-                selected === i
-                  ? "border-primary bg-primary/10 text-primary font-medium"
-                  : "border-border hover:bg-accent";
-            } else {
-              if (i === q.correct)
-                cls += "border-green-500 bg-green-50 text-green-800 font-semibold";
-              else if (i === userAnswers[current] && i !== q.correct)
-                cls += "border-red-400 bg-red-50 text-red-700";
-              else cls += "border-border text-muted-foreground";
-            }
-            return (
-              <button
-                key={i}
-                className={cls}
-                disabled={answered[current]}
-                onClick={() => setSelected(i)}
+      {q && (
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-serif text-xl leading-snug">{q.question}</h3>
+            {q.difficulty && (
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-mono uppercase ${
+                  q.difficulty === "easy"
+                    ? "bg-green-100 text-green-700"
+                    : q.difficulty === "hard"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-yellow-100 text-yellow-700"
+                }`}
               >
-                <span className="font-mono text-[11px] mr-2 uppercase">
-                  {["A", "B", "C", "D"][i]}.
-                </span>
-                {opt}
-              </button>
-            );
-          })}
-        </div>
-
-        {showExplain && (
-          <div className="rounded-lg border border-border/50 bg-muted/50 px-4 py-3 text-sm text-muted-foreground italic animate-in-slide">
-            💡 {q.explanation}
+                {q.difficulty}
+              </span>
+            )}
           </div>
-        )}
-
-        <div className="flex justify-end gap-3">
-          {!answered[current] ? (
-            <button
-              onClick={confirm}
-              disabled={selected === null}
-              className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
-            >
-              Confirm Answer
-            </button>
-          ) : (
-            <button
-              onClick={next}
-              className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              {current + 1 >= questions.length ? "See Results" : "Next"}
-              <ChevronRight className="h-4 w-4" />
-            </button>
+          {q.subtopic && (
+            <p className="text-xs text-muted-foreground -mt-3">Sub-topic: {q.subtopic}</p>
           )}
+
+          <div className="space-y-3">
+            {q.options.map((opt, i) => {
+              let cls = "w-full text-left rounded-lg border px-4 py-3 text-sm transition-colors ";
+              if (!answered[current]) {
+                cls +=
+                  selected === i
+                    ? "border-primary bg-primary/10 text-primary font-medium"
+                    : "border-border hover:bg-accent";
+              } else {
+                if (i === q.correct)
+                  cls += "border-green-500 bg-green-50 text-green-800 font-semibold";
+                else if (i === userAnswers[current] && i !== q.correct)
+                  cls += "border-red-400 bg-red-50 text-red-700";
+                else cls += "border-border text-muted-foreground";
+              }
+              return (
+                <button
+                  key={i}
+                  className={cls}
+                  disabled={answered[current]}
+                  onClick={() => setSelected(i)}
+                >
+                  <span className="font-mono text-[11px] mr-2 uppercase">
+                    {["A", "B", "C", "D"][i]}.
+                  </span>
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+
+          {showExplain && (
+            <div className="rounded-lg border border-border/50 bg-muted/50 px-4 py-3 text-sm text-muted-foreground italic animate-in-slide">
+              💡 {q.explanation}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3">
+            {!answered[current] ? (
+              <button
+                onClick={confirm}
+                disabled={selected === null}
+                className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
+              >
+                Confirm Answer
+              </button>
+            ) : (
+              <button
+                onClick={next}
+                className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                {current + 1 >= questions.length ? "See Results" : "Next"}
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
