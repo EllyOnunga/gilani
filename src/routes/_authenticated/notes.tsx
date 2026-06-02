@@ -46,7 +46,7 @@ const ingestNote = createServerFn({ method: "POST" })
       throw new Error("Title and content are required");
     }
 
-    const model = createLovableAiGatewayProvider().chatModel("gemini-1.5-flash");
+    const model = createLovableAiGatewayProvider().chatModel();
     const { generateText } = await import("ai");
     
     // Optimized, clean prompt structure targeting core educational content structures

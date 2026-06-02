@@ -124,18 +124,19 @@ function Dashboard() {
   const plannerTasks = data?.plannerTasks ?? [];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-8 lg:p-12 lg:space-y-12">
+    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8 lg:p-12 sm:space-y-8 lg:space-y-12">
       {/* Welcome Header */}
-      <header className="animate-in-slide flex items-end justify-between flex-wrap gap-4">
-        <div>
+      <header className="animate-in-slide flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
             Dashboard
           </p>
-          <h2 className="mt-1 max-w-2xl font-serif text-3xl sm:text-4xl text-balance">
+          <h2 className="mt-1 font-serif text-2xl sm:text-3xl lg:text-4xl text-balance">
             Habari, <span className="capitalize">{name}</span>. Ready to study?
           </h2>
         </div>
-        <div className="flex gap-4">
+        {/* Stats row — sits below greeting on mobile, inline on sm+ */}
+        <div className="flex gap-4 shrink-0">
           <div className="text-right">
             <p className="font-mono text-[10px] uppercase text-muted-foreground flex items-center gap-1 justify-end">
               <Flame className="h-3 w-3 text-orange-500 fill-orange-500" /> Streak
@@ -218,11 +219,11 @@ function Dashboard() {
               return (
                 <CarouselItem
                   key={idx}
-                  className="pl-4 basis-[85%] sm:basis-1/2 md:basis-1/3 animate-in-slide"
+                  className="pl-4 basis-[90%] xs:basis-[80%] sm:basis-1/2 md:basis-1/3 animate-in-slide"
                 >
                   <Link
                     to={item.to as any}
-                    className="group block h-full rounded-xl border border-border bg-card p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:scale-[1.01] flex flex-col justify-between"
+                    className="group block h-full rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:scale-[1.01] flex flex-col justify-between overflow-hidden"
                   >
                     <div>
                       <div
@@ -255,7 +256,7 @@ function Dashboard() {
       </section>
 
       {/* Widgets Grid */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 animate-in-slide [animation-delay:100ms]">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 animate-in-slide [animation-delay:100ms]">
         {/* Dynamic Study Plan Widget */}
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div>

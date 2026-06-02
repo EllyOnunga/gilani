@@ -68,6 +68,16 @@ function createChatModel(provider: string): { model: any; name: string } | null 
       });
       return { model: deepseek.chatModel("deepseek-chat"), name: "deepseek" };
     }
+    case "mistral": {
+      const key = getKey(process.env.MISTRAL_API_KEY);
+      if (!key) return null;
+      const mistral = createOpenAICompatible({
+        name: "mistral",
+        baseURL: "https://api.mistral.ai/v1",
+        apiKey: key,
+      });
+      return { model: mistral.chatModel("mistral-large-latest"), name: "mistral" };
+    }
     default:
       return null;
   }
@@ -94,6 +104,17 @@ function createEmbeddingModel(): { model: any; name: string } | null {
       apiKey: openaiKey,
     });
     return { model: openai.textEmbeddingModel("text-embedding-3-small"), name: "openai" };
+  }
+
+  // Try Mistral as fallback
+  const mistralKey = getKey(process.env.MISTRAL_API_KEY);
+  if (mistralKey) {
+    const mistral = createOpenAICompatible({
+      name: "mistral",
+      baseURL: "https://api.mistral.ai/v1",
+      apiKey: mistralKey,
+    });
+    return { model: mistral.textEmbeddingModel("mistral-embed"), name: "mistral" };
   }
   
   return null;
@@ -132,8 +153,8 @@ export const Route = createFileRoute("/api/chat")({
           }
 
           // ─── Select Chat Model (UPDATED PRIORITY ORDER) ──────────────────
-          // Priority: Groq → OpenAI → Gemini → DeepSeek
-          const providerOrder = ["groq", "openai", "gemini", "deepseek"];
+          // Priority: Groq → OpenAI → Gemini → Mistral → DeepSeek
+          const providerOrder = ["groq", "openai", "gemini", "mistral", "deepseek"];
           let model: any = null;
           let activeProvider: string = "";
 
