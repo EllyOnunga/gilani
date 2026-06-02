@@ -1,6 +1,87 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
+function createFallbackModel(models: any[]): any {
+  if (models.length === 1) return models[0];
+
+  return {
+    specificationVersion: "v3" as const,
+    get provider() {
+      return models[0].provider;
+    },
+    get modelId() {
+      return models[0].modelId;
+    },
+    get supportedUrls() {
+      return models[0].supportedUrls;
+    },
+    doGenerate(options: any) {
+      let lastError: any;
+      let attempt = 0;
+      
+      const executeNext = (): Promise<any> => {
+        if (attempt >= models.length) {
+          throw lastError;
+        }
+        const currentModel = models[attempt++];
+        console.log(`[AI Gateway Fallback] Attempting doGenerate with model ${currentModel.provider}/${currentModel.modelId} (attempt ${attempt}/${models.length})`);
+        try {
+          const result = currentModel.doGenerate(options);
+          if (result && typeof result.then === "function") {
+            return result.then(
+              (res: any) => res,
+              (err: any) => {
+                console.warn(`[AI Gateway Fallback] Model ${currentModel.provider}/${currentModel.modelId} doGenerate failed:`, err);
+                lastError = err;
+                return executeNext();
+              }
+            );
+          }
+          return Promise.resolve(result);
+        } catch (err) {
+          console.warn(`[AI Gateway Fallback] Model ${currentModel.provider}/${currentModel.modelId} doGenerate threw:`, err);
+          lastError = err;
+          return executeNext();
+        }
+      };
+
+      return executeNext();
+    },
+    doStream(options: any) {
+      let lastError: any;
+      let attempt = 0;
+
+      const executeNext = (): Promise<any> => {
+        if (attempt >= models.length) {
+          throw lastError;
+        }
+        const currentModel = models[attempt++];
+        console.log(`[AI Gateway Fallback] Attempting doStream with model ${currentModel.provider}/${currentModel.modelId} (attempt ${attempt}/${models.length})`);
+        try {
+          const result = currentModel.doStream(options);
+          if (result && typeof result.then === "function") {
+            return result.then(
+              (res: any) => res,
+              (err: any) => {
+                console.warn(`[AI Gateway Fallback] Model ${currentModel.provider}/${currentModel.modelId} doStream failed:`, err);
+                lastError = err;
+                return executeNext();
+              }
+            );
+          }
+          return Promise.resolve(result);
+        } catch (err) {
+          console.warn(`[AI Gateway Fallback] Model ${currentModel.provider}/${currentModel.modelId} doStream threw:`, err);
+          lastError = err;
+          return executeNext();
+        }
+      };
+
+      return executeNext();
+    }
+  };
+}
+
 /**
  * Creates an AI provider dynamically selecting OpenAI, Groq, or Google Gemini
  * depending on what environment keys are present.
@@ -31,139 +112,117 @@ export const createGoogleAiProvider = (apiKey?: string) => {
     geminiKey.trim() !== "" && 
     (geminiKey.startsWith("AIza") || geminiKey.startsWith("AQ"));
 
-  // Priority Routing logic: OpenAI > Groq > Gemini > Mistral
-  let activeProvider: "openai" | "groq" | "google" | "mistral";
-  if (openaiKey) {
-    activeProvider = "openai";
-  } else if (groqKey) {
-    activeProvider = "groq";
-  } else if (isValidGeminiKey) {
-    activeProvider = "google";
-  } else if (mistralKey) {
-    activeProvider = "mistral";
-  } else {
-    // No valid provider configured — defaults to openai so downstream SDK operations throw a clear config error
-    activeProvider = "openai";
+  // Build a list of all active/configured providers based on environment variables
+  const activeProviders: ("openai" | "groq" | "google" | "mistral")[] = [];
+  if (openaiKey) activeProviders.push("openai");
+  if (groqKey) activeProviders.push("groq");
+  if (isValidGeminiKey) activeProviders.push("google");
+  if (mistralKey) activeProviders.push("mistral");
+
+  if (activeProviders.length === 0) {
+    activeProviders.push("google"); // fallback default to Google Generative AI
   }
 
-  console.log(`[AI Gateway] Selected active provider: ${activeProvider}`);
-
-  if (activeProvider === "openai") {
-    const openai = createOpenAICompatible({
-      name: "openai",
-      baseURL: "https://api.openai.com/v1",
-      apiKey: openaiKey,
-    });
-    return {
-      chatModel: (modelId?: string) => {
-        const cleanModelId =
-          modelId && !modelId.includes("gemini") && !modelId.includes("google")
-            ? modelId.replace(/^openai\//, "")
-            : "gpt-4o-mini";
-        console.log(`[AI Gateway] Using OpenAI chat model: ${cleanModelId}`);
-        return openai.chatModel(cleanModelId);
-      },
-      textEmbeddingModel: (modelId?: string) => {
-        const cleanModelId =
-          modelId && !modelId.includes("google")
-            ? modelId.replace(/^openai\//, "")
-            : "text-embedding-3-small";
-        return openai.textEmbeddingModel(cleanModelId);
-      },
-    };
-  }
-
-  if (activeProvider === "groq") {
-    const groq = createOpenAICompatible({
-      name: "groq",
-      baseURL: "https://api.groq.com/openai/v1",
-      apiKey: groqKey,
-    });
-    return {
-      chatModel: (modelId?: string) => {
-        const cleanModelId =
-          modelId && !modelId.includes("gemini") && !modelId.includes("google")
-            ? modelId.replace(/^groq\//, "")
-            : "llama-3.3-70b-versatile";
-        console.log(`[AI Gateway] Using Groq chat model: ${cleanModelId}`);
-        return groq.chatModel(cleanModelId);
-      },
-      textEmbeddingModel: (modelId?: string) => {
-        if (openaiKey) {
-          const openai = createOpenAICompatible({
-            name: "openai",
-            baseURL: "https://api.openai.com/v1",
-            apiKey: openaiKey,
-          });
-          return openai.textEmbeddingModel("text-embedding-3-small");
-        }
-        if (isValidGeminiKey) {
-          const googleInstance = createGoogleGenerativeAI({ apiKey: geminiKey });
-          return googleInstance.textEmbeddingModel("text-embedding-004");
-        }
-        if (mistralKey) {
-          const mistral = createOpenAICompatible({
-            name: "mistral",
-            baseURL: "https://api.mistral.ai/v1",
-            apiKey: mistralKey,
-          });
-          return mistral.textEmbeddingModel("mistral-embed");
-        }
-        throw new Error(
-          "No embedding provider available for Groq. Please configure OPENAI_API_KEY, GEMINI_API_KEY, or MISTRAL_API_KEY.",
-        );
-      },
-    };
-  }
-
-  if (activeProvider === "mistral") {
+  const instantiatedProviders = activeProviders.map((providerName) => {
+    if (providerName === "openai") {
+      const openai = createOpenAICompatible({
+        name: "openai",
+        baseURL: "https://api.openai.com/v1",
+        apiKey: openaiKey,
+      });
+      return {
+        name: "openai" as const,
+        chatModel: (modelId?: string) => {
+          const cleanModelId =
+            modelId && !modelId.includes("gemini") && !modelId.includes("google")
+              ? modelId.replace(/^openai\//, "")
+              : "gpt-4o-mini";
+          return openai.chatModel(cleanModelId);
+        },
+      };
+    }
+    if (providerName === "groq") {
+      const groq = createOpenAICompatible({
+        name: "groq",
+        baseURL: "https://api.groq.com/openai/v1",
+        apiKey: groqKey,
+      });
+      return {
+        name: "groq" as const,
+        chatModel: (modelId?: string) => {
+          const cleanModelId =
+            modelId && !modelId.includes("gemini") && !modelId.includes("google")
+              ? modelId.replace(/^groq\//, "")
+              : "llama-3.3-70b-versatile";
+          return groq.chatModel(cleanModelId);
+        },
+      };
+    }
+    if (providerName === "google") {
+      const googleInstance = createGoogleGenerativeAI({ apiKey: geminiKey });
+      return {
+        name: "google" as const,
+        chatModel: (modelId?: string) => {
+          let cleanModelId = modelId ? modelId.replace(/^google\//, "") : "gemini-2.0-flash";
+          if (
+            cleanModelId === "gemini-1.5-flash" ||
+            cleanModelId === "gemini-1.5-flash-latest" ||
+            cleanModelId.includes("2.5-flash")
+          ) {
+            cleanModelId = "gemini-2.0-flash";
+          }
+          return googleInstance(cleanModelId);
+        },
+      };
+    }
+    // mistral
     const mistral = createOpenAICompatible({
       name: "mistral",
       baseURL: "https://api.mistral.ai/v1",
       apiKey: mistralKey,
     });
     return {
+      name: "mistral" as const,
       chatModel: (modelId?: string) => {
         const cleanModelId =
           modelId && !modelId.includes("gemini") && !modelId.includes("google")
             ? modelId.replace(/^mistral\//, "")
             : "mistral-large-latest";
-        console.log(`[AI Gateway] Using Mistral chat model: ${cleanModelId}`);
         return mistral.chatModel(cleanModelId);
       },
-      textEmbeddingModel: (modelId?: string) => {
-        const cleanModelId =
-          modelId && !modelId.includes("google")
-            ? modelId.replace(/^mistral\//, "")
-            : "mistral-embed";
-        return mistral.textEmbeddingModel(cleanModelId);
-      },
     };
-  }
+  });
 
-  // Default Fallback to Google Generative AI
-  const googleInstance = createGoogleGenerativeAI({ apiKey: geminiKey });
   return {
     chatModel: (modelId?: string) => {
-      let cleanModelId = modelId ? modelId.replace(/^google\//, "") : "gemini-2.0-flash";
-      
-      // Remap legacy versions to standard stable versions
-      if (
-        cleanModelId === "gemini-1.5-flash" ||
-        cleanModelId === "gemini-1.5-flash-latest" ||
-        cleanModelId.includes("2.5-flash")
-      ) {
-        cleanModelId = "gemini-2.0-flash";
-      }
-      console.log(`[AI Gateway] Using Google chat model: ${cleanModelId}`);
-      
-      // ✅ FIXED: Resolved TypeScript error ts(2339). 
-      // The Google provider instance from @ai-sdk/google is an executable function, not an object containing a .chatModel method.
-      return googleInstance(cleanModelId);
+      const models = instantiatedProviders.map((p) => p.chatModel(modelId));
+      return createFallbackModel(models);
     },
     textEmbeddingModel: (modelId?: string) => {
-      const cleanModelId = modelId ? modelId.replace(/^google\//, "") : "text-embedding-004";
-      return googleInstance.textEmbeddingModel(cleanModelId);
+      // Priority routing for embeddings: OpenAI > Gemini > Mistral
+      if (openaiKey) {
+        const openai = createOpenAICompatible({
+          name: "openai",
+          baseURL: "https://api.openai.com/v1",
+          apiKey: openaiKey,
+        });
+        return openai.textEmbeddingModel("text-embedding-3-small");
+      }
+      if (isValidGeminiKey) {
+        const googleInstance = createGoogleGenerativeAI({ apiKey: geminiKey });
+        return googleInstance.textEmbeddingModel("text-embedding-004");
+      }
+      if (mistralKey) {
+        const mistral = createOpenAICompatible({
+          name: "mistral",
+          baseURL: "https://api.mistral.ai/v1",
+          apiKey: mistralKey,
+        });
+        return mistral.textEmbeddingModel("mistral-embed");
+      }
+      // Ultimate fallback
+      const googleInstance = createGoogleGenerativeAI({ apiKey: geminiKey });
+      return googleInstance.textEmbeddingModel("text-embedding-004");
     },
   };
 };
