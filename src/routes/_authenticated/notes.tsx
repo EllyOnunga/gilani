@@ -46,13 +46,18 @@ const ingestNote = createServerFn({ method: "POST" })
       throw new Error("Title and content are required");
     }
 
-    const model = createLovableAiGatewayProvider().chatModel();
     const { generateText } = await import("ai");
-    
-    // Optimized, clean prompt structure targeting core educational content structures
-    const { text } = await generateText({
-      model,
-      prompt: `You are an expert educational content creator for Kenyan (KCSE/CBC) and International (IGCSE) curricula. Your task is to process study materials or problem sets into high-quality study resources.
+    const models = createLovableAiGatewayProvider().getAllChatModels();
+    if (models.length === 0) throw new Error("No AI providers are configured.");
+
+    let text = "";
+    let lastError: unknown;
+    for (const model of models) {
+      try {
+        console.log(`[Notes] Trying model: ${model.provider}/${model.modelId}`);
+        const result = await generateText({
+          model,
+          prompt: `You are an expert educational content creator for Kenyan (KCSE/CBC) and International (IGCSE) curricula. Your task is to process study materials or problem sets into high-quality study resources.
 
 Analyze the following input text and generate a structured response matching the requested JSON format exactly.
 
@@ -101,7 +106,21 @@ Return ONLY a valid JSON object. Do not include markdown code fences (\`\`\`json
 
 Study material content to process:
 ${content.slice(0, 8000)}`,
-    });
+        });
+        text = result.text;
+        if (text.trim()) {
+          console.log(`[Notes] Success with model: ${model.provider}/${model.modelId}`);
+          break;
+        }
+      } catch (err) {
+        console.warn(`[Notes] Model ${model.provider}/${model.modelId} failed:`, err);
+        lastError = err;
+      }
+    }
+
+    if (!text.trim()) {
+      throw lastError || new Error("Failed to generate notes with all configured providers.");
+    }
 
     interface StudyMaterialResponse {
       title: string;

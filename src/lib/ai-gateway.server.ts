@@ -1,92 +1,11 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-function createFallbackModel(models: any[]): any {
-  if (models.length === 1) return models[0];
-
-  return {
-    specificationVersion: "v3" as const,
-    get provider() {
-      return models[0].provider;
-    },
-    get modelId() {
-      return models[0].modelId;
-    },
-    get supportedUrls() {
-      return models[0].supportedUrls;
-    },
-    doGenerate(options: any) {
-      let lastError: any;
-      let attempt = 0;
-      
-      const executeNext = (): Promise<any> => {
-        if (attempt >= models.length) {
-          throw lastError;
-        }
-        const currentModel = models[attempt++];
-        console.log(`[AI Gateway Fallback] Attempting doGenerate with model ${currentModel.provider}/${currentModel.modelId} (attempt ${attempt}/${models.length})`);
-        try {
-          const result = currentModel.doGenerate(options);
-          if (result && typeof result.then === "function") {
-            return result.then(
-              (res: any) => res,
-              (err: any) => {
-                console.warn(`[AI Gateway Fallback] Model ${currentModel.provider}/${currentModel.modelId} doGenerate failed:`, err);
-                lastError = err;
-                return executeNext();
-              }
-            );
-          }
-          return Promise.resolve(result);
-        } catch (err) {
-          console.warn(`[AI Gateway Fallback] Model ${currentModel.provider}/${currentModel.modelId} doGenerate threw:`, err);
-          lastError = err;
-          return executeNext();
-        }
-      };
-
-      return executeNext();
-    },
-    doStream(options: any) {
-      let lastError: any;
-      let attempt = 0;
-
-      const executeNext = (): Promise<any> => {
-        if (attempt >= models.length) {
-          throw lastError;
-        }
-        const currentModel = models[attempt++];
-        console.log(`[AI Gateway Fallback] Attempting doStream with model ${currentModel.provider}/${currentModel.modelId} (attempt ${attempt}/${models.length})`);
-        try {
-          const result = currentModel.doStream(options);
-          if (result && typeof result.then === "function") {
-            return result.then(
-              (res: any) => res,
-              (err: any) => {
-                console.warn(`[AI Gateway Fallback] Model ${currentModel.provider}/${currentModel.modelId} doStream failed:`, err);
-                lastError = err;
-                return executeNext();
-              }
-            );
-          }
-          return Promise.resolve(result);
-        } catch (err) {
-          console.warn(`[AI Gateway Fallback] Model ${currentModel.provider}/${currentModel.modelId} doStream threw:`, err);
-          lastError = err;
-          return executeNext();
-        }
-      };
-
-      return executeNext();
-    }
-  };
-}
-
 /**
- * Creates an AI provider dynamically selecting OpenAI, Groq, or Google Gemini
- * depending on what environment keys are present.
- * Priority: OpenAI > Groq > Gemini
- * OpenAI has higher rate limits and is more reliable for production use.
+ * Creates an AI provider dynamically selecting available providers from env keys.
+ * Priority: OpenAI > Groq > Gemini > Mistral
+ * chatModel() returns the first available provider.
+ * getAllChatModels() returns all providers in order for application-level fallback loops.
  */
 export const createGoogleAiProvider = (apiKey?: string) => {
   const stripQuotes = (str: string): string => {
@@ -195,8 +114,12 @@ export const createGoogleAiProvider = (apiKey?: string) => {
 
   return {
     chatModel: (modelId?: string) => {
-      const models = instantiatedProviders.map((p) => p.chatModel(modelId));
-      return createFallbackModel(models);
+      // Return the first (highest priority) available model directly — no proxy wrapper
+      // Use getAllChatModels() for application-level fallback loops
+      return instantiatedProviders[0].chatModel(modelId);
+    },
+    getAllChatModels: (modelId?: string) => {
+      return instantiatedProviders.map((p) => p.chatModel(modelId));
     },
     textEmbeddingModel: (modelId?: string) => {
       // Priority routing for embeddings: OpenAI > Gemini > Mistral

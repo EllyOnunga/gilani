@@ -57,31 +57,33 @@ const generateQuiz = createServerFn({ method: "POST" })
       throw new Error("Question count must be between 1 and 50");
     }
 
-    // Use gateway without explicit key — auto-detects Groq > OpenAI > Gemini from env
-    const model = createLovableAiGatewayProvider().chatModel();
+    const gateway = createLovableAiGatewayProvider();
+    const models = (gateway as any).getAllChatModels();
     const { generateObject } = await import("ai");
 
-    // Flexible schema — accepts both numeric indexes AND letter strings from models like Llama/Groq
-    const { object } = await generateObject({
-      model,
-      schema: z.object({
-        questions: z.array(
-          z.object({
-            question: z.string(),
-            options: z.array(z.string()).min(4).max(4),
-            // Accept numeric index (0-3) OR letter string ("A"/"B"/"C"/"D")
-            correct: z.union([z.number(), z.string()]).optional(),
-            answer: z.union([z.number(), z.string()]).optional(),
-            explanation: z.string().optional().default(""),
-            difficulty: z.enum(["easy", "medium", "hard"]).optional().default("medium"),
-            subtopic: z.string().optional().default(""),
-            curriculum: z.string().optional().default(""),
-          })
-        ),
-      }),
-      // FIX: Added the critical keyword "json" explicitly inside formatting directives
-      // to comply with responseFormat / structuredOutputs gateway API guardrails.
-      prompt: `You are a senior curriculum examiner specialized in ${curriculum}. Generate exactly ${count} unique multiple-choice questions on the topic: "${topic}".
+    let object: any = null;
+    let lastError: any = null;
+
+    for (const model of models) {
+      try {
+        console.log(`[Quiz Generation] Attempting with model: ${model.provider}/${model.modelId}`);
+        const result = await generateObject({
+          model,
+          schema: z.object({
+            questions: z.array(
+              z.object({
+                question: z.string(),
+                options: z.array(z.string()).min(4).max(4),
+                correct: z.union([z.number(), z.string()]).optional(),
+                answer: z.union([z.number(), z.string()]).optional(),
+                explanation: z.string().optional().default(""),
+                difficulty: z.enum(["easy", "medium", "hard"]).optional().default("medium"),
+                subtopic: z.string().optional().default(""),
+                curriculum: z.string().optional().default(""),
+              })
+            ),
+          }),
+          prompt: `You are a senior curriculum examiner specialized in ${curriculum}. Generate exactly ${count} unique multiple-choice questions on the topic: "${topic}".
 
 ## OUTPUT FORMAT
 CRITICAL: You must return the output strictly as a valid json object matching the provided structural validation schema. Do not wrap the response in markdown code blocks or backticks (e.g., do not use \`\`\`json). The response must be clean, raw json payload.
@@ -105,7 +107,21 @@ CRITICAL: You must return the output strictly as a valid json object matching th
    - ✅ Correct Answer Explanation
    - ❌ Distractor Breakdown
    - 📚 Key Rule / Textbook reference`,
-    });
+        });
+        object = result.object;
+        if (object && Array.isArray(object.questions) && object.questions.length > 0) {
+          console.log(`[Quiz Generation] Success with model: ${model.provider}/${model.modelId}`);
+          break;
+        }
+      } catch (err) {
+        console.warn(`[Quiz Generation] Model ${model.provider}/${model.modelId} failed:`, err);
+        lastError = err;
+      }
+    }
+
+    if (!object) {
+      throw lastError || new Error("Failed to generate quiz with all configured providers.");
+    }
 
     // Helper: resolve correct answer index from letter OR number
     const resolveCorrectIndex = (raw: MCQ["correct"] | string | undefined | null, fallback = 0): number => {
@@ -118,7 +134,11 @@ CRITICAL: You must return the output strictly as a valid json object matching th
       return fallback;
     };
 
-    const questions: MCQ[] = (object.questions || []).map((q) => {
+    const questions: MCQ[] = ((object.questions || []) as Array<{
+      question: string; options: string[]; correct?: number | string;
+      answer?: number | string; explanation?: string;
+      difficulty?: string; subtopic?: string; curriculum?: string;
+    }>).map((q) => {
       // Accept either "correct" (numeric) or "answer" (letter/number) from various models
       const rawCorrect = q.correct ?? q.answer;
       return {

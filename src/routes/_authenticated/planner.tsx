@@ -161,8 +161,9 @@ const generatePlan = createServerFn({ method: "POST" })
       }
     }
 
-    const model = createLovableAiGatewayProvider().chatModel();
     const { generateText } = await import("ai");
+    const models = createLovableAiGatewayProvider().getAllChatModels();
+    if (models.length === 0) throw new Error("No AI providers are configured.");
 
     const today = new Date().toISOString().split("T")[0];
     const endDate = new Date();
@@ -221,12 +222,31 @@ Task Requirements:
 - Generate 14 tasks total distributed perfectly across the 7-day window (2 contextually coherent tasks per calendar day).
 - All items inside the tasks must feature uniquely identifiable text strings for their "id" parameters.`;
 
-    console.log("Generating plan with prompt...");
-    const { text } = await generateText({
-      model,
-      prompt: prompt,
-      temperature: 0.4, // Lowered temperature to heavily enforce structural compliance
-    });
+    console.log("Generating plan with providers...");
+    let text = "";
+    let lastError: unknown;
+    for (const model of models) {
+      try {
+        console.log(`[Planner] Trying model: ${model.provider}/${model.modelId}`);
+        const result = await generateText({
+          model,
+          prompt: prompt,
+          temperature: 0.4,
+        });
+        text = result.text;
+        if (text.trim()) {
+          console.log(`[Planner] Success with model: ${model.provider}/${model.modelId}`);
+          break;
+        }
+      } catch (err) {
+        console.warn(`[Planner] Model ${model.provider}/${model.modelId} failed:`, err);
+        lastError = err;
+      }
+    }
+
+    if (!text.trim()) {
+      throw lastError || new Error("Failed to generate plan with all configured providers.");
+    }
 
     // Advanced cleaning strategy to safely intercept string parsing anomalies
     let weeklyPlan: WeeklyPlanResponse;
