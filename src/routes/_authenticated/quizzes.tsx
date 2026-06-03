@@ -138,23 +138,23 @@ ${curriculum === "KCSE" ? `
   SGR railway, Lake Victoria, Rift Valley geography
 - Use KNEC command verbs: state, describe, explain, calculate, outline, give
 
-EXAMPLE (Mathematics, easy):
+EXAMPLE 1 (Mathematics, easy):
 {
   "question": "A matatu charges Ksh 150 per trip. If the fare increases by 20%, what is the new fare?",
   "options": ["Ksh 160", "Ksh 170", "Ksh 180", "Ksh 200"],
   "correct": 2,
-  "explanation": "20% of 150 = 30. 150 + 30 = 180. Option A and B use incorrect percentage methods. Option D doubles the fare.",
+  "explanation": "20% of 150 = 30. New fare = 150 + 30 = 180. Option A adds only 10. Option B adds 20 flat. Option D doubles the fare.",
   "difficulty": "easy",
   "subtopic": "Percentages",
   "curriculum": "KCSE"
 }
 
-EXAMPLE (Mathematics, medium):
+EXAMPLE 2 (Mathematics, medium):
 {
   "question": "Simplify $\\sqrt{144} + 3^2$",
   "options": ["21", "25", "27", "18"],
   "correct": 0,
-  "explanation": "$\\sqrt{144} = 12$ and $3^2 = 9$. So $12 + 9 = 21$. Option B confuses $\\sqrt{144}$ with 16. Option C squares 3 as 6. Option D subtracts instead of adding.",
+  "explanation": "$\\sqrt{144} = 12$ and $3^2 = 9$. So $12 + 9 = 21$. Option B assumes $\\sqrt{144} = 16$. Option C assumes $3^2 = 6$. Option D subtracts instead of adds.",
   "difficulty": "medium",
   "subtopic": "Indices and Surds",
   "curriculum": "KCSE"
@@ -200,7 +200,18 @@ EXAMPLE (Biology, hard):
   "subtopic": "Photosynthesis — Limiting Factors",
   "curriculum": "IGCSE"
 }` : ""}
+════════════════════════════════════════
+ANSWER DISTRIBUTION RULE
+════════════════════════════════════════
 
+Across all ${count} questions, distribute correct answers:
+- correct: 0  → approximately 25% of questions
+- correct: 1  → approximately 25% of questions
+- correct: 2  → approximately 25% of questions
+- correct: 3  → approximately 25% of questions
+
+Do NOT put the correct answer in position 0 for more than 3 consecutive questions.
+Do NOT make option A always correct or always wrong.
 ════════════════════════════════════════
 FORMATTING
 ════════════════════════════════════════
@@ -244,6 +255,7 @@ REQUIRED OUTPUT
 questions array MUST contain exactly ${count} items.
 correct MUST always be 0, 1, 2, or 3 — integer only.
 `,
+temperature: 0.3,
         });
         object = result.object;
         if (object && Array.isArray(object.questions) && object.questions.length > 0) {
