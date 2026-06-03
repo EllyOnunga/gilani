@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
+import { MathText } from "@/components/math-text";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -49,13 +50,8 @@ const generateQuiz = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { topic, count, userId, curriculum } = data;
 
-    // SECURITY: Validate inputs
-    if (!topic.trim()) {
-      throw new Error("Topic is required");
-    }
-    if (count < 1 || count > 50) {
-      throw new Error("Question count must be between 1 and 50");
-    }
+    if (!topic.trim()) throw new Error("Topic is required");
+    if (count < 1 || count > 50) throw new Error("Question count must be between 1 and 50");
 
     const gateway = createLovableAiGatewayProvider();
     const models = (gateway as any).getAllChatModels();
@@ -83,112 +79,153 @@ const generateQuiz = createServerFn({ method: "POST" })
               }),
             ),
           }),
-          prompt: `You are a senior curriculum examiner specialized in ${curriculum}.
+          prompt: `You are a senior curriculum examiner for ${curriculum}.
 
-You MUST generate EXACTLY ${count} multiple-choice questions on the topic:
-"${topic}".
+Generate EXACTLY ${count} multiple-choice questions on: "${topic}"
 
----
+════════════════════════════════════════
+OUTPUT RULES (ABSOLUTE)
+════════════════════════════════════════
 
-# 🚨 CRITICAL OUTPUT RULE (ABSOLUTE)
-
-You MUST return ONLY valid JSON that matches the provided schema.
-
-STRICT RULES:
-- No markdown
-- No backticks
-- No explanations outside JSON
-- No extra keys outside schema
+Return ONLY valid JSON matching the schema.
+- No markdown, no backticks, no prose outside JSON
+- No trailing commas, no comments
 - Output must be JSON.parse() valid
-- Must not include trailing commas
-- Must not include comments or metadata
 
-If you violate this → output is invalid.
+════════════════════════════════════════
+ANSWER INDEX (CRITICAL)
+════════════════════════════════════════
 
----
+"correct" MUST be an integer 0–3 only:
+  0 = option A   1 = option B   2 = option C   3 = option D
 
-# 🎯 QUESTION REQUIREMENTS
+✓  "correct": 2
+✗  "correct": "C"
+✗  "correct": "option C"
+✗  "correct": "2"
+
+════════════════════════════════════════
+QUESTION RULES
+════════════════════════════════════════
 
 Each question MUST:
-- Be clear and unambiguous
-- Have exactly 4 options (A, B, C, D)
-- Have ONLY ONE correct answer
-- Include realistic distractors based on common student mistakes
+- Be unambiguous and exam-ready
+- Have exactly 4 options (A–D)
+- Have exactly one correct answer
+- Include distractors based on real student misconceptions
+- Include an explanation covering: why the correct answer is right, why distractors are wrong, and the underlying concept
 
----
+════════════════════════════════════════
+DIFFICULTY SLOTS
+════════════════════════════════════════
 
-# 📊 DIFFICULTY DISTRIBUTION
+Assign difficulties in this order across all ${count} questions:
+- First 30%  → "easy"
+- Middle 50% → "medium"
+- Last 20%   → "hard"
 
-Across all ${count} questions:
-- 30% easy
-- 50% medium
-- 20% hard
+Do not randomise. Fill slots in order.
 
-You must approximate this distribution.
+════════════════════════════════════════
+CURRICULUM BEHAVIOUR
+════════════════════════════════════════
 
----
-
-# 🧠 CURRICULUM BEHAVIOR
-
+${curriculum === "KCSE" ? `
 ## KCSE
-- Align strictly to KNEC syllabus
-- Use KLB / Longhorn logic
-- Use Kenyan context (M-Pesa, agriculture, transport, geography)
+- Align strictly to KNEC syllabus (KLB / Longhorn logic)
+- Use Kenyan real-world context in at least 40% of questions:
+  M-Pesa transactions, matatu journeys, shamba farming,
+  SGR railway, Lake Victoria, Rift Valley geography
+- Use KNEC command verbs: state, describe, explain, calculate, outline, give
 
+EXAMPLE (Mathematics, easy):
+{
+  "question": "A matatu charges Ksh 150 per trip. If the fare increases by 20%, what is the new fare?",
+  "options": ["Ksh 160", "Ksh 170", "Ksh 180", "Ksh 200"],
+  "correct": 2,
+  "explanation": "20% of 150 = 30. 150 + 30 = 180. Option A and B use incorrect percentage methods. Option D doubles the fare.",
+  "difficulty": "easy",
+  "subtopic": "Percentages",
+  "curriculum": "KCSE"
+}
+
+EXAMPLE (Mathematics, medium):
+{
+  "question": "Simplify $\\sqrt{144} + 3^2$",
+  "options": ["21", "25", "27", "18"],
+  "correct": 0,
+  "explanation": "$\\sqrt{144} = 12$ and $3^2 = 9$. So $12 + 9 = 21$. Option B confuses $\\sqrt{144}$ with 16. Option C squares 3 as 6. Option D subtracts instead of adding.",
+  "difficulty": "medium",
+  "subtopic": "Indices and Surds",
+  "curriculum": "KCSE"
+}` : ""}
+${curriculum === "CBC" ? `
 ## CBC
 - Focus on competencies and real-life reasoning
-- Scenario-based learning
-- Practical application over memorization
+- Frame questions as scenarios the learner must analyse
+- Prioritise application over recall
+- Connect to everyday Kenyan contexts
 
+EXAMPLE (Science, medium):
+{
+  "question": "Achieng wants to grow maize on her shamba during the dry season. Which method would BEST conserve soil moisture?",
+  "options": ["Deep ploughing every week", "Mulching with dry grass", "Watering at noon", "Adding sand to the topsoil"],
+  "correct": 1,
+  "explanation": "Mulching reduces evaporation by covering the soil surface. Deep ploughing increases moisture loss. Watering at noon causes rapid evaporation. Adding sand increases drainage.",
+  "difficulty": "medium",
+  "subtopic": "Soil and Water Conservation",
+  "curriculum": "CBC"
+}` : ""}
+${curriculum === "IGCSE" ? `
 ## IGCSE
-- Use Cambridge command verbs:
-  describe, explain, calculate, evaluate
-- Align to AO1, AO2, AO3
+- Align to Cambridge Assessment structure
+- Use command verbs correctly:
+  AO1 (recall) → state, name, list
+  AO2 (apply) → describe, explain, calculate
+  AO3 (analyse) → evaluate, discuss, suggest, compare
+- At least 40% of questions should be AO2 or AO3
 
----
+EXAMPLE (Biology, hard):
+{
+  "question": "Which statement BEST evaluates the effect of increasing $\\text{CO}_2$ concentration on the rate of photosynthesis in a C3 plant?",
+  "options": [
+    "Rate increases indefinitely as $\\text{CO}_2$ rises",
+    "Rate increases until limited by light intensity or temperature",
+    "Rate decreases because excess $\\text{CO}_2$ inhibits RuBiSCO",
+    "Rate is unaffected because $\\text{CO}_2$ is not the limiting factor"
+  ],
+  "correct": 1,
+  "explanation": "Photosynthesis rate rises with $\\text{CO}_2$ until another factor (light or temperature) becomes limiting — the law of limiting factors. Option A ignores limiting factors. Option C is incorrect; RuBiSCO is not inhibited by $\\text{CO}_2$. Option D is false when $\\text{CO}_2$ is the current limiting factor.",
+  "difficulty": "hard",
+  "subtopic": "Photosynthesis — Limiting Factors",
+  "curriculum": "IGCSE"
+}` : ""}
 
-# 🧪 FORMATTING RULES
+════════════════════════════════════════
+FORMATTING
+════════════════════════════════════════
 
-- All math MUST use LaTeX with $...$
-- Chemistry MUST use proper subscripts/superscripts:
-  $H_2O$, $CO_2$, $SO_4^{2-}$
-- Do NOT use markdown formatting anywhere
-- Do NOT use brackets for equations
-- Keep question text clean and exam-ready
+Math — always wrap in LaTeX:
+- Inline: $x = 2a + b$
+- Block: $$ F = ma $$
+- Powers: $x^2$ (squared), $x^3$ (cubed), $x^n$ (nth power)
+- Roots: $\\sqrt{x}$, $\\sqrt[3]{x}$, $\\sqrt[n]{x}$
+- Nested roots: $\\sqrt{b^2 - 4ac}$ — always use braces
+- Fractions: $\\frac{a}{b}$
+- Quadratic formula: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$
+- Area of circle: $A = \\pi r^2$
+- Volume of sphere: $V = \\frac{4}{3}\\pi r^3$
+- Pythagorean theorem: $a^2 + b^2 = c^2$
 
----
+Chemistry — always use subscripts/superscripts:
+- $\\text{H}_2\\text{O}$, $\\text{CO}_2$, $\\text{SO}_4^{2-}$, $\\text{H}_2\\text{SO}_4$
 
-# ❗ ANSWER FIELD RULE (VERY IMPORTANT)
+NEVER write: x^2, sqrt(x), x**2, ²x, H2O in plain text — always use $...$
+Options must be plain strings — no "A)", "1.", or letter prefixes
 
-The "correct" field MUST be:
-- A NUMBER ONLY
-- 0 = A
-- 1 = B
-- 2 = C
-- 3 = D
-
-DO NOT output:
-- letters in correct field
-- strings like "A"
-- explanations in correct field
-
----
-
-# 🧾 EXPLANATION FORMAT
-
-Each explanation MUST include:
-
-- Correct Answer Explanation (why it is correct)
-- Distractor Analysis (why others are wrong)
-- Key Concept (curriculum rule or principle)
-
-Keep explanations concise and exam-focused.
-
----
-
-# 📦 FINAL OUTPUT SCHEMA
-
-Return EXACTLY:
+════════════════════════════════════════
+REQUIRED OUTPUT
+════════════════════════════════════════
 
 {
   "questions": [
@@ -204,27 +241,9 @@ Return EXACTLY:
   ]
 }
 
-IMPORTANT RULES:
-- questions array MUST contain exactly ${count} items
-- options MUST be an array of 4 strings
-- correct MUST always be 0–3 integer
-- no extra fields allowed
-- no missing fields allowed
-
----
-
-# 🧠 SELF-CHECK BEFORE RESPONDING
-
-Before outputting:
-- Verify exactly ${count} questions
-- Verify all options length = 4
-- Verify correct is valid index (0–3)
-- Verify JSON is valid
-- Verify curriculum alignment
-
----
-
-Now generate the JSON output.`,
+questions array MUST contain exactly ${count} items.
+correct MUST always be 0, 1, 2, or 3 — integer only.
+`,
         });
         object = result.object;
         if (object && Array.isArray(object.questions) && object.questions.length > 0) {
@@ -241,27 +260,20 @@ Now generate the JSON output.`,
       throw lastError || new Error("Failed to generate quiz with all configured providers.");
     }
 
-    // Helper: resolve correct answer index from letter OR number
     const resolveCorrectIndex = (
       raw: MCQ["correct"] | string | undefined | null,
-      fallback = 0,
     ): number => {
-      if (typeof raw === "number") return Math.max(0, Math.min(3, raw));
+      if (typeof raw === "number" && raw >= 0 && raw <= 3) return raw;
       if (typeof raw === "string") {
-        const upper = raw.trim().toUpperCase();
         const map: Record<string, number> = {
-          A: 0,
-          B: 1,
-          C: 2,
-          D: 3,
-          "0": 0,
-          "1": 1,
-          "2": 2,
-          "3": 3,
+          A: 0, B: 1, C: 2, D: 3,
+          "0": 0, "1": 1, "2": 2, "3": 3,
         };
-        return map[upper] ?? fallback;
+        const result = map[raw.trim().toUpperCase()];
+        if (result !== undefined) return result;
       }
-      return fallback;
+      console.warn(`[Quiz] Could not resolve correct index from:`, raw, "— defaulting to 0");
+      return 0;
     };
 
     const questions: MCQ[] = (
@@ -276,7 +288,6 @@ Now generate the JSON output.`,
         curriculum?: string;
       }>
     ).map((q) => {
-      // Accept either "correct" (numeric) or "answer" (letter/number) from various models
       const rawCorrect = q.correct ?? q.answer;
       return {
         question: q.question,
@@ -293,7 +304,6 @@ Now generate the JSON output.`,
       throw new Error("No questions were generated by the AI agent.");
     }
 
-    // Insert the generated quiz into the `quizzes` table
     const { data: quiz, error } = await supabaseAdmin
       .from("quizzes")
       .insert({
@@ -310,10 +320,7 @@ Now generate the JSON output.`,
       throw new Error("Failed to save generated quiz: " + error.message);
     }
 
-    return {
-      quizId: quiz.id,
-      questions,
-    };
+    return { quizId: quiz.id, questions };
   });
 
 const saveAttempt = createServerFn({ method: "POST" })
@@ -350,6 +357,8 @@ export const Route = createFileRoute("/_authenticated/quizzes")({
   }),
   component: QuizzesPage,
 });
+
+// ─── Constants ─────────────────────────────────────────────────────────────────
 
 const TOPICS = [
   "Mathematics — Algebra",
@@ -398,10 +407,11 @@ const CURRICULUM_BADGE: Record<string, { bg: string; text: string; icon: any }> 
   },
 };
 
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
 function CurriculumBadge({ curriculum }: { curriculum: string }) {
   const badge = CURRICULUM_BADGE[curriculum] || CURRICULUM_BADGE.KCSE;
   const Icon = badge.icon;
-
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${badge.bg} ${badge.text}`}
@@ -411,6 +421,65 @@ function CurriculumBadge({ curriculum }: { curriculum: string }) {
     </span>
   );
 }
+
+function LoadingStep({
+  label,
+  detail,
+  index,
+}: {
+  label: string;
+  detail: string;
+  index: number;
+}) {
+  const [state, setState] = useState<"waiting" | "active" | "done">("waiting");
+
+  useEffect(() => {
+    const activateAt = index * 1400;
+    const doneAt = activateAt + 1200;
+    const t1 = setTimeout(() => setState("active"), activateAt);
+    const t2 = setTimeout(() => setState("done"), doneAt);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [index]);
+
+  return (
+    <div
+      className="flex items-center gap-3"
+      style={{
+        animation: `stepIn 0.35s ease forwards`,
+        animationDelay: `${index * 0.08}s`,
+        opacity: 0,
+      }}
+    >
+      {/* Status icon */}
+      <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+        {state === "done" ? (
+          <CheckCircle2 className="h-4 w-4 text-primary" />
+        ) : state === "active" ? (
+          <Loader2 className="h-4 w-4 text-primary animate-spin" />
+        ) : (
+          <div className="h-4 w-4 rounded-full border-2 border-border" />
+        )}
+      </div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <p
+          className={`text-xs font-medium leading-tight transition-colors duration-300 ${
+            state === "waiting" ? "text-muted-foreground" : "text-foreground"
+          }`}
+        >
+          {label}
+        </p>
+        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{detail}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page Component ───────────────────────────────────────────────────────
 
 function QuizzesPage() {
   const [questionCount, setQuestionCount] = useState(10);
@@ -431,7 +500,6 @@ function QuizzesPage() {
 
   const activeTopic = customTopic.trim() || topic;
 
-  // Fetch user's curriculum preference
   useEffect(() => {
     const fetchCurriculum = async () => {
       try {
@@ -455,9 +523,7 @@ function QuizzesPage() {
   }, []);
 
   useEffect(() => {
-    if (topicFromUrl) {
-      setCustomTopic(topicFromUrl);
-    }
+    if (topicFromUrl) setCustomTopic(topicFromUrl);
   }, [topicFromUrl]);
 
   const startQuiz = async () => {
@@ -474,20 +540,18 @@ function QuizzesPage() {
         setPhase("setup");
         return;
       }
-
       const result = await withTimeout(
         generateQuiz({
           data: {
             topic: activeTopic,
             count: questionCount,
             userId: session.user.id,
-            curriculum: curriculum,
+            curriculum,
           },
         }),
-        90000, // 90 seconds timeout
+        90000,
         "Quiz generation timed out. Please try with fewer questions or a different topic.",
       );
-
       setQuizId(result.quizId);
       setQuestions(result.questions);
       setCurrent(0);
@@ -538,7 +602,6 @@ function QuizzesPage() {
     const wrongTopics = questions
       .filter((_, i) => userAnswers[i] !== questions[i].correct)
       .map((q) => q.subtopic || q.question.slice(0, 60));
-
     try {
       const res = await supabase.auth.getSession();
       const session = res?.data?.session;
@@ -565,10 +628,9 @@ function QuizzesPage() {
 
   const score = userAnswers.filter((a, i) => a === questions[i]?.correct).length;
   const pct = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
-
   const q = questions[current];
 
-  // ── Setup screen ──────────────────────────────────────────────────────────
+  // ── Setup screen ────────────────────────────────────────────────────────────
   if (phase === "setup") {
     return (
       <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12">
@@ -669,39 +731,107 @@ function QuizzesPage() {
             disabled={isGenerating}
             className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow hover:bg-primary/90 transition-colors"
           >
-            <ListChecks className="h-4 w-4" /> {isGenerating ? "Generating…" : "Generate Quiz"}
+            <ListChecks className="h-4 w-4" />
+            {isGenerating ? "Generating…" : "Generate Quiz"}
           </button>
         </div>
       </div>
     );
   }
 
-  // ── Loading screen ─────────────────────────────────────────────────────────
+  // ── Loading screen ──────────────────────────────────────────────────────────
   if (phase === "loading") {
+    const steps = [
+      { label: "Reading curriculum standards", detail: `Aligning to ${curriculum}` },
+      { label: "Crafting questions", detail: `${questionCount} MCQs on ${activeTopic}` },
+      { label: "Adding distractors", detail: "Based on common student mistakes" },
+      { label: "Writing explanations", detail: "With Kenyan context where relevant" },
+      { label: "Validating answers", detail: "Checking difficulty distribution" },
+    ];
+
     return (
-      <div className="flex flex-col items-center justify-center h-full py-40 gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="font-serif text-xl text-muted-foreground">Generating your quiz…</p>
-        <p className="text-sm text-muted-foreground font-mono">
-          Crafting {questionCount} {curriculum}-aligned questions on {activeTopic}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          This can take up to 90 seconds during high load.
-        </p>
-        <button
-          onClick={() => {
-            setIsGenerating(false);
-            setPhase("setup");
-          }}
-          className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
-        >
-          Cancel
-        </button>
+      <div className="flex items-center justify-center min-h-[70vh] p-4">
+        <div className="w-full max-w-md space-y-4">
+
+          {/* Main card */}
+          <div className="rounded-2xl border border-border bg-card shadow-md overflow-hidden">
+
+            {/* Animated shimmer bar */}
+            <div className="h-1 w-full bg-muted overflow-hidden">
+              <div className="h-full bg-primary w-1/3 animate-[shimmer_1.8s_ease-in-out_infinite]" />
+            </div>
+
+            <div className="p-6 space-y-5">
+
+              {/* Icon + heading */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0">
+                  <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm leading-tight">Generating your quiz…</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    This can take up to 90 seconds
+                  </p>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-border" />
+
+              {/* Quiz detail chips */}
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                  <ListChecks className="h-3 w-3" />
+                  {questionCount} questions
+                </span>
+                <CurriculumBadge curriculum={curriculum} />
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground truncate max-w-[180px]">
+                  {activeTopic}
+                </span>
+              </div>
+
+              {/* Step list */}
+              <div className="space-y-2.5">
+                {steps.map((step, i) => (
+                  <LoadingStep
+                    key={step.label}
+                    label={step.label}
+                    detail={step.detail}
+                    index={i}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Cancel — outside card */}
+          <button
+            onClick={() => {
+              setIsGenerating(false);
+              setPhase("setup");
+            }}
+            className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <style>{`
+          @keyframes shimmer {
+            0%   { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+          }
+          @keyframes stepIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
       </div>
     );
   }
 
-  // ── Results screen ─────────────────────────────────────────────────────────
+  // ── Results screen ──────────────────────────────────────────────────────────
   if (phase === "results") {
     const grade =
       pct >= 80
@@ -711,13 +841,15 @@ function QuizzesPage() {
           : pct >= 40
             ? "Keep practising."
             : "Need more revision.";
+
     return (
       <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12 text-center">
         <div className="animate-in-slide">
           <Trophy className="mx-auto h-14 w-14 text-primary mb-4" />
           <h2 className="font-serif text-3xl sm:text-4xl">{grade}</h2>
           <p className="mt-2 text-muted-foreground text-sm">
-            Topic: <strong>{activeTopic}</strong> • <CurriculumBadge curriculum={curriculum} />
+            Topic: <strong>{activeTopic}</strong> •{" "}
+            <CurriculumBadge curriculum={curriculum} />
           </p>
         </div>
 
@@ -729,7 +861,6 @@ function QuizzesPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             {score} / {questions.length} correct
           </p>
-
           <div className="mt-6 h-3 rounded-full bg-muted overflow-hidden">
             <div
               className="h-full rounded-full bg-primary transition-all duration-1000"
@@ -750,8 +881,8 @@ function QuizzesPage() {
                 key={i}
                 className={`flex gap-3 p-3 rounded-lg ${
                   correct
-                    ? "bg-green-50 border border-green-200"
-                    : "bg-red-50 border border-red-200"
+                    ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
+                    : "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"
                 }`}
               >
                 {correct ? (
@@ -761,7 +892,7 @@ function QuizzesPage() {
                 )}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium">{q.question}</p>
+                    <p className="text-sm font-medium"><MathText text={q.question} /></p>
                     {q.difficulty && (
                       <span
                         className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono uppercase ${
@@ -779,15 +910,17 @@ function QuizzesPage() {
                   {!correct && (
                     <p className="text-xs text-muted-foreground mt-1">
                       Your answer:{" "}
-                      <span className="font-semibold text-red-700">
+                      <span className="font-semibold text-red-700 dark:text-red-400">
                         {q.options[userAnswers[i]]}
                       </span>
                       {" • "}
                       Correct:{" "}
-                      <span className="font-semibold text-green-700">{q.options[q.correct]}</span>
+                      <span className="font-semibold text-green-700 dark:text-green-400">
+                        {q.options[q.correct]}
+                      </span>
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-1 italic">{q.explanation}</p>
+                  <p className="text-xs text-muted-foreground mt-1 italic"><MathText text={q.explanation} /></p>
                 </div>
               </div>
             );
@@ -808,8 +941,9 @@ function QuizzesPage() {
     );
   }
 
-  // ── Quiz screen ────────────────────────────────────────────────────────────
+  // ── Quiz screen ─────────────────────────────────────────────────────────────
   const progress = ((current + (answered[current] ? 1 : 0)) / questions.length) * 100;
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12">
       {/* Progress */}
@@ -834,11 +968,11 @@ function QuizzesPage() {
       {/* Question card */}
       {q && (
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-serif text-xl leading-snug">{q.question}</h3>
+          <div className="flex items-start gap-2 flex-wrap">
+            <h3 className="font-serif text-xl leading-snug flex-1"><MathText text={q.question} /></h3>
             {q.difficulty && (
               <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-mono uppercase ${
+                className={`text-[10px] px-2 py-0.5 rounded-full font-mono uppercase flex-shrink-0 ${
                   q.difficulty === "easy"
                     ? "bg-green-100 text-green-700"
                     : q.difficulty === "hard"
@@ -856,7 +990,8 @@ function QuizzesPage() {
 
           <div className="space-y-3">
             {q.options.map((opt, i) => {
-              let cls = "w-full text-left rounded-lg border px-4 py-3 text-sm transition-colors ";
+              let cls =
+                "w-full text-left rounded-lg border px-4 py-3 text-sm transition-colors ";
               if (!answered[current]) {
                 cls +=
                   selected === i
@@ -864,9 +999,11 @@ function QuizzesPage() {
                     : "border-border hover:bg-accent";
               } else {
                 if (i === q.correct)
-                  cls += "border-green-500 bg-green-50 text-green-800 font-semibold";
+                  cls +=
+                    "border-green-500 bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-300 font-semibold";
                 else if (i === userAnswers[current] && i !== q.correct)
-                  cls += "border-red-400 bg-red-50 text-red-700";
+                  cls +=
+                    "border-red-400 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400";
                 else cls += "border-border text-muted-foreground";
               }
               return (
@@ -879,7 +1016,7 @@ function QuizzesPage() {
                   <span className="font-mono text-[11px] mr-2 uppercase">
                     {["A", "B", "C", "D"][i]}.
                   </span>
-                  {opt}
+                  <MathText text={opt} />
                 </button>
               );
             })}
@@ -887,7 +1024,7 @@ function QuizzesPage() {
 
           {showExplain && (
             <div className="rounded-lg border border-border/50 bg-muted/50 px-4 py-3 text-sm text-muted-foreground italic animate-in-slide">
-              💡 {q.explanation}
+              💡 <MathText text={q.explanation} />
             </div>
           )}
 

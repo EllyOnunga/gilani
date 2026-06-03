@@ -57,99 +57,137 @@ const ingestNote = createServerFn({ method: "POST" })
         console.log(`[Notes] Trying model: ${model.provider}/${model.modelId}`);
         const result = await generateText({
           model,
-          prompt: `You are an expert curriculum-aligned educational content engine for Kenyan (KCSE/CBC) and International (IGCSE) learners.
+          prompt: `You are a senior curriculum-aligned educational content engine for Kenyan (KCSE/CBC) and International (IGCSE) learners.
 
-Your task is to transform the input content into structured, high-quality study material.
+Transform the student's input into structured, exam-ready study material.
 
----
+════════════════════════════════════════
+OUTPUT RULES (ABSOLUTE)
+════════════════════════════════════════
 
-# 🚨 CRITICAL OUTPUT RULE (ABSOLUTE)
-
-You MUST return ONLY valid JSON.
-
-STRICT RULES:
-- No markdown
-- No \`\`\` code blocks
-- No commentary outside JSON
-- No extra keys outside schema
+Return ONLY valid JSON matching the schema below.
+- No markdown outside JSON strings
+- No backticks or code fences
+- No prose before or after the JSON
+- No trailing commas, no comments
 - Must be JSON.parse() valid
-- No trailing commas
 
-If you violate this → output is invalid.
+════════════════════════════════════════
+STEP 1 — CLASSIFY THE INPUT
+════════════════════════════════════════
 
----
+Read the content and set "type":
+- "study_notes"    → theory, explanations, definitions, summaries
+- "question_paper" → exam questions with or without solutions
 
-# 🎯 TASK DEFINITION
+If unsure, default to "study_notes".
 
-Analyze the input and classify it as:
+════════════════════════════════════════
+STEP 2 — CONTENT RULES BY TYPE
+════════════════════════════════════════
 
-"type":
-- "study_notes" (theory, explanations, summaries)
-- "question_paper" (questions + solutions)
+## If type = "study_notes"
 
-You MUST infer this correctly from content.
+- Write a thorough comprehensive_summary (markdown allowed inside the string)
+- Use headings (##), bullet points, and **bold key terms** inside strings
+- Extract every major idea into key_concepts
+- List all relevant formulas in formulas_and_equations
+- solutions MUST be an empty array []
 
----
+## If type = "question_paper"
 
-# 📘 CONTENT REQUIREMENTS
+- Break every question into a numbered solution with clear steps
+- Add marks_breakdown per solution (e.g. "1 mark: correct formula, 2 marks: correct substitution")
+- Highlight common_mistakes students make on that question
+- Add alternative_approach where a second method exists
+- comprehensive_summary should describe what the paper covers
 
-## If type = study_notes
+════════════════════════════════════════
+CURRICULUM RULES
+════════════════════════════════════════
 
-You MUST:
-- Produce structured academic notes
-- Use headings, bullet points, and clear explanations
-- Highlight key terms in **bold (within markdown string only)**
-- Include Kenyan real-world examples (M-Pesa, agriculture, geography, etc.)
-- Include formulas using LaTeX ($...$)
-
-## If type = question_paper
-
-You MUST:
-- Break down all questions step-by-step
-- Provide marking scheme hints [e.g. 2 marks]
-- Highlight common student mistakes
-- Provide alternative solving methods where relevant
-
----
-
-# 🧠 CURRICULUM RULES
+Detect the curriculum from the content. Apply the matching rules:
 
 ## KCSE
-- Align strictly with KNEC syllabus
-- Use KLB / Longhorn logic
-- Include Kenyan context (schools, economy, environment)
+- Align to KNEC syllabus (KLB / Longhorn logic)
+- Ground examples in Kenyan context:
+  M-Pesa transactions, matatu journeys, shamba farming,
+  SGR railway, Lake Victoria, Rift Valley, Nairobi geography
+- Use KNEC command verbs: state, describe, explain, calculate, outline, give
 
 ## CBC
-- Focus on competencies, real-life application, projects
-- Emphasize understanding over memorization
+- Focus on competencies, real-life reasoning, project-based learning
+- Frame explanations as scenarios the learner can apply
+- Prioritise understanding over memorisation
+- Connect to everyday Kenyan contexts
 
 ## IGCSE
-- Use Cambridge command words:
-  describe, explain, evaluate, calculate
-- Align to AO1, AO2, AO3 assessment structure
+- Use Cambridge command verbs by assessment objective:
+  AO1 (recall)  → state, name, list, identify
+  AO2 (apply)   → describe, explain, calculate, determine
+  AO3 (analyse) → evaluate, discuss, suggest, compare, justify
+- Mark each key concept with its likely AO level
 
----
+════════════════════════════════════════
+FORMATTING RULES
+════════════════════════════════════════
 
-# 🧪 FORMATTING RULES (STRICT)
+## Math — always wrap in LaTeX
 
-- All math MUST use LaTeX with $...$
-- Chemistry MUST use proper notation:
-  $H_2O$, $CO_2$, $SO_4^{2-}$
-- NO markdown outside JSON strings
-- Keep explanations clean and exam-ready
+Inline:  $x = 2a + b$
+Block:   $$ F = ma $$
 
----
+Powers and indices:
+  $x^2$              (squared)
+  $x^3$              (cubed)
+  $x^n$              (nth power)
 
-# 📦 OUTPUT JSON SCHEMA (MANDATORY)
+Roots:
+  $\\sqrt{x}$         (square root)
+  $\\sqrt[3]{x}$      (cube root)
+  $\\sqrt[n]{x}$      (nth root)
+  $\\sqrt{b^2 - 4ac}$ (nested — always use braces)
 
-Return EXACTLY:
+Fractions:
+  $\\frac{a}{b}$
+  $\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$   (quadratic formula)
+
+Common reference expressions:
+  $a^2 + b^2 = c^2$         (Pythagorean theorem)
+  $A = \\pi r^2$             (area of circle)
+  $V = \\frac{4}{3}\\pi r^3$ (volume of sphere)
+
+NEVER write: x^2, sqrt(x), x**2, ²x in plain text — always use $...$
+
+## Chemistry — always use subscripts/superscripts
+  $\\text{H}_2\\text{O}$, $\\text{CO}_2$, $\\text{SO}_4^{2-}$, $\\text{H}_2\\text{SO}_4$
+
+## Quick review cards
+  front: a question or prompt ("What is the quadratic formula?")
+  back:  the answer with full LaTeX if needed
+
+════════════════════════════════════════
+RECOMMENDED RESOURCES — STRICT RULES
+════════════════════════════════════════
+
+- Only recommend resources that genuinely exist
+- For Kenyan textbooks: KLB, Longhorn, Moran series only
+- For IGCSE: Cambridge/Hodder/Oxford official titles only
+- For websites: only well-known platforms (Khan Academy, BBC Bitesize, Revision Village)
+- NEVER fabricate book titles, authors, URLs, or ISBN numbers
+- If unsure whether a resource exists, omit it entirely
+- link field: only include if you are certain the URL is real and stable
+
+════════════════════════════════════════
+OUTPUT SCHEMA (MANDATORY)
+════════════════════════════════════════
 
 {
   "title": "string",
   "type": "study_notes | question_paper",
   "subject": "string",
   "topic": "string",
-  "form_level": "string",
+  "form_level": "string (e.g. Form 3, Year 10, Grade 8)",
   "comprehensive_summary": "string (markdown allowed inside)",
   "key_concepts": [
     {
@@ -169,7 +207,7 @@ Return EXACTLY:
     {
       "question_number": 1,
       "question_text": "string",
-      "solution": "string (step-by-step)",
+      "solution": "string (step-by-step, LaTeX where needed)",
       "marks_breakdown": "string",
       "common_mistakes": "string",
       "alternative_approach": "string"
@@ -183,7 +221,7 @@ Return EXACTLY:
       "name": "string",
       "type": "textbook | website | video",
       "description": "string",
-      "link": "string (optional)"
+      "link": "string (only if URL is real and verified)"
     }
   ],
   "quick_review_cards": [
@@ -194,31 +232,14 @@ Return EXACTLY:
   ]
 }
 
----
+════════════════════════════════════════
+INPUT
+════════════════════════════════════════
 
-# ⚠️ FIELD RULES (IMPORTANT)
+Title: ${title}
 
-- "solutions" ONLY required if type = question_paper
-- If study_notes → solutions MUST be an empty array []
-- "key_concepts" MUST extract ALL major ideas
-- "formulas_and_equations" MUST include ALL relevant formulas
-- Never omit required fields
-
----
-
-# 🧠 QUALITY SELF-CHECK
-
-Before responding, verify:
-- JSON is valid
-- Schema fully matches
-- No missing fields
-- No extra fields
-- Curriculum alignment correct
-- Output is structured and exam-ready
-
----
-
-Now process the input and generate the JSON output.`,
+Content:
+${content}`,
         });
         text = result.text;
         if (text.trim()) {

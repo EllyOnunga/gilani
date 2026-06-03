@@ -171,173 +171,127 @@ const generatePlan = createServerFn({ method: "POST" })
     const endDateStr = endDate.toISOString().split("T")[0];
 
     // Highly structural, robust prompt optimized to completely avoid parse failures
-    const prompt = `
-You are an expert academic curriculum strategist and exam preparation planner.
+    const prompt = `You are an expert academic curriculum strategist for Kenyan and International learners.
 
-Your task is to generate a STRICTLY STRUCTURED 7-DAY STUDY PLAN for a ${curriculum} student.
+Generate a STRICTLY STRUCTURED 7-day study plan for a ${curriculum} student.
 
 Start date: ${today}
-End date: ${endDateStr}
+End date:   ${endDateStr}
+Curriculum: ${curriculum}
+Weak areas: ${weakTopics.length ? weakTopics.slice(0, 5).join(", ") : "Balanced foundational revision across core subjects"}
 
-Weak areas (highest priority focus):
-${weakTopics.length ? weakTopics.slice(0, 5).join(", ") : "Balanced foundational revision across core subjects"}
+════════════════════════════════════════
+OUTPUT RULES (ABSOLUTE)
+════════════════════════════════════════
 
----
-
-# 🚨 CRITICAL OUTPUT RULE (ABSOLUTE)
-
-You MUST return ONLY valid JSON.
-
-STRICT RULES:
-- No markdown
-- No code blocks (\`\`\`)
-- No explanations outside JSON
-- No extra fields
+Return ONLY valid JSON matching the schema below.
+- No markdown, no backticks, no prose outside JSON
+- No trailing commas, no comments
 - Must be JSON.parse() valid
-- No trailing commas
-- No duplicate keys
 
-If you violate this → output is invalid.
+════════════════════════════════════════
+STRUCTURE REQUIREMENTS (HARD LIMITS)
+════════════════════════════════════════
 
----
-
-# 📊 PLAN STRUCTURE REQUIREMENTS
-
-You MUST generate:
-
-- EXACTLY 7 days in "daily_plans"
+- EXACTLY 7 objects in "daily_plans"
 - EXACTLY 2 tasks per day
-- EXACTLY 14 total tasks
+- EXACTLY 14 tasks total across the plan
+- No more, no less — this is non-negotiable
 
-Hard enforcement:
-- No more, no less
+════════════════════════════════════════
+TASK PRIORITY RULES
+════════════════════════════════════════
 
----
+Assign priorities in this order:
+1. Weak topics listed above → "high" priority (minimum 40% of all tasks)
+2. Core ${curriculum} exam subjects → "medium" priority
+3. General revision → "low" priority
 
-# 🧠 TASK DESIGN RULES
+If no weak topics are provided, distribute evenly across core subjects.
 
-Each task MUST:
-- Be actionable (not vague)
-- Be curriculum aligned (${curriculum})
-- Be time-bound (duration required)
-- Be realistic for a student session
-- Directly improve exam performance
+════════════════════════════════════════
+CURRICULUM BEHAVIOUR
+════════════════════════════════════════
 
----
-
-# 🎯 PRIORITIZATION LOGIC
-
-Task priority MUST follow:
-
-1. Weak topics (from quiz attempts) → HIGH priority
-2. Core exam subjects → MEDIUM priority
-3. General revision → LOW priority
-
-Weak topics MUST appear at least 40% of tasks.
-
----
-
-# 📘 CURRICULUM BEHAVIOR
-
+${curriculum === "KCSE" ? `
 ## KCSE
-- KNEC syllabus aligned
-- Use KLB / Longhorn logic
-- Include Kenyan context (M-Pesa, agriculture, geography, transport)
-
+- Align to KNEC syllabus (KLB / Longhorn logic)
+- Ground at least 40% of task descriptions in Kenyan context:
+  M-Pesa transactions, matatu journeys, shamba farming,
+  SGR railway, Lake Victoria, Rift Valley geography
+- Use KNEC command verbs: state, describe, explain, calculate, outline
+- Cover: Mathematics, Sciences, Humanities, Languages proportionally` : ""}
+${curriculum === "CBC" ? `
 ## CBC
-- Competency-based tasks
-- Real-life application
-- Project + skill-based learning
-
+- Focus on competencies and real-life application
+- Frame tasks as scenarios the learner acts on (projects, investigations, demonstrations)
+- Prioritise practical skill-building over passive reading
+- Integrate Kenyan daily life contexts throughout` : ""}
+${curriculum === "IGCSE" ? `
 ## IGCSE
-- Use command words:
-  describe, explain, evaluate, calculate
-- AO1 / AO2 / AO3 alignment
+- Align to Cambridge Assessment objectives
+- Use command verbs by AO level:
+  AO1 (recall)  → state, name, list, identify
+  AO2 (apply)   → describe, explain, calculate, determine
+  AO3 (analyse) → evaluate, discuss, suggest, compare
+- At least 40% of tasks should target AO2 or AO3` : ""}
+${curriculum === "MIXED" ? `
+## MIXED
+- Balance KCSE and IGCSE requirements equally
+- Alternate between Kenyan context and Cambridge command verb tasks
+- Cover both KNEC and Cambridge subject requirements` : ""}
 
----
+════════════════════════════════════════
+MATH FORMATTING IN TASKS
+════════════════════════════════════════
 
-# 🧪 TASK FORMAT RULES
+When a task involves mathematical content, use LaTeX inside the task and study_tip strings:
 
-Each task MUST include:
+Inline:   $x^2 + 3x - 4 = 0$
+Block:    $$ F = ma $$
 
-- id → MUST be globally unique string
-- date → valid ISO date (YYYY-MM-DD)
-- subject → clear academic subject
-- topic → specific sub-topic
-- curriculum → ${curriculum} OR "BOTH"
-- task → clear instruction (what student does)
-- duration → e.g. "45 min"
-- priority → high | medium | low
-- type → theory | practice | revision | past_paper | project
-- study_tip → short actionable tip
-- tags → array of relevant tags
+Powers:   $x^2$, $x^3$, $x^n$
+Roots:    $\\sqrt{x}$, $\\sqrt[3]{x}$, $\\sqrt{b^2 - 4ac}$
+Fractions: $\\frac{a}{b}$, $\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$
+Chemistry: $\\text{H}_2\\text{O}$, $\\text{CO}_2$, $\\text{SO}_4^{2-}$
 
----
+NEVER write: x^2, sqrt(x), H2O in plain text.
 
-# ⚠️ ID GENERATION RULE (VERY IMPORTANT)
+════════════════════════════════════════
+TASK ID RULE
+════════════════════════════════════════
 
-Each task id MUST:
-- Be unique across entire plan
-- Follow format: task-{date}-{index}-{randomString}
-- Never repeat across tasks
-- Never be "task-1" or "task-2"
+Every task id MUST be unique across the entire plan.
+Use this exact format: "task-{YYYY-MM-DD}-{position}"
+where position is 1 or 2 (the task's position within that day).
 
-Example:
-task-2026-06-03-1-x7k2p
+✓  "task-${today}-1"
+✓  "task-${today}-2"
+✗  "task-1"
+✗  "task-2"
+✗  Same id on two different tasks
 
----
+════════════════════════════════════════
+DAILY QUOTE RULE
+════════════════════════════════════════
 
-# 📅 DAILY PLAN RULES
+Each daily_quote MUST be:
+- A real, attributed quote from a known person
+- Relevant to learning, effort, or academic growth
+- Under 20 words
+- Format: "Quote text." — First Last
 
-Each day MUST include:
+✓  "Education is the most powerful weapon you can use to change the world." — Nelson Mandela
+✗  Generic motivational filler with no attribution
 
-- date (ISO format)
-- day_of_week
-- daily_focus (clear learning goal)
-- curriculum_focus
-- tasks (EXACTLY 2 tasks)
-- daily_quote (motivational but short)
-
----
-
-# 🧾 PLAN METADATA RULES
-
-You MUST include:
-
-- start_date: ${today}
-- end_date: ${endDateStr}
-- total_tasks: 14
-- curriculum: ${curriculum}
-- focus_areas: MUST reflect weak topics + syllabus balance
-- weekly_goal: exam-focused outcome
-- estimated_weekly_hours: realistic estimate (10–15 hours)
-
----
-
-# 🧠 QUALITY CONTROL (SELF CHECK BEFORE OUTPUT)
-
-Before responding, verify:
-
-- [ ] 7 daily_plans exist
-- [ ] Each day has exactly 2 tasks
-- [ ] Total tasks = 14
-- [ ] All IDs are unique
-- [ ] All dates valid ISO format
-- [ ] No missing required fields
-- [ ] JSON is valid
-- [ ] Weak topics are prioritized
-- [ ] Curriculum rules respected
-
----
-
-# 📦 OUTPUT SCHEMA (MANDATORY)
-
-Return EXACTLY:
+════════════════════════════════════════
+OUTPUT SCHEMA
+════════════════════════════════════════
 
 {
   "plan_metadata": {
-    "start_date": "...",
-    "end_date": "...",
+    "start_date": "${today}",
+    "end_date": "${endDateStr}",
     "total_tasks": 14,
     "curriculum": "${curriculum}",
     "curriculum_details": {
@@ -352,11 +306,24 @@ Return EXACTLY:
     {
       "date": "YYYY-MM-DD",
       "day_of_week": "string",
-      "daily_focus": "string",
+      "daily_focus": "string describing today's learning goal",
       "curriculum_focus": "${curriculum}",
       "tasks": [
         {
-          "id": "string",
+          "id": "task-YYYY-MM-DD-1",
+          "date": "YYYY-MM-DD",
+          "subject": "string",
+          "topic": "string",
+          "curriculum": "${curriculum}",
+          "task": "string — specific, actionable instruction for the student",
+          "duration": "string e.g. 45 min",
+          "priority": "high | medium | low",
+          "type": "theory | practice | revision | past_paper | project",
+          "study_tip": "string — short actionable tip, LaTeX where relevant",
+          "tags": ["string"]
+        },
+        {
+          "id": "task-YYYY-MM-DD-2",
           "date": "YYYY-MM-DD",
           "subject": "string",
           "topic": "string",
@@ -369,15 +336,14 @@ Return EXACTLY:
           "tags": ["string"]
         }
       ],
-      "daily_quote": "string"
+      "daily_quote": "string — attributed quote under 20 words"
     }
   ]
 }
 
----
-
-Now generate the study plan JSON output.
-`;
+The "daily_plans" array MUST contain exactly 7 objects covering ${today} through ${endDateStr}.
+Each "tasks" array MUST contain exactly 2 objects.
+Generate the JSON now.`;
     console.log("Generating plan with providers...");
     let text = "";
     let lastError: unknown;
