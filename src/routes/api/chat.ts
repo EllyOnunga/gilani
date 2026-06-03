@@ -6,7 +6,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { withTimeout } from "@/lib/async";
-import { buildSystemPrompt, checkDignityViolation, DISTRESS_KEYWORDS } from "@/lib/tutor-prompt";
+import { buildSystemPrompt } from "@/lib/tutor-prompt";
 
 // ─── Provider Helpers ─────────────────────────────────────────────────────────
 
@@ -343,22 +343,9 @@ export const Route = createFileRoute("/api/chat")({
                     status: "pending",
                     user_id: userId,
                   });
-                } else {
-                  const lowered = safeText.toLowerCase();
-                  if (DISTRESS_KEYWORDS.some((k) => lowered.includes(k))) {
-                    await supabaseAdmin.from("escalations").insert({
-                      conversation_id: threadId,
-                      reason: "distress_keyword",
-                      user_id: userId,
-                    });
-                  } else if (checkDignityViolation(safeText)) {
-                    await supabaseAdmin.from("escalations").insert({
-                      conversation_id: threadId,
-                      reason: "dignity_violation",
-                      user_id: userId,
-                    });
-                  }
-                }
+                } 
+                  
+              
               } catch (persistError) {
                 console.error("Failed to persist assistant message:", persistError);
               }
