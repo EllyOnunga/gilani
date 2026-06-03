@@ -80,33 +80,151 @@ const generateQuiz = createServerFn({ method: "POST" })
                 difficulty: z.enum(["easy", "medium", "hard"]).optional().default("medium"),
                 subtopic: z.string().optional().default(""),
                 curriculum: z.string().optional().default(""),
-              })
+              }),
             ),
           }),
-          prompt: `You are a senior curriculum examiner specialized in ${curriculum}. Generate exactly ${count} unique multiple-choice questions on the topic: "${topic}".
+          prompt: `You are a senior curriculum examiner specialized in ${curriculum}.
 
-## OUTPUT FORMAT
-CRITICAL: You must return the output strictly as a valid json object matching the provided structural validation schema. Do not wrap the response in markdown code blocks or backticks (e.g., do not use \`\`\`json). The response must be clean, raw json payload.
+You MUST generate EXACTLY ${count} multiple-choice questions on the topic:
+"${topic}".
 
-## STUDENT CONTEXT
-- Target Curriculum: ${curriculum}
-- Purpose: Formative assessment identifying knowledge gaps.
-- Difficulty mix: 30% easy, 50% medium, 20% hard.
+---
 
-## CURRICULUM-SPECIFIC GUIDELINES
-- **KCSE**: Align to KNEC syllabus/past papers (Form 1-4). Use Kenyan textbook references (KLB, Longhorn) and localized contexts (e.g., M-Pesa, localized geography, agriculture).
-- **CBC**: Focus on the 7 core competencies, scenario-based problem solving, and grade-appropriate practical tasks.
-- **IGCSE**: Use Cambridge command words (describe, explain, evaluate). Structure questions across Core/Extended tier logic matching assessments objectives AO1, AO2, and AO3.
+# 🚨 CRITICAL OUTPUT RULE (ABSOLUTE)
 
-## QUESTION & OPTION DESIGN
-1. **JSON Array Payload**: Ensure your generated response maps accurately onto the structured json questions schema definitions.
-2. **Formatting**: Wrap ALL math, chemical notation, and formulas cleanly using single-dollar sign delimiters like $x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$ or block expression delimiters $F = ma$. Do NOT use markdown code blocks or brackets [ ] for equations inside the json text keys.
-3. **Options**: Provide exactly 4 options (A, B, C, D). Ensure all distractors are plausible, tracking common misconceptions (calculation errors, reversed processes, or grammar slips).
-4. **Answers**: Exactly one clearly correct answer. Use a "correct" field with a 0-based integer index (0=A, 1=B, 2=C, 3=D). Never use "All of the above" or "None of the above".
-5. **Explanation**: Format explanations strictly with:
-   - ✅ Correct Answer Explanation
-   - ❌ Distractor Breakdown
-   - 📚 Key Rule / Textbook reference`,
+You MUST return ONLY valid JSON that matches the provided schema.
+
+STRICT RULES:
+- No markdown
+- No backticks
+- No explanations outside JSON
+- No extra keys outside schema
+- Output must be JSON.parse() valid
+- Must not include trailing commas
+- Must not include comments or metadata
+
+If you violate this → output is invalid.
+
+---
+
+# 🎯 QUESTION REQUIREMENTS
+
+Each question MUST:
+- Be clear and unambiguous
+- Have exactly 4 options (A, B, C, D)
+- Have ONLY ONE correct answer
+- Include realistic distractors based on common student mistakes
+
+---
+
+# 📊 DIFFICULTY DISTRIBUTION
+
+Across all ${count} questions:
+- 30% easy
+- 50% medium
+- 20% hard
+
+You must approximate this distribution.
+
+---
+
+# 🧠 CURRICULUM BEHAVIOR
+
+## KCSE
+- Align strictly to KNEC syllabus
+- Use KLB / Longhorn logic
+- Use Kenyan context (M-Pesa, agriculture, transport, geography)
+
+## CBC
+- Focus on competencies and real-life reasoning
+- Scenario-based learning
+- Practical application over memorization
+
+## IGCSE
+- Use Cambridge command verbs:
+  describe, explain, calculate, evaluate
+- Align to AO1, AO2, AO3
+
+---
+
+# 🧪 FORMATTING RULES
+
+- All math MUST use LaTeX with $...$
+- Chemistry MUST use proper subscripts/superscripts:
+  $H_2O$, $CO_2$, $SO_4^{2-}$
+- Do NOT use markdown formatting anywhere
+- Do NOT use brackets for equations
+- Keep question text clean and exam-ready
+
+---
+
+# ❗ ANSWER FIELD RULE (VERY IMPORTANT)
+
+The "correct" field MUST be:
+- A NUMBER ONLY
+- 0 = A
+- 1 = B
+- 2 = C
+- 3 = D
+
+DO NOT output:
+- letters in correct field
+- strings like "A"
+- explanations in correct field
+
+---
+
+# 🧾 EXPLANATION FORMAT
+
+Each explanation MUST include:
+
+- Correct Answer Explanation (why it is correct)
+- Distractor Analysis (why others are wrong)
+- Key Concept (curriculum rule or principle)
+
+Keep explanations concise and exam-focused.
+
+---
+
+# 📦 FINAL OUTPUT SCHEMA
+
+Return EXACTLY:
+
+{
+  "questions": [
+    {
+      "question": "string",
+      "options": ["string", "string", "string", "string"],
+      "correct": 0,
+      "explanation": "string",
+      "difficulty": "easy | medium | hard",
+      "subtopic": "string",
+      "curriculum": "${curriculum}"
+    }
+  ]
+}
+
+IMPORTANT RULES:
+- questions array MUST contain exactly ${count} items
+- options MUST be an array of 4 strings
+- correct MUST always be 0–3 integer
+- no extra fields allowed
+- no missing fields allowed
+
+---
+
+# 🧠 SELF-CHECK BEFORE RESPONDING
+
+Before outputting:
+- Verify exactly ${count} questions
+- Verify all options length = 4
+- Verify correct is valid index (0–3)
+- Verify JSON is valid
+- Verify curriculum alignment
+
+---
+
+Now generate the JSON output.`,
         });
         object = result.object;
         if (object && Array.isArray(object.questions) && object.questions.length > 0) {
@@ -124,21 +242,40 @@ CRITICAL: You must return the output strictly as a valid json object matching th
     }
 
     // Helper: resolve correct answer index from letter OR number
-    const resolveCorrectIndex = (raw: MCQ["correct"] | string | undefined | null, fallback = 0): number => {
+    const resolveCorrectIndex = (
+      raw: MCQ["correct"] | string | undefined | null,
+      fallback = 0,
+    ): number => {
       if (typeof raw === "number") return Math.max(0, Math.min(3, raw));
       if (typeof raw === "string") {
         const upper = raw.trim().toUpperCase();
-        const map: Record<string, number> = { "A": 0, "B": 1, "C": 2, "D": 3, "0": 0, "1": 1, "2": 2, "3": 3 };
+        const map: Record<string, number> = {
+          A: 0,
+          B: 1,
+          C: 2,
+          D: 3,
+          "0": 0,
+          "1": 1,
+          "2": 2,
+          "3": 3,
+        };
         return map[upper] ?? fallback;
       }
       return fallback;
     };
 
-    const questions: MCQ[] = ((object.questions || []) as Array<{
-      question: string; options: string[]; correct?: number | string;
-      answer?: number | string; explanation?: string;
-      difficulty?: string; subtopic?: string; curriculum?: string;
-    }>).map((q) => {
+    const questions: MCQ[] = (
+      (object.questions || []) as Array<{
+        question: string;
+        options: string[];
+        correct?: number | string;
+        answer?: number | string;
+        explanation?: string;
+        difficulty?: string;
+        subtopic?: string;
+        curriculum?: string;
+      }>
+    ).map((q) => {
       // Accept either "correct" (numeric) or "answer" (letter/number) from various models
       const rawCorrect = q.correct ?? q.answer;
       return {

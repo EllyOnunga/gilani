@@ -24,8 +24,10 @@ function isRateLimitError(error: unknown): boolean {
   const msg = String(err?.message || err?.error?.message || JSON.stringify(err) || "");
   return (
     err?.statusCode === 429 ||
-    msg.includes("rate_limit") || msg.includes("Rate limit") ||
-    msg.includes("quota") || msg.includes("insufficient_quota") ||
+    msg.includes("rate_limit") ||
+    msg.includes("Rate limit") ||
+    msg.includes("quota") ||
+    msg.includes("insufficient_quota") ||
     msg.includes("RESOURCE_EXHAUSTED")
   );
 }
@@ -116,7 +118,7 @@ function createEmbeddingModel(): { model: any; name: string } | null {
     });
     return { model: mistral.textEmbeddingModel("mistral-embed"), name: "mistral" };
   }
-  
+
   return null;
 }
 
@@ -148,7 +150,8 @@ export const Route = createFileRoute("/api/chat")({
 
           if (!threadId) {
             return new Response(JSON.stringify({ error: "threadId required" }), {
-              status: 400, headers: { "Content-Type": "application/json" },
+              status: 400,
+              headers: { "Content-Type": "application/json" },
             });
           }
 
@@ -169,13 +172,18 @@ export const Route = createFileRoute("/api/chat")({
 
           if (!model) {
             return new Response(
-              JSON.stringify({ error: "No AI provider configured. Set GROQ_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, or DEEPSEEK_API_KEY." }),
+              JSON.stringify({
+                error:
+                  "No AI provider configured. Set GROQ_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, or DEEPSEEK_API_KEY.",
+              }),
               { status: 500, headers: { "Content-Type": "application/json" } },
             );
           }
 
           console.log(`[API Chat] Selected chat provider: ${activeProvider}`);
-          console.log(`[API Chat] Available providers: ${providerOrder.filter(p => createChatModel(p)).join(", ")}`);
+          console.log(
+            `[API Chat] Available providers: ${providerOrder.filter((p) => createChatModel(p)).join(", ")}`,
+          );
 
           // ─── Database Checks ────────────────────────────────────────────
           const { data: thread } = await supabaseAdmin
@@ -187,7 +195,8 @@ export const Route = createFileRoute("/api/chat")({
 
           if (!thread) {
             return new Response(JSON.stringify({ error: "thread not found" }), {
-              status: 404, headers: { "Content-Type": "application/json" },
+              status: 404,
+              headers: { "Content-Type": "application/json" },
             });
           }
 
@@ -231,11 +240,11 @@ export const Route = createFileRoute("/api/chat")({
 
           if (latestMessageContent) {
             const embResult = createEmbeddingModel();
-            
+
             if (embResult) {
               try {
                 console.log(`[RAG] Using ${embResult.name} for embeddings`);
-                
+
                 const { embedding } = await withTimeout(
                   embed({ model: embResult.model, value: latestMessageContent, maxRetries: 0 }),
                   15000,
@@ -290,18 +299,22 @@ export const Route = createFileRoute("/api/chat")({
             timeout: 30000,
             onError: (errorObj) => {
               const error = (errorObj as any)?.error || errorObj;
-              console.error(`[API Chat] ${activeProvider} onError:`, 
-                typeof error === "object" ? JSON.stringify(error).slice(0, 300) : String(error)
+              console.error(
+                `[API Chat] ${activeProvider} onError:`,
+                typeof error === "object" ? JSON.stringify(error).slice(0, 300) : String(error),
               );
             },
             onFinish: async ({ text: assistantText, providerMetadata }) => {
               console.log(`[API Chat] ${activeProvider} finished. Length: ${assistantText.length}`);
-              
-              const safeText = assistantText.trim() || "Sorry, I could not generate a response right now. Please try again.";
+
+              const safeText =
+                assistantText.trim() ||
+                "Sorry, I could not generate a response right now. Please try again.";
 
               try {
                 const assistantParts = [{ type: "text" as const, text: safeText }];
-                const thoughtSignature = (providerMetadata as any)?.google?.thoughtSignature || null;
+                const thoughtSignature =
+                  (providerMetadata as any)?.google?.thoughtSignature || null;
 
                 await supabaseAdmin.from("messages").insert({
                   conversation_id: threadId,
@@ -350,15 +363,17 @@ export const Route = createFileRoute("/api/chat")({
                 console.error("Failed to persist assistant message:", persistError);
               }
             },
-        });
+          });
 
           console.log("[API Chat] Returning stream response");
           return streamResult.toTextStreamResponse({
             headers: { "cache-control": "no-cache" },
           });
-
         } catch (error: unknown) {
-          console.error("[API Chat] Error:", error instanceof Error ? error.message : String(error));
+          console.error(
+            "[API Chat] Error:",
+            error instanceof Error ? error.message : String(error),
+          );
 
           return new Response(
             JSON.stringify({

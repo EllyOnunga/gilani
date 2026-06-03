@@ -29,8 +29,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { NotificationBell } from "@/components/notifications";
-import { DisclaimerBanner } from "@/components/DisclaimerBanner";
-import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import { DisclaimerModal } from "@/components/DisclaimerModal";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
@@ -190,7 +188,6 @@ function AuthedShell() {
       </header>
 
       {/* Disclaimer Banner - dismissible warning */}
-      <DisclaimerBanner />
 
       {/* Sidebar Backdrop Overlay for Mobile */}
       {sidebarOpen && (

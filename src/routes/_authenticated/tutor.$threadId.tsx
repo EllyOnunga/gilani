@@ -363,81 +363,85 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     };
   }, []);
 
- // Load messages
-useEffect(() => {
+  // Load messages
+  useEffect(() => {
     let mounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     const loadingThreadId = threadId;
 
-    if (!threadId) { 
-      setMessagesLoading(false); 
-      return; 
+    if (!threadId) {
+      setMessagesLoading(false);
+      return;
     }
-    
+
     setMessagesLoading(true);
     setMessagesLoadError(null);
     // ✅ REMOVED: setMessages([]); - Don't clear messages, keep existing state while loading
 
     timeoutId = setTimeout(() => {
-      if (mounted) { 
-        setMessagesLoading(false); 
-        setMessagesLoadError("Loading timed out."); 
+      if (mounted) {
+        setMessagesLoading(false);
+        setMessagesLoadError("Loading timed out.");
       }
     }, 5000);
 
     (async () => {
       try {
         const [messagesRes, escalationRes] = await Promise.all([
-          supabase.from("messages")
+          supabase
+            .from("messages")
             .select("*")
             .eq("conversation_id", threadId)
             .order("created_at", { ascending: true }),
-          supabase.from("escalations")
+          supabase
+            .from("escalations")
             .select("status")
             .eq("conversation_id", threadId)
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle(),
         ]);
-        
+
         clearTimeout(timeoutId);
-        
+
         // ✅ CRITICAL FIX: Check if this is still the current thread
         // This prevents stale data from overwriting the new thread's messages
         if (!mounted || loadingThreadId !== threadId) return;
-        
-        if (messagesRes.error) { 
-          setMessagesLoadError(`Database error: ${messagesRes.error.message}`); 
-          setMessagesLoading(false); 
-          return; 
+
+        if (messagesRes.error) {
+          setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
+          setMessagesLoading(false);
+          return;
         }
-        
+
         if (messagesRes.data && messagesRes.data.length > 0) {
-          setMessages(messagesRes.data.map((m) => ({
-            id: m.id ?? crypto.randomUUID(),
-            role: m.role as "user" | "assistant",
-            parts: [{ type: "text" as const, text: m.content || "" }],
-            createdAt: m.created_at ? new Date(m.created_at) : new Date(),
-          })));
+          setMessages(
+            messagesRes.data.map((m) => ({
+              id: m.id ?? crypto.randomUUID(),
+              role: m.role as "user" | "assistant",
+              parts: [{ type: "text" as const, text: m.content || "" }],
+              createdAt: m.created_at ? new Date(m.created_at) : new Date(),
+            })),
+          );
         } else {
           // ✅ Only clear if there are genuinely no messages
           setMessages([]);
         }
-        
+
         setEscalationStatus((escalationRes.data?.status as any) || null);
         setMessagesLoading(false);
       } catch (e) {
         clearTimeout(timeoutId);
-        if (mounted) { 
-          setMessagesLoadError("Connection failed. Try refreshing."); 
-          setMessagesLoading(false); 
+        if (mounted) {
+          setMessagesLoadError("Connection failed. Try refreshing.");
+          setMessagesLoading(false);
         }
       }
     })();
-    
-    return () => { 
-      mounted = false; 
-      if (timeoutId) clearTimeout(timeoutId); 
+
+    return () => {
+      mounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [threadId, setMessages]);
 

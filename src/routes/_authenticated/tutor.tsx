@@ -5,7 +5,6 @@ import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchWithTimeout, getErrorMessage, withTimeout } from "@/lib/async";
 
-
 export const Route = createFileRoute("/_authenticated/tutor")({
   component: TutorIndex,
 });

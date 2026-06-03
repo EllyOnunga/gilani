@@ -26,13 +26,13 @@ const listNotes = createServerFn({ method: "GET" })
   .inputValidator(z.object({ userId: z.string() }))
   .handler(async ({ data }) => {
     const { userId } = data;
-    
+
     const { data: notes, error } = await supabaseAdmin
       .from("notes")
       .select("id, title, summary, key_concepts, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
-      
+
     if (error) throw new Error(error.message);
     return notes ?? [];
   });
@@ -57,55 +57,168 @@ const ingestNote = createServerFn({ method: "POST" })
         console.log(`[Notes] Trying model: ${model.provider}/${model.modelId}`);
         const result = await generateText({
           model,
-          prompt: `You are an expert educational content creator for Kenyan (KCSE/CBC) and International (IGCSE) curricula. Your task is to process study materials or problem sets into high-quality study resources.
+          prompt: `You are an expert curriculum-aligned educational content engine for Kenyan (KCSE/CBC) and International (IGCSE) learners.
 
-Analyze the following input text and generate a structured response matching the requested JSON format exactly.
+Your task is to transform the input content into structured, high-quality study material.
 
-[Core Content Requirements]
-1. For Study Notes: Create a detailed markdown summary with headings, key terms highlighted in bold, local Kenyan examples, formulas with LaTeX if applicable ($formula$), and practical study tips (mnemonics, common exam angles). Extract ALL key concepts.
-2. For Question Papers: Provide clear step-by-step solutions for each question, including clear marking scheme indicators (e.g., [2 marks]), common student pitfalls, and alternative approaches.
-3. Include references to approved local and international textbooks (e.g., KLB, Longhorn) or open educational resources (KICD, Kenya Education Cloud).
+---
 
-[Formatting & Output Constraint]
-Return ONLY a valid JSON object. Do not include markdown code fences (\`\`\`json).
+# 🚨 CRITICAL OUTPUT RULE (ABSOLUTE)
 
-[Target Schema]
+You MUST return ONLY valid JSON.
+
+STRICT RULES:
+- No markdown
+- No \`\`\` code blocks
+- No commentary outside JSON
+- No extra keys outside schema
+- Must be JSON.parse() valid
+- No trailing commas
+
+If you violate this → output is invalid.
+
+---
+
+# 🎯 TASK DEFINITION
+
+Analyze the input and classify it as:
+
+"type":
+- "study_notes" (theory, explanations, summaries)
+- "question_paper" (questions + solutions)
+
+You MUST infer this correctly from content.
+
+---
+
+# 📘 CONTENT REQUIREMENTS
+
+## If type = study_notes
+
+You MUST:
+- Produce structured academic notes
+- Use headings, bullet points, and clear explanations
+- Highlight key terms in **bold (within markdown string only)**
+- Include Kenyan real-world examples (M-Pesa, agriculture, geography, etc.)
+- Include formulas using LaTeX ($...$)
+
+## If type = question_paper
+
+You MUST:
+- Break down all questions step-by-step
+- Provide marking scheme hints [e.g. 2 marks]
+- Highlight common student mistakes
+- Provide alternative solving methods where relevant
+
+---
+
+# 🧠 CURRICULUM RULES
+
+## KCSE
+- Align strictly with KNEC syllabus
+- Use KLB / Longhorn logic
+- Include Kenyan context (schools, economy, environment)
+
+## CBC
+- Focus on competencies, real-life application, projects
+- Emphasize understanding over memorization
+
+## IGCSE
+- Use Cambridge command words:
+  describe, explain, evaluate, calculate
+- Align to AO1, AO2, AO3 assessment structure
+
+---
+
+# 🧪 FORMATTING RULES (STRICT)
+
+- All math MUST use LaTeX with $...$
+- Chemistry MUST use proper notation:
+  $H_2O$, $CO_2$, $SO_4^{2-}$
+- NO markdown outside JSON strings
+- Keep explanations clean and exam-ready
+
+---
+
+# 📦 OUTPUT JSON SCHEMA (MANDATORY)
+
+Return EXACTLY:
+
 {
-  "title": "Descriptive title",
-  "type": "study_notes" or "question_paper",
-  "subject": "Subject name",
-  "topic": "Topic name",
-  "form_level": "Level classification",
-  "comprehensive_summary": "Complete markdown summary string",
+  "title": "string",
+  "type": "study_notes | question_paper",
+  "subject": "string",
+  "topic": "string",
+  "form_level": "string",
+  "comprehensive_summary": "string (markdown allowed inside)",
   "key_concepts": [
-    {"concept": "Name", "definition": "Clear description", "importance": "Why it matters"}
+    {
+      "concept": "string",
+      "definition": "string",
+      "importance": "string"
+    }
   ],
   "formulas_and_equations": [
-    {"name": "Name", "expression": "LaTeX string", "explanation": "Usage rule"}
+    {
+      "name": "string",
+      "expression": "string (LaTeX)",
+      "explanation": "string"
+    }
   ],
   "solutions": [
     {
       "question_number": 1,
-      "question_text": "Text",
-      "solution": "Step-by-step markdown solution",
-      "marks_breakdown": "Allocation string",
-      "common_mistakes": "Pitfalls",
-      "alternative_approach": "Optional alternate method"
+      "question_text": "string",
+      "solution": "string (step-by-step)",
+      "marks_breakdown": "string",
+      "common_mistakes": "string",
+      "alternative_approach": "string"
     }
   ],
-  "study_tips": ["Tip 1"],
-  "common_exam_questions": ["Question type 1"],
-  "related_topics": ["Topic 1"],
+  "study_tips": ["string"],
+  "common_exam_questions": ["string"],
+  "related_topics": ["string"],
   "recommended_resources": [
-    {"name": "Resource name", "type": "textbook/website/video", "description": "Details", "link": "URL if available"}
+    {
+      "name": "string",
+      "type": "textbook | website | video",
+      "description": "string",
+      "link": "string (optional)"
+    }
   ],
   "quick_review_cards": [
-    {"front": "Question/Prompt", "back": "Answer/Explanation"}
+    {
+      "front": "string",
+      "back": "string"
+    }
   ]
 }
 
-Study material content to process:
-${content.slice(0, 8000)}`,
+---
+
+# ⚠️ FIELD RULES (IMPORTANT)
+
+- "solutions" ONLY required if type = question_paper
+- If study_notes → solutions MUST be an empty array []
+- "key_concepts" MUST extract ALL major ideas
+- "formulas_and_equations" MUST include ALL relevant formulas
+- Never omit required fields
+
+---
+
+# 🧠 QUALITY SELF-CHECK
+
+Before responding, verify:
+- JSON is valid
+- Schema fully matches
+- No missing fields
+- No extra fields
+- Curriculum alignment correct
+- Output is structured and exam-ready
+
+---
+
+Now process the input and generate the JSON output.`,
         });
         text = result.text;
         if (text.trim()) {
@@ -143,7 +256,12 @@ ${content.slice(0, 8000)}`,
       study_tips: string[];
       common_exam_questions: string[];
       related_topics: string[];
-      recommended_resources: Array<{ name: string; type: string; description: string; link?: string }>;
+      recommended_resources: Array<{
+        name: string;
+        type: string;
+        description: string;
+        link?: string;
+      }>;
       quick_review_cards: Array<{ front: string; back: string }>;
     }
 
@@ -162,7 +280,7 @@ ${content.slice(0, 8000)}`,
       summary = parsed.comprehensive_summary || parsed.summary || "";
       keyConcepts = Array.isArray(parsed.key_concepts)
         ? parsed.key_concepts.map((kc) =>
-            typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`
+            typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
           )
         : [];
     } catch (error) {
@@ -177,7 +295,7 @@ ${content.slice(0, 8000)}`,
       .insert({ title, raw_text: content, summary, key_concepts: keyConcepts, user_id: userId })
       .select()
       .single();
-      
+
     if (noteErr) throw new Error(noteErr.message);
 
     // Split text into chunks
@@ -332,7 +450,8 @@ function NotesPage() {
           </p>
           <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Upload &amp; Summarise</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Paste your class notes and GilaniAI will extract a summary and key concepts automatically.
+            Paste your class notes and GilaniAI will extract a summary and key concepts
+            automatically.
           </p>
         </div>
         <button
@@ -351,9 +470,21 @@ function NotesPage() {
           <div className="space-y-4">
             {/* Document Upload Zone */}
             <div
-              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
-              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
-              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(true);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(false);
+              }}
               onDrop={handleFileDrop}
               className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all ${
                 dragActive

@@ -171,57 +171,213 @@ const generatePlan = createServerFn({ method: "POST" })
     const endDateStr = endDate.toISOString().split("T")[0];
 
     // Highly structural, robust prompt optimized to completely avoid parse failures
-    const prompt = `You are an expert academic curriculum strategist. Create a highly structured 7-day study plan for a ${curriculum} student. 
-Today's start date is ${today}.
+    const prompt = `
+You are an expert academic curriculum strategist and exam preparation planner.
 
-Weak target areas requiring high-priority focus: ${weakTopics.length ? weakTopics.slice(0, 5).join(", ") : "General balanced study blueprint"}.
+Your task is to generate a STRICTLY STRUCTURED 7-DAY STUDY PLAN for a ${curriculum} student.
 
-CRITICAL: Return output strictly as raw executable JSON matching the architecture signature below. Do not wrap inside code block fences. Do not output conversational explanations.
+Start date: ${today}
+End date: ${endDateStr}
+
+Weak areas (highest priority focus):
+${weakTopics.length ? weakTopics.slice(0, 5).join(", ") : "Balanced foundational revision across core subjects"}
+
+---
+
+# 🚨 CRITICAL OUTPUT RULE (ABSOLUTE)
+
+You MUST return ONLY valid JSON.
+
+STRICT RULES:
+- No markdown
+- No code blocks (\`\`\`)
+- No explanations outside JSON
+- No extra fields
+- Must be JSON.parse() valid
+- No trailing commas
+- No duplicate keys
+
+If you violate this → output is invalid.
+
+---
+
+# 📊 PLAN STRUCTURE REQUIREMENTS
+
+You MUST generate:
+
+- EXACTLY 7 days in "daily_plans"
+- EXACTLY 2 tasks per day
+- EXACTLY 14 total tasks
+
+Hard enforcement:
+- No more, no less
+
+---
+
+# 🧠 TASK DESIGN RULES
+
+Each task MUST:
+- Be actionable (not vague)
+- Be curriculum aligned (${curriculum})
+- Be time-bound (duration required)
+- Be realistic for a student session
+- Directly improve exam performance
+
+---
+
+# 🎯 PRIORITIZATION LOGIC
+
+Task priority MUST follow:
+
+1. Weak topics (from quiz attempts) → HIGH priority
+2. Core exam subjects → MEDIUM priority
+3. General revision → LOW priority
+
+Weak topics MUST appear at least 40% of tasks.
+
+---
+
+# 📘 CURRICULUM BEHAVIOR
+
+## KCSE
+- KNEC syllabus aligned
+- Use KLB / Longhorn logic
+- Include Kenyan context (M-Pesa, agriculture, geography, transport)
+
+## CBC
+- Competency-based tasks
+- Real-life application
+- Project + skill-based learning
+
+## IGCSE
+- Use command words:
+  describe, explain, evaluate, calculate
+- AO1 / AO2 / AO3 alignment
+
+---
+
+# 🧪 TASK FORMAT RULES
+
+Each task MUST include:
+
+- id → MUST be globally unique string
+- date → valid ISO date (YYYY-MM-DD)
+- subject → clear academic subject
+- topic → specific sub-topic
+- curriculum → ${curriculum} OR "BOTH"
+- task → clear instruction (what student does)
+- duration → e.g. "45 min"
+- priority → high | medium | low
+- type → theory | practice | revision | past_paper | project
+- study_tip → short actionable tip
+- tags → array of relevant tags
+
+---
+
+# ⚠️ ID GENERATION RULE (VERY IMPORTANT)
+
+Each task id MUST:
+- Be unique across entire plan
+- Follow format: task-{date}-{index}-{randomString}
+- Never repeat across tasks
+- Never be "task-1" or "task-2"
+
+Example:
+task-2026-06-03-1-x7k2p
+
+---
+
+# 📅 DAILY PLAN RULES
+
+Each day MUST include:
+
+- date (ISO format)
+- day_of_week
+- daily_focus (clear learning goal)
+- curriculum_focus
+- tasks (EXACTLY 2 tasks)
+- daily_quote (motivational but short)
+
+---
+
+# 🧾 PLAN METADATA RULES
+
+You MUST include:
+
+- start_date: ${today}
+- end_date: ${endDateStr}
+- total_tasks: 14
+- curriculum: ${curriculum}
+- focus_areas: MUST reflect weak topics + syllabus balance
+- weekly_goal: exam-focused outcome
+- estimated_weekly_hours: realistic estimate (10–15 hours)
+
+---
+
+# 🧠 QUALITY CONTROL (SELF CHECK BEFORE OUTPUT)
+
+Before responding, verify:
+
+- [ ] 7 daily_plans exist
+- [ ] Each day has exactly 2 tasks
+- [ ] Total tasks = 14
+- [ ] All IDs are unique
+- [ ] All dates valid ISO format
+- [ ] No missing required fields
+- [ ] JSON is valid
+- [ ] Weak topics are prioritized
+- [ ] Curriculum rules respected
+
+---
+
+# 📦 OUTPUT SCHEMA (MANDATORY)
+
+Return EXACTLY:
 
 {
   "plan_metadata": {
-    "start_date": "${today}",
-    "end_date": "${endDateStr}",
+    "start_date": "...",
+    "end_date": "...",
     "total_tasks": 14,
     "curriculum": "${curriculum}",
     "curriculum_details": {
       "type": "${curriculum}",
-      "specific_requirements": "Targeted optimization of diagnostic performance gaps."
+      "specific_requirements": "string"
     },
-    "focus_areas": ["Introduce target subject matters here"],
-    "weekly_goal": "Master foundational knowledge structures and enhance analytical execution.",
-    "estimated_weekly_hours": "12 hours"
+    "focus_areas": ["string"],
+    "weekly_goal": "string",
+    "estimated_weekly_hours": "string"
   },
   "daily_plans": [
     {
-      "date": "${today}",
-      "day_of_week": "Monday",
-      "daily_focus": "Diagnostic subject alignment target",
+      "date": "YYYY-MM-DD",
+      "day_of_week": "string",
+      "daily_focus": "string",
       "curriculum_focus": "${curriculum}",
       "tasks": [
         {
-          "id": "task-unique-hash-1",
-          "date": "${today}",
-          "subject": "Core Subject",
-          "topic": "Target Sub-Topic Area",
+          "id": "string",
+          "date": "YYYY-MM-DD",
+          "subject": "string",
+          "topic": "string",
           "curriculum": "${curriculum}",
-          "task": "Fully descriptive actionable learning task objectives.",
-          "duration": "45 min",
-          "priority": "high",
-          "type": "practice",
-          "study_tip": "Strategic focus application strategy.",
-          "tags": ["weak_area", "revision"]
+          "task": "string",
+          "duration": "string",
+          "priority": "high | medium | low",
+          "type": "theory | practice | revision | past_paper | project",
+          "study_tip": "string",
+          "tags": ["string"]
         }
       ],
-      "daily_quote": "Consistency anchors mastery."
+      "daily_quote": "string"
     }
   ]
 }
 
-Task Requirements:
-- Generate 14 tasks total distributed perfectly across the 7-day window (2 contextually coherent tasks per calendar day).
-- All items inside the tasks must feature uniquely identifiable text strings for their "id" parameters.`;
+---
 
+Now generate the study plan JSON output.
+`;
     console.log("Generating plan with providers...");
     let text = "";
     let lastError: unknown;
@@ -274,9 +430,10 @@ Task Requirements:
           day.tasks.map((task, idx) => ({
             ...task,
             date: task.date || day.date,
-            id: task.id && task.id !== "task-1" && task.id !== "task-2" 
-              ? task.id 
-              : `${day.date}-task-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+            id:
+              task.id && task.id !== "task-1" && task.id !== "task-2"
+                ? task.id
+                : `${day.date}-task-${idx}-${Math.random().toString(36).substring(2, 7)}`,
           })),
         );
       } else if (Array.isArray(parsed)) {
