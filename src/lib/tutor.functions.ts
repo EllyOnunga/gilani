@@ -45,12 +45,33 @@ export async function escalateMessage(
   messageId?: string,
   reason?: string,
 ) {
-  const { error } = await supabaseAdmin.from("escalations").insert({
-    conversation_id: threadId,
-    detail: messageId || null,
-    reason: reason || "manual",
-    user_id: userId,
-  });
+  const { data, error } = await supabaseAdmin
+    .from("escalations")
+    .insert({
+      conversation_id: threadId,
+      detail: messageId || null,
+      reason: reason || "manual",
+      user_id: userId,
+    })
+    .select("id")
+    .single();
+
   if (error) throw error;
+
+  // Trigger Zapier Webhook in the background (fire and forget)
+  import("@/lib/zapier.server")
+    .then(({ triggerZapierEscalation }) => {
+      triggerZapierEscalation({
+        escalationId: data?.id,
+        userId,
+        threadId,
+        reason: reason || "student_request",
+        detail: messageId || null,
+      });
+    })
+    .catch((err) => {
+      console.error("[Zapier] Failed to load trigger function:", err);
+    });
+
   return true;
 }
