@@ -187,3 +187,41 @@
 .animate-cursor-blink {
   animation: cursor-blink 0.8s infinite;
 }
+
+/* ── Study Suite auto-scroll ─────────────────────────────────────── */
+@keyframes suite-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.suite-track {
+  display: flex;
+  width: max-content;
+  animation: suite-scroll 28s linear infinite;
+  will-change: transform;
+}
+
+/* Pause the infinite scroll when user hovers any card */
+.suite-track:hover {
+  animation-play-state: paused;
+}
+
+/* Edge fade masks for seamless look */
+.suite-fade::before,
+.suite-fade::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+.suite-fade::before {
+  left: 0;
+  background: linear-gradient(to right, var(--color-background) 0%, transparent 100%);
+}
+.suite-fade::after {
+  right: 0;
+  background: linear-gradient(to left, var(--color-background) 0%, transparent 100%);
+}

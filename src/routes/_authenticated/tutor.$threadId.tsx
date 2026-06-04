@@ -34,6 +34,10 @@ type Thread = {
 };
 
 function TutorThread() {
+  // ✅ Read threadId here so we can key TutorThreadInner on it.
+  // This forces a full remount whenever the thread changes, eliminating the
+  // race condition where messages=[] and messagesLoading=false flash together.
+  const { threadId } = Route.useParams();
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -65,7 +69,9 @@ function TutorThread() {
     );
   }
 
-  return <TutorThreadInner authToken={authToken} />;
+  // key={threadId} forces TutorThreadInner to remount on every thread switch.
+  // Fresh mount means messagesLoading starts as true — no empty-state flash.
+  return <TutorThreadInner key={threadId} authToken={authToken} />;
 }
 
 function TutorThreadInner({ authToken }: { authToken: string | null }) {

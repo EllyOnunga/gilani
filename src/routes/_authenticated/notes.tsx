@@ -188,6 +188,7 @@ Common reference expressions:
   $a^2 + b^2 = c^2$         (Pythagorean theorem)
   $A = \\pi r^2$             (area of circle)
   $V = \\frac{4}{3}\\pi r^3$ (volume of sphere)
+  
 
 NEVER write: x^2, sqrt(x), x**2, ²x in plain text — always use $...$
 
@@ -298,8 +299,8 @@ ${content.slice(0, 15000)}`,
     const summary = parsed.comprehensive_summary || parsed.summary || "";
     const keyConcepts = Array.isArray(parsed.key_concepts)
       ? parsed.key_concepts.map((kc) =>
-          typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
-        )
+        typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
+      )
       : [];
 
     // Insert note
@@ -499,11 +500,10 @@ function NotesPage() {
                 setDragActive(false);
               }}
               onDrop={handleFileDrop}
-              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all ${
-                dragActive
+              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all ${dragActive
                   ? "border-primary bg-primary/5 scale-[0.99]"
                   : "border-border bg-background hover:bg-accent/30 hover:border-muted-foreground/50"
-              }`}
+                }`}
             >
               <input
                 type="file"
@@ -607,10 +607,10 @@ function NotesPage() {
                       <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
                         {note.created_at
                           ? new Date(note.created_at).toLocaleDateString("en-KE", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
                           : "—"}
                       </p>
                     </div>

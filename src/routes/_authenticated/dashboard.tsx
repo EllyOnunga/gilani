@@ -19,13 +19,7 @@ import {
   BarChart3,
   Sparkles,
 } from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+// Carousel import removed — using CSS infinite scroll instead
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -152,107 +146,175 @@ function Dashboard() {
         </div>
       </header>
 
-      {/* Study Suite Carousel */}
+      {/* Study Suite — CSS infinite auto-scroll */}
       <section className="animate-in-slide [animation-delay:50ms] w-full">
-        <Carousel opts={{ align: "start" }} className="w-full relative">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="font-serif text-2xl font-semibold">Your Study Suite</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Explore curriculum tools and practice systems
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <CarouselPrevious className="static translate-y-0 h-9 w-9 border-border/80 bg-background/50 hover:bg-background" />
-              <CarouselNext className="static translate-y-0 h-9 w-9 border-border/80 bg-background/50 hover:bg-background" />
-            </div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="font-serif text-2xl font-semibold">Your Study Suite</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Explore curriculum tools and practice systems
+            </p>
           </div>
+          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground hidden sm:block">
+            Hover to pause
+          </span>
+        </div>
 
-          <CarouselContent className="-ml-4">
+        {/* Overflow mask + infinite scroll track */}
+        <div className="suite-fade relative overflow-hidden">
+          <div className="suite-track">
+            {/* Cards rendered TWICE for seamless loop */}
             {[
               {
                 title: "Socratic AI Tutor",
                 description:
-                  "Curriculum-grounded Socratic explanations & direct teacher escalations.",
+                  "Curriculum-precise AI tutor. Direct answers, worked proofs, teacher escalation.",
                 icon: MessageCircle,
                 to: "/tutor",
-                accent: "from-blue-500/20 to-indigo-500/10 text-blue-600 dark:text-blue-400",
+                accent: "from-blue-500/20 to-indigo-500/10",
+                iconColor: "text-blue-600 dark:text-blue-400",
                 cta: "Start a session",
+                badge: "01",
               },
               {
                 title: "Study Notes",
-                description: "Upload and summarize your notes, generating key concepts and terms.",
+                description:
+                  "Upload notes or paste text. Get AI-generated summaries, key concepts & flashcards.",
                 icon: BookOpenText,
                 to: "/notes",
-                accent: "from-emerald-500/20 to-teal-500/10 text-emerald-600 dark:text-emerald-400",
+                accent: "from-emerald-500/20 to-teal-500/10",
+                iconColor: "text-emerald-600 dark:text-emerald-400",
                 cta: "Summarise notes",
+                badge: "02",
               },
               {
                 title: "Practice Quizzes",
                 description:
-                  "Generate customized practice tests tuned to your weak subject topics.",
+                  "AI-generated MCQs tuned to your weak topics, with full explanations and difficulty tiers.",
                 icon: ListChecks,
                 to: "/quizzes",
-                accent: "from-orange-500/20 to-red-500/10 text-orange-600 dark:text-orange-400",
+                accent: "from-orange-500/20 to-red-500/10",
+                iconColor: "text-orange-600 dark:text-orange-400",
                 cta: "Take a quiz",
+                badge: "03",
               },
               {
                 title: "Syllabus Planner",
                 description:
-                  "Create personalized study schedules and keep track of daily revision.",
+                  "7-day personalised study schedule built from your quiz history and weak areas.",
                 icon: CalendarDays,
                 to: "/planner",
-                accent: "from-violet-500/20 to-purple-500/10 text-violet-600 dark:text-violet-400",
+                accent: "from-violet-500/20 to-purple-500/10",
+                iconColor: "text-violet-600 dark:text-violet-400",
                 cta: "Manage calendar",
+                badge: "04",
               },
               {
                 title: "Performance Analytics",
                 description:
-                  "Track mastery score progress, daily streaks, and flagged focus items.",
+                  "Track mastery scores, daily streaks, and flagged focus concepts over time.",
                 icon: BarChart3,
                 to: "/analytics",
-                accent: "from-pink-500/20 to-rose-500/10 text-pink-600 dark:text-pink-400",
+                accent: "from-pink-500/20 to-rose-500/10",
+                iconColor: "text-pink-600 dark:text-pink-400",
                 cta: "View progress",
+                badge: "05",
               },
-            ].map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <CarouselItem
-                  key={idx}
-                  className="pl-4 basis-[90%] xs:basis-[80%] sm:basis-1/2 md:basis-1/3 animate-in-slide"
-                >
-                  <Link
-                    to={item.to as any}
-                    className="group block h-full rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/50 hover:scale-[1.01] flex flex-col justify-between overflow-hidden"
-                  >
-                    <div>
-                      <div
-                        className={`p-3 rounded-lg w-fit bg-gradient-to-br ${item.accent} transition-transform duration-300 group-hover:scale-110`}
-                      >
-                        <Icon className="h-5 w-5" />
+            ]
+              .concat([
+                // Duplicate set for seamless wrap
+                {
+                  title: "Socratic AI Tutor",
+                  description:
+                    "Curriculum-precise AI tutor. Direct answers, worked proofs, teacher escalation.",
+                  icon: MessageCircle,
+                  to: "/tutor",
+                  accent: "from-blue-500/20 to-indigo-500/10",
+                  iconColor: "text-blue-600 dark:text-blue-400",
+                  cta: "Start a session",
+                  badge: "01",
+                },
+                {
+                  title: "Study Notes",
+                  description:
+                    "Upload notes or paste text. Get AI-generated summaries, key concepts & flashcards.",
+                  icon: BookOpenText,
+                  to: "/notes",
+                  accent: "from-emerald-500/20 to-teal-500/10",
+                  iconColor: "text-emerald-600 dark:text-emerald-400",
+                  cta: "Summarise notes",
+                  badge: "02",
+                },
+                {
+                  title: "Practice Quizzes",
+                  description:
+                    "AI-generated MCQs tuned to your weak topics, with full explanations and difficulty tiers.",
+                  icon: ListChecks,
+                  to: "/quizzes",
+                  accent: "from-orange-500/20 to-red-500/10",
+                  iconColor: "text-orange-600 dark:text-orange-400",
+                  cta: "Take a quiz",
+                  badge: "03",
+                },
+                {
+                  title: "Syllabus Planner",
+                  description:
+                    "7-day personalised study schedule built from your quiz history and weak areas.",
+                  icon: CalendarDays,
+                  to: "/planner",
+                  accent: "from-violet-500/20 to-purple-500/10",
+                  iconColor: "text-violet-600 dark:text-violet-400",
+                  cta: "Manage calendar",
+                  badge: "04",
+                },
+                {
+                  title: "Performance Analytics",
+                  description:
+                    "Track mastery scores, daily streaks, and flagged focus concepts over time.",
+                  icon: BarChart3,
+                  to: "/analytics",
+                  accent: "from-pink-500/20 to-rose-500/10",
+                  iconColor: "text-pink-600 dark:text-pink-400",
+                  cta: "View progress",
+                  badge: "05",
+                },
+              ])
+              .map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <div key={idx} className="w-[280px] sm:w-[300px] flex-shrink-0 px-2">
+                    <Link
+                      to={item.to as any}
+                      className={`group flex flex-col justify-between h-[200px] rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/60 hover:-translate-y-1 overflow-hidden`}
+                    >
+                      <div>
+                        <div
+                          className={`p-2.5 rounded-lg w-fit bg-gradient-to-br ${item.accent} ${item.iconColor} transition-transform duration-300 group-hover:scale-110`}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <h4 className="mt-3 font-serif text-base font-bold group-hover:text-primary transition-colors flex items-center gap-1.5">
+                          {item.title}
+                          <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                        </h4>
+                        <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
+                          {item.description}
+                        </p>
                       </div>
-                      <h4 className="mt-4 font-serif text-base sm:text-lg font-bold group-hover:text-primary transition-colors flex items-center gap-1.5">
-                        {item.title}
-                        <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                      </h4>
-                      <p className="mt-2 text-xs leading-relaxed text-muted-foreground min-h-[48px]">
-                        {item.description}
-                      </p>
-                    </div>
-                    <div className="mt-6 flex items-center justify-between border-t border-border/40 pt-4">
-                      <span className="text-[11px] font-mono uppercase tracking-widest text-primary font-bold">
-                        {item.cta}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground font-mono">
-                        0{idx + 1}
-                      </span>
-                    </div>
-                  </Link>
-                </CarouselItem>
-              );
-            })}
-          </CarouselContent>
-        </Carousel>
+                      <div className="flex items-center justify-between border-t border-border/40 pt-3 mt-3">
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-primary font-bold">
+                          {item.cta}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {item.badge}
+                        </span>
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
       </section>
 
       {/* Widgets Grid */}
