@@ -419,6 +419,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             messagesRes.data.map((m) => ({
               id: m.id ?? crypto.randomUUID(),
               role: m.role as "user" | "assistant",
+              content: m.content || "",
               parts: [{ type: "text" as const, text: m.content || "" }],
               createdAt: m.created_at ? new Date(m.created_at) : new Date(),
             })),
@@ -496,6 +497,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             const teacherMsg = {
               id: msg.id ?? crypto.randomUUID(),
               role: "assistant" as const,
+              content: msg.content || "",
               parts: [{ type: "text" as const, text: msg.content || "" }],
               createdAt: msg.created_at ? new Date(msg.created_at) : new Date(),
             };

@@ -344,19 +344,67 @@ OUTPUT SCHEMA
 The "daily_plans" array MUST contain exactly 7 objects covering ${today} through ${endDateStr}.
 Each "tasks" array MUST contain exactly 2 objects.
 Generate the JSON now.`;
-    console.log("Generating plan with providers...");
-    let text = "";
+    let weeklyPlan: WeeklyPlanResponse | null = null;
+    let items: PlanTask[] = [];
     let lastError: unknown;
+
+    console.log("Generating plan with providers...");
     for (const model of models) {
       try {
         console.log(`[Planner] Trying model: ${model.provider}/${model.modelId}`);
         const result = await generateText({
-          model,
+          model: model as any,
           prompt: prompt,
           temperature: 0.4,
-        });
-        text = result.text;
-        if (text.trim()) {
+          maxTokens: 4000,
+        } as any);
+
+        const textResult = result.text.trim();
+        if (textResult) {
+          let cleanJsonString = textResult;
+          const firstMatch = cleanJsonString.indexOf("{");
+          const lastMatch = cleanJsonString.lastIndexOf("}");
+          if (firstMatch !== -1 && lastMatch !== -1 && lastMatch > firstMatch) {
+            cleanJsonString = cleanJsonString.slice(firstMatch, lastMatch + 1);
+          }
+          const parsed = JSON.parse(cleanJsonString);
+
+          if (parsed.daily_plans && Array.isArray(parsed.daily_plans)) {
+            weeklyPlan = parsed as WeeklyPlanResponse;
+
+            // Flatten tasks from daily_plans while strictly ensuring unique identifier integrity
+            items = weeklyPlan.daily_plans.flatMap((day) =>
+              day.tasks.map((task, idx) => ({
+                ...task,
+                date: task.date || day.date,
+                id:
+                  task.id && task.id !== "task-1" && task.id !== "task-2"
+                    ? task.id
+                    : `${day.date}-task-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+              })),
+            );
+          } else if (Array.isArray(parsed)) {
+            items = parsed;
+            weeklyPlan = {
+              plan_metadata: {
+                start_date: today,
+                end_date: endDateStr,
+                total_tasks: items.length,
+                curriculum: curriculum,
+                curriculum_details: {
+                  type: curriculum as CurriculumType,
+                  specific_requirements: "Balanced study plan",
+                },
+                focus_areas: weakTopics.slice(0, 5),
+                weekly_goal: "Improve understanding in weak areas",
+                estimated_weekly_hours: `${Math.round(items.length * 0.75)} hours`,
+              },
+              daily_plans: [],
+            };
+          } else {
+            throw new Error("Response schema does not align with valid structural patterns.");
+          }
+
           console.log(`[Planner] Success with model: ${model.provider}/${model.modelId}`);
           break;
         }
@@ -366,70 +414,8 @@ Generate the JSON now.`;
       }
     }
 
-    if (!text.trim()) {
+    if (!weeklyPlan || items.length === 0) {
       throw lastError || new Error("Failed to generate plan with all configured providers.");
-    }
-
-    // Advanced cleaning strategy to safely intercept string parsing anomalies
-    let weeklyPlan: WeeklyPlanResponse;
-    let items: PlanTask[] = [];
-
-    try {
-      let cleanJsonString = text.trim();
-
-      // Clear any standard markdown wrapping artifacts
-      if (cleanJsonString.includes("```")) {
-        const firstMatch = cleanJsonString.indexOf("{");
-        const lastMatch = cleanJsonString.lastIndexOf("}");
-        if (firstMatch !== -1 && lastMatch !== -1) {
-          cleanJsonString = cleanJsonString.substring(firstMatch, lastMatch + 1);
-        }
-      }
-
-      const parsed = JSON.parse(cleanJsonString);
-
-      if (parsed.daily_plans && Array.isArray(parsed.daily_plans)) {
-        weeklyPlan = parsed as WeeklyPlanResponse;
-
-        // Flatten tasks from daily_plans while strictly ensuring unique identifier integrity
-        items = weeklyPlan.daily_plans.flatMap((day) =>
-          day.tasks.map((task, idx) => ({
-            ...task,
-            date: task.date || day.date,
-            id:
-              task.id && task.id !== "task-1" && task.id !== "task-2"
-                ? task.id
-                : `${day.date}-task-${idx}-${Math.random().toString(36).substring(2, 7)}`,
-          })),
-        );
-      } else if (Array.isArray(parsed)) {
-        items = parsed;
-        weeklyPlan = {
-          plan_metadata: {
-            start_date: today,
-            end_date: endDateStr,
-            total_tasks: items.length,
-            curriculum: curriculum,
-            curriculum_details: {
-              type: curriculum as CurriculumType,
-              specific_requirements: "Balanced study plan",
-            },
-            focus_areas: weakTopics.slice(0, 5),
-            weekly_goal: "Improve understanding in weak areas",
-            estimated_weekly_hours: `${Math.round(items.length * 0.75)} hours`,
-          },
-          daily_plans: [],
-        };
-      } else {
-        throw new Error("Response schema does not align with valid structural patterns.");
-      }
-    } catch (parseError) {
-      console.error("Failed to parse plan JSON:", parseError);
-      throw new Error("Failed to parse study schedule layout engine parameters.");
-    }
-
-    if (items.length === 0) {
-      throw new Error("No tasks were generated. Please try again.");
     }
 
     const wrappedData = {

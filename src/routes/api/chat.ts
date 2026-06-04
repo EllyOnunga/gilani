@@ -155,22 +155,14 @@ export const Route = createFileRoute("/api/chat")({
             });
           }
 
-          // ─── Select Chat Model (UPDATED PRIORITY ORDER) ──────────────────
+          // ─── Gather Configured Chat Models (UPDATED PRIORITY ORDER) ──────
           // Priority: Groq → OpenAI → Gemini → Mistral → DeepSeek
           const providerOrder = ["groq", "openai", "gemini", "mistral", "deepseek"];
-          let model: any = null;
-          let activeProvider: string = "";
+          const configuredProviders = providerOrder
+            .map((p) => createChatModel(p))
+            .filter((p): p is { model: any; name: string } => p !== null);
 
-          for (const provider of providerOrder) {
-            const result = createChatModel(provider);
-            if (result) {
-              model = result.model;
-              activeProvider = result.name;
-              break;
-            }
-          }
-
-          if (!model) {
+          if (configuredProviders.length === 0) {
             return new Response(
               JSON.stringify({
                 error:
@@ -180,9 +172,8 @@ export const Route = createFileRoute("/api/chat")({
             );
           }
 
-          console.log(`[API Chat] Selected chat provider: ${activeProvider}`);
           console.log(
-            `[API Chat] Available providers: ${providerOrder.filter((p) => createChatModel(p)).join(", ")}`,
+            `[API Chat] Configured providers in priority order: ${configuredProviders.map((p) => p.name).join(", ")}`,
           );
 
           // ─── Database Checks ────────────────────────────────────────────
@@ -276,83 +267,100 @@ export const Route = createFileRoute("/api/chat")({
           // ─── Build Prompt ───────────────────────────────────────────────
           const systemPrompt = buildSystemPrompt({ curriculum, notesContext });
 
-          // ✅ FIXED: Clean user/assistant messages array ONLY. No system parameters nested here.
+          // ✅ FIXED: Clean user/assistant messages array ONLY. Use flat string content for maximum provider compatibility.
           const aiMessages = [
             ...(messages?.map((m: any) => {
               const textContent = extractText(m);
               return {
                 role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
-                content: [{ type: "text" as const, text: textContent }],
+                content: textContent,
               };
             }) || []),
           ];
 
           console.log(`[API Chat] System prompt length: ${systemPrompt.length} chars`);
 
-          // ─── Stream Response ────────────────────────────────────────────
-          const streamResult = streamText({
-            model,
-            system: systemPrompt, // ✅ FIXED: System prompt is placed safely at top-level configuration
-            messages: aiMessages,
-            maxRetries: 0,
-            temperature: 0.7,
-            timeout: 30000,
-            onError: (errorObj) => {
-              const error = (errorObj as any)?.error || errorObj;
-              console.error(
-                `[API Chat] ${activeProvider} onError:`,
-                typeof error === "object" ? JSON.stringify(error).slice(0, 300) : String(error),
-              );
-            },
-            onFinish: async ({ text: assistantText, providerMetadata }) => {
-              console.log(`[API Chat] ${activeProvider} finished. Length: ${assistantText.length}`);
+          // ─── Stream Response (WITH PROVIDER RETRY FALLBACK) ───────────────
+          let streamResult: any = null;
+          let activeProvider = "";
+          let lastError: unknown;
 
-              const safeText =
-                assistantText.trim() ||
-                "Sorry, I could not generate a response right now. Please try again.";
+          for (const prov of configuredProviders) {
+            try {
+              console.log(`[API Chat] Attempting stream with provider: ${prov.name}`);
+              streamResult = await streamText({
+                model: prov.model,
+                system: systemPrompt,
+                messages: aiMessages,
+                maxRetries: 0,
+                temperature: 0.7,
+                timeout: 30000,
+                onError: (errorObj) => {
+                  const error = (errorObj as any)?.error || errorObj;
+                  console.error(
+                    `[API Chat] ${prov.name} onError:`,
+                    typeof error === "object" ? JSON.stringify(error).slice(0, 300) : String(error),
+                  );
+                },
+                onFinish: async ({ text: assistantText, providerMetadata }) => {
+                  console.log(`[API Chat] ${prov.name} finished. Length: ${assistantText.length}`);
 
-              try {
-                const assistantParts = [{ type: "text" as const, text: safeText }];
-                const thoughtSignature =
-                  (providerMetadata as any)?.google?.thoughtSignature || null;
+                  const safeText =
+                    assistantText.trim() ||
+                    "Sorry, I could not generate a response right now. Please try again.";
 
-                await supabaseAdmin.from("messages").insert({
-                  conversation_id: threadId,
-                  role: "assistant",
-                  content: safeText,
-                  parts: JSON.stringify(assistantParts),
-                  confidence: 0.9,
-                  user_id: userId,
-                  thought_signature: thoughtSignature,
-                } as any);
+                  try {
+                    const assistantParts = [{ type: "text" as const, text: safeText }];
+                    const thoughtSignature =
+                      (providerMetadata as any)?.google?.thoughtSignature || null;
 
-                await supabaseAdmin.from("audit_logs").insert({
-                  action: "tutor.message",
-                  payload: { threadId, confidence: 0.9, provider: activeProvider },
-                });
+                    await supabaseAdmin.from("messages").insert({
+                      conversation_id: threadId,
+                      role: "assistant",
+                      content: safeText,
+                      parts: JSON.stringify(assistantParts),
+                      confidence: 0.9,
+                      user_id: userId,
+                      thought_signature: thoughtSignature,
+                    } as any);
 
-                // Safety checks
-                const safety = (providerMetadata as any)?.google?.safetyRatings;
-                if (
-                  Array.isArray(safety) &&
-                  safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")
-                ) {
-                  await supabaseAdmin.from("escalations").insert({
-                    conversation_id: threadId,
-                    reason: "Safety probability threshold exceeded",
-                    status: "pending",
-                    user_id: userId,
-                  });
-                } 
-                  
-              
-              } catch (persistError) {
-                console.error("Failed to persist assistant message:", persistError);
-              }
-            },
-          });
+                    await supabaseAdmin.from("audit_logs").insert({
+                      action: "tutor.message",
+                      payload: { threadId, confidence: 0.9, provider: prov.name },
+                    });
 
-          console.log("[API Chat] Returning stream response");
+                    // Safety checks
+                    const safety = (providerMetadata as any)?.google?.safetyRatings;
+                    if (
+                      Array.isArray(safety) &&
+                      safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")
+                    ) {
+                      await supabaseAdmin.from("escalations").insert({
+                        conversation_id: threadId,
+                        reason: "Safety probability threshold exceeded",
+                        status: "pending",
+                        user_id: userId,
+                      });
+                    } 
+                  } catch (persistError) {
+                    console.error("Failed to persist assistant message:", persistError);
+                  }
+                },
+              });
+
+              activeProvider = prov.name;
+              break;
+            } catch (err) {
+              console.warn(`[API Chat] Provider ${prov.name} stream start failed:`, err);
+              lastError = err;
+            }
+          }
+
+          if (!streamResult) {
+            throw lastError || new Error("Failed to stream chat response from all providers.");
+          }
+
+          console.log(`[API Chat] Returning stream response from: ${activeProvider}`);
           return streamResult.toTextStreamResponse({
             headers: { "cache-control": "no-cache" },
           });

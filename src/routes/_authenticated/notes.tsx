@@ -50,13 +50,45 @@ const ingestNote = createServerFn({ method: "POST" })
     const models = createLovableAiGatewayProvider().getAllChatModels();
     if (models.length === 0) throw new Error("No AI providers are configured.");
 
-    let text = "";
+    interface StudyMaterialResponse {
+      title: string;
+      type: "study_notes" | "question_paper";
+      subject: string;
+      topic: string;
+      form_level: string;
+      comprehensive_summary: string;
+      summary?: string;
+      key_concepts: Array<{ concept: string; definition: string; importance: string }>;
+      formulas_and_equations: Array<{ name: string; expression: string; explanation: string }>;
+      solutions?: Array<{
+        question_number: number;
+        question_text: string;
+        solution: string;
+        marks_breakdown: string;
+        common_mistakes: string;
+        alternative_approach?: string;
+      }>;
+      study_tips: string[];
+      common_exam_questions: string[];
+      related_topics: string[];
+      recommended_resources: Array<{
+        name: string;
+        type: string;
+        description: string;
+        link?: string;
+      }>;
+      quick_review_cards: Array<{ front: string; back: string }>;
+    }
+
+    let parsed: StudyMaterialResponse | null = null;
     let lastError: unknown;
+
     for (const model of models) {
       try {
         console.log(`[Notes] Trying model: ${model.provider}/${model.modelId}`);
         const result = await generateText({
-          model,
+          model: model as any,
+          maxTokens: 4000,
           prompt: `You are a senior curriculum-aligned educational content engine for Kenyan (KCSE/CBC) and International (IGCSE) learners.
 
 Transform the student's input into structured, exam-ready study material.
@@ -239,10 +271,17 @@ INPUT
 Title: ${title}
 
 Content:
-${content}`,
-        });
-        text = result.text;
-        if (text.trim()) {
+${content.slice(0, 15000)}`,
+        } as any);
+        const textResult = result.text.trim();
+        if (textResult) {
+          let cleanText = textResult;
+          const firstBrace = cleanText.indexOf("{");
+          const lastBrace = cleanText.lastIndexOf("}");
+          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            cleanText = cleanText.slice(firstBrace, lastBrace + 1);
+          }
+          parsed = JSON.parse(cleanText) as StudyMaterialResponse;
           console.log(`[Notes] Success with model: ${model.provider}/${model.modelId}`);
           break;
         }
@@ -252,63 +291,16 @@ ${content}`,
       }
     }
 
-    if (!text.trim()) {
-      throw lastError || new Error("Failed to generate notes with all configured providers.");
+    if (!parsed) {
+      throw lastError || new Error("Failed to generate and parse notes with all configured providers.");
     }
 
-    interface StudyMaterialResponse {
-      title: string;
-      type: "study_notes" | "question_paper";
-      subject: string;
-      topic: string;
-      form_level: string;
-      comprehensive_summary: string;
-      summary?: string;
-      key_concepts: Array<{ concept: string; definition: string; importance: string }>;
-      formulas_and_equations: Array<{ name: string; expression: string; explanation: string }>;
-      solutions?: Array<{
-        question_number: number;
-        question_text: string;
-        solution: string;
-        marks_breakdown: string;
-        common_mistakes: string;
-        alternative_approach?: string;
-      }>;
-      study_tips: string[];
-      common_exam_questions: string[];
-      related_topics: string[];
-      recommended_resources: Array<{
-        name: string;
-        type: string;
-        description: string;
-        link?: string;
-      }>;
-      quick_review_cards: Array<{ front: string; back: string }>;
-    }
-
-    let summary = "";
-    let keyConcepts: string[] = [];
-
-    try {
-      let cleanText = text.trim();
-      if (cleanText.startsWith("```json")) {
-        cleanText = cleanText.replace(/^```json\s*/, "").replace(/\s*```$/, "");
-      } else if (cleanText.startsWith("```")) {
-        cleanText = cleanText.replace(/^```\s*/, "").replace(/\s*```$/, "");
-      }
-
-      const parsed = JSON.parse(cleanText) as StudyMaterialResponse;
-      summary = parsed.comprehensive_summary || parsed.summary || "";
-      keyConcepts = Array.isArray(parsed.key_concepts)
-        ? parsed.key_concepts.map((kc) =>
-            typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
-          )
-        : [];
-    } catch (error) {
-      console.error("Failed to parse study material JSON:", error);
-      summary = text.slice(0, 1000);
-      keyConcepts = [];
-    }
+    const summary = parsed.comprehensive_summary || parsed.summary || "";
+    const keyConcepts = Array.isArray(parsed.key_concepts)
+      ? parsed.key_concepts.map((kc) =>
+          typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
+        )
+      : [];
 
     // Insert note
     const { data: note, error: noteErr } = await supabaseAdmin
