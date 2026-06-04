@@ -15,8 +15,8 @@ interface MathTextProps {
 export function MathText({ text, className }: MathTextProps) {
   if (!text) return null;
 
-  // Split on $$...$$ first (block), then $...$ (inline)
-  const parts = splitMath(text);
+  const cleanedText = cleanMathString(text);
+  const parts = splitMath(cleanedText);
 
   return (
     <span className={className}>
@@ -31,6 +31,28 @@ export function MathText({ text, className }: MathTextProps) {
       })}
     </span>
   );
+}
+
+function cleanMathString(text: string): string {
+  if (!text) return text;
+
+  // 1. Globally restore control characters that are never used in normal text
+  let cleaned = text;
+  cleaned = cleaned.replace(/\u000c/g, "\\f"); // Form feed -> \f (e.g. \frac)
+  cleaned = cleaned.replace(/\u0008/g, "\\b"); // Backspace -> \b (e.g. \beta)
+
+  // 2. Restore newlines and tabs only inside math blocks to avoid corrupting text paragraphs
+  cleaned = cleaned.replace(/\$\$(.*?)\$\$|\$(.*?)\$/gs, (match, block, inline) => {
+    if (block !== undefined) {
+      return `$$${block.replace(/\n/g, "\\n").replace(/\t/g, "\\t")}$$`;
+    }
+    if (inline !== undefined) {
+      return `$${inline.replace(/\n/g, "\\n").replace(/\t/g, "\\t")}$`;
+    }
+    return match;
+  });
+
+  return cleaned;
 }
 
 // ─── Parser ────────────────────────────────────────────────────────────────────
