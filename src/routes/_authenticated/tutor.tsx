@@ -140,7 +140,14 @@ function TutorIndex() {
 
   useEffect(() => {
     const isExactTutor = location.pathname === "/tutor" || location.pathname === "/tutor/";
-    if (!isExactTutor) return;
+
+    if (!isExactTutor) {
+      // ✅ Reset the guard whenever we're viewing a thread so that the NEXT
+      // time we return to /tutor (e.g. after deleting the current thread)
+      // createSession() fires again instead of being permanently blocked.
+      startedRef.current = false;
+      return;
+    }
 
     if (startedRef.current) return;
     startedRef.current = true;
