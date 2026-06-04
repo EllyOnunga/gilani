@@ -59,29 +59,40 @@ const fetchAnalytics = createServerFn({ method: "GET" })
       };
     }
 
-    // 2. Fetch associated quizzes to determine subject
+    // 2. Fetch associated quizzes to determine subject and questions count
     const quizIds = attempts.map((a) => a.quiz_id);
     const { data: quizzes } = await supabaseAdmin
       .from("quizzes")
-      .select("id, topic")
+      .select("id, topic, questions")
       .in("id", quizIds);
 
     const quizTopicMap: Record<string, string> = {};
+    const quizLengthMap: Record<string, number> = {};
     if (quizzes) {
-      for (const q of quizzes) quizTopicMap[q.id] = q.topic;
+      for (const q of quizzes) {
+        quizTopicMap[q.id] = q.topic;
+        const qList = Array.isArray(q.questions) ? q.questions : [];
+        quizLengthMap[q.id] = qList.length || 10;
+      }
     }
 
     // Process attempts count and average
     const attemptsCount = attempts.length;
-    const averageScore = Math.round(
-      (attempts.reduce((sum, a) => sum + a.score, 0) / (attemptsCount * 10)) * 100,
-    ); // Assuming 10 questions per quiz
+    let totalScorePercent = 0;
+    for (const a of attempts) {
+      const qLen = quizLengthMap[a.quiz_id] || 10;
+      totalScorePercent += Math.round((a.score / qLen) * 100);
+    }
+    const averageScore = attemptsCount > 0 ? Math.round(totalScorePercent / attemptsCount) : 0;
 
     // History chart data
-    const attemptsHistory = attempts.map((a) => ({
-      date: new Date(a.created_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" }),
-      score: Math.round((a.score / 10) * 100),
-    }));
+    const attemptsHistory = attempts.map((a) => {
+      const qLen = quizLengthMap[a.quiz_id] || 10;
+      return {
+        date: new Date(a.created_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" }),
+        score: Math.round((a.score / qLen) * 100),
+      };
+    });
 
     // Weak topics aggregation
     const topicCounts: Record<string, number> = {};
@@ -90,12 +101,14 @@ const fetchAnalytics = createServerFn({ method: "GET" })
     for (const a of attempts) {
       const topic = quizTopicMap[a.quiz_id] || "General";
       const subject = topic.split(" — ")[0] || "General";
+      const qLen = quizLengthMap[a.quiz_id] || 10;
+      const percentScore = Math.round((a.score / qLen) * 100);
 
       // Subject mastery
       if (!subjectsMap[subject]) {
         subjectsMap[subject] = { totalScore: 0, count: 0 };
       }
-      subjectsMap[subject].totalScore += Math.round((a.score / 10) * 100);
+      subjectsMap[subject].totalScore += percentScore;
       subjectsMap[subject].count += 1;
 
       // Weak topics
@@ -205,10 +218,10 @@ function AnalyticsPage() {
   const activeHistory = hasData ? data.attemptsHistory : mockHistory;
   const activeWeakTopics = hasData ? data.weakTopics : mockWeakTopics;
   const activeSubjectMastery = hasData ? data.subjectMastery : mockSubjectMastery;
-  const attemptsCount = hasData ? data.attemptsCount : 5;
-  const averageScore = hasData ? data.averageScore : 78;
-  const streak = data ? (data as any).streak : 3;
-  const notesCount = data ? (data as any).notesCount : 4;
+  const attemptsCount = data ? data.attemptsCount : 0;
+  const averageScore = data ? data.averageScore : 0;
+  const streak = data ? (data as any).streak : 0;
+  const notesCount = data ? (data as any).notesCount : 0;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8 lg:p-12">
@@ -287,7 +300,18 @@ function AnalyticsPage() {
       {/* Chart Visuals */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* area progress chart */}
-        <div className="lg:col-span-8 rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-8 rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
+          {!hasData && (
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
+              <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">
+                Demo Mode
+              </span>
+              <p className="mt-2 text-xs font-semibold text-foreground">No Quiz Attempts Yet</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground max-w-[200px]">
+                Complete your first practice quiz to see your real progress chart.
+              </p>
+            </div>
+          )}
           <div className="mb-4">
             <h3 className="font-serif text-xl">Revision Progress Over Time</h3>
             <p className="text-xs text-muted-foreground mt-1">
@@ -321,7 +345,18 @@ function AnalyticsPage() {
         </div>
 
         {/* radar subject mastery */}
-        <div className="lg:col-span-4 rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-4 rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
+          {!hasData && (
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
+              <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">
+                Demo Mode
+              </span>
+              <p className="mt-2 text-xs font-semibold text-foreground">Mastery Profile Locked</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground max-w-[180px]">
+                We need quiz attempts across different subjects to map your mastery.
+              </p>
+            </div>
+          )}
           <div className="mb-4">
             <h3 className="font-serif text-xl">Subject Mastery</h3>
             <p className="text-xs text-muted-foreground mt-1">
@@ -347,7 +382,18 @@ function AnalyticsPage() {
         </div>
 
         {/* weak topics bar chart */}
-        <div className="lg:col-span-12 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="lg:col-span-12 rounded-xl border border-border bg-card p-6 shadow-sm relative overflow-hidden">
+          {!hasData && (
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
+              <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">
+                Demo Mode
+              </span>
+              <p className="mt-2 text-xs font-semibold text-foreground">Syllabus Weak Spots</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground max-w-[300px]">
+                Your incorrect answers will be categorized here to target your study.
+              </p>
+            </div>
+          )}
           <div className="mb-6">
             <h3 className="font-serif text-xl">Syllabus Weak Topics</h3>
             <p className="text-xs text-muted-foreground mt-1">

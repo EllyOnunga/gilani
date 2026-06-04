@@ -21,6 +21,25 @@ export function useAuth(): AuthState {
   useEffect(() => {
     let active = true;
 
+    const checkAndAssignRole = async (userId: string): Promise<AppRole[]> => {
+      try {
+        const { data: r } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId);
+        if (r && r.length > 0) {
+          return r.map((x) => x.role as AppRole);
+        }
+        // Auto-assign student role
+        const { assignUserRole } = await import("@/lib/auth-actions");
+        await assignUserRole({ data: { userId, role: "student" } });
+        return ["student"];
+      } catch (err) {
+        console.error("[checkAndAssignRole] failed:", err);
+        return [];
+      }
+    };
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, s) => {
@@ -28,15 +47,9 @@ export function useAuth(): AuthState {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        setTimeout(() => {
-          supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", s.user.id)
-            .then(({ data }) => {
-              if (active) setRoles((data ?? []).map((r) => r.role as AppRole));
-            });
-        }, 0);
+        checkAndAssignRole(s.user.id).then((userRoles) => {
+          if (active) setRoles(userRoles);
+        });
       } else {
         setRoles([]);
       }
@@ -50,12 +63,9 @@ export function useAuth(): AuthState {
         setUser(data.session?.user ?? null);
         if (data.session?.user) {
           try {
-            const { data: r } = await supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", data.session.user.id);
+            const userRoles = await checkAndAssignRole(data.session.user.id);
             if (active) {
-              setRoles((r ?? []).map((x) => x.role as AppRole));
+              setRoles(userRoles);
             }
           } catch {
             // roles fetch failed, continue without roles
