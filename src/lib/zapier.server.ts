@@ -31,7 +31,7 @@ export async function triggerZapierEscalation({
     );
 
     // 1. Fetch user email from auth
-    const { data: userData, error: userErr } = await supabaseAdmin.auth.admin.getUser(userId);
+    const { data: userData, error: userErr } = await supabaseAdmin.auth.admin.getUserById(userId);
     if (userErr) {
       console.warn("[Zapier Integration] Fetching user email failed:", userErr.message);
     }
