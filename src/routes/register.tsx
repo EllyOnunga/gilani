@@ -1,5 +1,6 @@
 import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
+import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
@@ -84,9 +85,7 @@ function RegisterPage() {
   return (
     <div className="min-h-screen grid place-items-center bg-background px-4 py-8">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-md">
-        <Link to="/" className="font-serif text-xl font-bold italic text-primary">
-          GilaniAI
-        </Link>
+        <Logo to="/" size="md" />
         <h1 className="mt-6 font-serif text-3xl font-bold">Create your account</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Free for students. Powerful tools for teachers.

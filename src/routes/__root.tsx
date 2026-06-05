@@ -90,7 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-      { rel: "apple-touch-icon", href: "/favicon.svg" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/manifest.json" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -154,6 +154,27 @@ function AuthInvalidator() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [toasterPos, setToasterPos] = useState<"top-right" | "top-center">("top-right");
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+    const registerSW = () => {
+      navigator.serviceWorker.register("/sw.js")
+        .then((reg) => {
+          console.log("[GilaniAI PWA] ServiceWorker registered successfully:", reg.scope);
+        })
+        .catch((err) => {
+          console.error("[GilaniAI PWA] ServiceWorker registration failed:", err);
+        });
+    };
+
+    if (document.readyState === "complete") {
+      registerSW();
+    } else {
+      window.addEventListener("load", registerSW);
+      return () => window.removeEventListener("load", registerSW);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

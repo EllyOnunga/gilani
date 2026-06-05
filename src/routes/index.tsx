@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { Logo } from "@/components/ui/logo";
 import {
   ArrowRight,
   BookOpenText,
@@ -247,12 +248,7 @@ function Landing() {
       {/* ── Sticky Header ── */}
       <header className="border-b border-border/50 sticky top-0 bg-background/80 backdrop-blur-md z-30">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-          <Link
-            to="/"
-            className="font-serif text-xl sm:text-2xl font-black italic tracking-tight text-primary hover:opacity-90 transition-opacity"
-          >
-            GilaniAI
-          </Link>
+          <Logo to="/" size="md" />
           <nav className="flex items-center gap-2 sm:gap-3">
             <Link
               to="/login"
@@ -608,7 +604,7 @@ function Landing() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16 grid grid-cols-2 md:grid-cols-12 gap-8 items-start">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-4 space-y-4">
-            <h2 className="font-serif text-2xl font-black italic text-primary">GilaniAI</h2>
+            <Logo to="/" size="md" />
             <p className="text-xs text-muted-foreground leading-relaxed max-w-[260px]">
               Curriculum-grounded AI tutoring for KCSE, CBC and IGCSE students across Kenya.
             </p>

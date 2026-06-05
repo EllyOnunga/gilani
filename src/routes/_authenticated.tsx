@@ -30,6 +30,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { NotificationBell } from "@/components/notifications";
 import { DisclaimerModal } from "@/components/DisclaimerModal";
+import { Logo } from "@/components/ui/logo";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
@@ -163,11 +164,9 @@ function AuthedShell() {
         >
           <Menu className="h-6 w-6" />
         </button>
-        <Link to="/dashboard" className="text-center flex-1">
-          <h1 className="font-serif text-xl font-bold italic tracking-tight text-primary">
-            GilaniAI
-          </h1>
-        </Link>
+        <div className="flex-1 flex justify-center">
+          <Logo to="/dashboard" size="sm" />
+        </div>
         <div className="flex items-center gap-1.5">
           <NotificationBell userId={user.id} />
           <button
@@ -205,14 +204,12 @@ function AuthedShell() {
       >
         {/* Brand logo & Mobile Close Button */}
         <div className="flex items-center justify-between mb-8">
-          <Link to="/dashboard" onClick={() => setSidebarOpen(false)} className="block">
-            <h1 className="font-serif text-2xl font-bold italic tracking-tight text-primary">
-              GilaniAI
-            </h1>
-            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          <div className="block">
+            <Logo to="/dashboard" onClick={() => setSidebarOpen(false)} size="md" />
+            <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground pl-[38px]">
               Ethical Learning / KCSE-CBC
             </p>
-          </Link>
+          </div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 lg:hidden"
