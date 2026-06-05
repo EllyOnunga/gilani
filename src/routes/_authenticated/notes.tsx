@@ -133,9 +133,17 @@ const listNotes = createServerFn({ method: "GET" })
   });
 
 const ingestNote = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ title: z.string(), content: z.string(), userId: z.string() }))
+  .inputValidator(
+    z.object({
+      title: z.string(),
+      heading: z.string().optional().default(""),
+      subheading: z.string().optional().default(""),
+      content: z.string(),
+      userId: z.string(),
+    })
+  )
   .handler(async ({ data }) => {
-    const { title, content, userId } = data;
+    const { title, heading, subheading, content, userId } = data;
 
     if (!title.trim() || !content.trim()) {
       throw new Error("Title and content are required");
@@ -364,10 +372,13 @@ OUTPUT SCHEMA (MANDATORY)
 INPUT
 ════════════════════════════════════════
 
-Title: ${title}
+Title: ${title}${heading ? `
+Heading: ${heading}` : ""}${subheading ? `
+Subheading: ${subheading}` : ""}
 
 Content:
 ${content.slice(0, 15000)}`,
+  // heading and subheading are passed to the prompt above
         } as any);
         const textResult = result.text.trim();
         if (textResult) {
@@ -474,6 +485,8 @@ function NotesPage() {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
+  const [heading, setHeading] = useState("");
+  const [subheading, setSubheading] = useState("");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -504,6 +517,8 @@ function NotesPage() {
       const parsed = await parseDocument(file);
       const baseName = parsed.name.replace(/\.[^/.]+$/, "");
       setTitle(baseName);
+      setHeading("");
+      setSubheading("");
       setContent(parsed.text);
       toast.success("Document text extracted successfully!", { id: toastId });
     } catch (err: any) {
@@ -527,7 +542,7 @@ function NotesPage() {
         return;
       }
       const note = await withTimeout(
-        ingestNote({ data: { title, content, userId: session.user.id } }),
+        ingestNote({ data: { title, heading, subheading, content, userId: session.user.id } }),
         120000,
         "Saving note timed out. Please try again.",
       );
@@ -633,6 +648,30 @@ function NotesPage() {
                 placeholder="e.g. Biology Chapter 3 — Photosynthesis"
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-1 block">
+                  Heading <span className="normal-case text-muted-foreground/60">(optional)</span>
+                </label>
+                <input
+                  value={heading}
+                  onChange={(e) => setHeading(e.target.value)}
+                  placeholder="e.g. Cell Biology"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-1 block">
+                  Subheading <span className="normal-case text-muted-foreground/60">(optional)</span>
+                </label>
+                <input
+                  value={subheading}
+                  onChange={(e) => setSubheading(e.target.value)}
+                  placeholder="e.g. Mitosis and Meiosis"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
             </div>
             <div>
               <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-1 block">
