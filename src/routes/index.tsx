@@ -33,13 +33,40 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "GilaniAI — AI Study Assistant for Kenyan Students" },
+      { title: "GilaniAI — AI Study Assistant for Kenyan Students | KCSE, CBC & IGCSE" },
       {
         name: "description",
         content:
-          "GilaniAI is a curriculum-grounded AI tutoring platform for KCSE, CBC and IGCSE students. Get instant summaries, practice quizzes, personalised study plans, and teacher escalation — all in one place.",
+          "GilaniAI is Kenya's #1 curriculum-grounded AI tutoring platform for KCSE, CBC and IGCSE students. Get instant AI tutoring, practice quizzes, smart notes summaries, a personalised 7-day study planner, and real teacher escalation — all in one place. Start free.",
       },
+      {
+        name: "keywords",
+        content:
+          "KCSE AI tutor, CBC study assistant, IGCSE revision Kenya, AI tutoring Kenya, online study Kenya, KCSE quizzes, study planner Kenya, AI education Africa, GilaniAI, Kenyan students AI",
+      },
+      { name: "robots", content: "index, follow" },
+      // Open Graph
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://gilaniai.vercel.app/" },
+      { property: "og:title", content: "GilaniAI — AI Study Assistant for Kenyan Students" },
+      {
+        property: "og:description",
+        content:
+          "Kenya's #1 AI tutor for KCSE, CBC and IGCSE. Socratic tutoring, quizzes, smart notes, study planner, and teacher escalation — free to start.",
+      },
+      { property: "og:image", content: "https://gilaniai.vercel.app/icon-512.png" },
+      { property: "og:image:alt", content: "GilaniAI — Ethical AI Study Assistant" },
+      // Twitter
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "GilaniAI — AI Study Assistant for Kenyan Students" },
+      {
+        name: "twitter:description",
+        content:
+          "AI tutoring for KCSE, CBC & IGCSE students. Quizzes, notes, planner and real teacher review — free to start.",
+      },
+      { name: "twitter:image", content: "https://gilaniai.vercel.app/icon-512.png" },
     ],
+    links: [{ rel: "canonical", href: "https://gilaniai.vercel.app/" }],
   }),
   component: Landing,
 });

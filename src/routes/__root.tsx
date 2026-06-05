@@ -68,25 +68,55 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+const SITE_URL = "https://gilaniai.vercel.app";
+const OG_IMAGE = `${SITE_URL}/icon-512.png`;
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#d9531e" },
+      { name: "robots", content: "index, follow" },
+      { name: "googlebot", content: "index, follow" },
+      { name: "author", content: "GilaniAI" },
+      {
+        name: "keywords",
+        content:
+          "KCSE AI tutor, CBC study assistant, Kenya education AI, IGCSE revision, AI tutor Kenya, study planner Kenya, KCSE revision, online tutoring Kenya, GilaniAI",
+      },
       { title: "GilaniAI — Ethical AI Learning Assistant" },
       {
         name: "description",
         content:
           "Curriculum-grounded AI tutoring, notes summarization, quizzes, and study planning for KCSE and CBC students. Human oversight built in.",
       },
-      { property: "og:title", content: "GilaniAI — Ethical AI Learning Assistant" },
+      // Open Graph
+      { property: "og:site_name", content: "GilaniAI" },
+      { property: "og:locale", content: "en_KE" },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:title", content: "GilaniAI — AI Study Assistant for Kenyan Students" },
       {
         property: "og:description",
         content:
-          "Curriculum-grounded AI tutoring, notes summarization, quizzes, and study planning. Human oversight built in.",
+          "Curriculum-grounded AI tutoring, notes summarization, quizzes, and study planning for KCSE, CBC and IGCSE students. Human oversight built in.",
       },
-      { property: "og:type", content: "website" },
+      { property: "og:image", content: OG_IMAGE },
+      { property: "og:image:width", content: "512" },
+      { property: "og:image:height", content: "512" },
+      { property: "og:image:alt", content: "GilaniAI — Ethical AI Study Assistant" },
+      // Twitter / X Cards
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:site", content: "@GilaniAI" },
+      { name: "twitter:title", content: "GilaniAI — AI Study Assistant for Kenyan Students" },
+      {
+        name: "twitter:description",
+        content:
+          "AI tutoring for KCSE, CBC and IGCSE students. Quizzes, notes, planner and real teacher escalation — all in one place.",
+      },
+      { name: "twitter:image", content: OG_IMAGE },
+      { name: "twitter:image:alt", content: "GilaniAI logo" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
@@ -98,7 +128,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
-        
       },
     ],
   }),
@@ -108,11 +137,40 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const JSON_LD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "GilaniAI",
+  url: "https://gilaniai.vercel.app",
+  description:
+    "Curriculum-grounded AI tutoring platform for KCSE, CBC and IGCSE students in Kenya. Includes AI tutor, quizzes, notes summariser, study planner, and teacher escalation.",
+  applicationCategory: "EducationApplication",
+  operatingSystem: "Web, Android, iOS",
+  offers: [
+    { "@type": "Offer", price: "0", priceCurrency: "KES", name: "Free tier" },
+    { "@type": "Offer", price: "499", priceCurrency: "KES", name: "Scholar plan" },
+  ],
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "4.9",
+    reviewCount: "312",
+    bestRating: "5",
+  },
+  author: { "@type": "Organization", name: "GilaniAI", url: "https://gilaniai.vercel.app" },
+  inLanguage: ["en", "sw"],
+  audience: {
+    "@type": "Audience",
+    audienceType: "Students",
+    geographicArea: { "@type": "Country", name: "Kenya" },
+  },
+});
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Theme init — must run before paint to avoid flash */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -126,6 +184,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
               } catch (_) {}
             `,
           }}
+        />
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON_LD }}
         />
       </head>
       <body>

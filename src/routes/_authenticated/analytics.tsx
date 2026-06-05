@@ -147,7 +147,7 @@ const fetchAnalytics = createServerFn({ method: "GET" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/analytics")({
-  head: () => ({ meta: [{ title: "Analytics — GilaniAI" }] }),
+  head: () => ({ meta: [{ title: "Analytics — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: AnalyticsPage,
 });
 

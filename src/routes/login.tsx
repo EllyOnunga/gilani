@@ -14,7 +14,17 @@ export const Route = createFileRoute("/login")({
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: search.redirect || "/dashboard" });
   },
-  head: () => ({ meta: [{ title: "Sign in — GilaniAI" }] }),
+  head: () => ({
+    meta: [
+      { title: "Sign in — GilaniAI" },
+      {
+        name: "description",
+        content: "Sign in to your GilaniAI account to access AI tutoring, quizzes, notes, and your personalised study planner.",
+      },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+    links: [{ rel: "canonical", href: "https://gilaniai.vercel.app/login" }],
+  }),
   component: LoginPage,
 });
 

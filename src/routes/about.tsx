@@ -3,13 +3,21 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "How GilaniAI works" },
+      { title: "How GilaniAI Works — Ethical AI Tutoring for Kenyan Students" },
       {
         name: "description",
         content:
-          "GilaniAI combines curriculum-grounded retrieval, structured quiz generation, and human oversight to support African students.",
+          "Learn how GilaniAI combines curriculum-grounded AI, Socratic questioning, and human teacher oversight to help KCSE, CBC and IGCSE students study more effectively and ethically.",
       },
+      { name: "robots", content: "index, follow" },
+      { property: "og:title", content: "How GilaniAI Works — Ethical AI Tutoring" },
+      {
+        property: "og:description",
+        content: "AI tutoring grounded in Kenyan curriculum standards with real teacher escalation built in.",
+      },
+      { property: "og:url", content: "https://gilaniai.vercel.app/about" },
     ],
+    links: [{ rel: "canonical", href: "https://gilaniai.vercel.app/about" }],
   }),
   component: About,
 });

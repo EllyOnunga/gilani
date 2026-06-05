@@ -401,7 +401,7 @@ const saveAttempt = createServerFn({ method: "POST" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/quizzes")({
-  head: () => ({ meta: [{ title: "Practice Quizzes — GilaniAI" }] }),
+  head: () => ({ meta: [{ title: "Practice Quizzes — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
     topic: (search.topic as string) || "",
   }),

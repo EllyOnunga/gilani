@@ -104,7 +104,7 @@ const updateRole = createServerFn({ method: "POST" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
-  head: () => ({ meta: [{ title: "Admin — Users & Roles — GilaniAI" }] }),
+  head: () => ({ meta: [{ title: "Admin — Users & Roles — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
   loader: async () => {
     const data = await listProfiles();
     return data as Profile[];

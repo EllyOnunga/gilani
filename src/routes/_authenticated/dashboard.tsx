@@ -124,7 +124,7 @@ const loadDashboardData = createServerFn({ method: "GET" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "GilaniAI" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: Dashboard,
 });
 

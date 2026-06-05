@@ -533,7 +533,7 @@ Generate the JSON now.`;
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/planner")({
-  head: () => ({ meta: [{ title: "Study Planner — GilaniAI" }] }),
+  head: () => ({ meta: [{ title: "Study Planner — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: PlannerPage,
 });
 

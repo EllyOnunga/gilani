@@ -486,7 +486,7 @@ type Note = {
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/notes")({
-  head: () => ({ meta: [{ title: "Study Notes — GilaniAI" }] }),
+  head: () => ({ meta: [{ title: "Study Notes — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
   loader: async () => {
     const res = await supabase.auth.getSession();
     const session = res?.data?.session;

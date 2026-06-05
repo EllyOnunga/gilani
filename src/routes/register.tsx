@@ -11,7 +11,17 @@ export const Route = createFileRoute("/register")({
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: "/dashboard" });
   },
-  head: () => ({ meta: [{ title: "Create account — GilaniAI" }] }),
+  head: () => ({
+    meta: [
+      { title: "Create account — GilaniAI" },
+      {
+        name: "description",
+        content: "Create your free GilaniAI account. Students get AI tutoring, quizzes and a smart study planner. Teachers get an escalation dashboard for student support.",
+      },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+    links: [{ rel: "canonical", href: "https://gilaniai.vercel.app/register" }],
+  }),
   component: RegisterPage,
 });
 

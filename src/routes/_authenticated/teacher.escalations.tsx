@@ -126,7 +126,7 @@ const getConversationMessages = createServerFn({ method: "POST" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/teacher/escalations")({
-  head: () => ({ meta: [{ title: "Escalations — GilaniAI" }] }),
+  head: () => ({ meta: [{ title: "Escalations — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: EscalationsPage,
 });
 

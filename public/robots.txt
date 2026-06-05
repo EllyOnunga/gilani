@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+
+# Public pages
+Allow: /
+Allow: /about
+Allow: /login
+Allow: /register
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+
+# Block authenticated app routes from indexing
+Disallow: /dashboard
+Disallow: /tutor
+Disallow: /notes
+Disallow: /quizzes
+Disallow: /planner
+Disallow: /analytics
+Disallow: /admin
+Disallow: /teacher
+Disallow: /api/
+
+Sitemap: https://gilaniai.vercel.app/sitemap.xml
