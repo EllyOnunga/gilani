@@ -1,38 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <!-- Background Gradient: Scholarly Hearth Warmth -->
-    <radialGradient id="bg-grad" cx="50%" cy="50%" r="70%">
-      <stop offset="0%" stop-color="hsl(24, 25%, 15%)" />
-      <stop offset="100%" stop-color="hsl(24, 20%, 8%)" />
+    <!-- Dark background -->
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1e1e1e"/>
+      <stop offset="100%" stop-color="#0d0d0d"/>
     </radialGradient>
-
-    <!-- Terracotta Flame Gradient -->
-    <linearGradient id="terracotta-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="hsl(22, 75%, 48%)" />
-      <stop offset="100%" stop-color="hsl(45, 95%, 60%)" />
+    <!-- Neon blue book -->
+    <linearGradient id="blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
     </linearGradient>
-
-    <!-- Gold Accent Gradient -->
-    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FBBF24" />
-      <stop offset="100%" stop-color="#D97706" />
+    <!-- Orange neural network -->
+    <linearGradient id="orange" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#fb923c"/>
     </linearGradient>
+    <!-- Glow filter -->
+    <filter id="glow-blue" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-orange" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>
 
-  <!-- Background Card -->
-  <rect width="128" height="128" rx="32" fill="url(#bg-grad)" stroke="hsl(22, 75%, 48%, 0.3)" stroke-width="2" />
+  <!-- Rounded square background -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
 
-  <g transform="translate(16, 16)">
-    <!-- Book pages -->
-    <path d="M 5 90 Q 25 80 48 95 Q 48 35 48 25 Q 25 10 5 20 Z" fill="hsl(38, 20%, 90%)" />
-    <path d="M 91 90 Q 71 80 48 95 Q 48 35 48 25 Q 71 10 91 20 Z" fill="hsl(38, 20%, 94%)" />
-    <path d="M 45 25 L 51 25 L 51 96 L 45 96 Z" fill="hsl(24, 20%, 25%)" />
+  <!-- Open book (neon blue outline) -->
+  <!-- Left page -->
+  <path d="M 18 90 Q 32 72 64 78 L 64 38 Q 32 30 18 50 Z"
+        fill="none" stroke="url(#blue)" stroke-width="2.2"
+        stroke-linejoin="round" filter="url(#glow-blue)"/>
+  <!-- Right page -->
+  <path d="M 110 90 Q 96 72 64 78 L 64 38 Q 96 30 110 50 Z"
+        fill="none" stroke="url(#blue)" stroke-width="2.2"
+        stroke-linejoin="round" filter="url(#glow-blue)"/>
+  <!-- Book spine / bottom curve -->
+  <path d="M 18 90 Q 64 98 110 90" fill="none" stroke="url(#blue)" stroke-width="2.2" filter="url(#glow-blue)"/>
 
-    <!-- Socratic Hearth / Flame -->
-    <path d="M 48 20 C 30 42 32 62 48 75 C 64 62 66 42 48 20 Z" fill="url(#terracotta-grad)" />
-    <path d="M 48 32 C 37 50 39 62 48 71 C 57 62 59 50 48 32 Z" fill="url(#gold-grad)" />
-    
-    <!-- Little sparkle -->
-    <path d="M 76 20 L 78 22 L 76 24 L 74 22 Z" fill="#FBBF24" />
+  <!-- Neural network nodes & connections (orange) -->
+  <!-- Connections first (behind nodes) -->
+  <g stroke="url(#orange)" stroke-width="1.1" opacity="0.85" filter="url(#glow-orange)">
+    <line x1="64" y1="28" x2="40" y2="52"/>
+    <line x1="64" y1="28" x2="88" y2="52"/>
+    <line x1="40" y1="52" x2="64" y2="68"/>
+    <line x1="88" y1="52" x2="64" y2="68"/>
+    <line x1="40" y1="52" x2="26" y2="64"/>
+    <line x1="88" y1="52" x2="102" y2="64"/>
+    <line x1="26" y1="64" x2="40" y2="78"/>
+    <line x1="102" y1="64" x2="88" y2="78"/>
+    <line x1="40" y1="78" x2="64" y2="68"/>
+    <line x1="88" y1="78" x2="64" y2="68"/>
+    <line x1="40" y1="52" x2="88" y2="52"/>
+  </g>
+
+  <!-- Nodes -->
+  <g fill="url(#orange)" filter="url(#glow-orange)">
+    <!-- Top center (sparkle star) -->
+    <path d="M64 22 L65.5 27 L70 28 L65.5 29 L64 34 L62.5 29 L58 28 L62.5 27 Z" fill="#fbbf24"/>
+    <!-- Main nodes -->
+    <circle cx="64" cy="28" r="3"/>
+    <circle cx="40" cy="52" r="2.5"/>
+    <circle cx="88" cy="52" r="2.5"/>
+    <circle cx="64" cy="68" r="3"/>
+    <circle cx="26" cy="64" r="2"/>
+    <circle cx="102" cy="64" r="2"/>
+    <circle cx="40" cy="78" r="2"/>
+    <circle cx="88" cy="78" r="2"/>
   </g>
 </svg>

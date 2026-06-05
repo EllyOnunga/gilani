@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageCircle, Loader2 } from "lucide-react";
+import { Menu, Plus, Loader2 } from "lucide-react";
 import { parseDocument } from "@/lib/document-parser";
 import {
   createEscalationNotification,
@@ -11,9 +11,7 @@ import {
 } from "@/lib/tutor.server-fns";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
-import { jsPDF } from "jspdf";
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
-import { saveAs } from "file-saver";
+import { exportAsPDF, exportAsWord } from "@/lib/export-utils";
 import { withTimeout } from "@/lib/async";
 import { toast } from "sonner";
 import { ChatHeader } from "@/components/tutor/ChatHeader";
@@ -547,90 +545,14 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   };
 
   // Export as PDF
-  const exportAsPDF = () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    const maxWidth = pageWidth - margin * 2;
-    let y = 20;
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("GilaniAI Study Session", margin, y);
-    y += 8;
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(120);
-    doc.text(`Exported on ${new Date().toLocaleDateString()}`, margin, y);
-    y += 10;
-    doc.setDrawColor(200);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 8;
-    messages.forEach((m: any) => {
-      const role = m.role === "user" ? "You" : "GilaniAI";
-      const text = m.parts?.find((p: any) => p.type === "text")?.text || m.content || "";
-      const clean = text.replace(/[#*`$]/g, "").trim();
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(m.role === "user" ? 30 : 0, m.role === "user" ? 100 : 150, 255);
-      doc.text(role, margin, y);
-      y += 5;
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(40);
-      const lines = doc.splitTextToSize(clean, maxWidth);
-      lines.forEach((line: string) => {
-        if (y > 275) {
-          doc.addPage();
-          y = 20;
-        }
-        doc.text(line, margin, y);
-        y += 5;
-      });
-      y += 4;
-    });
+  const handleExportPDF = () => {
     const title = threads.find((t) => t.id === threadId)?.title || "study-session";
-    doc.save(`${title.replace(/\s+/g, "-")}.pdf`);
-    toast.success("PDF exported successfully!");
+    exportAsPDF(messages, title);
   };
 
-  // Export as Word
-  const exportAsWord = async () => {
-    const children: Paragraph[] = [
-      new Paragraph({ text: "GilaniAI Study Session", heading: HeadingLevel.HEADING_1 }),
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: `Exported on ${new Date().toLocaleDateString()}`,
-            color: "888888",
-            size: 18,
-          }),
-        ],
-      }),
-      new Paragraph({ text: "" }),
-    ];
-    messages.forEach((m: any) => {
-      const role = m.role === "user" ? "You" : "GilaniAI";
-      const text = m.parts?.find((p: any) => p.type === "text")?.text || m.content || "";
-      const clean = text.replace(/[#*`$]/g, "").trim();
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: role,
-              bold: true,
-              color: m.role === "user" ? "1E64FF" : "0096FF",
-              size: 20,
-            }),
-          ],
-        }),
-        new Paragraph({ children: [new TextRun({ text: clean, size: 20 })] }),
-        new Paragraph({ text: "" }),
-      );
-    });
-    const doc = new Document({ sections: [{ children }] });
-    const blob = await Packer.toBlob(doc);
+  const handleExportWord = async () => {
     const title = threads.find((t) => t.id === threadId)?.title || "study-session";
-    saveAs(blob, `${title.replace(/\s+/g, "-")}.docx`);
-    toast.success("Word document exported successfully!");
+    await exportAsWord(messages, title);
   };
 
   return (
@@ -647,17 +569,41 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         onNewThread={createNewThread}
         onDeleteClick={setDeleteConfirmId}
         onClose={() => setThreadsOpen(false)}
+        curriculum={curriculum}
+        onCurriculumChange={handleCurriculumChange}
+        escalationStatus={escalationStatus}
+        escalating={escalating}
+        messagesLoading={messagesLoading}
+        onEscalate={() => setEscalateModalOpen(true)}
+        onExportPDF={handleExportPDF}
+        onExportWord={handleExportWord}
+        threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
       />
       {/* Main chat area */}
       <main className="flex flex-1 flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="flex items-center gap-3 border-b border-border bg-sidebar px-4 py-3 lg:hidden">
+        <div className="flex items-center justify-between border-b border-border bg-sidebar px-4 py-3 lg:hidden">
           <button
             onClick={() => setThreadsOpen(true)}
-            className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground"
+            title="Open sessions"
           >
-            <MessageCircle className="h-3.5 w-3.5 text-primary" />
-            Study Sessions
+            <Menu className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setThreadsOpen(true)}
+            className="flex-1 mx-3 text-left text-sm font-semibold truncate hover:text-primary transition-colors"
+            title="Click to switch or create session"
+          >
+            {threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
+          </button>
+          <button
+            onClick={createNewThread}
+            className="flex items-center gap-1 rounded-lg bg-primary/10 border border-primary/20 px-2.5 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 transition-colors"
+            title="New session"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New
           </button>
         </div>
 
@@ -670,8 +616,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           escalating={escalating}
           messagesLoading={messagesLoading}
           onEscalate={() => setEscalateModalOpen(true)}
-          onExportPDF={exportAsPDF}
-          onExportWord={exportAsWord}
+          onExportPDF={handleExportPDF}
+          onExportWord={handleExportWord}
           threadId={threadId}
           threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
         />

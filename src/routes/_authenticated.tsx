@@ -21,8 +21,6 @@ import {
   Settings,
   Menu,
   X,
-  Sun,
-  Moon,
   Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -189,25 +187,8 @@ function AuthedShell() {
         <div className="flex-1 flex justify-center">
           <Logo to="/dashboard" size="sm" />
         </div>
-        <div className="flex items-center gap-1.5">
-          <NotificationBell userId={user.id} />
-          <button
-            onClick={toggleTheme}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground transition-colors"
-            title="Toggle Theme"
-          >
-            {isDark ? <Sun className="h-5 w-5 text-amber-500" /> : <Moon className="h-5 w-5" />}
-          </button>
-          <button
-            onClick={signOut}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground transition-colors"
-            title="Sign out"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
-        </div>
+        <NotificationBell userId={user.id} />
       </header>
-
       {/* Disclaimer Banner - dismissible warning */}
 
       {/* Sidebar Backdrop Overlay for Mobile */}
@@ -220,9 +201,8 @@ function AuthedShell() {
 
       {/* Responsive Aside Navigation Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Brand logo & Mobile Close Button */}
         <div className="flex items-center justify-between mb-8">
@@ -249,9 +229,8 @@ function AuthedShell() {
                 key={to}
                 to={to}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
-                }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
+                  }`}
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -267,11 +246,10 @@ function AuthedShell() {
               <Link
                 to={"/teacher/escalations" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
-                  path.startsWith("/teacher/escalations")
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-black/5"
-                }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/teacher/escalations")
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-black/5"
+                  }`}
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
               </Link>
@@ -285,11 +263,10 @@ function AuthedShell() {
               <Link
                 to={"/admin/users" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
-                  path.startsWith("/admin")
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-black/5"
-                }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/admin")
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-black/5"
+                  }`}
               >
                 <Settings className="h-4 w-4" /> Users & Roles
               </Link>
@@ -348,27 +325,16 @@ function AuthedShell() {
             <p className="truncate text-xs text-muted-foreground mr-2" title={user?.email ?? ""}>
               {user?.email}
             </p>
-            <div className="flex items-center gap-1">
-              <NotificationBell userId={user.id} />
-              <button
-                onClick={toggleTheme}
-                className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-black/5 transition-colors"
-                title="Toggle Theme"
-              >
-                {isDark ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4" />}
-              </button>
-              <button
-                onClick={signOut}
-                className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-black/5 transition-colors"
-                title="Sign out"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
           </div>
+          <button
+            onClick={signOut}
+            className="flex items-center gap-2 w-full rounded-lg border border-border px-3 py-2.5 text-xs font-bold text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
         </div>
       </aside>
-
       <main className="flex-1 min-w-0 overflow-y-auto">
         <Outlet />
       </main>

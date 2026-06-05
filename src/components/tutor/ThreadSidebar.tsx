@@ -1,4 +1,5 @@
 import { MessageCircle, Plus, Search, Trash2, X } from "lucide-react";
+import { SessionActions } from "./SessionActions";
 
 type Thread = {
   id: string;
@@ -17,6 +18,16 @@ type Props = {
   onNewThread: () => void;
   onDeleteClick: (id: string) => void;
   onClose: () => void;
+  // Session actions props
+  curriculum: string;
+  onCurriculumChange: (val: string) => void;
+  escalationStatus: "open" | "in_review" | "resolved" | null;
+  escalating: boolean;
+  messagesLoading: boolean;
+  onEscalate: () => void;
+  onExportPDF: () => void;
+  onExportWord: () => void;
+  threadTitle: string;
 };
 
 export function ThreadSidebar({
@@ -31,6 +42,15 @@ export function ThreadSidebar({
   onNewThread,
   onDeleteClick,
   onClose,
+  curriculum,
+  onCurriculumChange,
+  escalationStatus,
+  escalating,
+  messagesLoading,
+  onEscalate,
+  onExportPDF,
+  onExportWord,
+  threadTitle,
 }: Props) {
   const filtered = threads.filter((t) =>
     (t.title || "Untitled").toLowerCase().includes(searchQuery.toLowerCase()),
@@ -55,7 +75,7 @@ export function ThreadSidebar({
         className="flex items-center gap-2 w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs font-bold text-primary hover:bg-primary/10 transition-colors mb-3"
       >
         <Plus className="h-4 w-4" />
-        New Study Session
+        New Chat
       </button>
 
       {/* Search */}
@@ -83,11 +103,10 @@ export function ThreadSidebar({
         {filtered.map((t) => (
           <div
             key={t.id}
-            className={`group relative flex items-center justify-between rounded-lg transition-colors ${
-              t.id === threadId
+            className={`group relative flex items-center justify-between rounded-lg transition-colors ${t.id === threadId
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-accent"
-            }`}
+              }`}
           >
             <button
               onClick={() => onSelectThread(t.id)}
@@ -111,6 +130,19 @@ export function ThreadSidebar({
           </div>
         ))}
       </div>
+      <SessionActions
+        curriculum={curriculum}
+        onCurriculumChange={onCurriculumChange}
+        escalationStatus={escalationStatus}
+        escalating={escalating}
+        messagesLoading={messagesLoading}
+        onEscalate={onEscalate}
+        onExportPDF={onExportPDF}
+        onExportWord={onExportWord}
+        threadTitle={threadTitle}
+        threadId={threadId}
+        onClose={onClose}
+      />
     </div>
   );
 
@@ -131,9 +163,8 @@ export function ThreadSidebar({
 
       {/* Mobile sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out lg:hidden ${
-          threadsOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out lg:hidden ${threadsOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {SidebarContent}
       </aside>
