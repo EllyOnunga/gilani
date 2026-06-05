@@ -25,6 +25,13 @@
   ],
   "rewrites": [
     { "source": "/manifest.json", "destination": "/manifest.json" },
-    { "source": "/favicon.svg", "destination": "/favicon.svg" }
+    { "source": "/favicon.svg", "destination": "/favicon.svg" },
+    { "source": "/logo.svg", "destination": "/logo.svg" },
+    { "source": "/sw.js", "destination": "/sw.js" },
+    { "source": "/apple-touch-icon.png", "destination": "/apple-touch-icon.png" },
+    { "source": "/icon-192.png", "destination": "/icon-192.png" },
+    { "source": "/icon-192-maskable.png", "destination": "/icon-192-maskable.png" },
+    { "source": "/icon-512.png", "destination": "/icon-512.png" },
+    { "source": "/icon-512-maskable.png", "destination": "/icon-512-maskable.png" }
   ]
 }
