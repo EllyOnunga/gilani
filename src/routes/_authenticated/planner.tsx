@@ -134,81 +134,46 @@ function repairAndParseJson(raw: string): any {
     s = s.slice(first, last + 1);
   }
 
-  // 2.5 Escape unescaped double quotes inside string values (line-by-line)
-  const lines = s.split("\n");
-  s = lines
-    .map((line) => {
-      const match = line.match(/^(\s*"[a-zA-Z_0-9]+"\s*:\s*")(.*)("\s*,?\s*)$/);
-      if (match) {
-        const prefix = match[1];
-        const val = match[2];
-        const suffix = match[3];
-        // Escape any unescaped double quotes inside the value
-        const escapedVal = val.replace(/(?<!\\)"/g, '\\"');
-        return prefix + escapedVal + suffix;
-      }
-      return line;
-    })
-    .join("\n");
-
   // 3. Remove trailing commas before ] or } (handles ,\n} and ,})
   s = s.replace(/,\s*([}\]])/g, "$1");
 
   // 4. Fix lone backslashes inside JSON string values:
-  //    Escape any backslash that is not:
-  //    - part of an already-escaped backslash (\\)
-  //    - part of an escaped double quote (\")
-  //    - part of a valid newline escape (\n)
-  //    - part of a valid Unicode escape sequence (\uXXXX)
-  //    This successfully repairs LaTeX sequences like \sqrt, \frac, \text, \pm etc.
+  //    Scans each JSON string token and escapes backslashes that are not
+  //    part of a valid escape sequence (\\, \", \n, \uXXXX).
+  //    This repairs LaTeX sequences like \sqrt, \frac etc.
   s = s.replace(
     /("(?:[^"\\]|\\.)*")/g,
     (match) => {
-      return match.replace(/\\(\\|"|n|u[0-9a-fA-F]{4})|\\/g, (m, g1) => {
-        if (g1) return m;
-        return "\\\\";
+      return match.replace(/\\(\\|"|n|r|t|b|f|u[0-9a-fA-F]{4})|\\/g, (m, g1) => {
+        if (g1) return m; // already-valid escape — leave alone
+        return "\\\\"; // lone backslash → double-escape
       });
     }
   );
 
-  // 5. Try direct parse first, fall back to eval-style as last resort
+  // 5. Try direct parse first, fall back to control-char strip as last resort
   try {
     return JSON.parse(s);
   } catch (err: any) {
-    // Last-resort: strip any remaining illegal control characters and retry
     const cleaned = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
     try {
       return JSON.parse(cleaned);
     } catch (finalErr: any) {
       console.error("[JSON Repair] Failed to parse repaired JSON string!");
-      console.error("[JSON Repair] Error message:", finalErr.message);
+      console.error("[JSON Repair] Error:", finalErr.message);
 
-      // Attempt to extract position from error message
-      let pos = -1;
       const posMatch = finalErr.message.match(/at position (\d+)/);
       if (posMatch) {
-        pos = parseInt(posMatch[1], 10);
+        const pos = parseInt(posMatch[1], 10);
+        const start = Math.max(0, pos - 120);
+        const end = Math.min(cleaned.length, pos + 120);
+        console.error(`[JSON Repair] Context around position ${pos}:\n...${cleaned.slice(start, end)}...`);
       }
 
-      if (pos >= 0) {
-        const start = Math.max(0, pos - 100);
-        const end = Math.min(cleaned.length, pos + 100);
-        console.error(
-          `[JSON Repair] Snippet around error (pos ${pos}):\n... ${cleaned.substring(
-            start,
-            end
-          )} ...`
-        );
-      }
-
-      // Write bad JSON to a local debug file for inspection
       try {
         const fs = require("fs");
         fs.writeFileSync("debug-bad-json.json", cleaned, "utf8");
-        console.error("[JSON Repair] Wrote bad JSON to debug-bad-json.json");
-      } catch (fsErr) {
-        // Fallback for environment if require/fs is not available or throws
-      }
+      } catch (_) { /* silent */ }
 
       throw finalErr;
     }
@@ -853,7 +818,7 @@ function PlannerPage() {
                 </div>
                 {dailyQuote && (
                   <p className="mt-2 text-[10px] text-muted-foreground italic text-center">
-                    "{dailyQuote}"
+                    &ldquo;{dailyQuote}&rdquo;
                   </p>
                 )}
               </div>
