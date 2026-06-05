@@ -19,6 +19,7 @@ import { parseDocument } from "@/lib/document-parser";
 import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
+import { MarkdownRenderer } from "@/components/tutor/MarkdownRenderer";
 
 // ─── JSON Repair Helper ───────────────────────────────────────────────────────
 
@@ -34,27 +35,37 @@ function repairAndParseJson(raw: string): any {
     s = s.slice(first, last + 1);
   }
 
-  // 2.5 Escape unescaped double quotes inside string values (line-by-line)
-  const lines = s.split("\n");
-  s = lines
-    .map((line) => {
-      const match = line.match(/^(\s*"[a-zA-Z_0-9]+"\s*:\s*")(.*)("\s*,?\s*)$/);
-      if (match) {
-        const prefix = match[1];
-        const val = match[2];
-        const suffix = match[3];
-        // Escape any unescaped double quotes inside the value
-        const escapedVal = val.replace(/(?<!\\)"/g, '\\"');
-        return prefix + escapedVal + suffix;
-      }
-      return line;
-    })
-    .join("\n");
+  // 3. Pre-repair: Fix "daily_quote": "Quote text." — First Last (author outside quotes)
+  s = s.split("\n").map(line => {
+    const quoteMatch = line.match(/^(\s*"daily_quote"\s*:\s*")(.*)"\s*[—–-]\s*([^",]+)(\s*,?\s*)$/);
+    if (quoteMatch) {
+      const prefix = quoteMatch[1];
+      const quoteText = quoteMatch[2];
+      const author = quoteMatch[3].trim();
+      const suffix = quoteMatch[4];
+      return `${prefix}${quoteText} — ${author}"${suffix}`;
+    }
+    return line;
+  }).join("\n");
 
-  // 3. Remove trailing commas before ] or } (handles ,\n} and ,})
+  // 4. Escape unescaped double quotes inside all JSON string values (line-by-line)
+  s = s.split("\n").map((line) => {
+    const match = line.match(/^(\s*"[a-zA-Z_0-9]+"\s*:\s*")(.*)("\s*,?\s*)$/);
+    if (match) {
+      const prefix = match[1];
+      const val = match[2];
+      const suffix = match[3];
+      // Escape any unescaped double quotes inside the value
+      const escapedVal = val.replace(/(?<!\\)"/g, '\\"');
+      return prefix + escapedVal + suffix;
+    }
+    return line;
+  }).join("\n");
+
+  // 5. Remove trailing commas before ] or } (handles ,\n} and ,})
   s = s.replace(/,\s*([}\]])/g, "$1");
 
-  // 4. Fix lone backslashes inside JSON string values:
+  // 6. Fix lone backslashes inside JSON string values:
   //    Escape any backslash that is not:
   //    - part of an already-escaped backslash (\\)
   //    - part of an escaped double quote (\")
@@ -71,7 +82,7 @@ function repairAndParseJson(raw: string): any {
     }
   );
 
-  // 5. Try direct parse first, fall back to eval-style as last resort
+  // 7. Try direct parse first, fall back to eval-style as last resort
   try {
     return JSON.parse(s);
   } catch (err: any) {
@@ -223,8 +234,11 @@ STEP 2 — CONTENT RULES BY TYPE
 
 ## If type = "study_notes"
 
-- Write a thorough comprehensive_summary (markdown allowed inside the string)
-- Use headings (##), bullet points, and **bold key terms** inside strings
+- Write an extremely detailed, highly comprehensive study guide in comprehensive_summary (minimum 500-1000 words, markdown allowed inside the string).
+- Organize it cleanly using markdown headings for Topics (##) and Subtopics (###).
+- For each subtopic, provide clear definitions, complete explanations, and step-by-step examples.
+- Include practice questions with their detailed step-by-step explanations directly within the comprehensive_summary to reinforce understanding.
+- Use bullet points, bold key terms (**bold**), and LaTeX formatting for mathematical expressions.
 - Extract every major idea into key_concepts
 - List all relevant formulas in formulas_and_equations
 - solutions MUST be an empty array []
@@ -759,7 +773,9 @@ function NotesPage() {
                         <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
                           AI Summary
                         </p>
-                        <p className="text-sm leading-relaxed text-foreground/90">{note.summary}</p>
+                        <div className="text-sm leading-relaxed text-foreground/90 markdown-note-summary">
+                          <MarkdownRenderer content={note.summary} />
+                        </div>
                       </div>
                     )}
                     {note.key_concepts && (note.key_concepts as any).length > 0 && (

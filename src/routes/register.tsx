@@ -21,11 +21,14 @@ function RegisterPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<"student" | "teacher" | "admin">("student");
+  const [role, setRole] = useState<"student" | "teacher">("student");
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
+
+    // Persist pending role to local storage for use after redirect/session check
+    localStorage.setItem("pending_role", role);
 
     // 1. Sign up user
     const { data, error } = await supabase.auth.signUp({
@@ -38,12 +41,15 @@ function RegisterPage() {
     });
 
     if (error) {
+      localStorage.removeItem("pending_role");
       setBusy(false);
       return toast.error(error.message);
     }
 
-    // 2. Invoke server function to assign their role securely
-    if (data?.user?.id) {
+    // 2. Invoke server function to assign their role securely ONLY if the session
+    // is NOT auto-established. If it is auto-established, the checkAndAssignRole
+    // listener inside useAuth hook will handle the server-side role assignment via pending_role.
+    if (data?.user?.id && !data.session) {
       try {
         const { assignUserRole } = await import("@/lib/auth-actions");
         await assignUserRole({ data: { userId: data.user.id, role: role } });
@@ -59,6 +65,9 @@ function RegisterPage() {
 
   const onGoogle = async () => {
     setBusy(true);
+    // Persist pending role to local storage before redirecting to Google OAuth
+    localStorage.setItem("pending_role", role);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -66,6 +75,7 @@ function RegisterPage() {
       },
     });
     if (error) {
+      localStorage.removeItem("pending_role");
       setBusy(false);
       return toast.error("Google sign-in failed: " + error.message);
     }
@@ -79,7 +89,7 @@ function RegisterPage() {
         </Link>
         <h1 className="mt-6 font-serif text-3xl font-bold">Create your account</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Free for students. Powerful tools for teachers and admins.
+          Free for students. Powerful tools for teachers.
         </p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
@@ -87,8 +97,8 @@ function RegisterPage() {
             <label className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
               I am registering as:
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["student", "teacher", "admin"] as const).map((r) => (
+            <div className="grid grid-cols-2 gap-2">
+              {(["student", "teacher"] as const).map((r) => (
                 <button
                   key={r}
                   type="button"

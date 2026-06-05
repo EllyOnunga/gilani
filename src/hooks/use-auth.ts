@@ -23,6 +23,16 @@ export function useAuth(): AuthState {
 
     const checkAndAssignRole = async (userId: string): Promise<AppRole[]> => {
       try {
+        // Read pending role if stored during register page submit or OAuth redirect
+        const pendingRole = typeof window !== "undefined" ? localStorage.getItem("pending_role") : null;
+
+        if (pendingRole && (pendingRole === "student" || pendingRole === "teacher")) {
+          localStorage.removeItem("pending_role");
+          const { assignUserRole } = await import("@/lib/auth-actions");
+          await assignUserRole({ data: { userId, role: pendingRole as AppRole } });
+          return [pendingRole as AppRole];
+        }
+
         const { data: r } = await supabase
           .from("user_roles")
           .select("role")
