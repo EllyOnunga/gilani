@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { withTimeout } from "@/lib/async";
 
 export type AppRole = "student" | "teacher" | "admin";
 
@@ -21,26 +20,30 @@ export function useAuth(): AuthState {
   useEffect(() => {
     let active = true;
 
-    const checkAndAssignRole = async (userId: string): Promise<AppRole[]> => {
+    const checkAndAssignRole = async (userId: string, isNewSignIn = false): Promise<AppRole[]> => {
       try {
-        // Read pending role if stored during register page submit or OAuth redirect
-        const pendingRole = typeof window !== "undefined" ? localStorage.getItem("pending_role") : null;
-
-        if (pendingRole && (pendingRole === "student" || pendingRole === "teacher")) {
-          localStorage.removeItem("pending_role");
-          const { assignUserRole } = await import("@/lib/auth-actions");
-          await assignUserRole({ data: { userId, role: pendingRole as AppRole } });
-          return [pendingRole as AppRole];
+        // Check for pending role from OAuth redirect — only on fresh sign in
+        if (isNewSignIn) {
+          const pendingRole = typeof window !== "undefined" ? localStorage.getItem("pending_role") : null;
+          if (pendingRole && ["student", "teacher", "admin"].includes(pendingRole)) {
+            localStorage.removeItem("pending_role");
+            const { assignUserRole } = await import("@/lib/auth-actions");
+            await assignUserRole({ data: { userId, role: pendingRole as AppRole } });
+            return [pendingRole as AppRole];
+          }
         }
 
+        // Fetch existing roles
         const { data: r } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", userId);
+
         if (r && r.length > 0) {
           return r.map((x) => x.role as AppRole);
         }
-        // Auto-assign student role
+
+        // No role found — auto-assign student
         const { assignUserRole } = await import("@/lib/auth-actions");
         await assignUserRole({ data: { userId, role: "student" } });
         return ["student"];
@@ -52,13 +55,15 @@ export function useAuth(): AuthState {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
+    } = supabase.auth.onAuthStateChange((event, s) => {
       if (!active) return;
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
         setLoading(true);
-        checkAndAssignRole(s.user.id).then((userRoles) => {
+        // Only treat SIGNED_IN as a fresh sign in (OAuth callback lands here)
+        const isNewSignIn = event === "SIGNED_IN";
+        checkAndAssignRole(s.user.id, isNewSignIn).then((userRoles) => {
           if (active) {
             setRoles(userRoles);
             setLoading(false);
@@ -70,7 +75,6 @@ export function useAuth(): AuthState {
       }
     });
 
-
     supabase.auth
       .getSession()
       .then(async ({ data }) => {
@@ -79,12 +83,11 @@ export function useAuth(): AuthState {
         setUser(data.session?.user ?? null);
         if (data.session?.user) {
           try {
-            const userRoles = await checkAndAssignRole(data.session.user.id);
-            if (active) {
-              setRoles(userRoles);
-            }
+            // On page load, don't treat as fresh sign in
+            const userRoles = await checkAndAssignRole(data.session.user.id, false);
+            if (active) setRoles(userRoles);
           } catch {
-            // roles fetch failed, continue without roles
+            // roles fetch failed
           } finally {
             if (active) setLoading(false);
           }
@@ -94,8 +97,7 @@ export function useAuth(): AuthState {
       })
       .catch((e) => {
         console.error("getSession error:", e);
-        if (!active) return;
-        setLoading(false);
+        if (!active) setLoading(false);
       });
 
     return () => {

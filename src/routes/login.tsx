@@ -2,7 +2,7 @@ import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-ro
 import { useState, type FormEvent, useEffect } from "react";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -72,7 +72,11 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin + (search.redirect || "/dashboard"),
+        redirectTo: `${window.location.origin}${search.redirect || "/dashboard"}`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "select_account",
+        },
       },
     });
     if (error) {
@@ -144,8 +148,9 @@ function LoginPage() {
         </div>
         <button
           onClick={onGoogle}
-          className="w-full rounded-md border border-border bg-background py-2.5 text-sm font-medium hover:bg-accent"
+          className="w-full flex items-center justify-center gap-3 rounded-md border border-border bg-white dark:bg-zinc-900 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm"
         >
+          <FcGoogle className="h-5 w-5" />
           Continue with Google
         </button>
         <p className="mt-6 text-sm text-muted-foreground">
