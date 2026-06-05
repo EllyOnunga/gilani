@@ -104,8 +104,8 @@ export function ThreadSidebar({
           <div
             key={t.id}
             className={`group relative flex items-center justify-between rounded-lg transition-colors ${t.id === threadId
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-accent"
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-accent"
               }`}
           >
             <button
@@ -130,19 +130,22 @@ export function ThreadSidebar({
           </div>
         ))}
       </div>
-      <SessionActions
-        curriculum={curriculum}
-        onCurriculumChange={onCurriculumChange}
-        escalationStatus={escalationStatus}
-        escalating={escalating}
-        messagesLoading={messagesLoading}
-        onEscalate={onEscalate}
-        onExportPDF={onExportPDF}
-        onExportWord={onExportWord}
-        threadTitle={threadTitle}
-        threadId={threadId}
-        onClose={onClose}
-      />
+      {/* Session Actions - mobile only, desktop has ChatHeader */}
+      <div className="lg:hidden">
+        <SessionActions
+          curriculum={curriculum}
+          onCurriculumChange={onCurriculumChange}
+          escalationStatus={escalationStatus}
+          escalating={escalating}
+          messagesLoading={messagesLoading}
+          onEscalate={onEscalate}
+          onExportPDF={onExportPDF}
+          onExportWord={onExportWord}
+          threadTitle={threadTitle}
+          threadId={threadId}
+          onClose={onClose}
+        />
+      </div>
     </div>
   );
 
