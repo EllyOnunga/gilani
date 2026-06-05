@@ -114,6 +114,48 @@ function convertToStudyPlan(data: any): StudyPlan | null {
   };
 }
 
+// ─── JSON Repair Helper ───────────────────────────────────────────────────────
+
+/**
+ * Attempts to repair common LLM JSON defects before parsing:
+ * 1. Strips markdown code fences (```json ... ```)
+ * 2. Removes trailing commas before ] or }
+ * 3. Escapes lone backslashes in string values (e.g. LaTeX \sqrt → \\sqrt)
+ */
+function repairAndParseJson(raw: string): any {
+  // 1. Strip markdown fences
+  let s = raw.trim();
+  s = s.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+
+  // 2. Extract outermost { ... }
+  const first = s.indexOf("{");
+  const last = s.lastIndexOf("}");
+  if (first !== -1 && last !== -1 && last > first) {
+    s = s.slice(first, last + 1);
+  }
+
+  // 3. Remove trailing commas before ] or } (handles ,\n} and ,})
+  s = s.replace(/,\s*([}\]])/g, "$1");
+
+  // 4. Fix lone backslashes inside JSON string values:
+  //    Replace every \ that is NOT already \\ or a valid JSON escape (n,t,r,",/,b,f,u)
+  //    This handles LaTeX sequences like \sqrt, \frac, \text, \pm etc.
+  s = s.replace(
+    /("(?:[^"\\]|\\.)*")/g,
+    (match) =>
+      match.replace(/\\(?![\\"nrtbfu\/])/g, "\\\\"),
+  );
+
+  // 5. Try direct parse first, fall back to eval-style as last resort
+  try {
+    return JSON.parse(s);
+  } catch {
+    // Last-resort: strip any remaining illegal control characters and retry
+    const cleaned = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+    return JSON.parse(cleaned);
+  }
+}
+
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
 const loadPlan = createServerFn({ method: "GET" })
@@ -361,13 +403,7 @@ Generate the JSON now.`;
 
         const textResult = result.text.trim();
         if (textResult) {
-          let cleanJsonString = textResult;
-          const firstMatch = cleanJsonString.indexOf("{");
-          const lastMatch = cleanJsonString.lastIndexOf("}");
-          if (firstMatch !== -1 && lastMatch !== -1 && lastMatch > firstMatch) {
-            cleanJsonString = cleanJsonString.slice(firstMatch, lastMatch + 1);
-          }
-          const parsed = JSON.parse(cleanJsonString);
+          const parsed = repairAndParseJson(textResult);
 
           if (parsed.daily_plans && Array.isArray(parsed.daily_plans)) {
             weeklyPlan = parsed as WeeklyPlanResponse;

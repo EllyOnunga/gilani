@@ -20,6 +20,30 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 
+// ─── JSON Repair Helper ───────────────────────────────────────────────────────
+
+function repairAndParseJson(raw: string): any {
+  let s = raw.trim();
+  // Strip markdown fences
+  s = s.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  // Extract outermost { ... }
+  const first = s.indexOf("{");
+  const last = s.lastIndexOf("}");
+  if (first !== -1 && last !== -1 && last > first) s = s.slice(first, last + 1);
+  // Remove trailing commas
+  s = s.replace(/,\s*([}\]])/g, "$1");
+  // Escape lone backslashes in string values (LaTeX etc.)
+  s = s.replace(
+    /("(?:[^"\\]|\\.)*")/g,
+    (match) => match.replace(/\\(?![\\"nrtbfu\/])/g, "\\\\"),
+  );
+  try {
+    return JSON.parse(s);
+  } catch {
+    return JSON.parse(s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, ""));
+  }
+}
+
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
 const listNotes = createServerFn({ method: "GET" })
@@ -276,13 +300,7 @@ ${content.slice(0, 15000)}`,
         } as any);
         const textResult = result.text.trim();
         if (textResult) {
-          let cleanText = textResult;
-          const firstBrace = cleanText.indexOf("{");
-          const lastBrace = cleanText.lastIndexOf("}");
-          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-            cleanText = cleanText.slice(firstBrace, lastBrace + 1);
-          }
-          parsed = JSON.parse(cleanText) as StudyMaterialResponse;
+          parsed = repairAndParseJson(textResult) as StudyMaterialResponse;
           console.log(`[Notes] Success with model: ${model.provider}/${model.modelId}`);
           break;
         }
