@@ -581,6 +581,11 @@ function CurriculumBadge({ curriculum }: { curriculum: string }) {
   );
 }
 
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function PlannerPage() {
   const [plan, setPlan] = useState<StudyPlan | null>(null);
   const [loading, setLoading] = useState(false);
@@ -588,6 +593,7 @@ function PlannerPage() {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr());
 
   useEffect(() => {
     const init = async () => {
@@ -673,6 +679,12 @@ function PlannerPage() {
   const totalTasks = plan?.items?.length ?? 0;
   const doneTasks = completed.size;
 
+  // If the selected date has no tasks (e.g. plan was regenerated), fall back to first date with tasks
+  const activeDate =
+    grouped[selectedDate] && grouped[selectedDate].length > 0
+      ? selectedDate
+      : sortedDates[0] ?? selectedDate;
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8 lg:p-12">
       {/* Header */}
@@ -686,10 +698,10 @@ function PlannerPage() {
               <CurriculumBadge curriculum={plan.plan_metadata.curriculum_details.type} />
             )}
           </div>
-          <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Your Weekly Plan</h2>
+          <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Your Study Planner</h2>
           <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
             {plan?.plan_metadata?.weekly_goal ||
-              "AI-generated study schedule based on your quiz performance and weak topics."}
+              "AI-generated daily study tasks based on your quiz performance and weak topics."}
           </p>
         </div>
         <button
@@ -760,99 +772,139 @@ function PlannerPage() {
         </div>
       )}
 
-      {/* Calendar grid */}
-      {plan && totalTasks > 0 && (
-        <div className="space-y-6">
-          {sortedDates.map((date) => {
-            const tasks = grouped[date];
-            if (!tasks || tasks.length === 0) return null;
-
-            const d = new Date(date + "T00:00:00");
-            const dayLabel = d.toLocaleDateString("en-KE", {
-              weekday: "long",
-              day: "numeric",
-              month: "short",
-            });
-
-            const dayPlan = plan?.daily_plans?.find((dp) => dp.date === date);
-            const dayFocus = dayPlan?.daily_focus;
-            const curriculumFocus = dayPlan?.curriculum_focus;
-            const dailyQuote = dayPlan?.daily_quote;
-
-            return (
-              <div key={date} className="animate-in-slide">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-                    {dayLabel}
-                  </p>
-                  {curriculumFocus && <CurriculumBadge curriculum={curriculumFocus} />}
-                </div>
-                {dayFocus && (
-                  <p className="text-xs text-muted-foreground mb-2 italic">Focus: {dayFocus}</p>
-                )}
-                <div className="space-y-2">
-                  {tasks.map((task) => {
-                    const uniqueTaskId = task.id;
-                    const done = completed.has(uniqueTaskId);
-                    return (
-                      <button
-                        key={uniqueTaskId}
-                        onClick={() => toggleTask(uniqueTaskId)}
-                        className={`w-full flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${
-                          done
-                            ? "border-border/40 bg-muted/40 opacity-60"
-                            : "border-border bg-card shadow-sm hover:shadow-md"
-                        }`}
-                      >
-                        {done ? (
-                          <CheckSquare className="h-5 w-5 flex-shrink-0 text-primary" />
-                        ) : (
-                          <Square className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <p
-                              className={`text-sm font-semibold ${done ? "line-through text-muted-foreground" : ""}`}
-                            >
-                              {task.subject}
-                            </p>
-                            <span
-                              className={`rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${PRIORITY_COLOR[task.priority] || PRIORITY_COLOR.medium}`}
-                            >
-                              {task.priority}
-                            </span>
-                            {task.curriculum && (
-                              <span className="font-mono text-[9px] text-muted-foreground">
-                                {task.curriculum}
-                              </span>
-                            )}
-                          </div>
-                          <p
-                            className={`text-xs ${done ? "line-through text-muted-foreground" : "text-muted-foreground"}`}
-                          >
-                            {task.task}
-                          </p>
-                          {task.study_tip && (
-                            <p className="text-xs text-primary/70 mt-1">💡 {task.study_tip}</p>
-                          )}
-                        </div>
-                        <span className="font-mono text-[10px] text-muted-foreground flex-shrink-0">
-                          {task.duration}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {dailyQuote && (
-                  <p className="mt-2 text-[10px] text-muted-foreground italic text-center">
-                    &ldquo;{dailyQuote}&rdquo;
-                  </p>
-                )}
-              </div>
-            );
-          })}
+      {/* Day tab strip */}
+      {plan && sortedDates.length > 0 && (
+        <div className="overflow-x-auto pb-1">
+          <div className="flex gap-2 min-w-max">
+            {sortedDates.map((date) => {
+              const d = new Date(date + "T00:00:00");
+              const isToday = date === todayStr();
+              const isSelected = date === activeDate;
+              const dayTasks = grouped[date] ?? [];
+              const dayDone = dayTasks.filter((t) => completed.has(t.id)).length;
+              return (
+                <button
+                  key={date}
+                  onClick={() => setSelectedDate(date)}
+                  className={`flex flex-col items-center rounded-xl px-3 py-2 min-w-[60px] border transition-all ${
+                    isSelected
+                      ? "border-primary bg-primary/10 text-primary shadow-sm"
+                      : "border-border bg-card text-muted-foreground hover:bg-accent"
+                  }`}
+                >
+                  <span className="font-mono text-[9px] uppercase tracking-wider">
+                    {d.toLocaleDateString("en-KE", { weekday: "short" })}
+                  </span>
+                  <span className="font-serif text-lg font-bold leading-none mt-0.5">
+                    {d.getDate()}
+                  </span>
+                  {isToday && (
+                    <span className="mt-1 h-1 w-1 rounded-full bg-primary" />
+                  )}
+                  {dayTasks.length > 0 && (
+                    <span className="font-mono text-[8px] mt-1 opacity-60">
+                      {dayDone}/{dayTasks.length}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
+
+      {/* Daily task view */}
+      {plan && totalTasks > 0 && (() => {
+        const tasks = grouped[activeDate] ?? [];
+        if (tasks.length === 0) return null;
+
+        const d = new Date(activeDate + "T00:00:00");
+        const dayLabel = d.toLocaleDateString("en-KE", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+        const dayPlan = plan?.daily_plans?.find((dp) => dp.date === activeDate);
+        const dayFocus = dayPlan?.daily_focus;
+        const curriculumFocus = dayPlan?.curriculum_focus;
+        const dailyQuote = dayPlan?.daily_quote;
+
+        return (
+          <div className="animate-in-slide space-y-4">
+            {/* Day header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                  {dayLabel}
+                </p>
+                {dayFocus && (
+                  <p className="text-xs text-muted-foreground mt-0.5 italic">🎯 {dayFocus}</p>
+                )}
+              </div>
+              {curriculumFocus && <CurriculumBadge curriculum={curriculumFocus} />}
+            </div>
+
+            {/* Task cards */}
+            <div className="space-y-3">
+              {tasks.map((task) => {
+                const done = completed.has(task.id);
+                return (
+                  <button
+                    key={task.id}
+                    onClick={() => toggleTask(task.id)}
+                    className={`w-full flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
+                      done
+                        ? "border-border/40 bg-muted/40 opacity-60"
+                        : "border-border bg-card shadow-sm hover:shadow-md"
+                    }`}
+                  >
+                    {done ? (
+                      <CheckSquare className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
+                    ) : (
+                      <Square className="h-5 w-5 flex-shrink-0 text-muted-foreground mt-0.5" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className={`text-sm font-bold ${done ? "line-through text-muted-foreground" : ""}`}>
+                          {task.subject}
+                        </p>
+                        {task.topic && (
+                          <span className="text-xs text-muted-foreground">— {task.topic}</span>
+                        )}
+                        <span className={`rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${PRIORITY_COLOR[task.priority] || PRIORITY_COLOR.medium}`}>
+                          {task.priority}
+                        </span>
+                        {task.type && (
+                          <span className="font-mono text-[9px] text-muted-foreground border border-border rounded-full px-2 py-0.5">
+                            {task.type}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-sm ${done ? "line-through text-muted-foreground" : "text-foreground/80"}`}>
+                        {task.task}
+                      </p>
+                      {task.study_tip && (
+                        <p className="text-xs text-primary/70 mt-2 bg-primary/5 rounded-lg px-3 py-2">💡 {task.study_tip}</p>
+                      )}
+                    </div>
+                    <span className="font-mono text-[10px] text-muted-foreground flex-shrink-0 whitespace-nowrap">
+                      {task.duration}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {dailyQuote && (
+              <p className="mt-2 text-[11px] text-muted-foreground italic text-center border-t border-border/40 pt-3">
+                &ldquo;{dailyQuote}&rdquo;
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Fallback state inside valid data scopes */}
       {plan && totalTasks === 0 && (

@@ -25,10 +25,15 @@ import {
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
+type RevisionTopic = {
+  subject: string;
+  topic: string;
+};
+
 type DashboardData = {
   streak: number;
   quizzesCompleted: number;
-  weakTopics: string[];
+  revisionTopics: RevisionTopic[];
   plannerTasks: { subject: string; task: string; duration: string }[];
 };
 
@@ -44,23 +49,13 @@ const loadDashboardData = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { userId, localDate } = data;
 
-    // 1. Fetch quiz attempts to get completed count and weak topics
+    // 1. Fetch quiz attempts to get completed count
     const { data: attempts } = await supabaseAdmin
       .from("quiz_attempts")
-      .select("weak_topics")
+      .select("id")
       .eq("user_id", userId);
 
     const quizCount = attempts?.length ?? 0;
-    const weakSet = new Set<string>();
-    if (attempts) {
-      for (const a of attempts) {
-        if (Array.isArray(a.weak_topics)) {
-          for (const wt of a.weak_topics as string[]) {
-            weakSet.add(wt.length > 28 ? wt.slice(0, 28) + "…" : wt);
-          }
-        }
-      }
-    }
 
     // 2. Fetch the latest study plan
     const { data: plan } = await supabaseAdmin
@@ -72,9 +67,11 @@ const loadDashboardData = createServerFn({ method: "GET" })
       .maybeSingle();
 
     let plannerTasks: { subject: string; task: string; duration: string }[] = [];
+    let revisionTopics: { subject: string; topic: string }[] = [];
+
     if (plan && plan.items) {
       const parsedItems = typeof plan.items === "string" ? JSON.parse(plan.items) : plan.items;
-      
+
       let allTasks: any[] = [];
       if (parsedItems && typeof parsedItems === "object" && !Array.isArray(parsedItems)) {
         if (Array.isArray(parsedItems.items)) {
@@ -86,7 +83,7 @@ const loadDashboardData = createServerFn({ method: "GET" })
 
       // Filter tasks for the user's local date
       const dateFiltered = allTasks.filter((t: any) => t.date === localDate);
-      
+
       // Fallback: if no tasks match today, just take the first 3 tasks of the plan
       const displayTasks = dateFiltered.length > 0 ? dateFiltered : allTasks;
 
@@ -95,6 +92,22 @@ const loadDashboardData = createServerFn({ method: "GET" })
         task: item.task || "Revision",
         duration: item.duration || "45 min",
       }));
+
+      // Extract unique subject+topic pairs from today's tasks (or full plan as fallback)
+      const topicSources = dateFiltered.length > 0 ? dateFiltered : allTasks;
+      const seen = new Set<string>();
+      for (const item of topicSources) {
+        const subject = (item.subject || "").trim();
+        const topic = (item.topic || item.subtopic || "").trim();
+        if (!subject) continue;
+        const key = `${subject}||${topic}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          revisionTopics.push({ subject, topic: topic || "General Revision" });
+        }
+      }
+      // Cap at 5 unique topic entries
+      revisionTopics = revisionTopics.slice(0, 5);
     }
 
     const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils");
@@ -103,7 +116,7 @@ const loadDashboardData = createServerFn({ method: "GET" })
     return {
       streak,
       quizzesCompleted: quizCount,
-      weakTopics: Array.from(weakSet).slice(0, 4),
+      revisionTopics,
       plannerTasks,
     };
   });
@@ -143,7 +156,7 @@ function Dashboard() {
 
   const streak = data?.streak ?? 0;
   const quizzesCompleted = data?.quizzesCompleted ?? 0;
-  const weakTopics = data?.weakTopics ?? [];
+  const revisionTopics = data?.revisionTopics ?? [];
   const plannerTasks = data?.plannerTasks ?? [];
 
   return (
@@ -390,41 +403,46 @@ function Dashboard() {
           )}
         </div>
 
-        {/* Weak Topics / Mastery Widget */}
+        {/* Revision Topics / Mastery Widget */}
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              Focus Concepts
+              Today's Focus
             </p>
             <h3 className="font-serif text-xl mt-2 mb-4">Target Revision</h3>
 
-            {weakTopics.length === 0 ? (
+            {revisionTopics.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground italic flex flex-col items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-muted-foreground/50" />
-                No weak topics flagged yet. Excellent job!
+                No revision targets yet. Generate a study plan to get started!
               </div>
             ) : (
               <div className="space-y-2">
-                {weakTopics.map((topic, idx) => (
+                {revisionTopics.map((rt, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-2.5 p-2.5 rounded-lg border border-red-200/50 dark:border-red-900/35 bg-red-50/50 dark:bg-red-950/20"
+                    className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-background"
                   >
-                    <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-                    <span className="text-xs text-red-800 dark:text-red-200 font-medium truncate">
-                      {topic}
-                    </span>
+                    <div className="flex-shrink-0 mt-0.5">
+                      <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary/15 text-primary font-mono text-[9px] font-bold">
+                        {idx + 1}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-foreground leading-tight">{rt.subject}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{rt.topic}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-          {weakTopics.length > 0 && (
+          {revisionTopics.length > 0 && (
             <Link
-              to="/analytics"
+              to="/planner"
               className="text-xs font-semibold text-primary mt-4 inline-block hover:underline"
             >
-              View detailed performance analytics →
+              View full study plan →
             </Link>
           )}
         </div>
