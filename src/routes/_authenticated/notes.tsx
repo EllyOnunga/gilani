@@ -34,6 +34,23 @@ function repairAndParseJson(raw: string): any {
     s = s.slice(first, last + 1);
   }
 
+  // 2.5 Escape unescaped double quotes inside string values (line-by-line)
+  const lines = s.split("\n");
+  s = lines
+    .map((line) => {
+      const match = line.match(/^(\s*"[a-zA-Z_0-9]+"\s*:\s*")(.*)("\s*,?\s*)$/);
+      if (match) {
+        const prefix = match[1];
+        const val = match[2];
+        const suffix = match[3];
+        // Escape any unescaped double quotes inside the value
+        const escapedVal = val.replace(/(?<!\\)"/g, '\\"');
+        return prefix + escapedVal + suffix;
+      }
+      return line;
+    })
+    .join("\n");
+
   // 3. Remove trailing commas before ] or } (handles ,\n} and ,})
   s = s.replace(/,\s*([}\]])/g, "$1");
 
