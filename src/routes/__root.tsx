@@ -271,6 +271,31 @@ function RootComponent() {
     }
   }, []);
 
+  // Capture the browser's native PWA install prompt and surface it via a custom event
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      // Store prompt on window so any component can access it
+      (window as any).__pwaInstallPrompt = e;
+      // Notify sidebar / other components that the app is installable
+      window.dispatchEvent(new CustomEvent("custom:pwa-installable"));
+    };
+
+    const handleAppInstalled = () => {
+      (window as any).__pwaInstallPrompt = null;
+      window.dispatchEvent(new CustomEvent("custom:pwa-installed"));
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 

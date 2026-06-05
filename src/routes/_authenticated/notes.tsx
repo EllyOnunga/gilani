@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -496,11 +496,38 @@ export const Route = createFileRoute("/_authenticated/notes")({
   component: NotesPage,
 });
 
+// ─── Offline Cache ─────────────────────────────────────────────────────────────
+
+const NOTES_CACHE_KEY = "gilani_notes_cache";
+
+function getCachedNotes(): Note[] {
+  try {
+    const raw = localStorage.getItem(NOTES_CACHE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as Note[];
+  } catch {
+    return [];
+  }
+}
+
+function setCachedNotes(notes: Note[]) {
+  try {
+    localStorage.setItem(NOTES_CACHE_KEY, JSON.stringify(notes));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 function NotesPage() {
   const initialNotes = Route.useLoaderData() as Note[];
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [notes, setNotes] = useState<Note[]>(() => {
+    // Seed from loader if available, otherwise fall back to cache
+    if (initialNotes && initialNotes.length > 0) return initialNotes;
+    return getCachedNotes();
+  });
+  const [isOffline, setIsOffline] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [heading, setHeading] = useState("");
@@ -511,6 +538,40 @@ function NotesPage() {
 
   const [parsingFile, setParsingFile] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+
+  // Cache notes whenever they load fresh from the server
+  useEffect(() => {
+    if (initialNotes && initialNotes.length > 0) {
+      setCachedNotes(initialNotes);
+      setNotes(initialNotes);
+      setIsOffline(false);
+    } else if (initialNotes && initialNotes.length === 0 && !navigator.onLine) {
+      // Loader returned empty but we're offline — use cache
+      const cached = getCachedNotes();
+      if (cached.length > 0) {
+        setNotes(cached);
+        setIsOffline(true);
+      }
+    }
+  }, [initialNotes]);
+
+  // Listen for online/offline transitions
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => {
+      const cached = getCachedNotes();
+      if (cached.length > 0) {
+        setNotes(cached);
+        setIsOffline(true);
+      }
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const handleFileDrop = async (e: React.DragEvent) => {
     e.preventDefault();
@@ -578,6 +639,17 @@ function NotesPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8 lg:p-12">
+      {/* Offline Backup Badge */}
+      {isOffline && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700/40 px-4 py-2.5 text-xs text-amber-700 dark:text-amber-400">
+          <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
+          <span>
+            <strong>Offline mode</strong> — Viewing cached notes from your last session. New notes
+            will sync when you reconnect.
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <header className="animate-in-slide flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -592,7 +664,8 @@ function NotesPage() {
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="self-start sm:self-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
+          disabled={isOffline}
+          className="self-start sm:self-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
           {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {showForm ? "Cancel" : "New Note"}

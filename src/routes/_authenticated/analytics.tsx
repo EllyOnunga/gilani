@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -151,11 +151,136 @@ export const Route = createFileRoute("/_authenticated/analytics")({
   component: AnalyticsPage,
 });
 
+// ─── Confetti Engine ───────────────────────────────────────────────────────────
+
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  size: number;
+  rotation: number;
+  rotationSpeed: number;
+  alpha: number;
+}
+
+const CONFETTI_COLORS = [
+  "#d9531e", "#f59e0b", "#10b981", "#6366f1",
+  "#ec4899", "#3b82f6", "#a78bfa", "#f97316",
+];
+
+function createConfettiParticle(canvasWidth: number): Particle {
+  return {
+    x: Math.random() * canvasWidth,
+    y: -10 - Math.random() * 40,
+    vx: (Math.random() - 0.5) * 3,
+    vy: 2 + Math.random() * 3,
+    color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+    size: 6 + Math.random() * 6,
+    rotation: Math.random() * 360,
+    rotationSpeed: (Math.random() - 0.5) * 8,
+    alpha: 1,
+  };
+}
+
 function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialised, setInitialised] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const particlesRef = useRef<Particle[]>([]);
+  const confettiFiredRef = useRef(false);
+
+  const stopConfetti = useCallback(() => {
+    if (animFrameRef.current !== null) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
+    particlesRef.current = [];
+  }, []);
+
+  const launchConfetti = useCallback(() => {
+    if (confettiFiredRef.current) return;
+    confettiFiredRef.current = true;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Spawn 180 particles in bursts over 600ms
+    let spawned = 0;
+    const spawnInterval = setInterval(() => {
+      for (let i = 0; i < 30; i++) {
+        particlesRef.current.push(createConfettiParticle(canvas.width));
+      }
+      spawned += 30;
+      if (spawned >= 180) clearInterval(spawnInterval);
+    }, 120);
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particlesRef.current = particlesRef.current.filter((p) => p.alpha > 0.05);
+
+      for (const p of particlesRef.current) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.06; // gravity
+        p.vx += (Math.random() - 0.5) * 0.1; // horizontal drift
+        p.rotation += p.rotationSpeed;
+        if (p.y > canvas.height * 0.7) {
+          p.alpha -= 0.025; // fade out near bottom
+        }
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        ctx.restore();
+      }
+
+      if (particlesRef.current.length > 0) {
+        animFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        stopConfetti();
+      }
+    };
+
+    animFrameRef.current = requestAnimationFrame(animate);
+
+    // Auto-stop after 3.5 seconds to avoid lingering
+    setTimeout(() => {
+      clearInterval(spawnInterval);
+      stopConfetti();
+    }, 3500);
+  }, [stopConfetti]);
+
+  // Trigger confetti when streak data arrives
+  useEffect(() => {
+    if (!data) return;
+    const streak = (data as any).streak ?? 0;
+    if (streak >= 1) {
+      // Small delay so charts can paint first
+      const t = setTimeout(launchConfetti, 600);
+      return () => clearTimeout(t);
+    }
+  }, [data, launchConfetti]);
+
+  // Cleanup on unmount
+  useEffect(() => () => stopConfetti(), [stopConfetti]);
 
   const init = async () => {
     if (initialised) return;
@@ -225,6 +350,13 @@ function AnalyticsPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8 lg:p-12">
+      {/* Confetti canvas — fixed, full-screen, pointer-events-none */}
+      <canvas
+        ref={canvasRef}
+        aria-hidden="true"
+        className="fixed inset-0 z-50 pointer-events-none"
+        style={{ width: "100vw", height: "100vh" }}
+      />
       {/* Header */}
       <header className="animate-in-slide">
         <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">

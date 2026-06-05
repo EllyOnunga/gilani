@@ -23,6 +23,7 @@ import {
   X,
   Sun,
   Moon,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createServerFn } from "@tanstack/react-start";
@@ -80,6 +81,25 @@ function AuthedShell() {
     if (typeof window === "undefined") return true;
     return document.documentElement.classList.contains("dark");
   });
+  const [pwaInstallable, setPwaInstallable] = useState(false);
+
+  // Listen for PWA install events dispatched from __root.tsx
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onInstallable = () => setPwaInstallable(true);
+    const onInstalled = () => setPwaInstallable(false);
+
+    // In case the event already fired before this component mounted
+    if ((window as any).__pwaInstallPrompt) setPwaInstallable(true);
+
+    window.addEventListener("custom:pwa-installable", onInstallable);
+    window.addEventListener("custom:pwa-installed", onInstalled);
+    return () => {
+      window.removeEventListener("custom:pwa-installable", onInstallable);
+      window.removeEventListener("custom:pwa-installed", onInstalled);
+    };
+  }, []);
 
   useEffect(() => {
     if (loading) return;
@@ -276,6 +296,27 @@ function AuthedShell() {
         </nav>
 
         <div className="mt-auto space-y-3 border-t border-border pt-6">
+          {/* PWA Install Button */}
+          {pwaInstallable && (
+            <button
+              id="pwa-install-btn"
+              onClick={async () => {
+                const prompt = (window as any).__pwaInstallPrompt;
+                if (!prompt) return;
+                prompt.prompt();
+                const { outcome } = await prompt.userChoice;
+                if (outcome === "accepted") {
+                  setPwaInstallable(false);
+                  (window as any).__pwaInstallPrompt = null;
+                }
+              }}
+              className="w-full flex items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary hover:bg-primary/20 hover:border-primary/60 transition-all"
+            >
+              <Smartphone className="h-3.5 w-3.5" />
+              Install GilaniAI App
+            </button>
+          )}
+
           <div className="rounded-lg border border-border/50 bg-card p-3">
             <p className="font-mono text-[11px] text-muted-foreground">REACH A TEACHER</p>
             <p className="mt-2 text-xs leading-relaxed text-pretty">

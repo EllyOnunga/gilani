@@ -125,14 +125,31 @@ type Props = {
   content: string;
 };
 
+/**
+ * Pre-process markdown to convert bracket-style LaTeX delimiters
+ * to dollar-sign delimiters that remark-math/KaTeX expects.
+ *
+ * Converts:
+ *   \( ... \)  →  $ ... $   (inline math)
+ *   \[ ... \]  →  $$ ... $$ (block math)
+ */
+function preprocessLatex(raw: string): string {
+  // Block math: \[ ... \] → $$ ... $$
+  let s = raw.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `$$${inner.trim()}$$`);
+  // Inline math: \( ... \) → $ ... $
+  s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_m, inner) => `$${inner.trim()}$`);
+  return s;
+}
+
 export function MarkdownRenderer({ content }: Props) {
+  const processed = preprocessLatex(content);
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm, remarkMath]}
       rehypePlugins={[rehypeKatex]}
       components={markdownComponents}
     >
-      {content}
+      {processed}
     </ReactMarkdown>
   );
 }
