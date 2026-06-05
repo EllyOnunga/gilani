@@ -23,6 +23,8 @@ import {
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
+// ─── Types ─────────────────────────────────────────────────────────────────────
+
 type DashboardData = {
   streak: number;
   quizzesCompleted: number;
@@ -33,8 +35,15 @@ type DashboardData = {
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
 const loadDashboardData = createServerFn({ method: "GET" })
-  .inputValidator(z.string())
-  .handler(async ({ data: userId }) => {
+  .inputValidator(
+    z.object({
+      userId: z.string(),
+      localDate: z.string(),
+    })
+  )
+  .handler(async ({ data }) => {
+    const { userId, localDate } = data;
+
     // 1. Fetch quiz attempts to get completed count and weak topics
     const { data: attempts } = await supabaseAdmin
       .from("quiz_attempts")
@@ -63,8 +72,25 @@ const loadDashboardData = createServerFn({ method: "GET" })
       .maybeSingle();
 
     let plannerTasks: { subject: string; task: string; duration: string }[] = [];
-    if (plan && Array.isArray(plan.items)) {
-      plannerTasks = (plan.items as any[]).slice(0, 3).map((item) => ({
+    if (plan && plan.items) {
+      const parsedItems = typeof plan.items === "string" ? JSON.parse(plan.items) : plan.items;
+      
+      let allTasks: any[] = [];
+      if (parsedItems && typeof parsedItems === "object" && !Array.isArray(parsedItems)) {
+        if (Array.isArray(parsedItems.items)) {
+          allTasks = parsedItems.items;
+        }
+      } else if (Array.isArray(parsedItems)) {
+        allTasks = parsedItems;
+      }
+
+      // Filter tasks for the user's local date
+      const dateFiltered = allTasks.filter((t: any) => t.date === localDate);
+      
+      // Fallback: if no tasks match today, just take the first 3 tasks of the plan
+      const displayTasks = dateFiltered.length > 0 ? dateFiltered : allTasks;
+
+      plannerTasks = displayTasks.slice(0, 3).map((item: any) => ({
         subject: item.subject || "Study Session",
         task: item.task || "Revision",
         duration: item.duration || "45 min",
@@ -95,22 +121,25 @@ function Dashboard() {
     (user?.user_metadata?.display_name as string) || user?.email?.split("@")[0] || "Student";
 
   const [data, setData] = useState<DashboardData | null>(null);
-  const [initialised, setInitialised] = useState(false);
 
   useEffect(() => {
-    if (!user?.id || initialised) return;
+    if (!user?.id) return;
 
     (async () => {
       try {
-        const res = await loadDashboardData({ data: user.id });
+        const d = new Date();
+        const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+          d.getDate()
+        ).padStart(2, "0")}`;
+
+        const res = await loadDashboardData({ data: { userId: user.id, localDate } });
         setData(res);
       } catch (err) {
         console.error("[Dashboard] load error:", err);
-      } finally {
-        setInitialised(true);
       }
     })();
-  }, [user?.id, initialised]);
+  }, [user?.id]);
+
 
   const streak = data?.streak ?? 0;
   const quizzesCompleted = data?.quizzesCompleted ?? 0;

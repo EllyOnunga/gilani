@@ -23,24 +23,78 @@ import { getErrorMessage, withTimeout } from "@/lib/async";
 // ─── JSON Repair Helper ───────────────────────────────────────────────────────
 
 function repairAndParseJson(raw: string): any {
+  // 1. Strip markdown fences
   let s = raw.trim();
-  // Strip markdown fences
   s = s.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-  // Extract outermost { ... }
+
+  // 2. Extract outermost { ... }
   const first = s.indexOf("{");
   const last = s.lastIndexOf("}");
-  if (first !== -1 && last !== -1 && last > first) s = s.slice(first, last + 1);
-  // Remove trailing commas
+  if (first !== -1 && last !== -1 && last > first) {
+    s = s.slice(first, last + 1);
+  }
+
+  // 3. Remove trailing commas before ] or } (handles ,\n} and ,})
   s = s.replace(/,\s*([}\]])/g, "$1");
-  // Escape lone backslashes in string values (LaTeX etc.)
+
+  // 4. Fix lone backslashes inside JSON string values:
+  //    Escape any backslash that is not:
+  //    - part of an already-escaped backslash (\\)
+  //    - part of an escaped double quote (\")
+  //    - part of a valid newline escape (\n)
+  //    - part of a valid Unicode escape sequence (\uXXXX)
+  //    This successfully repairs LaTeX sequences like \sqrt, \frac, \text, \pm etc.
   s = s.replace(
     /("(?:[^"\\]|\\.)*")/g,
-    (match) => match.replace(/\\(?![\\"nrtbfu\/])/g, "\\\\"),
+    (match) => {
+      return match.replace(/\\(\\|"|n|u[0-9a-fA-F]{4})|\\/g, (m, g1) => {
+        if (g1) return m;
+        return "\\\\";
+      });
+    }
   );
+
+  // 5. Try direct parse first, fall back to eval-style as last resort
   try {
     return JSON.parse(s);
-  } catch {
-    return JSON.parse(s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, ""));
+  } catch (err: any) {
+    // Last-resort: strip any remaining illegal control characters and retry
+    const cleaned = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+    try {
+      return JSON.parse(cleaned);
+    } catch (finalErr: any) {
+      console.error("[JSON Repair] Failed to parse repaired JSON string!");
+      console.error("[JSON Repair] Error message:", finalErr.message);
+
+      // Attempt to extract position from error message
+      let pos = -1;
+      const posMatch = finalErr.message.match(/at position (\d+)/);
+      if (posMatch) {
+        pos = parseInt(posMatch[1], 10);
+      }
+
+      if (pos >= 0) {
+        const start = Math.max(0, pos - 100);
+        const end = Math.min(cleaned.length, pos + 100);
+        console.error(
+          `[JSON Repair] Snippet around error (pos ${pos}):\n... ${cleaned.substring(
+            start,
+            end
+          )} ...`
+        );
+      }
+
+      // Write bad JSON to a local debug file for inspection
+      try {
+        const fs = require("fs");
+        fs.writeFileSync("debug-bad-json-notes.json", cleaned, "utf8");
+        console.error("[JSON Repair] Wrote bad JSON to debug-bad-json-notes.json");
+      } catch (fsErr) {
+        // Fallback for environment if require/fs is not available or throws
+      }
+
+      throw finalErr;
+    }
   }
 }
 

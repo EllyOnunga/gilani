@@ -649,9 +649,10 @@ function QuizzesPage() {
   const finishQuiz = useCallback(async () => {
     setPhase("results");
     const score = userAnswers.filter((a, i) => a === questions[i]?.correct).length;
+    const fallbackTopic = activeTopic.includes(" — ") ? activeTopic.split(" — ")[1] : activeTopic;
     const wrongTopics = questions
       .filter((_, i) => userAnswers[i] !== questions[i].correct)
-      .map((q) => q.subtopic || q.question.slice(0, 60));
+      .map((q) => q.subtopic || fallbackTopic);
     try {
       const res = await supabase.auth.getSession();
       const session = res?.data?.session;
@@ -674,7 +675,7 @@ function QuizzesPage() {
       console.error("Failed to save quiz attempt:", err);
       toast.error(getErrorMessage(err, "Could not save quiz attempt"));
     }
-  }, [userAnswers, questions, quizId]);
+  }, [userAnswers, questions, quizId, activeTopic]);
 
   const score = userAnswers.filter((a, i) => a === questions[i]?.correct).length;
   const pct = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
