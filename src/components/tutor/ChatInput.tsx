@@ -1,16 +1,11 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   FileText,
   Loader2,
-  Mic,
-  MicOff,
   Paperclip,
   Send,
   Trash2,
-  Volume2,
-  VolumeX,
 } from "lucide-react";
-import { toast } from "sonner";
 
 type AttachedFile = {
   name: string;
@@ -28,7 +23,6 @@ type Props = {
   onSubmit: (e: React.FormEvent) => void;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: () => void;
-  onInputSet: (val: string) => void;
 };
 
 export function ChatInput({
@@ -41,23 +35,22 @@ export function ChatInput({
   onSubmit,
   onFileChange,
   onRemoveFile,
-  onInputSet,
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const [isListening, setIsListening] = useState(false);
-  const [ttsEnabled, setTtsEnabled] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const recognitionRef = useRef<any>(null);
-
   const isRateLimited = !!(chatError?.includes("rate limit") || chatError?.includes("quota"));
 
-  // Auto-resize textarea
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onInputChange(e);
+  // Auto-resize textarea when input changes (typing, pasting, clearing, or starter prompts)
+  useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 144)}px`;
+      if (input !== "") {
+        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 144)}px`;
+      }
     }
+  }, [input]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onInputChange(e);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -65,53 +58,6 @@ export function ChatInput({
       e.preventDefault();
       onSubmit(e as any);
     }
-  };
-
-  // Speech to text
-  const startListening = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error("Speech recognition is not supported in your browser.");
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-KE";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onerror = () => {
-      setIsListening(false);
-      toast.error("Microphone error. Please try again.");
-    };
-    recognition.onresult = (e: any) => {
-      const transcript = e.results[0][0].transcript;
-      onInputSet(input ? input + " " + transcript : transcript);
-    };
-    recognitionRef.current = recognition;
-    recognition.start();
-  };
-
-  const stopListening = () => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-  };
-
-  // Text to speech
-  const speakText = (text: string) => {
-    if (!ttsEnabled) return;
-    window.speechSynthesis.cancel();
-    const clean = text
-      .replace(/[#*`$]/g, "")
-      .replace(/\$\$?[^$]+\$\$?/g, "equation")
-      .trim();
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.lang = "en-KE";
-    utterance.rate = 0.95;
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(utterance);
   };
 
   return (
@@ -183,36 +129,6 @@ export function ChatInput({
           disabled={isPending || parsingFile || isRateLimited}
           onKeyDown={handleKeyDown}
         />
-
-        {/* Mic Button */}
-        <button
-          onClick={isListening ? stopListening : startListening}
-          disabled={isPending || parsingFile}
-          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border shadow-sm transition-colors ${
-            isListening
-              ? "border-red-400 bg-red-50 text-red-500 animate-pulse"
-              : "border-border bg-card text-muted-foreground hover:bg-accent"
-          }`}
-          title={isListening ? "Stop listening" : "Speak your question"}
-        >
-          {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-        </button>
-
-        {/* TTS Toggle */}
-        <button
-          onClick={() => {
-            setTtsEnabled((v) => !v);
-            if (isSpeaking) window.speechSynthesis.cancel();
-          }}
-          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border shadow-sm transition-colors ${
-            ttsEnabled
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border bg-card text-muted-foreground hover:bg-accent"
-          }`}
-          title={ttsEnabled ? "Disable text-to-speech" : "Enable text-to-speech"}
-        >
-          {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-        </button>
 
         {/* Send Button */}
         <button

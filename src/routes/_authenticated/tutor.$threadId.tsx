@@ -698,7 +698,6 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           onSubmit={submit}
           onFileChange={handleFileChange}
           onRemoveFile={() => setAttachedFile(null)}
-          onInputSet={setInput}
         />
       </main>
       {/* Escalate Modal */}
