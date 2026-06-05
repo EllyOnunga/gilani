@@ -14,8 +14,10 @@ function getKey(key: string | undefined): string {
   return (key || "").trim();
 }
 
+// NOTE: Only AIza... keys work with @ai-sdk/google (Google AI Studio).
+// "AQ." prefix = Vertex AI Express Mode — requires OAuth2, not compatible with this SDK.
 function isValidGeminiKey(key: string): boolean {
-  return key !== "" && (key.startsWith("AIza") || key.startsWith("AQ"));
+  return key !== "" && key.startsWith("AIza");
 }
 
 function isRateLimitError(error: unknown): boolean {
