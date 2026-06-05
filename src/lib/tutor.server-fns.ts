@@ -25,13 +25,17 @@ export const generateThreadTitleFn = createServerFn({ method: "POST" })
         messages: [
           {
             role: "user",
-            content: `Generate a short 4-6 word title for a study session that starts with this question: "${firstMessage}". Reply with only the title, no punctuation.`,
+            content: `Generate a short 3-5 word title for a study session that starts with this question: "${firstMessage}". Reply with only the title itself. Do not wrap in quotes. Do not include prefixes like "Title:". No punctuation.`,
           },
         ],
       }),
     });
     const data = await response.json();
-    return data.choices?.[0]?.message?.content?.trim() || firstMessage.slice(0, 29);
+    let title = data.choices?.[0]?.message?.content?.trim() || "";
+    // Clean quotes or conversational prefix/suffix
+    title = title.replace(/^["'“”‘“]|["'“”’]$/g, "").trim();
+    title = title.replace(/^(title|session|study session):\s*/i, "").trim();
+    return title || firstMessage.slice(0, 29);
   });
 
 export const lookupTeacherByEmail = createServerFn({ method: "POST" })

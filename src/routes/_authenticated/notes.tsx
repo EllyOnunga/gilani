@@ -412,22 +412,24 @@ ${content.slice(0, 15000)}`,
 
     if (noteErr) throw new Error(noteErr.message);
 
-    // Split text into chunks
+     // Split text into chunks and prepend Title, Heading, and Subheading context
     const chunkSize = 500;
     const chunks: string[] = [];
     for (let i = 0; i < content.length; i += chunkSize) {
-      chunks.push(content.slice(i, i + chunkSize));
+      const segment = content.slice(i, i + chunkSize);
+      const fullChunkText = `Note Title: ${title}${heading ? `\nHeading: ${heading}` : ""}${subheading ? `\nSubheading: ${subheading}` : ""}\n---\n${segment}`;
+      chunks.push(fullChunkText);
     }
 
     // Process embeddings in parallel
-    const chunkPromises = chunks.map(async (chunk, index) => {
+    const chunkPromises = chunks.map(async (chunkText, index) => {
       let embedding: number[] | null = null;
       try {
         const { embed } = await import("ai");
         const embeddingModel = createLovableAiGatewayProvider().textEmbeddingModel();
         const res = await embed({
           model: embeddingModel,
-          value: chunk,
+          value: chunkText,
           maxRetries: 0,
         });
         embedding = res.embedding;
@@ -437,7 +439,7 @@ ${content.slice(0, 15000)}`,
 
       return {
         note_id: (note as any).id,
-        content: chunk,
+        content: chunkText,
         user_id: userId,
         embedding: embedding ? JSON.stringify(embedding) : null,
       };
