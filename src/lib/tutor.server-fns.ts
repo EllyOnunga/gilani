@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
+import { sendTransactionalEmail } from "./email.server";
 
 export const deleteThreadFn = createServerFn({ method: "POST" })
   .inputValidator(z.string())
@@ -82,7 +83,6 @@ export async function createNotification({
     link: link ?? null,
   } as any);
 }
-
 export const createEscalationNotification = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
@@ -94,8 +94,17 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { conversationId, reviewerId, studentId } = data;
 
+    // Fetch student profile details for context
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name")
+      .eq("id", studentId)
+      .maybeSingle();
+    const studentName = profile?.display_name || "A student";
+    const appUrl = process.env.APP_URL || "https://gilaniai.vercel.app";
+
     if (reviewerId) {
-      // Notify specific teacher
+      // Notify specific teacher in DB
       await (supabaseAdmin as any).from("notifications").insert({
         user_id: reviewerId,
         title: "New Escalation Assigned",
@@ -103,8 +112,30 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
         type: "escalation",
         link: "/teacher/escalations",
       } as any);
+
+      // Email the specific teacher
+      const { data: reviewerUser } = await supabaseAdmin.auth.admin.getUserById(reviewerId);
+      if (reviewerUser?.user?.email) {
+        await sendTransactionalEmail({
+          to: reviewerUser.user.email,
+          subject: `[GilaniAI] Escalation Assigned: Review Requested`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+              <h2 style="color: #d9531e;">Hello Teacher,</h2>
+              <p><strong>${studentName}</strong> has requested your review on their study session.</p>
+              <p>You can view and reply to this escalation by visiting your dashboard:</p>
+              <p style="margin: 24px 0;">
+                <a href="${appUrl}/teacher/escalations" style="display: inline-block; padding: 12px 24px; background-color: #d9531e; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">Open Escalations Dashboard</a>
+              </p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+              <p style="font-size: 12px; color: #666;">This is an automated notification from GilaniAI.</p>
+            </div>
+          `,
+          text: `Hello Teacher,\n\n${studentName} has requested your review on their study session. You can view and reply to this escalation by visiting your dashboard:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`
+        });
+      }
     } else {
-      // Notify all teachers and admins
+      // Notify all teachers and admins in DB
       const { data: teachers } = await supabaseAdmin
         .from("user_roles")
         .select("user_id")
@@ -123,6 +154,34 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
               }) as any,
           ),
         );
+
+        // Email all teachers/admins in parallel
+        const emails = await Promise.all(
+          teachers.map(async (t) => {
+            const { data: u } = await supabaseAdmin.auth.admin.getUserById(t.user_id);
+            return u?.user?.email;
+          })
+        );
+        const validEmails = emails.filter((email): email is string => !!email);
+        if (validEmails.length > 0) {
+          await sendTransactionalEmail({
+            to: validEmails,
+            subject: `[GilaniAI] New Escalation Request Available`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+                <h2 style="color: #d9531e;">Hello Teacher/Admin,</h2>
+                <p><strong>${studentName}</strong> has requested a teacher review on their study session.</p>
+                <p>Since this request is unassigned, any teacher can claim and review it:</p>
+                <p style="margin: 24px 0;">
+                  <a href="${appUrl}/teacher/escalations" style="display: inline-block; padding: 12px 24px; background-color: #d9531e; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">View Escalations</a>
+                </p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                <p style="font-size: 12px; color: #666;">This is an automated notification from GilaniAI.</p>
+              </div>
+            `,
+            text: `Hello Teacher/Admin,\n\n${studentName} has requested a teacher review on their study session. Since this request is unassigned, any teacher can claim and review it:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`
+          });
+        }
       }
     }
   });
@@ -136,6 +195,8 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { studentId, conversationId } = data;
+
+    // Insert database notification
     await (supabaseAdmin as any).from("notifications").insert({
       user_id: studentId,
       title: "Teacher Responded!",
@@ -143,4 +204,27 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
       type: "success",
       link: `/tutor/${conversationId}`,
     } as any);
+
+    // Email student
+    const { data: studentUser } = await supabaseAdmin.auth.admin.getUserById(studentId);
+    if (studentUser?.user?.email) {
+      const appUrl = process.env.APP_URL || "https://gilaniai.vercel.app";
+      await sendTransactionalEmail({
+        to: studentUser.user.email,
+        subject: `[GilaniAI] Teacher Responded to your Study Session!`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+            <h2 style="color: #4caf50;">Hello student,</h2>
+            <p>Your teacher has reviewed your study session and left a response!</p>
+            <p>Click the link below to view their response and continue learning:</p>
+            <p style="margin: 24px 0;">
+              <a href="${appUrl}/tutor/${conversationId}" style="display: inline-block; padding: 12px 24px; background-color: #4caf50; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">View Teacher's Response</a>
+            </p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+            <p style="font-size: 12px; color: #666;">This is an automated notification from GilaniAI.</p>
+          </div>
+        `,
+        text: `Hello student,\n\nYour teacher has reviewed your study session and left a response! Click the link below to view their response and continue learning:\n\n${appUrl}/tutor/${conversationId}\n\nBest regards,\nThe GilaniAI Team`
+      });
+    }
   });
