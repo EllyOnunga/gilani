@@ -1,14 +1,16 @@
 import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (s: Record<string, unknown>): { redirect?: string } => ({
+  validateSearch: (s: Record<string, unknown>): { redirect?: string; email?: string } => ({
     redirect: (s.redirect as string) || undefined,
+    email: (s.email as string) || undefined,
   }),
   beforeLoad: async ({ search }) => {
     const { data } = await supabase.auth.getSession();
@@ -28,13 +30,33 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+
 function LoginPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const [email, setEmail] = useState("");
+  const { user, roles, loading } = useAuth();
+  const [email, setEmail] = useState(search.email || "");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (search.email) {
+      setEmail(search.email);
+    }
+  }, [search.email]);
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (roles.includes("admin")) {
+        navigate({ to: "/admin/users" as any });
+      } else if (roles.includes("teacher")) {
+        navigate({ to: "/teacher/escalations" as any });
+      } else {
+        navigate({ to: search.redirect || "/dashboard" });
+      }
+    }
+  }, [user, roles, loading, navigate, search.redirect]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -42,7 +64,7 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) return toast.error(error.message);
-    navigate({ to: search.redirect || "/dashboard" });
+    // Redirection will be handled automatically by the useEffect hook above
   };
 
   const onGoogle = async () => {
@@ -68,6 +90,11 @@ function LoginPage() {
           Secure access for students, teachers, and administrators.
         </p>
         <form onSubmit={onSubmit} className="mt-6 space-y-3">
+          {search.email && (
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-200">
+              This email is already registered. If you forgot your password, please use the reset flow.
+            </div>
+          )}
           <input
             type="email"
             required
@@ -76,23 +103,34 @@ function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              required
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              title={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+          <div className="space-y-1.5">
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-md border border-border bg-background px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                search={{ email }}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </div>
           <button
             disabled={busy}
@@ -120,3 +158,4 @@ function LoginPage() {
     </div>
   );
 }
+

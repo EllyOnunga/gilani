@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { Logo } from "@/components/ui/logo";
+import { useAuth } from "@/hooks/use-auth";
+
 import {
   ArrowRight,
   BookOpenText,
@@ -258,9 +260,25 @@ const STATS = [
 ];
 
 function Landing() {
+  const { user, roles, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (roles.includes("admin")) {
+        navigate({ to: "/admin/users" as any });
+      } else if (roles.includes("teacher")) {
+        navigate({ to: "/teacher/escalations" as any });
+      } else {
+        navigate({ to: "/dashboard" as any });
+      }
+    }
+  }, [user, roles, loading, navigate]);
+
   const [subEmail, setSubEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();

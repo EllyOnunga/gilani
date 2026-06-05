@@ -1,10 +1,11 @@
 import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/register")({
   beforeLoad: async () => {
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/register")({
 
 function RegisterPage() {
   const navigate = useNavigate();
+  const { user, roles, loading } = useAuth();
   const [displayName, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,12 +36,39 @@ function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<"student" | "teacher">("student");
 
+  useEffect(() => {
+    if (!loading && user) {
+      if (roles.includes("admin")) {
+        navigate({ to: "/admin/users" as any });
+      } else if (roles.includes("teacher")) {
+        navigate({ to: "/teacher/escalations" as any });
+      } else {
+        navigate({ to: "/dashboard" as any });
+      }
+    }
+  }, [user, roles, loading, navigate]);
+
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
 
+    try {
+      const { checkEmailExists } = await import("@/lib/auth-actions");
+      const { exists } = await checkEmailExists({ data: { email } });
+      if (exists) {
+        setBusy(false);
+        toast.error("This email is already registered. Please sign in instead.", { duration: 5000 });
+        navigate({ to: "/login", search: { email } });
+        return;
+      }
+    } catch (checkErr) {
+      console.error("Failed to verify if email exists:", checkErr);
+    }
+
     // Persist pending role to local storage for use after redirect/session check
     localStorage.setItem("pending_role", role);
+
 
     // 1. Sign up user
     const { data, error } = await supabase.auth.signUp({

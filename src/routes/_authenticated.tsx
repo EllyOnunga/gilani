@@ -70,7 +70,9 @@ const NAV = [
   { to: "/quizzes" as any, label: "Practice Quizzes", icon: ListChecks },
   { to: "/planner" as any, label: "Planner", icon: CalendarDays },
   { to: "/analytics" as any, label: "Analytics", icon: BarChart3 },
+  { to: "/settings" as any, label: "Settings", icon: Settings },
 ] as const;
+
 
 function AuthedShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });

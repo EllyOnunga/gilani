@@ -47,3 +47,39 @@ export const assignUserRole = createServerFn({ method: "POST" })
       throw new Error(err.message || "BFF failed to assign user role securely.");
     }
   });
+
+/**
+ * Server action to check if an email already exists in Supabase Auth.
+ */
+export const checkEmailExists = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      email: z.string().email(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { email } = data;
+    try {
+      console.log(`[checkEmailExists] Checking if email exists: ${email}`);
+      const { data: userData, error } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000,
+      });
+      
+      if (error) {
+        console.error("[checkEmailExists] Supabase Auth error:", error);
+        return { exists: false };
+      }
+      
+      const foundUser = userData?.users?.find(
+        (u) => u.email?.toLowerCase() === email.toLowerCase()
+      );
+      
+      return { exists: !!foundUser };
+
+    } catch (err) {
+      console.error("[checkEmailExists] Server function failed:", err);
+      return { exists: false };
+    }
+  });
+

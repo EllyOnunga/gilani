@@ -57,13 +57,19 @@ export function useAuth(): AuthState {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
+        setLoading(true);
         checkAndAssignRole(s.user.id).then((userRoles) => {
-          if (active) setRoles(userRoles);
+          if (active) {
+            setRoles(userRoles);
+            setLoading(false);
+          }
         });
       } else {
         setRoles([]);
+        setLoading(false);
       }
     });
+
 
     supabase.auth
       .getSession()
