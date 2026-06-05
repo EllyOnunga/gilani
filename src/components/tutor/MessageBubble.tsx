@@ -1,8 +1,11 @@
 import React from "react";
 import { Copy, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { MarkdownRenderer } from "./MarkdownRenderer";
 import { ThoughtAccordion } from "./ThoughtAccordion";
+
+const LazyMarkdownRenderer = React.lazy(() =>
+  import("./MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer })),
+);
 
 type Props = {
   message: any;
@@ -44,7 +47,9 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload }: 
             />
             {displayText ? (
               <div className="mt-1 prose-ai relative">
-                <MarkdownRenderer content={displayText} />
+                <React.Suspense fallback={<div className="h-10 w-full animate-pulse bg-muted/50 rounded" />}>
+                  <LazyMarkdownRenderer content={displayText} />
+                </React.Suspense>
                 {isLast && isStreamActive && (
                   <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-primary/70 animate-cursor-blink align-middle" />
                 )}

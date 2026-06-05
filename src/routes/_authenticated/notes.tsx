@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +19,9 @@ import { parseDocument } from "@/lib/document-parser";
 import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
-import { MarkdownRenderer } from "@/components/tutor/MarkdownRenderer";
+const LazyMarkdownRenderer = lazy(() =>
+  import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer })),
+);
 
 // ─── JSON Repair Helper ───────────────────────────────────────────────────────
 
@@ -774,7 +776,9 @@ function NotesPage() {
                           AI Summary
                         </p>
                         <div className="text-sm leading-relaxed text-foreground/90 markdown-note-summary">
-                          <MarkdownRenderer content={note.summary} />
+                          <Suspense fallback={<div className="h-10 w-full animate-pulse bg-muted/50 rounded" />}>
+                            <LazyMarkdownRenderer content={note.summary} />
+                          </Suspense>
                         </div>
                       </div>
                     )}
