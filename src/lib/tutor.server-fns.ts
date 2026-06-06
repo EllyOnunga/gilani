@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
-import { sendTransactionalEmail } from "./email.server";
+import { sendTransactionalEmail, emailTemplate } from "./email.server";
 
 export const deleteThreadFn = createServerFn({ method: "POST" })
   .inputValidator(z.string())
@@ -119,18 +119,13 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
         await sendTransactionalEmail({
           to: reviewerUser.user.email,
           subject: `[GilaniAI] Escalation Assigned: Review Requested`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-              <h2 style="color: #d9531e;">Hello Teacher,</h2>
-              <p><strong>${studentName}</strong> has requested your review on their study session.</p>
-              <p>You can view and reply to this escalation by visiting your dashboard:</p>
-              <p style="margin: 24px 0;">
-                <a href="${appUrl}/teacher/escalations" style="display: inline-block; padding: 12px 24px; background-color: #d9531e; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">Open Escalations Dashboard</a>
-              </p>
-              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-              <p style="font-size: 12px; color: #666;">This is an automated notification from GilaniAI.</p>
-            </div>
-          `,
+          html: emailTemplate({
+            heading: 'New Escalation Assigned',
+            body: `<strong>${studentName}</strong> has requested your review on their study session. Please check your escalations dashboard to respond.`,
+            buttonText: 'Open Escalations Dashboard',
+            buttonUrl: `${appUrl}/teacher/escalations`,
+            footerNote: 'You are receiving this because you are registered as a teacher on GilaniAI.',
+          }),
           text: `Hello Teacher,\n\n${studentName} has requested your review on their study session. You can view and reply to this escalation by visiting your dashboard:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`,
         });
       }
@@ -167,18 +162,13 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
           await sendTransactionalEmail({
             to: validEmails,
             subject: `[GilaniAI] New Escalation Request Available`,
-            html: `
-              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-                <h2 style="color: #d9531e;">Hello Teacher/Admin,</h2>
-                <p><strong>${studentName}</strong> has requested a teacher review on their study session.</p>
-                <p>Since this request is unassigned, any teacher can claim and review it:</p>
-                <p style="margin: 24px 0;">
-                  <a href="${appUrl}/teacher/escalations" style="display: inline-block; padding: 12px 24px; background-color: #d9531e; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">View Escalations</a>
-                </p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-                <p style="font-size: 12px; color: #666;">This is an automated notification from GilaniAI.</p>
-              </div>
-            `,
+            html: emailTemplate({
+              heading: 'New Escalation Request Available',
+              body: `<strong>${studentName}</strong> has requested a teacher review on their study session. Since this request is unassigned, any teacher can claim and review it.`,
+              buttonText: 'View Escalations',
+              buttonUrl: `${appUrl}/teacher/escalations`,
+              footerNote: 'You are receiving this because you are registered as a teacher or admin on GilaniAI.',
+            }),
             text: `Hello Teacher/Admin,\n\n${studentName} has requested a teacher review on their study session. Since this request is unassigned, any teacher can claim and review it:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`,
           });
         }
@@ -212,18 +202,13 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
       await sendTransactionalEmail({
         to: studentUser.user.email,
         subject: `[GilaniAI] Teacher Responded to your Study Session!`,
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-            <h2 style="color: #4caf50;">Hello student,</h2>
-            <p>Your teacher has reviewed your study session and left a response!</p>
-            <p>Click the link below to view their response and continue learning:</p>
-            <p style="margin: 24px 0;">
-              <a href="${appUrl}/tutor/${conversationId}" style="display: inline-block; padding: 12px 24px; background-color: #4caf50; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">View Teacher's Response</a>
-            </p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-            <p style="font-size: 12px; color: #666;">This is an automated notification from GilaniAI.</p>
-          </div>
-        `,
+        html: emailTemplate({
+          heading: "Your teacher has responded! 🎉",
+          body: "Great news — your teacher has reviewed your study session and left a response. Click below to view their feedback and continue learning.",
+          buttonText: "View Teacher's Response",
+          buttonUrl: `${appUrl}/tutor/${conversationId}`,
+          footerNote: 'You are receiving this because you submitted an escalation request on GilaniAI.',
+        }),
         text: `Hello student,\n\nYour teacher has reviewed your study session and left a response! Click the link below to view their response and continue learning:\n\n${appUrl}/tutor/${conversationId}\n\nBest regards,\nThe GilaniAI Team`,
       });
     }

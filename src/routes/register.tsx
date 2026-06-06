@@ -76,7 +76,7 @@ function RegisterPage() {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin + "/dashboard",
+        emailRedirectTo: window.location.origin + "/callback",
         data: { display_name: displayName, role: role },
       },
     });
@@ -144,11 +144,10 @@ function RegisterPage() {
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${
-                    role === r
+                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${role === r
                       ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:bg-accent"
-                  }`}
+                    }`}
                 >
                   {r}
                 </button>

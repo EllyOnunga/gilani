@@ -72,7 +72,7 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}${search.redirect || "/dashboard"}`,
+        redirectTo: `${window.location.origin}/callback?next=${search.redirect || "/dashboard"}`,
         queryParams: {
           access_type: "offline",
           prompt: "select_account",
