@@ -4,6 +4,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { getRequest } from "@tanstack/react-start/server";
+import { authenticateRequest } from "@/lib/api-auth";
 import {
   BookOpenText,
   ChevronDown,
@@ -28,7 +30,10 @@ const LazyMarkdownRenderer = lazy(() =>
 function repairAndParseJson(raw: string): any {
   // 1. Strip markdown fences
   let s = raw.trim();
-  s = s.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  s = s
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
 
   // 2. Extract outermost { ... }
   const first = s.indexOf("{");
@@ -38,31 +43,39 @@ function repairAndParseJson(raw: string): any {
   }
 
   // 3. Pre-repair: Fix "daily_quote": "Quote text." — First Last (author outside quotes)
-  s = s.split("\n").map(line => {
-    const quoteMatch = line.match(/^(\s*"daily_quote"\s*:\s*")(.*)"\s*[—–-]\s*([^",]+)(\s*,?\s*)$/);
-    if (quoteMatch) {
-      const prefix = quoteMatch[1];
-      const quoteText = quoteMatch[2];
-      const author = quoteMatch[3].trim();
-      const suffix = quoteMatch[4];
-      return `${prefix}${quoteText} — ${author}"${suffix}`;
-    }
-    return line;
-  }).join("\n");
+  s = s
+    .split("\n")
+    .map((line) => {
+      const quoteMatch = line.match(
+        /^(\s*"daily_quote"\s*:\s*")(.*)"\s*[—–-]\s*([^",]+)(\s*,?\s*)$/,
+      );
+      if (quoteMatch) {
+        const prefix = quoteMatch[1];
+        const quoteText = quoteMatch[2];
+        const author = quoteMatch[3].trim();
+        const suffix = quoteMatch[4];
+        return `${prefix}${quoteText} — ${author}"${suffix}`;
+      }
+      return line;
+    })
+    .join("\n");
 
   // 4. Escape unescaped double quotes inside all JSON string values (line-by-line)
-  s = s.split("\n").map((line) => {
-    const match = line.match(/^(\s*"[a-zA-Z_0-9]+"\s*:\s*")(.*)("\s*,?\s*)$/);
-    if (match) {
-      const prefix = match[1];
-      const val = match[2];
-      const suffix = match[3];
-      // Escape any unescaped double quotes inside the value
-      const escapedVal = val.replace(/(?<!\\)"/g, '\\"');
-      return prefix + escapedVal + suffix;
-    }
-    return line;
-  }).join("\n");
+  s = s
+    .split("\n")
+    .map((line) => {
+      const match = line.match(/^(\s*"[a-zA-Z_0-9]+"\s*:\s*")(.*)("\s*,?\s*)$/);
+      if (match) {
+        const prefix = match[1];
+        const val = match[2];
+        const suffix = match[3];
+        // Escape any unescaped double quotes inside the value
+        const escapedVal = val.replace(/(?<!\\)"/g, '\\"');
+        return prefix + escapedVal + suffix;
+      }
+      return line;
+    })
+    .join("\n");
 
   // 5. Remove trailing commas before ] or } (handles ,\n} and ,})
   s = s.replace(/,\s*([}\]])/g, "$1");
@@ -74,15 +87,12 @@ function repairAndParseJson(raw: string): any {
   //    - part of a valid newline escape (\n)
   //    - part of a valid Unicode escape sequence (\uXXXX)
   //    This successfully repairs LaTeX sequences like \sqrt, \frac, \text, \pm etc.
-  s = s.replace(
-    /("(?:[^"\\]|\\.)*")/g,
-    (match) => {
-      return match.replace(/\\(\\|"|n|u[0-9a-fA-F]{4})|\\/g, (m, g1) => {
-        if (g1) return m;
-        return "\\\\";
-      });
-    }
-  );
+  s = s.replace(/("(?:[^"\\]|\\.)*")/g, (match) => {
+    return match.replace(/\\(\\|"|n|u[0-9a-fA-F]{4})|\\/g, (m, g1) => {
+      if (g1) return m;
+      return "\\\\";
+    });
+  });
 
   // 7. Try direct parse first, fall back to eval-style as last resort
   try {
@@ -109,8 +119,8 @@ function repairAndParseJson(raw: string): any {
         console.error(
           `[JSON Repair] Snippet around error (pos ${pos}):\n... ${cleaned.substring(
             start,
-            end
-          )} ...`
+            end,
+          )} ...`,
         );
       }
 
@@ -130,34 +140,46 @@ function repairAndParseJson(raw: string): any {
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
-const listNotes = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ userId: z.string() }))
-  .handler(async ({ data }) => {
-    const { userId } = data;
+const listNotes = createServerFn({ method: "GET" }).handler(async () => {
+  const request = getRequest();
+  let authResult;
+  try {
+    authResult = await authenticateRequest(request);
+  } catch (err) {
+    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+  }
+  const userId = authResult.userId;
 
-    const { data: notes, error } = await supabaseAdmin
-      .from("notes")
-      .select("id, title, summary, key_concepts, created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+  const { data: notes, error } = await supabaseAdmin
+    .from("notes")
+    .select("id, title, summary, key_concepts, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
-    if (error) throw new Error(error.message);
-    return notes ?? [];
-  });
+  if (error) throw new Error(error.message);
+  return notes ?? [];
+});
 
 const ingestNote = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       title: z.string(),
-      heading: z.string().optional().default(""),
-      subheading: z.string().optional().default(""),
+      heading: z.string(),
+      subheading: z.string(),
       content: z.string(),
-      userId: z.string(),
-    })
+      // userId removed
+    }),
   )
   .handler(async ({ data }) => {
-    const { title, heading, subheading, content, userId } = data;
-
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    }
+    const userId = authResult.userId;
+    const { title, heading, subheading, content } = data;
     if (!title.trim() || !content.trim()) {
       throw new Error("Title and content are required");
     }
@@ -388,13 +410,21 @@ OUTPUT SCHEMA (MANDATORY)
 INPUT
 ════════════════════════════════════════
 
-Title: ${title}${heading ? `
-Heading: ${heading}` : ""}${subheading ? `
-Subheading: ${subheading}` : ""}
+Title: ${title}${
+            heading
+              ? `
+Heading: ${heading}`
+              : ""
+          }${
+            subheading
+              ? `
+Subheading: ${subheading}`
+              : ""
+          }
 
 Content:
 ${content.slice(0, 15000)}`,
-  // heading and subheading are passed to the prompt above
+          // heading and subheading are passed to the prompt above
         } as any);
         const textResult = result.text.trim();
         if (textResult) {
@@ -409,14 +439,16 @@ ${content.slice(0, 15000)}`,
     }
 
     if (!parsed) {
-      throw lastError || new Error("Failed to generate and parse notes with all configured providers.");
+      throw (
+        lastError || new Error("Failed to generate and parse notes with all configured providers.")
+      );
     }
 
     const summary = parsed.comprehensive_summary || parsed.summary || "";
     const keyConcepts = Array.isArray(parsed.key_concepts)
       ? parsed.key_concepts.map((kc) =>
-        typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
-      )
+          typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
+        )
       : [];
 
     // Insert note
@@ -428,7 +460,7 @@ ${content.slice(0, 15000)}`,
 
     if (noteErr) throw new Error(noteErr.message);
 
-     // Split text into chunks and prepend Title, Heading, and Subheading context
+    // Split text into chunks and prepend Title, Heading, and Subheading context
     const chunkSize = 500;
     const chunks: string[] = [];
     for (let i = 0; i < content.length; i += chunkSize) {
@@ -486,12 +518,14 @@ type Note = {
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/notes")({
-  head: () => ({ meta: [{ title: "Study Notes — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
+  head: () => ({
+    meta: [{ title: "Study Notes — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }],
+  }),
   loader: async () => {
     const res = await supabase.auth.getSession();
     const session = res?.data?.session;
     if (!session?.user?.id) return [];
-    return listNotes({ data: { userId: session.user.id } });
+    return listNotes();
   },
   component: NotesPage,
 });
@@ -621,7 +655,7 @@ function NotesPage() {
         return;
       }
       const note = await withTimeout(
-        ingestNote({ data: { title, heading, subheading, content, userId: session.user.id } }),
+        ingestNote({ data: { title, heading, subheading, content } }),
         120000,
         "Saving note timed out. Please try again.",
       );
@@ -695,10 +729,11 @@ function NotesPage() {
                 setDragActive(false);
               }}
               onDrop={handleFileDrop}
-              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all ${dragActive
+              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all ${
+                dragActive
                   ? "border-primary bg-primary/5 scale-[0.99]"
                   : "border-border bg-background hover:bg-accent/30 hover:border-muted-foreground/50"
-                }`}
+              }`}
             >
               <input
                 type="file"
@@ -754,7 +789,8 @@ function NotesPage() {
               </div>
               <div>
                 <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-1 block">
-                  Subheading <span className="normal-case text-muted-foreground/60">(optional)</span>
+                  Subheading{" "}
+                  <span className="normal-case text-muted-foreground/60">(optional)</span>
                 </label>
                 <input
                   value={subheading}
@@ -826,10 +862,10 @@ function NotesPage() {
                       <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
                         {note.created_at
                           ? new Date(note.created_at).toLocaleDateString("en-KE", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
                           : "—"}
                       </p>
                     </div>
@@ -849,7 +885,11 @@ function NotesPage() {
                           AI Summary
                         </p>
                         <div className="text-sm leading-relaxed text-foreground/90 markdown-note-summary">
-                          <Suspense fallback={<div className="h-10 w-full animate-pulse bg-muted/50 rounded" />}>
+                          <Suspense
+                            fallback={
+                              <div className="h-10 w-full animate-pulse bg-muted/50 rounded" />
+                            }
+                          >
                             <LazyMarkdownRenderer content={note.summary} />
                           </Suspense>
                         </div>

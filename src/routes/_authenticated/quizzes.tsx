@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 import { MathText } from "@/components/math-text";
+import { getRequest } from "@tanstack/react-start/server";
+import { authenticateRequest } from "@/lib/api-auth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -43,13 +45,20 @@ const generateQuiz = createServerFn({ method: "POST" })
     z.object({
       topic: z.string(),
       count: z.number(),
-      userId: z.string(),
       curriculum: z.string(),
+      // userId removed
     }),
   )
   .handler(async ({ data }) => {
-    const { topic, count, userId, curriculum } = data;
-
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    }
+    const userId = authResult.userId;
+    const { topic, count, curriculum } = data;
     if (!topic.trim()) throw new Error("Topic is required");
     if (count < 1 || count > 50) throw new Error("Question count must be between 1 and 50");
 
@@ -130,7 +139,9 @@ Do not randomise. Fill slots in order.
 CURRICULUM BEHAVIOUR
 ════════════════════════════════════════
 
-${curriculum === "KCSE" ? `
+${
+  curriculum === "KCSE"
+    ? `
 ## KCSE
 - Align strictly to KNEC syllabus (KLB / Longhorn logic)
 - Use Kenyan real-world context in at least 40% of questions:
@@ -158,8 +169,12 @@ EXAMPLE 2 (Mathematics, medium):
   "difficulty": "medium",
   "subtopic": "Indices and Surds",
   "curriculum": "KCSE"
-}` : ""}
-${curriculum === "CBC" ? `
+}`
+    : ""
+}
+${
+  curriculum === "CBC"
+    ? `
 ## CBC
 - Focus on competencies and real-life reasoning
 - Frame questions as scenarios the learner must analyse
@@ -175,8 +190,12 @@ EXAMPLE (Science, medium):
   "difficulty": "medium",
   "subtopic": "Soil and Water Conservation",
   "curriculum": "CBC"
-}` : ""}
-${curriculum === "IGCSE" ? `
+}`
+    : ""
+}
+${
+  curriculum === "IGCSE"
+    ? `
 ## IGCSE
 - Align to Cambridge Assessment structure
 - Use command verbs correctly:
@@ -199,7 +218,9 @@ EXAMPLE (Biology, hard):
   "difficulty": "hard",
   "subtopic": "Photosynthesis — Limiting Factors",
   "curriculum": "IGCSE"
-}` : ""}
+}`
+    : ""
+}
 ════════════════════════════════════════
 ANSWER DISTRIBUTION RULE
 ════════════════════════════════════════
@@ -277,7 +298,7 @@ REQUIRED OUTPUT
 questions array MUST contain exactly ${count} items.
 correct MUST always be 0, 1, 2, or 3 — integer only.
 `,
-temperature: 0.15,
+          temperature: 0.15,
         });
         object = result.object;
         if (object && Array.isArray(object.questions) && object.questions.length > 0) {
@@ -294,14 +315,18 @@ temperature: 0.15,
       throw lastError || new Error("Failed to generate quiz with all configured providers.");
     }
 
-    const resolveCorrectIndex = (
-      raw: MCQ["correct"] | string | undefined | null,
-    ): number => {
+    const resolveCorrectIndex = (raw: MCQ["correct"] | string | undefined | null): number => {
       if (typeof raw === "number" && raw >= 0 && raw <= 3) return raw;
       if (typeof raw === "string") {
         const map: Record<string, number> = {
-          A: 0, B: 1, C: 2, D: 3,
-          "0": 0, "1": 1, "2": 2, "3": 3,
+          A: 0,
+          B: 1,
+          C: 2,
+          D: 3,
+          "0": 0,
+          "1": 1,
+          "2": 2,
+          "3": 3,
         };
         const result = map[raw.trim().toUpperCase()];
         if (result !== undefined) return result;
@@ -345,11 +370,14 @@ temperature: 0.15,
       const q = questions[i];
       const correctOption = q.options[q.correct] ?? "";
       const expl = q.explanation ?? "";
-      const plainOption = correctOption.replace(/\$[^$]*\$/g, "").replace(/\s+/g, " ").trim();
+      const plainOption = correctOption
+        .replace(/\$[^$]*\$/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
       if (plainOption.length > 2 && expl && !expl.includes(plainOption)) {
         console.warn(
           `[Quiz QA] Q${i + 1}: explanation may not match correct option. ` +
-          `correct=${q.correct} => "${correctOption.slice(0, 60)}" not found in explanation.`,
+            `correct=${q.correct} => "${correctOption.slice(0, 60)}" not found in explanation.`,
         );
       }
     }
@@ -376,15 +404,23 @@ temperature: 0.15,
 const saveAttempt = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
-      userId: z.string(),
       quizId: z.string(),
       score: z.number(),
-      answers: z.array(z.number()),
+      answers: z.any(),
       weakTopics: z.array(z.string()),
+      // userId removed
     }),
   )
   .handler(async ({ data }) => {
-    const { userId, quizId, score, answers, weakTopics } = data;
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    }
+    const userId = authResult.userId;
+    const { quizId, score, answers, weakTopics } = data;
     const { error } = await supabaseAdmin.from("quiz_attempts").insert({
       user_id: userId,
       quiz_id: quizId,
@@ -401,7 +437,12 @@ const saveAttempt = createServerFn({ method: "POST" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/quizzes")({
-  head: () => ({ meta: [{ title: "Practice Quizzes — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
+  head: () => ({
+    meta: [
+      { title: "Practice Quizzes — GilaniAI" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>) => ({
     topic: (search.topic as string) || "",
   }),
@@ -472,15 +513,7 @@ function CurriculumBadge({ curriculum }: { curriculum: string }) {
   );
 }
 
-function LoadingStep({
-  label,
-  detail,
-  index,
-}: {
-  label: string;
-  detail: string;
-  index: number;
-}) {
+function LoadingStep({ label, detail, index }: { label: string; detail: string; index: number }) {
   const [state, setState] = useState<"waiting" | "active" | "done">("waiting");
 
   useEffect(() => {
@@ -595,7 +628,6 @@ function QuizzesPage() {
           data: {
             topic: activeTopic,
             count: questionCount,
-            userId: session.user.id,
             curriculum,
           },
         }),
@@ -660,7 +692,6 @@ function QuizzesPage() {
         await withTimeout(
           saveAttempt({
             data: {
-              userId: session.user.id,
               quizId,
               score,
               answers: userAnswers,
@@ -803,17 +834,14 @@ function QuizzesPage() {
     return (
       <div className="flex items-center justify-center min-h-[70vh] p-4">
         <div className="w-full max-w-md space-y-4">
-
           {/* Main card */}
           <div className="rounded-2xl border border-border bg-card shadow-md overflow-hidden">
-
             {/* Animated shimmer bar */}
             <div className="h-1 w-full bg-muted overflow-hidden">
               <div className="h-full bg-primary w-1/3 animate-[shimmer_1.8s_ease-in-out_infinite]" />
             </div>
 
             <div className="p-6 space-y-5">
-
               {/* Icon + heading */}
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0">
@@ -845,12 +873,7 @@ function QuizzesPage() {
               {/* Step list */}
               <div className="space-y-2.5">
                 {steps.map((step, i) => (
-                  <LoadingStep
-                    key={step.label}
-                    label={step.label}
-                    detail={step.detail}
-                    index={i}
-                  />
+                  <LoadingStep key={step.label} label={step.label} detail={step.detail} index={i} />
                 ))}
               </div>
             </div>
@@ -899,8 +922,7 @@ function QuizzesPage() {
           <Trophy className="mx-auto h-14 w-14 text-primary mb-4" />
           <h2 className="font-serif text-3xl sm:text-4xl">{grade}</h2>
           <p className="mt-2 text-muted-foreground text-sm">
-            Topic: <strong>{activeTopic}</strong> •{" "}
-            <CurriculumBadge curriculum={curriculum} />
+            Topic: <strong>{activeTopic}</strong> • <CurriculumBadge curriculum={curriculum} />
           </p>
         </div>
 
@@ -943,7 +965,9 @@ function QuizzesPage() {
                 )}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium"><MathText text={q.question} /></p>
+                    <p className="text-sm font-medium">
+                      <MathText text={q.question} />
+                    </p>
                     {q.difficulty && (
                       <span
                         className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono uppercase ${
@@ -971,7 +995,9 @@ function QuizzesPage() {
                       </span>
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-1 italic"><MathText text={q.explanation} /></p>
+                  <p className="text-xs text-muted-foreground mt-1 italic">
+                    <MathText text={q.explanation} />
+                  </p>
                 </div>
               </div>
             );
@@ -1020,7 +1046,9 @@ function QuizzesPage() {
       {q && (
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-5">
           <div className="flex items-start gap-2 flex-wrap">
-            <h3 className="font-serif text-xl leading-snug flex-1"><MathText text={q.question} /></h3>
+            <h3 className="font-serif text-xl leading-snug flex-1">
+              <MathText text={q.question} />
+            </h3>
             {q.difficulty && (
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-full font-mono uppercase flex-shrink-0 ${
@@ -1041,8 +1069,7 @@ function QuizzesPage() {
 
           <div className="space-y-3">
             {q.options.map((opt, i) => {
-              let cls =
-                "w-full text-left rounded-lg border px-4 py-3 text-sm transition-colors ";
+              let cls = "w-full text-left rounded-lg border px-4 py-3 text-sm transition-colors ";
               if (!answered[current]) {
                 cls +=
                   selected === i

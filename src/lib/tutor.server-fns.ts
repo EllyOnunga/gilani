@@ -131,7 +131,7 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
               <p style="font-size: 12px; color: #666;">This is an automated notification from GilaniAI.</p>
             </div>
           `,
-          text: `Hello Teacher,\n\n${studentName} has requested your review on their study session. You can view and reply to this escalation by visiting your dashboard:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`
+          text: `Hello Teacher,\n\n${studentName} has requested your review on their study session. You can view and reply to this escalation by visiting your dashboard:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`,
         });
       }
     } else {
@@ -160,7 +160,7 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
           teachers.map(async (t) => {
             const { data: u } = await supabaseAdmin.auth.admin.getUserById(t.user_id);
             return u?.user?.email;
-          })
+          }),
         );
         const validEmails = emails.filter((email): email is string => !!email);
         if (validEmails.length > 0) {
@@ -179,7 +179,7 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
                 <p style="font-size: 12px; color: #666;">This is an automated notification from GilaniAI.</p>
               </div>
             `,
-            text: `Hello Teacher/Admin,\n\n${studentName} has requested a teacher review on their study session. Since this request is unassigned, any teacher can claim and review it:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`
+            text: `Hello Teacher/Admin,\n\n${studentName} has requested a teacher review on their study session. Since this request is unassigned, any teacher can claim and review it:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`,
           });
         }
       }
@@ -224,7 +224,7 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
             <p style="font-size: 12px; color: #666;">This is an automated notification from GilaniAI.</p>
           </div>
         `,
-        text: `Hello student,\n\nYour teacher has reviewed your study session and left a response! Click the link below to view their response and continue learning:\n\n${appUrl}/tutor/${conversationId}\n\nBest regards,\nThe GilaniAI Team`
+        text: `Hello student,\n\nYour teacher has reviewed your study session and left a response! Click the link below to view their response and continue learning:\n\n${appUrl}/tutor/${conversationId}\n\nBest regards,\nThe GilaniAI Team`,
       });
     }
   });

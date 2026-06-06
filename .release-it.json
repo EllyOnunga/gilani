@@ -17,9 +17,6 @@
   },
   "hooks": {
     "before:init": ["npm run build"],
-    "after:bump": [
-      "node scripts/bump-version.js",
-      "git add public/sw.js"
-    ]
+    "after:bump": ["node scripts/bump-version.js", "git add public/sw.js"]
   }
 }

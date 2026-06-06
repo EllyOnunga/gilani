@@ -1,11 +1,5 @@
 import { useEffect, useRef } from "react";
-import {
-  FileText,
-  Loader2,
-  Paperclip,
-  Send,
-  Trash2,
-} from "lucide-react";
+import { FileText, Loader2, Paperclip, Send, Trash2 } from "lucide-react";
 
 type AttachedFile = {
   name: string;

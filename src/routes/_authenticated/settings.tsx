@@ -16,14 +16,31 @@ import {
   Save,
   CheckCircle,
   AlertTriangle,
+  Trash2,
 } from "lucide-react";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { authenticateRequest } from "@/lib/api-auth";
+
+const deleteAccount = createServerFn({ method: "POST" }).handler(async () => {
+  const request = getRequest();
+  let authResult;
+  try {
+    authResult = await authenticateRequest(request);
+  } catch (err) {
+    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+  }
+
+  const { userId } = authResult;
+
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+  if (error) throw new Error(error.message);
+});
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
-    meta: [
-      { title: "Settings — GilaniAI" },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
+    meta: [{ title: "Settings — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: SettingsPage,
 });
@@ -33,6 +50,8 @@ function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
   const [curriculum, setCurriculum] = useState("KCSE");
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Theme State
   const [isDark, setIsDark] = useState(false);
@@ -105,7 +124,22 @@ function SettingsPage() {
     if (typeof window !== "undefined") {
       localStorage.setItem("theme", theme);
       document.documentElement.classList.toggle("dark", nextDark);
-      toast.success(nextDark ? "Dark theme active 🌙" : "Light theme active ☀️", { duration: 1500 });
+      toast.success(nextDark ? "Dark theme active 🌙" : "Light theme active ☀️", {
+        duration: 1500,
+      });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to delete account.");
+      setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -113,7 +147,9 @@ function SettingsPage() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("gilani_disclaimer_accepted");
       setDisclaimerAccepted(false);
-      toast.info("AI Disclaimer consent revoked. You will be prompted to read it again on your next dashboard visit.");
+      toast.info(
+        "AI Disclaimer consent revoked. You will be prompted to read it again on your next dashboard visit.",
+      );
     }
   };
 
@@ -126,7 +162,9 @@ function SettingsPage() {
       } else {
         localStorage.setItem("gilani_analytics_consent", String(value));
         setAnalyticsConsent(value);
-        toast.success(value ? "Anonymous usage tracking enabled." : "Anonymous usage tracking disabled.");
+        toast.success(
+          value ? "Anonymous usage tracking enabled." : "Anonymous usage tracking disabled.",
+        );
       }
     }
   };
@@ -176,6 +214,12 @@ function SettingsPage() {
           >
             <FileText className="h-4 w-4" /> Legal & Terms
           </a>
+          <a
+            href="#danger"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold hover:bg-accent hover:text-foreground transition-all text-destructive"
+          >
+            <Trash2 className="h-4 w-4" /> Danger Zone
+          </a>
         </div>
 
         {/* Right Settings Columns */}
@@ -211,10 +255,13 @@ function SettingsPage() {
                 >
                   <option value="KCSE">KCSE (Kenya Certificate of Secondary Education)</option>
                   <option value="CBC">CBC (Competency-Based Curriculum)</option>
-                  <option value="IGCSE">IGCSE (International General Certificate of Secondary Education)</option>
+                  <option value="IGCSE">
+                    IGCSE (International General Certificate of Secondary Education)
+                  </option>
                 </select>
                 <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1">
-                  <GraduationCap className="h-3.5 w-3.5" /> Adjusts the Socratic AI tutor's reference syllabus.
+                  <GraduationCap className="h-3.5 w-3.5" /> Adjusts the Socratic AI tutor's
+                  reference syllabus.
                 </p>
               </div>
 
@@ -232,7 +279,12 @@ function SettingsPage() {
           {/* Theme Section */}
           <section id="theme" className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <h3 className="font-serif text-xl font-bold flex items-center gap-2 mb-2 text-foreground">
-              {isDark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />} Display Theme
+              {isDark ? (
+                <Moon className="h-5 w-5 text-primary" />
+              ) : (
+                <Sun className="h-5 w-5 text-primary" />
+              )}{" "}
+              Display Theme
             </h3>
             <p className="text-xs text-muted-foreground mb-4">
               Switch between light and dark modes according to your reading comfort.
@@ -265,7 +317,10 @@ function SettingsPage() {
           </section>
 
           {/* Consent Section */}
-          <section id="consent" className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+          <section
+            id="consent"
+            className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4"
+          >
             <h3 className="font-serif text-xl font-bold flex items-center gap-2 mb-2 text-foreground">
               <Shield className="h-5 w-5 text-primary" /> Consent & Privacy
             </h3>
@@ -387,6 +442,51 @@ function SettingsPage() {
                 <span className="text-[10px] font-mono text-muted-foreground">Read &rarr;</span>
               </Link>
             </div>
+          </section>
+          {/* Danger Zone */}
+          <section
+            id="danger"
+            className="rounded-xl border border-destructive/40 bg-card p-6 shadow-sm"
+          >
+            <h3 className="font-serif text-xl font-bold flex items-center gap-2 mb-2 text-destructive">
+              <Trash2 className="h-5 w-5" /> Danger Zone
+            </h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+
+            {!showDeleteConfirm ? (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="inline-flex items-center gap-2 rounded-lg border border-destructive/50 px-4 py-2 text-xs font-bold uppercase tracking-wider text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Delete My Account
+              </button>
+            ) : (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+                <p className="text-sm font-semibold text-destructive">
+                  Are you sure? This will permanently delete your account, profile, and all chat
+                  history.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleting}
+                    className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-xs font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {deleting ? "Deleting..." : "Yes, Delete Everything"}
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleting}
+                    className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         </div>
       </div>

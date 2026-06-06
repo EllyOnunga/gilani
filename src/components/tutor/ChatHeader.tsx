@@ -1,12 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import {
-  CheckCircle2,
-  Clock,
-  Download,
-  ListChecks,
-  Loader2,
-  ShieldAlert,
-} from "lucide-react";
+import { CheckCircle2, Clock, Download, ListChecks, Loader2, ShieldAlert } from "lucide-react";
 import { PomodoroTimer } from "./PomodoroTimer";
 import { ExportMenu } from "./ExportModal";
 
@@ -67,7 +60,9 @@ export function ChatHeader({
           title="Select your study curriculum standards"
         >
           {CURRICULA.map((c) => (
-            <option key={c.value} value={c.value}>{c.label}</option>
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
           ))}
         </select>
 

@@ -24,7 +24,8 @@ export function useAuth(): AuthState {
       try {
         // Check for pending role from OAuth redirect — only on fresh sign in
         if (isNewSignIn) {
-          const pendingRole = typeof window !== "undefined" ? localStorage.getItem("pending_role") : null;
+          const pendingRole =
+            typeof window !== "undefined" ? localStorage.getItem("pending_role") : null;
           if (pendingRole && ["student", "teacher", "admin"].includes(pendingRole)) {
             localStorage.removeItem("pending_role");
             const { assignUserRole } = await import("@/lib/auth-actions");
@@ -34,10 +35,7 @@ export function useAuth(): AuthState {
         }
 
         // Fetch existing roles
-        const { data: r } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId);
+        const { data: r } = await supabase.from("user_roles").select("role").eq("user_id", userId);
 
         if (r && r.length > 0) {
           return r.map((x) => x.role as AppRole);

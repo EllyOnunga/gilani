@@ -2,6 +2,17 @@
 @source "../src";
 @import "tw-animate-css";
 
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/playfair-display/500.css";
+@import "@fontsource/playfair-display/600.css";
+@import "@fontsource/playfair-display/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/600.css";
+
 @custom-variant dark (&:is(.dark *));
 
 /* GilaniAI — "Scholarly hearth" design tokens
@@ -123,6 +134,7 @@
     opacity: 0;
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -159,6 +171,7 @@
   0% {
     transform: translateX(0%);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -179,6 +192,7 @@
   100% {
     opacity: 0;
   }
+
   50% {
     opacity: 1;
   }
@@ -190,8 +204,13 @@
 
 /* ── Study Suite auto-scroll ─────────────────────────────────────── */
 @keyframes suite-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .suite-track {
@@ -209,7 +228,7 @@
 /* Edge fade masks for seamless look */
 .suite-fade::before,
 .suite-fade::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   bottom: 0;
@@ -217,10 +236,12 @@
   z-index: 2;
   pointer-events: none;
 }
+
 .suite-fade::before {
   left: 0;
   background: linear-gradient(to right, var(--color-background) 0%, transparent 100%);
 }
+
 .suite-fade::after {
   right: 0;
   background: linear-gradient(to left, var(--color-background) 0%, transparent 100%);

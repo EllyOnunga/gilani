@@ -19,6 +19,8 @@ import {
   BarChart3,
   Sparkles,
 } from "lucide-react";
+import { getRequest } from "@tanstack/react-start/server";
+import { authenticateRequest } from "@/lib/api-auth";
 // Carousel import removed — using CSS infinite scroll instead
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -40,14 +42,17 @@ type DashboardData = {
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
 const loadDashboardData = createServerFn({ method: "GET" })
-  .inputValidator(
-    z.object({
-      userId: z.string(),
-      localDate: z.string(),
-    })
-  )
+  .inputValidator(z.object({ localDate: z.string() }))
   .handler(async ({ data }) => {
-    const { userId, localDate } = data;
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    }
+    const userId = authResult.userId;
+    const { localDate } = data;
 
     // 1. Fetch quiz attempts to get completed count
     const { data: attempts } = await supabaseAdmin
@@ -124,7 +129,9 @@ const loadDashboardData = createServerFn({ method: "GET" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
+  head: () => ({
+    meta: [{ title: "Dashboard — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }],
+  }),
   component: Dashboard,
 });
 
@@ -142,17 +149,16 @@ function Dashboard() {
       try {
         const d = new Date();
         const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-          d.getDate()
+          d.getDate(),
         ).padStart(2, "0")}`;
 
-        const res = await loadDashboardData({ data: { userId: user.id, localDate } });
+        const res = await loadDashboardData({ data: { localDate } });
         setData(res);
       } catch (err) {
         console.error("[Dashboard] load error:", err);
       }
     })();
   }, [user?.id]);
-
 
   const streak = data?.streak ?? 0;
   const quizzesCompleted = data?.quizzesCompleted ?? 0;
@@ -429,8 +435,12 @@ function Dashboard() {
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-foreground leading-tight">{rt.subject}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{rt.topic}</p>
+                      <p className="text-xs font-bold text-foreground leading-tight">
+                        {rt.subject}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                        {rt.topic}
+                      </p>
                     </div>
                   </div>
                 ))}

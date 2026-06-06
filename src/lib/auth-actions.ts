@@ -65,21 +65,19 @@ export const checkEmailExists = createServerFn({ method: "POST" })
         page: 1,
         perPage: 1000,
       });
-      
+
       if (error) {
         console.error("[checkEmailExists] Supabase Auth error:", error);
         return { exists: false };
       }
-      
-      const foundUser = userData?.users?.find(
-        (u) => u.email?.toLowerCase() === email.toLowerCase()
-      );
-      
-      return { exists: !!foundUser };
 
+      const foundUser = userData?.users?.find(
+        (u) => u.email?.toLowerCase() === email.toLowerCase(),
+      );
+
+      return { exists: !!foundUser };
     } catch (err) {
       console.error("[checkEmailExists] Server function failed:", err);
       return { exists: false };
     }
   });
-

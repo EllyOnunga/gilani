@@ -18,6 +18,8 @@ import {
 import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
+import { getRequest } from "@tanstack/react-start/server";
+import { authenticateRequest } from "@/lib/api-auth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -125,7 +127,10 @@ function convertToStudyPlan(data: any): StudyPlan | null {
 function repairAndParseJson(raw: string): any {
   // 1. Strip markdown fences
   let s = raw.trim();
-  s = s.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  s = s
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
 
   // 2. Extract outermost { ... }
   const first = s.indexOf("{");
@@ -135,31 +140,39 @@ function repairAndParseJson(raw: string): any {
   }
 
   // 3. Pre-repair: Fix "daily_quote": "Quote text." — First Last (author outside quotes)
-  s = s.split("\n").map(line => {
-    const quoteMatch = line.match(/^(\s*"daily_quote"\s*:\s*")(.*)"\s*[—–-]\s*([^",]+)(\s*,?\s*)$/);
-    if (quoteMatch) {
-      const prefix = quoteMatch[1];
-      const quoteText = quoteMatch[2];
-      const author = quoteMatch[3].trim();
-      const suffix = quoteMatch[4];
-      return `${prefix}${quoteText} — ${author}"${suffix}`;
-    }
-    return line;
-  }).join("\n");
+  s = s
+    .split("\n")
+    .map((line) => {
+      const quoteMatch = line.match(
+        /^(\s*"daily_quote"\s*:\s*")(.*)"\s*[—–-]\s*([^",]+)(\s*,?\s*)$/,
+      );
+      if (quoteMatch) {
+        const prefix = quoteMatch[1];
+        const quoteText = quoteMatch[2];
+        const author = quoteMatch[3].trim();
+        const suffix = quoteMatch[4];
+        return `${prefix}${quoteText} — ${author}"${suffix}`;
+      }
+      return line;
+    })
+    .join("\n");
 
   // 4. Escape unescaped double quotes inside all JSON string values (line-by-line)
-  s = s.split("\n").map((line) => {
-    const match = line.match(/^(\s*"[a-zA-Z_0-9]+"\s*:\s*")(.*)("\s*,?\s*)$/);
-    if (match) {
-      const prefix = match[1];
-      const val = match[2];
-      const suffix = match[3];
-      // Escape any unescaped double quotes inside the value
-      const escapedVal = val.replace(/(?<!\\)"/g, '\\"');
-      return prefix + escapedVal + suffix;
-    }
-    return line;
-  }).join("\n");
+  s = s
+    .split("\n")
+    .map((line) => {
+      const match = line.match(/^(\s*"[a-zA-Z_0-9]+"\s*:\s*")(.*)("\s*,?\s*)$/);
+      if (match) {
+        const prefix = match[1];
+        const val = match[2];
+        const suffix = match[3];
+        // Escape any unescaped double quotes inside the value
+        const escapedVal = val.replace(/(?<!\\)"/g, '\\"');
+        return prefix + escapedVal + suffix;
+      }
+      return line;
+    })
+    .join("\n");
 
   // 5. Remove trailing commas before ] or } (handles ,\n} and ,})
   s = s.replace(/,\s*([}\]])/g, "$1");
@@ -168,15 +181,12 @@ function repairAndParseJson(raw: string): any {
   //    Scans each JSON string token and escapes backslashes that are not
   //    part of a valid escape sequence (\\, \", \n, \uXXXX).
   //    This repairs LaTeX sequences like \sqrt, \frac etc.
-  s = s.replace(
-    /("(?:[^"\\]|\\.)*")/g,
-    (match) => {
-      return match.replace(/\\(\\|"|n|r|t|b|f|u[0-9a-fA-F]{4})|\\/g, (m, g1) => {
-        if (g1) return m; // already-valid escape — leave alone
-        return "\\\\"; // lone backslash → double-escape
-      });
-    }
-  );
+  s = s.replace(/("(?:[^"\\]|\\.)*")/g, (match) => {
+    return match.replace(/\\(\\|"|n|r|t|b|f|u[0-9a-fA-F]{4})|\\/g, (m, g1) => {
+      if (g1) return m; // already-valid escape — leave alone
+      return "\\\\"; // lone backslash → double-escape
+    });
+  });
 
   // 7. Try direct parse first, fall back to control-char strip as last resort
   try {
@@ -194,78 +204,91 @@ function repairAndParseJson(raw: string): any {
         const pos = parseInt(posMatch[1], 10);
         const start = Math.max(0, pos - 120);
         const end = Math.min(cleaned.length, pos + 120);
-        console.error(`[JSON Repair] Context around position ${pos}:\n...${cleaned.slice(start, end)}...`);
+        console.error(
+          `[JSON Repair] Context around position ${pos}:\n...${cleaned.slice(start, end)}...`,
+        );
       }
 
       try {
         const fs = require("fs");
         fs.writeFileSync("debug-bad-json.json", cleaned, "utf8");
-      } catch (_) { /* silent */ }
+      } catch (_) {
+        /* silent */
+      }
 
       throw finalErr;
     }
   }
 }
 
-
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
-const loadPlan = createServerFn({ method: "GET" })
-  .inputValidator(z.string())
-  .handler(async ({ data: userId }) => {
-    const { data } = await supabaseAdmin
-      .from("study_plans")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+const loadPlan = createServerFn({ method: "GET" }).handler(async () => {
+  const request = getRequest();
+  let authResult;
+  try {
+    authResult = await authenticateRequest(request);
+  } catch (err) {
+    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+  }
+  const userId = authResult.userId;
+  const { data } = await supabaseAdmin
+    .from("study_plans")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-    return convertToStudyPlan(data);
-  });
+  return convertToStudyPlan(data);
+});
 
-const generatePlan = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ userId: z.string() }))
-  .handler(async ({ data }) => {
-    const { userId } = data;
+const generatePlan = createServerFn({ method: "POST" }).handler(async () => {
+  const request = getRequest();
+  let authResult;
+  try {
+    authResult = await authenticateRequest(request);
+  } catch (err) {
+    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+  }
+  const userId = authResult.userId;
+  // Fetch user's curriculum from profile
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("curriculum")
+    .eq("id", userId)
+    .maybeSingle();
 
-    // Fetch user's curriculum from profile
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("curriculum")
-      .eq("id", userId)
-      .maybeSingle();
+  const curriculum = profile?.curriculum || "KCSE";
 
-    const curriculum = profile?.curriculum || "KCSE";
+  // Get the last 3 quiz attempts to find weak topics
+  const { data: attempts } = await supabaseAdmin
+    .from("quiz_attempts")
+    .select("score, weak_topics")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(3);
 
-    // Get the last 3 quiz attempts to find weak topics
-    const { data: attempts } = await supabaseAdmin
-      .from("quiz_attempts")
-      .select("score, weak_topics")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(3);
-
-    const weakTopics: string[] = [];
-    if (attempts) {
-      for (const a of attempts) {
-        if (Array.isArray(a.weak_topics)) {
-          weakTopics.push(...(a.weak_topics as string[]));
-        }
+  const weakTopics: string[] = [];
+  if (attempts) {
+    for (const a of attempts) {
+      if (Array.isArray(a.weak_topics)) {
+        weakTopics.push(...(a.weak_topics as string[]));
       }
     }
+  }
 
-    const { generateText } = await import("ai");
-    const models = createLovableAiGatewayProvider().getAllChatModels();
-    if (models.length === 0) throw new Error("No AI providers are configured.");
+  const { generateText } = await import("ai");
+  const models = createLovableAiGatewayProvider().getAllChatModels();
+  if (models.length === 0) throw new Error("No AI providers are configured.");
 
-    const today = new Date().toISOString().split("T")[0];
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 6);
-    const endDateStr = endDate.toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + 6);
+  const endDateStr = endDate.toISOString().split("T")[0];
 
-    // Highly structural, robust prompt optimized to completely avoid parse failures
-    const prompt = `You are an expert academic curriculum strategist for Kenyan and International learners.
+  // Highly structural, robust prompt optimized to completely avoid parse failures
+  const prompt = `You are an expert academic curriculum strategist for Kenyan and International learners.
 
 Generate a STRICTLY STRUCTURED 7-day study plan for a ${curriculum} student.
 
@@ -307,33 +330,49 @@ If no weak topics are provided, distribute evenly across core subjects.
 CURRICULUM BEHAVIOUR
 ════════════════════════════════════════
 
-${curriculum === "KCSE" ? `
+${
+  curriculum === "KCSE"
+    ? `
 ## KCSE
 - Align to KNEC syllabus (KLB / Longhorn logic)
 - Ground at least 40% of task descriptions in Kenyan context:
   M-Pesa transactions, matatu journeys, shamba farming,
   SGR railway, Lake Victoria, Rift Valley geography
 - Use KNEC command verbs: state, describe, explain, calculate, outline
-- Cover: Mathematics, Sciences, Humanities, Languages proportionally` : ""}
-${curriculum === "CBC" ? `
+- Cover: Mathematics, Sciences, Humanities, Languages proportionally`
+    : ""
+}
+${
+  curriculum === "CBC"
+    ? `
 ## CBC
 - Focus on competencies and real-life application
 - Frame tasks as scenarios the learner acts on (projects, investigations, demonstrations)
 - Prioritise practical skill-building over passive reading
-- Integrate Kenyan daily life contexts throughout` : ""}
-${curriculum === "IGCSE" ? `
+- Integrate Kenyan daily life contexts throughout`
+    : ""
+}
+${
+  curriculum === "IGCSE"
+    ? `
 ## IGCSE
 - Align to Cambridge Assessment objectives
 - Use command verbs by AO level:
   AO1 (recall)  → state, name, list, identify
   AO2 (apply)   → describe, explain, calculate, determine
   AO3 (analyse) → evaluate, discuss, suggest, compare
-- At least 40% of tasks should target AO2 or AO3` : ""}
-${curriculum === "MIXED" ? `
+- At least 40% of tasks should target AO2 or AO3`
+    : ""
+}
+${
+  curriculum === "MIXED"
+    ? `
 ## MIXED
 - Balance KCSE and IGCSE requirements equally
 - Alternate between Kenyan context and Cambridge command verb tasks
-- Cover both KNEC and Cambridge subject requirements` : ""}
+- Cover both KNEC and Cambridge subject requirements`
+    : ""
+}
 
 ════════════════════════════════════════
 MATH FORMATTING IN TASKS
@@ -438,102 +477,104 @@ OUTPUT SCHEMA
 The "daily_plans" array MUST contain exactly 7 objects covering ${today} through ${endDateStr}.
 Each "tasks" array MUST contain exactly 2 objects.
 Generate the JSON now.`;
-    let weeklyPlan: WeeklyPlanResponse | null = null;
-    let items: PlanTask[] = [];
-    let lastError: unknown;
+  let weeklyPlan: WeeklyPlanResponse | null = null;
+  let items: PlanTask[] = [];
+  let lastError: unknown;
 
-    console.log("Generating plan with providers...");
-    for (const model of models) {
-      try {
-        console.log(`[Planner] Trying model: ${model.provider}/${model.modelId}`);
-        const result = await generateText({
-          model: model as any,
-          prompt: prompt,
-          temperature: 0.4,
-          maxTokens: 4000,
-        } as any);
+  console.log("Generating plan with providers...");
+  for (const model of models) {
+    try {
+      console.log(`[Planner] Trying model: ${model.provider}/${model.modelId}`);
+      const result = await generateText({
+        model: model as any,
+        prompt: prompt,
+        temperature: 0.4,
+        maxTokens: 4000,
+      } as any);
 
-        const textResult = result.text.trim();
-        if (textResult) {
-          const parsed = repairAndParseJson(textResult);
+      const textResult = result.text.trim();
+      if (textResult) {
+        const parsed = repairAndParseJson(textResult);
 
-          if (parsed.daily_plans && Array.isArray(parsed.daily_plans)) {
-            weeklyPlan = parsed as WeeklyPlanResponse;
+        if (parsed.daily_plans && Array.isArray(parsed.daily_plans)) {
+          weeklyPlan = parsed as WeeklyPlanResponse;
 
-            // Flatten tasks from daily_plans while strictly ensuring unique identifier integrity
-            items = weeklyPlan.daily_plans.flatMap((day) =>
-              day.tasks.map((task, idx) => ({
-                ...task,
-                date: task.date || day.date,
-                id:
-                  task.id && task.id !== "task-1" && task.id !== "task-2"
-                    ? task.id
-                    : `${day.date}-task-${idx}-${Math.random().toString(36).substring(2, 7)}`,
-              })),
-            );
-          } else if (Array.isArray(parsed)) {
-            items = parsed;
-            weeklyPlan = {
-              plan_metadata: {
-                start_date: today,
-                end_date: endDateStr,
-                total_tasks: items.length,
-                curriculum: curriculum,
-                curriculum_details: {
-                  type: curriculum as CurriculumType,
-                  specific_requirements: "Balanced study plan",
-                },
-                focus_areas: weakTopics.slice(0, 5),
-                weekly_goal: "Improve understanding in weak areas",
-                estimated_weekly_hours: `${Math.round(items.length * 0.75)} hours`,
+          // Flatten tasks from daily_plans while strictly ensuring unique identifier integrity
+          items = weeklyPlan.daily_plans.flatMap((day) =>
+            day.tasks.map((task, idx) => ({
+              ...task,
+              date: task.date || day.date,
+              id:
+                task.id && task.id !== "task-1" && task.id !== "task-2"
+                  ? task.id
+                  : `${day.date}-task-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+            })),
+          );
+        } else if (Array.isArray(parsed)) {
+          items = parsed;
+          weeklyPlan = {
+            plan_metadata: {
+              start_date: today,
+              end_date: endDateStr,
+              total_tasks: items.length,
+              curriculum: curriculum,
+              curriculum_details: {
+                type: curriculum as CurriculumType,
+                specific_requirements: "Balanced study plan",
               },
-              daily_plans: [],
-            };
-          } else {
-            throw new Error("Response schema does not align with valid structural patterns.");
-          }
-
-          console.log(`[Planner] Success with model: ${model.provider}/${model.modelId}`);
-          break;
+              focus_areas: weakTopics.slice(0, 5),
+              weekly_goal: "Improve understanding in weak areas",
+              estimated_weekly_hours: `${Math.round(items.length * 0.75)} hours`,
+            },
+            daily_plans: [],
+          };
+        } else {
+          throw new Error("Response schema does not align with valid structural patterns.");
         }
-      } catch (err) {
-        console.warn(`[Planner] Model ${model.provider}/${model.modelId} failed:`, err);
-        lastError = err;
+
+        console.log(`[Planner] Success with model: ${model.provider}/${model.modelId}`);
+        break;
       }
+    } catch (err) {
+      console.warn(`[Planner] Model ${model.provider}/${model.modelId} failed:`, err);
+      lastError = err;
     }
+  }
 
-    if (!weeklyPlan || items.length === 0) {
-      throw lastError || new Error("Failed to generate plan with all configured providers.");
-    }
+  if (!weeklyPlan || items.length === 0) {
+    throw lastError || new Error("Failed to generate plan with all configured providers.");
+  }
 
-    const wrappedData = {
-      items: items,
-      plan_metadata: weeklyPlan.plan_metadata,
-      daily_plans: weeklyPlan.daily_plans,
-    };
+  const wrappedData = {
+    items: items,
+    plan_metadata: weeklyPlan.plan_metadata,
+    daily_plans: weeklyPlan.daily_plans,
+  };
 
-    const { data: plan, error } = await supabaseAdmin
-      .from("study_plans")
-      .insert({
-        user_id: userId,
-        exam_name: weeklyPlan.plan_metadata.weekly_goal || "Weekly Personal Study Plan",
-        items: wrappedData as any,
-      })
-      .select()
-      .single();
+  const { data: plan, error } = await supabaseAdmin
+    .from("study_plans")
+    .insert({
+      user_id: userId,
+      exam_name: weeklyPlan.plan_metadata.weekly_goal || "Weekly Personal Study Plan",
+      items: wrappedData as any,
+    })
+    .select()
+    .single();
 
-    if (error) {
-      console.error("Database error:", error);
-      throw new Error(error.message);
-    }
+  if (error) {
+    console.error("Database error:", error);
+    throw new Error(error.message);
+  }
 
-    return convertToStudyPlan(plan);
-  });
+  return convertToStudyPlan(plan);
+});
 
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/planner")({
-  head: () => ({ meta: [{ title: "Study Planner — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
+  head: () => ({
+    meta: [{ title: "Study Planner — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }],
+  }),
   component: PlannerPage,
 });
 
@@ -604,11 +645,7 @@ function PlannerPage() {
         const res = await supabase.auth.getSession();
         const session = res?.data?.session;
         if (!session) return;
-        const existing = await withTimeout(
-          loadPlan({ data: session.user.id }),
-          20000,
-          "Loading study plan timed out.",
-        );
+        const existing = await withTimeout(loadPlan(), 20000, "Loading study plan timed out.");
         if (existing) {
           setPlan(existing);
           setDebugInfo(`Loaded plan with ${existing.items?.length || 0} tasks`);
@@ -634,11 +671,7 @@ function PlannerPage() {
         toast.error("Not signed in");
         return;
       }
-      const newPlan = await withTimeout(
-        generatePlan({ data: { userId: session.user.id } }),
-        120000,
-        "Generating study plan timed out.",
-      );
+      const newPlan = await withTimeout(generatePlan(), 120000, "Generating study plan timed out.");
       setPlan(newPlan);
       setCompleted(new Set());
       setDebugInfo(`Generated plan with ${newPlan?.items?.length || 0} tasks`);
@@ -683,7 +716,7 @@ function PlannerPage() {
   const activeDate =
     grouped[selectedDate] && grouped[selectedDate].length > 0
       ? selectedDate
-      : sortedDates[0] ?? selectedDate;
+      : (sortedDates[0] ?? selectedDate);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8 lg:p-12">
@@ -798,9 +831,7 @@ function PlannerPage() {
                   <span className="font-serif text-lg font-bold leading-none mt-0.5">
                     {d.getDate()}
                   </span>
-                  {isToday && (
-                    <span className="mt-1 h-1 w-1 rounded-full bg-primary" />
-                  )}
+                  {isToday && <span className="mt-1 h-1 w-1 rounded-full bg-primary" />}
                   {dayTasks.length > 0 && (
                     <span className="font-mono text-[8px] mt-1 opacity-60">
                       {dayDone}/{dayTasks.length}
@@ -814,97 +845,107 @@ function PlannerPage() {
       )}
 
       {/* Daily task view */}
-      {plan && totalTasks > 0 && (() => {
-        const tasks = grouped[activeDate] ?? [];
-        if (tasks.length === 0) return null;
+      {plan &&
+        totalTasks > 0 &&
+        (() => {
+          const tasks = grouped[activeDate] ?? [];
+          if (tasks.length === 0) return null;
 
-        const d = new Date(activeDate + "T00:00:00");
-        const dayLabel = d.toLocaleDateString("en-KE", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        });
+          const d = new Date(activeDate + "T00:00:00");
+          const dayLabel = d.toLocaleDateString("en-KE", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          });
 
-        const dayPlan = plan?.daily_plans?.find((dp) => dp.date === activeDate);
-        const dayFocus = dayPlan?.daily_focus;
-        const curriculumFocus = dayPlan?.curriculum_focus;
-        const dailyQuote = dayPlan?.daily_quote;
+          const dayPlan = plan?.daily_plans?.find((dp) => dp.date === activeDate);
+          const dayFocus = dayPlan?.daily_focus;
+          const curriculumFocus = dayPlan?.curriculum_focus;
+          const dailyQuote = dayPlan?.daily_quote;
 
-        return (
-          <div className="animate-in-slide space-y-4">
-            {/* Day header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-                  {dayLabel}
-                </p>
-                {dayFocus && (
-                  <p className="text-xs text-muted-foreground mt-0.5 italic">🎯 {dayFocus}</p>
-                )}
+          return (
+            <div className="animate-in-slide space-y-4">
+              {/* Day header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                    {dayLabel}
+                  </p>
+                  {dayFocus && (
+                    <p className="text-xs text-muted-foreground mt-0.5 italic">🎯 {dayFocus}</p>
+                  )}
+                </div>
+                {curriculumFocus && <CurriculumBadge curriculum={curriculumFocus} />}
               </div>
-              {curriculumFocus && <CurriculumBadge curriculum={curriculumFocus} />}
-            </div>
 
-            {/* Task cards */}
-            <div className="space-y-3">
-              {tasks.map((task) => {
-                const done = completed.has(task.id);
-                return (
-                  <button
-                    key={task.id}
-                    onClick={() => toggleTask(task.id)}
-                    className={`w-full flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
-                      done
-                        ? "border-border/40 bg-muted/40 opacity-60"
-                        : "border-border bg-card shadow-sm hover:shadow-md"
-                    }`}
-                  >
-                    {done ? (
-                      <CheckSquare className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
-                    ) : (
-                      <Square className="h-5 w-5 flex-shrink-0 text-muted-foreground mt-0.5" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <p className={`text-sm font-bold ${done ? "line-through text-muted-foreground" : ""}`}>
-                          {task.subject}
-                        </p>
-                        {task.topic && (
-                          <span className="text-xs text-muted-foreground">— {task.topic}</span>
-                        )}
-                        <span className={`rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${PRIORITY_COLOR[task.priority] || PRIORITY_COLOR.medium}`}>
-                          {task.priority}
-                        </span>
-                        {task.type && (
-                          <span className="font-mono text-[9px] text-muted-foreground border border-border rounded-full px-2 py-0.5">
-                            {task.type}
+              {/* Task cards */}
+              <div className="space-y-3">
+                {tasks.map((task) => {
+                  const done = completed.has(task.id);
+                  return (
+                    <button
+                      key={task.id}
+                      onClick={() => toggleTask(task.id)}
+                      className={`w-full flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
+                        done
+                          ? "border-border/40 bg-muted/40 opacity-60"
+                          : "border-border bg-card shadow-sm hover:shadow-md"
+                      }`}
+                    >
+                      {done ? (
+                        <CheckSquare className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
+                      ) : (
+                        <Square className="h-5 w-5 flex-shrink-0 text-muted-foreground mt-0.5" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p
+                            className={`text-sm font-bold ${done ? "line-through text-muted-foreground" : ""}`}
+                          >
+                            {task.subject}
+                          </p>
+                          {task.topic && (
+                            <span className="text-xs text-muted-foreground">— {task.topic}</span>
+                          )}
+                          <span
+                            className={`rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${PRIORITY_COLOR[task.priority] || PRIORITY_COLOR.medium}`}
+                          >
+                            {task.priority}
                           </span>
+                          {task.type && (
+                            <span className="font-mono text-[9px] text-muted-foreground border border-border rounded-full px-2 py-0.5">
+                              {task.type}
+                            </span>
+                          )}
+                        </div>
+                        <p
+                          className={`text-sm ${done ? "line-through text-muted-foreground" : "text-foreground/80"}`}
+                        >
+                          {task.task}
+                        </p>
+                        {task.study_tip && (
+                          <p className="text-xs text-primary/70 mt-2 bg-primary/5 rounded-lg px-3 py-2">
+                            💡 {task.study_tip}
+                          </p>
                         )}
                       </div>
-                      <p className={`text-sm ${done ? "line-through text-muted-foreground" : "text-foreground/80"}`}>
-                        {task.task}
-                      </p>
-                      {task.study_tip && (
-                        <p className="text-xs text-primary/70 mt-2 bg-primary/5 rounded-lg px-3 py-2">💡 {task.study_tip}</p>
-                      )}
-                    </div>
-                    <span className="font-mono text-[10px] text-muted-foreground flex-shrink-0 whitespace-nowrap">
-                      {task.duration}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      <span className="font-mono text-[10px] text-muted-foreground flex-shrink-0 whitespace-nowrap">
+                        {task.duration}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
-            {dailyQuote && (
-              <p className="mt-2 text-[11px] text-muted-foreground italic text-center border-t border-border/40 pt-3">
-                &ldquo;{dailyQuote}&rdquo;
-              </p>
-            )}
-          </div>
-        );
-      })()}
+              {dailyQuote && (
+                <p className="mt-2 text-[11px] text-muted-foreground italic text-center border-t border-border/40 pt-3">
+                  &ldquo;{dailyQuote}&rdquo;
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
       {/* Fallback state inside valid data scopes */}
       {plan && totalTasks === 0 && (

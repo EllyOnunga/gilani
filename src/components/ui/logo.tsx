@@ -17,17 +17,17 @@ export function Logo({
 }: LogoProps) {
   const sizeClasses = {
     sm: {
-      img: "h-7 w-7",
+      img: "h-16 w-48",
       text: "text-lg",
       container: "gap-2",
     },
     md: {
-      img: "h-9 w-9",
+      img: "h-20 w-64",
       text: "text-xl sm:text-2xl",
       container: "gap-2.5",
     },
     lg: {
-      img: "h-12 w-12",
+      img: "h-32 w-96",
       text: "text-3xl sm:text-4xl",
       container: "gap-3.5",
     },
@@ -39,22 +39,11 @@ export function Logo({
     <div className={`flex items-center ${currentSize.container} ${className}`}>
       {/* GilaniAI Logo — neural-network book icon from Canva */}
       <img
-        src="/gilaniai_logo.png"
+        src="/gilanilogo.png"
         alt="GilaniAI logo"
-        className={`${currentSize.img} flex-shrink-0 rounded-lg object-contain`}
-        width={size === "sm" ? 28 : size === "md" ? 36 : 48}
-        height={size === "sm" ? 28 : size === "md" ? 36 : 48}
+        className={`${currentSize.img} flex-shrink-0 object-contain`}
         aria-hidden="true"
       />
-
-      {/* Brand Text */}
-      {!iconOnly && (
-        <span
-          className={`font-serif font-black italic tracking-tight text-primary ${currentSize.text}`}
-        >
-          GilaniAI
-        </span>
-      )}
     </div>
   );
 

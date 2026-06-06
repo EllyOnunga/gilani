@@ -18,10 +18,7 @@ import appCss from "../styles.css?url";
 if (typeof window !== "undefined" && import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration(),
-    ],
+    integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
     tracesSampleRate: 1.0,
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
@@ -60,6 +57,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     }
   }, [error]);
 
+  // Use a hard navigation instead of reset() for root-level errors
+  // reset() tries to reconcile the broken tree; href="/" does a clean remount
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -88,7 +87,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     </div>
   );
 }
-
 const SITE_URL = "https://gilaniai.vercel.app";
 const OG_IMAGE = `${SITE_URL}/icon-512.png`;
 
@@ -150,16 +148,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     return {
       meta: metaTags,
       links: [
-        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        { rel: "icon", type: "image/png", href: "/favicon.png" },
         { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
         { rel: "manifest", href: "/manifest.json" },
         { rel: "stylesheet", href: appCss },
-        { rel: "preconnect", href: "https://fonts.googleapis.com" },
-        { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-        {
-          rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
-        },
       ],
     };
   },
@@ -208,7 +200,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
             __html: `
               try {
                 const storedTheme = localStorage.getItem("theme");
-                if (storedTheme === "dark" || (!storedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches) || !storedTheme) {
+                if (storedTheme === "dark" || (!storedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
                   document.documentElement.classList.add("dark");
                 } else {
                   document.documentElement.classList.remove("dark");
@@ -218,12 +210,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
           }}
         />
         {/* JSON-LD Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON_LD }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON_LD }} />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>
@@ -254,7 +243,8 @@ function RootComponent() {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
     const registerSW = () => {
-      navigator.serviceWorker.register("/sw.js")
+      navigator.serviceWorker
+        .register("/sw.js")
         .then((reg) => {
           console.log("[GilaniAI PWA] ServiceWorker registered successfully:", reg.scope);
         })

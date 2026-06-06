@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { getRequest } from "@tanstack/react-start/server";
+import { authenticateRequest } from "@/lib/api-auth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -28,36 +30,49 @@ type Escalation = {
 };
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
-const listEscalations = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ userId: z.string() }))
-  .handler(async ({ data }) => {
-    const { userId } = data;
+const listEscalations = createServerFn({ method: "POST" }).handler(async () => {
+  const request = getRequest();
+  let authResult;
+  try {
+    authResult = await authenticateRequest(request);
+  } catch (err) {
+    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+  }
+  const userId = authResult.userId;
 
-    // SECURITY: Verify teacher/admin role before returning escalations
-    const { data: roleCheck, error: roleError } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .in("role", ["teacher", "admin"])
-      .single();
+  // SECURITY: Verify teacher/admin role before returning escalations
+  const { data: roleCheck, error: roleError } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .in("role", ["teacher", "admin"])
+    .single();
 
-    if (roleError || !roleCheck) {
-      throw new Error("Forbidden: Teacher access required");
-    }
+  if (roleError || !roleCheck) {
+    throw new Error("Forbidden: Teacher access required");
+  }
 
-    const { data: escalationsData, error } = await supabaseAdmin
-      .from("escalations")
-      .select("*")
-      .eq("reviewer_id", userId)
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return (escalationsData ?? []) as any[];
-  });
+  const { data: escalationsData, error } = await supabaseAdmin
+    .from("escalations")
+    .select("*")
+    .eq("reviewer_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (escalationsData ?? []) as any[];
+});
 
 const resolveEscalation = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id: z.string(), expertAnswer: z.string(), userId: z.string() }))
+  .inputValidator(z.object({ id: z.string(), expertAnswer: z.string() }))
   .handler(async ({ data }) => {
-    const { id, expertAnswer, userId } = data;
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    }
+    const userId = authResult.userId;
+    const { id, expertAnswer } = data;
 
     const { data: roleCheck } = await supabaseAdmin
       .from("user_roles")
@@ -100,9 +115,17 @@ const resolveEscalation = createServerFn({ method: "POST" })
   });
 
 const getConversationMessages = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ conversationId: z.string(), userId: z.string() }))
+  .inputValidator(z.object({ conversationId: z.string() }))
   .handler(async ({ data }) => {
-    const { conversationId, userId } = data;
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    }
+    const userId = authResult.userId;
+    const { conversationId } = data;
 
     const { data: roleCheck } = await supabaseAdmin
       .from("user_roles")
@@ -126,7 +149,9 @@ const getConversationMessages = createServerFn({ method: "POST" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/teacher/escalations")({
-  head: () => ({ meta: [{ title: "Escalations — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
+  head: () => ({
+    meta: [{ title: "Escalations — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }],
+  }),
   component: EscalationsPage,
 });
 
@@ -160,7 +185,7 @@ function EscalationsPage() {
           if (mounted) setEscalations([]);
           return;
         }
-        const rows = await listEscalations({ data: { userId: session.user.id } });
+        const rows = await listEscalations();
         if (mounted) setEscalations(rows as Escalation[]);
       } catch (err: any) {
         if (mounted) toast.error(err?.message ?? "Failed to load escalations");
@@ -184,7 +209,7 @@ function EscalationsPage() {
         const session = authRes?.data?.session;
         if (!session?.user?.id) return;
         const msgs = await getConversationMessages({
-          data: { conversationId: existing.conversation_id, userId: session.user.id },
+          data: { conversationId: existing.conversation_id },
         });
         setConvoMessages(msgs);
       } catch (err: any) {
@@ -205,7 +230,7 @@ function EscalationsPage() {
       const authRes = await supabase.auth.getSession();
       const session = authRes?.data?.session;
       if (!session?.user?.id) throw new Error("Not signed in");
-      await resolveEscalation({ data: { id, expertAnswer: answer, userId: session.user.id } });
+      await resolveEscalation({ data: { id, expertAnswer: answer } });
       setEscalations((prev) =>
         prev.map((e) => (e.id === id ? { ...e, status: "resolved", detail: answer } : e)),
       );
@@ -347,10 +372,11 @@ function EscalationsPage() {
                                 {msg.role === "user" ? "Student" : "GilaniAI"}
                               </span>
                               <div
-                                className={`rounded-lg px-3 py-2 text-xs max-w-[85%] leading-relaxed ${msg.role === "user"
+                                className={`rounded-lg px-3 py-2 text-xs max-w-[85%] leading-relaxed ${
+                                  msg.role === "user"
                                     ? "bg-primary/10 text-foreground"
                                     : "bg-card border border-border text-foreground"
-                                  }`}
+                                }`}
                               >
                                 {msg.content}
                               </div>

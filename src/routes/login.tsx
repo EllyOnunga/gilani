@@ -21,7 +21,8 @@ export const Route = createFileRoute("/login")({
       { title: "Sign in — GilaniAI" },
       {
         name: "description",
-        content: "Sign in to your GilaniAI account to access AI tutoring, quizzes, notes, and your personalised study planner.",
+        content:
+          "Sign in to your GilaniAI account to access AI tutoring, quizzes, notes, and your personalised study planner.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -29,7 +30,6 @@ export const Route = createFileRoute("/login")({
   }),
   component: LoginPage,
 });
-
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -96,7 +96,8 @@ function LoginPage() {
         <form onSubmit={onSubmit} className="mt-6 space-y-3">
           {search.email && (
             <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-200">
-              This email is already registered. If you forgot your password, please use the reset flow.
+              This email is already registered. If you forgot your password, please use the reset
+              flow.
             </div>
           )}
           <input
@@ -163,4 +164,3 @@ function LoginPage() {
     </div>
   );
 }
-

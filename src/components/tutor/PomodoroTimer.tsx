@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Timer } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Props = {
   open?: boolean;
@@ -19,7 +14,7 @@ export function PomodoroTimer({ open, onOpenChange, showTrigger = true }: Props)
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerMode, setTimerMode] = useState<"study" | "break">("study");
-  
+
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const timerOpen = isControlled ? open : internalOpen;

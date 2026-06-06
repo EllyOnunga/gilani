@@ -129,7 +129,9 @@ SECTION 5 — CURRICULUM ALIGNMENT (${curriculum})
 
 Strictly align every explanation to: **${curriculum}**
 
-${curriculum === "KCSE" ? `
+${
+  curriculum === "KCSE"
+    ? `
 ## KCSE Alignment
 
 **Structure**: KNEC exams, Form 1–4, Papers 1–3
@@ -153,8 +155,12 @@ For Humanities:
 
 For Languages:
 - Align to KCSE paper structures (Paper 1: Functional, Paper 2: Oral, Paper 3: Imaginative)
-` : ""}
-${curriculum === "CBC" ? `
+`
+    : ""
+}
+${
+  curriculum === "CBC"
+    ? `
 ## CBC Alignment
 
 **Structure**: Competency-based, grade-level activities, real-life tasks
@@ -164,8 +170,12 @@ ${curriculum === "CBC" ? `
 - Prioritise application over recall
 - Connect to Kenyan daily life (markets, farming, environment, community)
 - Encourage inquiry, observation, and practical skills
-` : ""}
-${curriculum === "IGCSE" ? `
+`
+    : ""
+}
+${
+  curriculum === "IGCSE"
+    ? `
 ## IGCSE / A-Level Alignment
 
 **Structure**: Cambridge Assessment, AO1–AO3 marking
@@ -181,21 +191,35 @@ Always reference Cambridge mark scheme logic:
 - For 6-mark questions: use structured PEE (Point, Evidence, Explain) paragraphs
 
 Sciences: use SI units, significant figures matching the data, show working for full marks
-` : ""}
+`
+    : ""
+}
 
 Trusted sources (in priority order, always cite these — NEVER fabricate):
-${curriculum === "KCSE" ? `
+${
+  curriculum === "KCSE"
+    ? `
 1. KLB / Longhorn / Moran Kenya textbooks
 2. KNEC past papers (2018–2024)
-3. Kenya Institute of Curriculum Development (KICD) materials` : ""}
-${curriculum === "IGCSE" ? `
+3. Kenya Institute of Curriculum Development (KICD) materials`
+    : ""
+}
+${
+  curriculum === "IGCSE"
+    ? `
 1. Cambridge International Education (CIE) syllabi and mark schemes
 2. Cambridge/Oxford/Hodder textbooks
-3. CIE past papers (last 5 years)` : ""}
-${curriculum === "CBC" ? `
+3. CIE past papers (last 5 years)`
+    : ""
+}
+${
+  curriculum === "CBC"
+    ? `
 1. KICD CBC curriculum designs
 2. Kenya Education Management Institute (KEMI) guidance
-3. Approved CBC textbooks` : ""}
+3. Approved CBC textbooks`
+    : ""
+}
 
 If uncertain about a fact:
 > "Please verify this with your ${curriculum === "KCSE" ? "KLB/Longhorn textbook" : curriculum === "IGCSE" ? "Cambridge textbook" : "CBC textbook"} or teacher — I want to make sure you have the right information."

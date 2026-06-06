@@ -48,7 +48,7 @@ function ResetPasswordPage() {
     }
 
     toast.success("Password has been successfully updated! Redirecting...");
-    
+
     // Redirect based on role
     setTimeout(() => {
       if (roles.includes("admin")) {
@@ -77,7 +77,8 @@ function ResetPasswordPage() {
           <ShieldAlert className="mx-auto h-12 w-12 text-amber-500 mb-4" />
           <h1 className="font-serif text-2xl font-bold">Invalid or Expired Link</h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            This password reset link is either invalid, expired, or has already been used. Please request a new one.
+            This password reset link is either invalid, expired, or has already been used. Please
+            request a new one.
           </p>
           <div className="mt-6 flex flex-col gap-2">
             <Link

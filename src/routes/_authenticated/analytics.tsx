@@ -22,6 +22,8 @@ import {
   Radar,
 } from "recharts";
 import { getErrorMessage, withTimeout } from "@/lib/async";
+import { getRequest } from "@tanstack/react-start/server";
+import { authenticateRequest } from "@/lib/api-auth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -35,119 +37,127 @@ type AnalyticsData = {
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
-const fetchAnalytics = createServerFn({ method: "GET" })
-  .inputValidator(z.string())
-  .handler(async ({ data: userId }) => {
-    // 1. Fetch attempts
-    const { data: attempts } = await supabaseAdmin
-      .from("quiz_attempts")
-      .select("score, created_at, weak_topics, quiz_id")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: true });
+const fetchAnalytics = createServerFn({ method: "GET" }).handler(async () => {
+  const request = getRequest();
+  let authResult;
+  try {
+    authResult = await authenticateRequest(request);
+  } catch (err) {
+    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+  }
+  const userId = authResult.userId;
+  // 1. Fetch attempts
+  const { data: attempts } = await supabaseAdmin
+    .from("quiz_attempts")
+    .select("score, created_at, weak_topics, quiz_id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
 
-    if (!attempts || attempts.length === 0) {
-      const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils");
-      const { streak, notesCount } = await calculateUserStreakAndStats(userId);
-      return {
-        attemptsCount: 0,
-        averageScore: 0,
-        attemptsHistory: [],
-        weakTopics: [],
-        subjectMastery: [],
-        streak,
-        notesCount,
-      };
-    }
-
-    // 2. Fetch associated quizzes to determine subject and questions count
-    const quizIds = attempts.map((a) => a.quiz_id);
-    const { data: quizzes } = await supabaseAdmin
-      .from("quizzes")
-      .select("id, topic, questions")
-      .in("id", quizIds);
-
-    const quizTopicMap: Record<string, string> = {};
-    const quizLengthMap: Record<string, number> = {};
-    if (quizzes) {
-      for (const q of quizzes) {
-        quizTopicMap[q.id] = q.topic;
-        const qList = Array.isArray(q.questions) ? q.questions : [];
-        quizLengthMap[q.id] = qList.length || 10;
-      }
-    }
-
-    // Process attempts count and average
-    const attemptsCount = attempts.length;
-    let totalScorePercent = 0;
-    for (const a of attempts) {
-      const qLen = quizLengthMap[a.quiz_id] || 10;
-      totalScorePercent += Math.round((a.score / qLen) * 100);
-    }
-    const averageScore = attemptsCount > 0 ? Math.round(totalScorePercent / attemptsCount) : 0;
-
-    // History chart data
-    const attemptsHistory = attempts.map((a) => {
-      const qLen = quizLengthMap[a.quiz_id] || 10;
-      return {
-        date: new Date(a.created_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" }),
-        score: Math.round((a.score / qLen) * 100),
-      };
-    });
-
-    // Weak topics aggregation
-    const topicCounts: Record<string, number> = {};
-    const subjectsMap: Record<string, { totalScore: number; count: number }> = {};
-
-    for (const a of attempts) {
-      const topic = quizTopicMap[a.quiz_id] || "General";
-      const subject = topic.split(" — ")[0] || "General";
-      const qLen = quizLengthMap[a.quiz_id] || 10;
-      const percentScore = Math.round((a.score / qLen) * 100);
-
-      // Subject mastery
-      if (!subjectsMap[subject]) {
-        subjectsMap[subject] = { totalScore: 0, count: 0 };
-      }
-      subjectsMap[subject].totalScore += percentScore;
-      subjectsMap[subject].count += 1;
-
-      // Weak topics
-      if (Array.isArray(a.weak_topics)) {
-        for (const wt of a.weak_topics as string[]) {
-          const cleanWt = wt.length > 30 ? wt.slice(0, 30) + "…" : wt;
-          topicCounts[cleanWt] = (topicCounts[cleanWt] || 0) + 1;
-        }
-      }
-    }
-
-    const weakTopics = Object.entries(topicCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    const subjectMastery = Object.entries(subjectsMap).map(([subject, data]) => ({
-      subject,
-      score: Math.round(data.totalScore / data.count),
-    }));
-
+  if (!attempts || attempts.length === 0) {
     const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils");
     const { streak, notesCount } = await calculateUserStreakAndStats(userId);
-
     return {
-      attemptsCount,
-      averageScore,
-      attemptsHistory,
-      weakTopics,
-      subjectMastery,
+      attemptsCount: 0,
+      averageScore: 0,
+      attemptsHistory: [],
+      weakTopics: [],
+      subjectMastery: [],
       streak,
       notesCount,
     };
+  }
+
+  // 2. Fetch associated quizzes to determine subject and questions count
+  const quizIds = attempts.map((a) => a.quiz_id);
+  const { data: quizzes } = await supabaseAdmin
+    .from("quizzes")
+    .select("id, topic, questions")
+    .in("id", quizIds);
+
+  const quizTopicMap: Record<string, string> = {};
+  const quizLengthMap: Record<string, number> = {};
+  if (quizzes) {
+    for (const q of quizzes) {
+      quizTopicMap[q.id] = q.topic;
+      const qList = Array.isArray(q.questions) ? q.questions : [];
+      quizLengthMap[q.id] = qList.length || 10;
+    }
+  }
+
+  // Process attempts count and average
+  const attemptsCount = attempts.length;
+  let totalScorePercent = 0;
+  for (const a of attempts) {
+    const qLen = quizLengthMap[a.quiz_id] || 10;
+    totalScorePercent += Math.round((a.score / qLen) * 100);
+  }
+  const averageScore = attemptsCount > 0 ? Math.round(totalScorePercent / attemptsCount) : 0;
+
+  // History chart data
+  const attemptsHistory = attempts.map((a) => {
+    const qLen = quizLengthMap[a.quiz_id] || 10;
+    return {
+      date: new Date(a.created_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" }),
+      score: Math.round((a.score / qLen) * 100),
+    };
   });
+
+  // Weak topics aggregation
+  const topicCounts: Record<string, number> = {};
+  const subjectsMap: Record<string, { totalScore: number; count: number }> = {};
+
+  for (const a of attempts) {
+    const topic = quizTopicMap[a.quiz_id] || "General";
+    const subject = topic.split(" — ")[0] || "General";
+    const qLen = quizLengthMap[a.quiz_id] || 10;
+    const percentScore = Math.round((a.score / qLen) * 100);
+
+    // Subject mastery
+    if (!subjectsMap[subject]) {
+      subjectsMap[subject] = { totalScore: 0, count: 0 };
+    }
+    subjectsMap[subject].totalScore += percentScore;
+    subjectsMap[subject].count += 1;
+
+    // Weak topics
+    if (Array.isArray(a.weak_topics)) {
+      for (const wt of a.weak_topics as string[]) {
+        const cleanWt = wt.length > 30 ? wt.slice(0, 30) + "…" : wt;
+        topicCounts[cleanWt] = (topicCounts[cleanWt] || 0) + 1;
+      }
+    }
+  }
+
+  const weakTopics = Object.entries(topicCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const subjectMastery = Object.entries(subjectsMap).map(([subject, data]) => ({
+    subject,
+    score: Math.round(data.totalScore / data.count),
+  }));
+
+  const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils");
+  const { streak, notesCount } = await calculateUserStreakAndStats(userId);
+
+  return {
+    attemptsCount,
+    averageScore,
+    attemptsHistory,
+    weakTopics,
+    subjectMastery,
+    streak,
+    notesCount,
+  };
+});
 
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/analytics")({
-  head: () => ({ meta: [{ title: "Analytics — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
+  head: () => ({
+    meta: [{ title: "Analytics — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }],
+  }),
   component: AnalyticsPage,
 });
 
@@ -166,8 +176,14 @@ interface Particle {
 }
 
 const CONFETTI_COLORS = [
-  "#d9531e", "#f59e0b", "#10b981", "#6366f1",
-  "#ec4899", "#3b82f6", "#a78bfa", "#f97316",
+  "#d9531e",
+  "#f59e0b",
+  "#10b981",
+  "#6366f1",
+  "#ec4899",
+  "#3b82f6",
+  "#a78bfa",
+  "#f97316",
 ];
 
 function createConfettiParticle(canvasWidth: number): Particle {
@@ -288,11 +304,7 @@ function AnalyticsPage() {
       const authRes = await supabase.auth.getSession();
       const session = authRes?.data?.session;
       if (session) {
-        const res = await withTimeout(
-          fetchAnalytics({ data: session.user.id }),
-          12000,
-          "Analytics request timed out.",
-        );
+        const res = await withTimeout(fetchAnalytics(), 12000, "Analytics request timed out.");
         setData(res);
       }
     } catch (err: unknown) {

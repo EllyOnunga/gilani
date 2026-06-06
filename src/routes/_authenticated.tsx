@@ -30,6 +30,7 @@ import { authenticateRequest } from "@/lib/api-auth";
 import { NotificationBell } from "@/components/notifications";
 import { DisclaimerModal } from "@/components/DisclaimerModal";
 import { Logo } from "@/components/ui/logo";
+import { GilaniLoader } from "@/components/GilaniLoader";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
@@ -70,7 +71,6 @@ const NAV = [
   { to: "/analytics" as any, label: "Analytics", icon: BarChart3 },
   { to: "/settings" as any, label: "Settings", icon: Settings },
 ] as const;
-
 
 function AuthedShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -153,12 +153,14 @@ function AuthedShell() {
     }
   };
 
-  if (loading || !user) {
-    return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center">
-        <p className="text-sm text-muted-foreground font-medium">Checking your session…</p>
-      </div>
-    );
+  if (loading) {
+    return <GilaniLoader />;
+  }
+
+  if (!user) {
+    // Hard redirect — don't render anything
+    navigate({ to: "/login", search: { redirect: window.location.href } });
+    return <GilaniLoader />;
   }
 
   const isTeacher = roles.includes("teacher") || roles.includes("admin");
@@ -201,20 +203,21 @@ function AuthedShell() {
 
       {/* Responsive Aside Navigation Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         {/* Brand logo & Mobile Close Button */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="block">
+        <div className="flex items-center justify-between mb-8 min-w-0">
+          <div className="block min-w-0 flex-1">
             <Logo to="/dashboard" onClick={() => setSidebarOpen(false)} size="md" />
             <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground pl-[38px]">
-              Ethical Learning / KCSE-CBC
+              Ethical Learning
             </p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 lg:hidden"
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 lg:hidden flex-shrink-0 ml-2"
             title="Close menu"
           >
             <X className="h-5 w-5" />
@@ -229,8 +232,9 @@ function AuthedShell() {
                 key={to}
                 to={to}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
-                  }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
+                }`}
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -246,10 +250,11 @@ function AuthedShell() {
               <Link
                 to={"/teacher/escalations" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/teacher/escalations")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-black/5"
-                  }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
+                  path.startsWith("/teacher/escalations")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-black/5"
+                }`}
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
               </Link>
@@ -263,10 +268,11 @@ function AuthedShell() {
               <Link
                 to={"/admin/users" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/admin")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-black/5"
-                  }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
+                  path.startsWith("/admin")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-black/5"
+                }`}
               >
                 <Settings className="h-4 w-4" /> Users & Roles
               </Link>

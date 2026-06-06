@@ -10,6 +10,7 @@ This project follows [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR
 ### 🚀 Initial Public Release
 
 #### Features
+
 - **AI Tutor** — Socratic curriculum-grounded AI chat with per-thread history and streaming responses
 - **Practice Quizzes** — Auto-generated multi-choice quizzes per KCSE/CBC topic with scoring and weak topic tracking
 - **Study Notes** — AI-powered summarisation with Markdown rendering, export to PDF/DOCX, and KaTeX math support
@@ -20,11 +21,13 @@ This project follows [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR
 - **PWA** — Installable on Android and iOS with offline static-asset caching via service worker
 
 #### Performance
+
 - Route-level lazy loading (`React.lazy`) for `MarkdownRenderer`
 - Vite code splitting per route
 - Immutable CDN caching for all `/assets/*` files via `vercel.json`
 
 #### SEO / SEM
+
 - `robots.txt` with correct allow/disallow rules
 - `sitemap.xml` for all public pages
 - Full Open Graph and Twitter Card meta per page
@@ -33,6 +36,7 @@ This project follows [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR
 - Canonical URLs on all public pages
 
 #### PWA
+
 - Web App Manifest with 192 × 192 and 512 × 512 PNG icons (regular + maskable)
 - Service worker with network-first for SSR pages, cache-first for static assets
 - Apple Touch Icon and `theme-color` meta
@@ -53,11 +57,13 @@ npm version major
 ```
 
 After bumping the version, also update `CACHE_NAME` in `public/sw.js` to match:
+
 ```js
-const CACHE_NAME = 'gilaniai-v1.0.1'; // ← bump to new version
+const CACHE_NAME = "gilaniai-v1.0.1"; // ← bump to new version
 ```
 
 Then commit, tag, and push:
+
 ```bash
 git add .
 git commit -m "chore: release v$(node -p "require('./package.json').version")"
@@ -69,8 +75,8 @@ git push origin main --tags
 
 ## Versioning Policy
 
-| Change type | Example | Version bump |
-|---|---|---|
-| Bug fix | Fix SW crash on `/dashboard` | `patch` — `1.0.x` |
-| New feature | Add flashcards module | `minor` — `1.x.0` |
+| Change type     | Example                       | Version bump      |
+| --------------- | ----------------------------- | ----------------- |
+| Bug fix         | Fix SW crash on `/dashboard`  | `patch` — `1.0.x` |
+| New feature     | Add flashcards module         | `minor` — `1.x.0` |
 | Breaking change | Rebuild auth flow / DB schema | `major` — `x.0.0` |

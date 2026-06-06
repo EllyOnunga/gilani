@@ -27,10 +27,7 @@ export const createGoogleAiProvider = (apiKey?: string) => {
 
   // NOTE: Only AIza... keys work with @ai-sdk/google (Google AI Studio keys).
   // Keys starting with "AQ." are Vertex AI Express Mode keys requiring OAuth2 — NOT compatible.
-  const isValidGeminiKey =
-    geminiKey &&
-    geminiKey.trim() !== "" &&
-    geminiKey.startsWith("AIza");
+  const isValidGeminiKey = geminiKey && geminiKey.trim() !== "" && geminiKey.startsWith("AIza");
 
   // Build a list of all active/configured providers based on environment variables
   const activeProviders: ("openai" | "groq" | "google" | "mistral")[] = [];

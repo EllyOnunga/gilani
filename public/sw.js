@@ -6,44 +6,49 @@
 //  - PWA files (icons, manifest) → cache-first with network fallback
 //  - Everything else → network-only (pass through)
 
-const CACHE_NAME = 'gilaniai-v1.0.0';
+const CACHE_NAME = "gilaniai-v1.0.0";
 
 const STATIC_ASSETS = [
-  '/favicon.svg',
-  '/logo.svg',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-192-maskable.png',
-  '/icon-512.png',
-  '/icon-512-maskable.png',
-  '/apple-touch-icon.png',
+  "/favicon.png", // was /favicon.svg
+  "/gilanilogo.png",
+  "/manifest.json",
+  "/icon-192.png",
+  "/icon-192-maskable.png",
+  "/icon-512.png",
+  "/icon-512-maskable.png",
+  "/apple-touch-icon.png",
 ];
 
 // ── Install: pre-cache only known static PWA assets ──────────────────────────
-self.addEventListener('install', (event) => {
+self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.allSettled(
-        STATIC_ASSETS.map((url) => cache.add(url).catch(() => { /* skip failures */ }))
+        STATIC_ASSETS.map((url) =>
+          cache.add(url).catch(() => {
+            /* skip failures */
+          }),
+        ),
       );
-    })
+    }),
   );
 });
 
 // ── Activate: remove old caches ───────────────────────────────────────────────
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))),
       )
-    ).then(() => self.clients.claim())
+      .then(() => self.clients.claim()),
   );
 });
 
 // ── Fetch: smart routing ──────────────────────────────────────────────────────
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
@@ -51,29 +56,31 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   // 2. Skip non-GET requests (POST, etc.)
-  if (request.method !== 'GET') return;
+  if (request.method !== "GET") return;
 
   // 3. CRITICAL for SSR: Never intercept navigation (document) requests.
   //    These must always hit the Vercel SSR server so the HTML is fresh.
-  if (request.mode === 'navigate') return;
+  if (request.mode === "navigate") return;
 
   // 4. Skip TanStack server-fn and API routes entirely
-  if (url.pathname.startsWith('/_server') || url.pathname.startsWith('/api/')) return;
+  if (url.pathname.startsWith("/_server") || url.pathname.startsWith("/api/")) return;
 
   // 5. For hashed static assets (/assets/*): cache-first strategy
   //    Vite hashes filenames so these are safe to cache indefinitely.
-  if (url.pathname.startsWith('/assets/')) {
+  if (url.pathname.startsWith("/assets/")) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
-        return fetch(request).then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        }).catch(() => new Response('Asset not available offline.', { status: 503 }));
-      })
+        return fetch(request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => new Response("Asset not available offline.", { status: 503 }));
+      }),
     );
     return;
   }
@@ -84,14 +91,16 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
-        return fetch(request).then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        }).catch(() => new Response('File not available offline.', { status: 503 }));
-      })
+        return fetch(request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => new Response("File not available offline.", { status: 503 }));
+      }),
     );
     return;
   }

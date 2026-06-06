@@ -70,7 +70,8 @@ function ForgotPasswordPage() {
 
         <h1 className="mt-4 font-serif text-3xl font-bold">Reset Password</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          Enter the email address associated with your account and we'll send you a secure link to reset your password.
+          Enter the email address associated with your account and we'll send you a secure link to
+          reset your password.
         </p>
 
         {success ? (
@@ -80,8 +81,9 @@ function ForgotPasswordPage() {
                 <Mail className="h-4 w-4 text-primary" /> Check your email
               </div>
               <p className="text-xs">
-                We've sent a password reset link to <strong className="text-foreground">{email}</strong>. 
-                Please click the link in the email to set a new password.
+                We've sent a password reset link to{" "}
+                <strong className="text-foreground">{email}</strong>. Please click the link in the
+                email to set a new password.
               </p>
               <p className="text-[10px] text-muted-foreground italic mt-2">
                 Didn't receive it? Check your spam folder or try again in a few minutes.

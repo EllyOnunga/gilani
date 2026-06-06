@@ -47,7 +47,9 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload }: 
             />
             {displayText ? (
               <div className="mt-1 prose-ai relative">
-                <React.Suspense fallback={<div className="h-10 w-full animate-pulse bg-muted/50 rounded" />}>
+                <React.Suspense
+                  fallback={<div className="h-10 w-full animate-pulse bg-muted/50 rounded" />}
+                >
                   <LazyMarkdownRenderer content={displayText} />
                 </React.Suspense>
                 {isLast && isStreamActive && (

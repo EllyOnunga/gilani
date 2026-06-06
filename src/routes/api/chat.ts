@@ -335,7 +335,9 @@ export const Route = createFileRoute("/api/chat")({
                     const safety = (providerMetadata as any)?.google?.safetyRatings;
                     if (
                       Array.isArray(safety) &&
-                      safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")
+                      safety.some(
+                        (s: any) => s.probability === "HIGH" || s.probability === "MEDIUM",
+                      )
                     ) {
                       const { data: escData, error: escErr } = await supabaseAdmin
                         .from("escalations")
@@ -356,14 +358,15 @@ export const Route = createFileRoute("/api/chat")({
                               userId,
                               threadId,
                               reason: "Safety probability threshold exceeded",
-                              detail: "Automatically escalated due to model safety ratings threshold breach.",
+                              detail:
+                                "Automatically escalated due to model safety ratings threshold breach.",
                             });
                           })
                           .catch((err) => {
                             console.error("[Zapier] Failed to load safety trigger:", err);
                           });
                       }
-                    } 
+                    }
                   } catch (persistError) {
                     console.error("Failed to persist assistant message:", persistError);
                   }

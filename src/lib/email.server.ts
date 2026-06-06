@@ -22,9 +22,7 @@ export async function sendTransactionalEmail({
   const senderEmail = process.env.SENDER_EMAIL || "onboarding@resend.dev";
 
   if (!apiKey) {
-    console.warn(
-      `[Email Service] RESEND_API_KEY is not configured. Email to "${to}" was skipped.`,
-    );
+    console.warn(`[Email Service] RESEND_API_KEY is not configured. Email to "${to}" was skipped.`);
     console.log(`[Email Service] Simulated Email Content:`, {
       to,
       subject,
@@ -42,7 +40,7 @@ export async function sendTransactionalEmail({
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

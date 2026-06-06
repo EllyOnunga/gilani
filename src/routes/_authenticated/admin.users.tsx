@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { Settings, UserCheck, Loader2, Shield, GraduationCap, User } from "lucide-react";
@@ -104,7 +105,18 @@ const updateRole = createServerFn({ method: "POST" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
-  head: () => ({ meta: [{ title: "Admin — Users & Roles — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }] }),
+  head: () => ({
+    meta: [
+      { title: "Admin — Users & Roles — GilaniAI" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
+  beforeLoad: async () => {
+    if (typeof window !== "undefined") {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) throw redirect({ to: "/login" });
+    }
+  },
   loader: async () => {
     const data = await listProfiles();
     return data as Profile[];

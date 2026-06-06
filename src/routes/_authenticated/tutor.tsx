@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchWithTimeout, getErrorMessage, withTimeout } from "@/lib/async";
+import { GilaniLoader } from "@/components/GilaniLoader";
 
 export const Route = createFileRoute("/_authenticated/tutor")({
   component: TutorIndex,
@@ -230,10 +231,5 @@ function TutorIndex() {
     );
   }
 
-  return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center">
-      <Loader2 className="h-6 w-6 animate-spin text-primary mb-3" />
-      <p className="text-sm text-muted-foreground font-medium">Creating your study session…</p>
-    </div>
-  );
+  return <GilaniLoader />;
 }

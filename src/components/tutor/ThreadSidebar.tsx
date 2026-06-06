@@ -56,17 +56,19 @@ export function ThreadSidebar({
     (t.title || "Untitled").toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const SidebarContent = (
+  const SidebarInner = ({ showClose }: { showClose: boolean }) => (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <span className="font-serif text-lg font-bold text-primary">Sessions</span>
-        <button
-          onClick={onClose}
-          className="rounded-md p-1 text-muted-foreground hover:text-foreground lg:hidden"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        {showClose && (
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* New Thread Button */}
@@ -103,10 +105,11 @@ export function ThreadSidebar({
         {filtered.map((t) => (
           <div
             key={t.id}
-            className={`group relative flex items-center justify-between rounded-lg transition-colors ${t.id === threadId
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:bg-accent"
-              }`}
+            className={`group relative flex items-center justify-between rounded-lg transition-colors ${
+              t.id === threadId
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-accent"
+            }`}
           >
             <button
               onClick={() => onSelectThread(t.id)}
@@ -151,9 +154,9 @@ export function ThreadSidebar({
 
   return (
     <>
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar — no close button */}
       <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-sidebar p-4 h-full overflow-hidden">
-        {SidebarContent}
+        <SidebarInner showClose={false} />
       </aside>
 
       {/* Mobile overlay */}
@@ -164,12 +167,13 @@ export function ThreadSidebar({
         />
       )}
 
-      {/* Mobile sidebar */}
+      {/* Mobile sidebar — has close button */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out lg:hidden ${threadsOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out lg:hidden ${
+          threadsOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        {SidebarContent}
+        <SidebarInner showClose={true} />
       </aside>
     </>
   );

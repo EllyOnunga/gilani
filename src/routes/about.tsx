@@ -13,7 +13,8 @@ export const Route = createFileRoute("/about")({
       { property: "og:title", content: "How GilaniAI Works — Ethical AI Tutoring" },
       {
         property: "og:description",
-        content: "AI tutoring grounded in Kenyan curriculum standards with real teacher escalation built in.",
+        content:
+          "AI tutoring grounded in Kenyan curriculum standards with real teacher escalation built in.",
       },
       { property: "og:url", content: "https://gilaniai.vercel.app/about" },
     ],

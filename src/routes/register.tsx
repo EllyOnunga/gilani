@@ -17,7 +17,8 @@ export const Route = createFileRoute("/register")({
       { title: "Create account — GilaniAI" },
       {
         name: "description",
-        content: "Create your free GilaniAI account. Students get AI tutoring, quizzes and a smart study planner. Teachers get an escalation dashboard for student support.",
+        content:
+          "Create your free GilaniAI account. Students get AI tutoring, quizzes and a smart study planner. Teachers get an escalation dashboard for student support.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -48,7 +49,6 @@ function RegisterPage() {
     }
   }, [user, roles, loading, navigate]);
 
-
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -58,7 +58,9 @@ function RegisterPage() {
       const { exists } = await checkEmailExists({ data: { email } });
       if (exists) {
         setBusy(false);
-        toast.error("This email is already registered. Please sign in instead.", { duration: 5000 });
+        toast.error("This email is already registered. Please sign in instead.", {
+          duration: 5000,
+        });
         navigate({ to: "/login", search: { email } });
         return;
       }
@@ -68,7 +70,6 @@ function RegisterPage() {
 
     // Persist pending role to local storage for use after redirect/session check
     localStorage.setItem("pending_role", role);
-
 
     // 1. Sign up user
     const { data, error } = await supabase.auth.signUp({
@@ -143,10 +144,11 @@ function RegisterPage() {
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${role === r
-                    ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
-                    : "border-border bg-card text-muted-foreground hover:bg-accent"
-                    }`}
+                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${
+                    role === r
+                      ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                      : "border-border bg-card text-muted-foreground hover:bg-accent"
+                  }`}
                 >
                   {r}
                 </button>
