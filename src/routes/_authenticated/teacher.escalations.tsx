@@ -48,7 +48,7 @@ const listEscalations = createServerFn({ method: "POST" })
     const { data: escalationsData, error } = await supabaseAdmin
       .from("escalations")
       .select("*")
-      .or(`reviewer_id.eq.${userId},reviewer_id.is.null`)
+      .eq("reviewer_id", userId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return (escalationsData ?? []) as any[];
@@ -347,11 +347,10 @@ function EscalationsPage() {
                                 {msg.role === "user" ? "Student" : "GilaniAI"}
                               </span>
                               <div
-                                className={`rounded-lg px-3 py-2 text-xs max-w-[85%] leading-relaxed ${
-                                  msg.role === "user"
+                                className={`rounded-lg px-3 py-2 text-xs max-w-[85%] leading-relaxed ${msg.role === "user"
                                     ? "bg-primary/10 text-foreground"
                                     : "bg-card border border-border text-foreground"
-                                }`}
+                                  }`}
                               >
                                 {msg.content}
                               </div>

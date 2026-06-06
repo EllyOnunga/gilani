@@ -118,8 +118,8 @@ export function SessionActions({
                 <div>
                     {escalationStatus ? (
                         <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${escalationStatus === "open" ? "border-amber-200 bg-amber-50 text-amber-700" :
-                                escalationStatus === "in_review" ? "border-blue-200 bg-blue-50 text-blue-700" :
-                                    "border-green-200 bg-green-50 text-green-700"
+                            escalationStatus === "in_review" ? "border-blue-200 bg-blue-50 text-blue-700" :
+                                "border-green-200 bg-green-50 text-green-700"
                             }`}>
                             {escalationStatus === "open" && <><Clock className="h-4 w-4 animate-pulse" /> Pending Review</>}
                             {escalationStatus === "in_review" && <><Clock className="h-4 w-4 animate-pulse" /> Teacher Reviewing</>}
