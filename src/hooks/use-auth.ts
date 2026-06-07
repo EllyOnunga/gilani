@@ -27,10 +27,21 @@ export function useAuth(): AuthState {
           const pendingRole =
             typeof window !== "undefined" ? localStorage.getItem("pending_role") : null;
           if (pendingRole && ["student", "teacher"].includes(pendingRole)) {
-            localStorage.removeItem("pending_role");
-            const { assignUserRole } = await import("@/lib/auth-actions");
-            await assignUserRole({ data: { role: pendingRole as AppRole } });
-            return [pendingRole as AppRole];
+            // Check if role already assigned before trying to assign
+            const { data: existing } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+            if (!existing || existing.length === 0) {
+              try {
+                localStorage.removeItem("pending_role");
+                const { assignUserRole } = await import("@/lib/auth-actions");
+                await assignUserRole({ data: { role: pendingRole as AppRole } });
+                return [pendingRole as AppRole];
+              } catch {
+                // Role already assigned by trigger, continue
+              }
+            } else {
+              localStorage.removeItem("pending_role");
+              return existing.map((x) => x.role as AppRole);
+            }
           }
         }
 
@@ -41,10 +52,8 @@ export function useAuth(): AuthState {
           return r.map((x) => x.role as AppRole);
         }
 
-        // No role found — auto-assign student
-        const { assignUserRole } = await import("@/lib/auth-actions");
-        await assignUserRole({ data: { role: "student" } });
-        return ["student"];
+        // No role found — trigger should have assigned student, return empty and let UI handle
+        return [];
       } catch (err) {
         console.error("[checkAndAssignRole] failed:", err);
         return [];
