@@ -22,6 +22,7 @@ import {
   Menu,
   X,
   Smartphone,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createServerFn } from "@tanstack/react-start";
@@ -63,7 +64,7 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthedShell,
 });
 
-const NAV = [
+const STUDENT_NAV = [
   { to: "/dashboard" as any, label: "Dashboard", icon: GraduationCap },
   { to: "/tutor" as any, label: "Tutor Chat", icon: MessageCircle },
   { to: "/notes" as any, label: "Study Notes", icon: BookOpenText },
@@ -241,7 +242,7 @@ function AuthedShell() {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto min-h-0">
-          {NAV.map(({ to, label, icon: Icon }) => {
+          {!isTeacher && !isAdmin && STUDENT_NAV.map(({ to, label, icon: Icon }) => {
             const active = path === to || path.startsWith(to + "/");
             return (
               <Link
@@ -272,6 +273,13 @@ function AuthedShell() {
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
               </Link>
+              <Link
+                to={"/settings" as any}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path === "/settings" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"}`}
+              >
+                <Settings className="h-4 w-4" /> Settings
+              </Link>
             </>
           )}
           {isAdmin && (
@@ -287,7 +295,14 @@ function AuthedShell() {
                   : "text-muted-foreground hover:bg-black/5"
                   }`}
               >
-                <Settings className="h-4 w-4" /> Users & Roles
+                <Users className="h-4 w-4" /> Users & Roles
+              </Link>
+              <Link
+                to={"/settings" as any}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path === "/settings" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"}`}
+              >
+                <Settings className="h-4 w-4" /> Settings
               </Link>
             </>
           )}
