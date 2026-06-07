@@ -85,8 +85,16 @@ export interface ExtractedDocument {
 /**
  * Runs Tesseract OCR on an image File and returns extracted text
  */
+async function getTesseract(): Promise<any> {
+  if ((window as any).Tesseract) return (window as any).Tesseract;
+  await loadExternalScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
+  const Tesseract = (window as any).Tesseract;
+  if (!Tesseract) throw new Error("Tesseract.js failed to load.");
+  return Tesseract;
+}
+
 async function ocrImage(file: File): Promise<string> {
-  const { default: Tesseract } = await import("tesseract.js");
+  const Tesseract = await getTesseract();
   const url = URL.createObjectURL(file);
   try {
     const result = await Tesseract.recognize(url, "eng", {
