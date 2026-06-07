@@ -15,6 +15,10 @@ const RATE_LIMIT_WINDOW = 60000; // per 60 seconds
 
 function checkRateLimit(userId: string): boolean {
   const now = Date.now();
+  // Prune expired entries to prevent memory leak
+  for (const [key, val] of rateLimitMap.entries()) {
+    if (now > val.resetAt) rateLimitMap.delete(key);
+  }
   const entry = rateLimitMap.get(userId);
   if (!entry || now > entry.resetAt) {
     rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
@@ -174,9 +178,9 @@ export const Route = createFileRoute("/api/chat")({
           const body = await request.json().catch(() => ({}));
           const { threadId, messages } = body as { threadId?: string; messages?: any[] };
 
-          console.log("[API Chat] userId:", userId, "| threadId:", threadId);
-
-          if (!threadId) {
+          // Validate threadId is a UUID
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          if (!threadId || !uuidRegex.test(threadId)) {
             return new Response(JSON.stringify({ error: "threadId required" }), {
               status: 400,
               headers: { "Content-Type": "application/json" },

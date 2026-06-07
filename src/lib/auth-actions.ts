@@ -62,7 +62,6 @@ export const checkEmailExists = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { email } = data;
     try {
-      console.log(`[checkEmailExists] Checking if email exists: ${email}`);
       const { data: userData, error } = await supabaseAdmin.auth.admin.listUsers({
         page: 1,
         perPage: 1000,

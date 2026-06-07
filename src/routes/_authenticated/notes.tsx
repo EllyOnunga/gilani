@@ -125,13 +125,7 @@ function repairAndParseJson(raw: string): any {
       }
 
       // Write bad JSON to a local debug file for inspection
-      try {
-        const fs = require("fs");
-        fs.writeFileSync("debug-bad-json-notes.json", cleaned, "utf8");
-        console.error("[JSON Repair] Wrote bad JSON to debug-bad-json-notes.json");
-      } catch (fsErr) {
-        // Fallback for environment if require/fs is not available or throws
-      }
+      // debug file write removed in production
 
       throw finalErr;
     }
