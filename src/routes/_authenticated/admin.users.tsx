@@ -25,10 +25,12 @@ const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
   // SECURITY: Use proper SSR auth via request header
   const request = getRequest();
   let authResult;
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return [];
   try {
     authResult = await authenticateRequest(request);
   } catch (err) {
-    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    return [];
   }
 
   const { userId } = authResult;

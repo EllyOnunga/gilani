@@ -181,7 +181,7 @@ function AuthedShell() {
     return <GilaniLoader />;
   }
 
-  const isTeacher = roles.includes("teacher") || roles.includes("admin");
+  const isTeacher = roles.includes("teacher") && !roles.includes("admin");
   const isAdmin = roles.includes("admin");
 
   const signOut = async () => {
