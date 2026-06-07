@@ -59,9 +59,14 @@ function AuthCallback() {
           return;
         }
 
-        // Existing user — go to their destination
-
-        navigate({ to: safePath });
+        // Existing user — redirect based on role to avoid flash
+        if (roleRow.role === "admin") {
+          navigate({ to: "/admin/users" });
+        } else if (roleRow.role === "teacher") {
+          navigate({ to: "/teacher/escalations" });
+        } else {
+          navigate({ to: safePath });
+        }
         return;
       }
 
