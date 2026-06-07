@@ -1,3 +1,4 @@
+import Tesseract from 'tesseract.js';
 // Dynamic browser-side document text extractor supporting PDF, DOCX, TXT, MD, and CSV files.
 // Performs parsing entirely client-side to guarantee speed, privacy, and zero server storage overhead.
 
@@ -81,6 +82,35 @@ export interface ExtractedDocument {
 /**
  * Parses and extracts clean raw text from a variety of document formats.
  */
+
+/**
+ * Runs Tesseract OCR on an image File and returns extracted text
+ */
+async function ocrImage(file: File): Promise<string> {
+  const url = URL.createObjectURL(file);
+  try {
+    const result = await Tesseract.recognize(url, "eng", {
+      logger: () => {},
+    });
+    return result.data.text.trim();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/**
+ * Renders a PDF page to a canvas and returns it as a Blob for OCR
+ */
+async function pdfPageToBlob(page: any): Promise<Blob> {
+  const viewport = page.getViewport({ scale: 2.0 });
+  const canvas = document.createElement("canvas");
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext("2d")!;
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  return new Promise((res) => canvas.toBlob((b) => res(b!), "image/png"));
+}
+
 export async function parseDocument(file: File): Promise<ExtractedDocument> {
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(
@@ -118,7 +148,16 @@ export async function parseDocument(file: File): Promise<ExtractedDocument> {
         }
 
         if (!fullText.trim()) {
-          throw new Error("The PDF document seems to be empty or contains only images.");
+          // Scanned PDF — fall back to Tesseract OCR page by page
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const blob = await pdfPageToBlob(page);
+            const imageFile = new File([blob], `page-${i}.png`, { type: "image/png" });
+            fullText += await ocrImage(imageFile) + "\n";
+          }
+          if (!fullText.trim()) {
+            throw new Error("Could not extract text from this PDF even with OCR.");
+          }
         }
 
         return { text: fullText.trim(), name, size };
@@ -137,9 +176,18 @@ export async function parseDocument(file: File): Promise<ExtractedDocument> {
         return { text: text.trim(), name, size };
       }
 
+      case "jpg":
+      case "jpeg":
+      case "png":
+      case "webp": {
+        const text = await ocrImage(file);
+        if (!text) throw new Error("Could not extract any text from this image.");
+        return { text, name, size };
+      }
+
       default:
         throw new Error(
-          `Unsupported file type (.${extension}). Please upload a PDF, DOCX, TXT, MD, or CSV file.`,
+          `Unsupported file type (.${extension}). Please upload a PDF, DOCX, TXT, MD, CSV, or image file (JPG, PNG, WEBP).`,
         );
     }
   } catch (err: any) {

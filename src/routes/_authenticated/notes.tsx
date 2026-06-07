@@ -745,7 +745,7 @@ ${content}`.trim() : content } }),
                 type="file"
                 id="notes-file-upload"
                 className="hidden"
-                accept=".pdf,.docx,.txt,.md,.csv"
+                accept=".pdf,.docx,.txt,.md,.csv,.jpg,.jpeg,.png,.webp"
                 onChange={handleFileChange}
                 disabled={parsingFile}
               />
@@ -765,7 +765,7 @@ ${content}`.trim() : content } }),
                   or drag and drop a document
                 </div>
                 <div className="font-mono text-[10px] text-muted-foreground/80">
-                  Supports PDF, DOCX, TXT, MD, CSV (Max 10MB)
+                  Supports PDF, DOCX, TXT, MD, CSV, JPG, PNG, WEBP (Max 10MB)
                 </div>
               </label>
             </div>

@@ -100,7 +100,7 @@ export function ChatInput({
             type="file"
             id="chat-file-attachment"
             className="hidden"
-            accept=".pdf,.docx,.txt,.md,.csv"
+            accept=".pdf,.docx,.txt,.md,.csv,.jpg,.jpeg,.png,.webp"
             onChange={onFileChange}
             disabled={isDisabled}
           />
@@ -111,7 +111,7 @@ export function ChatInput({
                 ? "pointer-events-none opacity-40"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
-            title="Attach a document (PDF, DOCX, TXT, MD, CSV — max 10 MB)"
+            title="Attach a file (PDF, DOCX, TXT, MD, CSV, JPG, PNG, WEBP — max 10 MB)"
           >
             {parsingFile ? (
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
