@@ -26,7 +26,7 @@ export function useAuth(): AuthState {
         if (isNewSignIn) {
           const pendingRole =
             typeof window !== "undefined" ? localStorage.getItem("pending_role") : null;
-          if (pendingRole && ["student", "teacher", "admin"].includes(pendingRole)) {
+          if (pendingRole && ["student", "teacher"].includes(pendingRole)) {
             localStorage.removeItem("pending_role");
             const { assignUserRole } = await import("@/lib/auth-actions");
             await assignUserRole({ data: { role: pendingRole as AppRole } });

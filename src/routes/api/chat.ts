@@ -300,17 +300,18 @@ export const Route = createFileRoute("/api/chat")({
           const systemPrompt = buildSystemPrompt({ curriculum, notesContext });
 
           // ✅ FIXED: Clean user/assistant messages array ONLY. Use flat string content for maximum provider compatibility.
+          // Cap to last 50 messages to prevent unbounded token cost
+          const cappedMessages = messages?.slice(-50) ?? [];
           const aiMessages = [
-            ...(messages?.map((m: any) => {
+            ...(cappedMessages.map((m: any) => {
               const textContent = extractText(m);
               return {
                 role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
                 content: textContent,
               };
-            }) || []),
+            })),
           ];
 
-          console.log(`[API Chat] System prompt length: ${systemPrompt.length} chars`);
 
           // ─── Stream Response (WITH PROVIDER RETRY FALLBACK) ───────────────
           let streamResult: any = null;
