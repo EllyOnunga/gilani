@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Logo } from "@/components/ui/logo";
+import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
@@ -19,19 +21,13 @@ function TermsPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
       <header className="border-b border-border/50 sticky top-0 bg-background/80 backdrop-blur-md z-30">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
-          <Link
-            to="/"
-            className="font-serif text-xl font-black italic text-primary hover:opacity-90 transition-opacity"
-          >
-            GilaniAI
-          </Link>
-          <Link
-            to="/"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Back to home
-          </Link>
+        <div className="flex w-full items-center justify-between px-4 sm:px-6 py-3">
+          <Logo to="/" size="md" />
+          <nav className="flex items-center gap-3">
+            <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to home
+            </Link>
+          </nav>
         </div>
       </header>
 
