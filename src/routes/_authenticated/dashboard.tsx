@@ -137,11 +137,6 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { user, roles, loading } = useAuth();
-
-  // Block admin/teacher from seeing student dashboard
-  if (!loading && roles.length > 0 && (roles.includes("admin") || roles.includes("teacher"))) {
-    return null;
-  }
   const name =
     (user?.user_metadata?.display_name as string) || user?.email?.split("@")[0] || "Student";
 
@@ -169,6 +164,11 @@ function Dashboard() {
   const quizzesCompleted = data?.quizzesCompleted ?? 0;
   const revisionTopics = data?.revisionTopics ?? [];
   const plannerTasks = data?.plannerTasks ?? [];
+
+  // Block admin/teacher from rendering student dashboard
+  if (!loading && roles.length > 0 && (roles.includes("admin") || roles.includes("teacher"))) {
+    return null;
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8 lg:p-12 sm:space-y-8 lg:space-y-12">
