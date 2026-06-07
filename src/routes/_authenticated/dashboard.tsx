@@ -136,7 +136,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
-  const { user } = useAuth();
+  const { user, roles, loading } = useAuth();
+
+  // Block admin/teacher from seeing student dashboard
+  if (!loading && roles.length > 0 && (roles.includes("admin") || roles.includes("teacher"))) {
+    return null;
+  }
   const name =
     (user?.user_metadata?.display_name as string) || user?.email?.split("@")[0] || "Student";
 
