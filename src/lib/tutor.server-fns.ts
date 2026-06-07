@@ -26,7 +26,7 @@ export const generateThreadTitleFn = createServerFn({ method: "POST" })
         messages: [
           {
             role: "user",
-            content: `Generate a short 3-5 word title for a study session that starts with this question: "${firstMessage}". Reply with only the title itself. Do not wrap in quotes. Do not include prefixes like "Title:". No punctuation.`,
+            content: `Generate a short 3-5 word title for a study session that starts with this question: "${firstMessage.slice(0, 200)}". Reply with only the title itself. Do not wrap in quotes. Do not include prefixes like "Title:". No punctuation.`,
           },
         ],
       }),
