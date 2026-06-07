@@ -180,7 +180,7 @@ const ingestNote = createServerFn({ method: "POST" })
     }
     const userId = authResult.userId;
     const { title, heading, subheading, content } = data;
-    if (!title.trim() || (!content.trim() && !attachedFile)) {
+    if (!title.trim() || !content.trim()) {
       throw new Error("Title and content are required");
     }
 

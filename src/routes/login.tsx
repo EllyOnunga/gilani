@@ -64,7 +64,7 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) return toast.error(error.message);
-    navigate({ to: "/callback", search: { next: search.redirect || "/dashboard" } });
+    navigate({ to: "/callback", search: { next: search.redirect || "/dashboard", error: undefined, error_description: undefined } });
   };
 
   const onGoogle = async () => {
