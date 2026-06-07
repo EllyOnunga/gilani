@@ -37,6 +37,25 @@ function AuthCallback() {
     }
 
     const handleCallback = async () => {
+      // Handle email confirmation / recovery links with token_hash
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenHash = urlParams.get("token_hash");
+      const type = urlParams.get("type") as "email" | "recovery" | null;
+
+      if (tokenHash && type) {
+        const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+        if (verifyError) {
+          setIsError(true);
+          setErrorMessage(verifyError.message || "The link is invalid or has expired.");
+          return;
+        }
+        if (type === "recovery") {
+          navigate({ to: "/reset-password" });
+          return;
+        }
+        // Email confirmed — fall through to get session below
+      }
+
       const {
         data: { session },
         error,
