@@ -23,17 +23,21 @@ export default defineConfig({
       disableCsrfMiddlewareWarning: true,
     },
   },
-  nitro: nitroPreset
-    ? {
-        preset: nitroPreset,
-        output:
-          nitroPreset === "vercel"
-            ? {
-                dir: ".vercel/output",
-                serverDir: ".vercel/output/functions/__server.func",
-                publicDir: ".vercel/output/static",
-              }
-            : undefined,
-      }
-    : undefined,
+  nitro: {
+    ...(nitroPreset ? {
+      preset: nitroPreset,
+      output:
+        nitroPreset === "vercel"
+          ? {
+              dir: ".vercel/output",
+              serverDir: ".vercel/output/functions/__server.func",
+              publicDir: ".vercel/output/static",
+            }
+          : undefined,
+    } : {}),
+    externals: {
+      inline: [],
+      external: ["nodemailer"],
+    },
+  },
 });
