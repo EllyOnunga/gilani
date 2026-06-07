@@ -29,7 +29,7 @@ export function useAuth(): AuthState {
           if (pendingRole && ["student", "teacher", "admin"].includes(pendingRole)) {
             localStorage.removeItem("pending_role");
             const { assignUserRole } = await import("@/lib/auth-actions");
-            await assignUserRole({ data: { userId, role: pendingRole as AppRole } });
+            await assignUserRole({ data: { role: pendingRole as AppRole } });
             return [pendingRole as AppRole];
           }
         }
@@ -43,7 +43,7 @@ export function useAuth(): AuthState {
 
         // No role found — auto-assign student
         const { assignUserRole } = await import("@/lib/auth-actions");
-        await assignUserRole({ data: { userId, role: "student" } });
+        await assignUserRole({ data: { role: "student" } });
         return ["student"];
       } catch (err) {
         console.error("[checkAndAssignRole] failed:", err);

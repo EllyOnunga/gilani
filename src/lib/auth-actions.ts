@@ -1,50 +1,50 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { authenticateRequest } from "@/lib/api-auth";
 import { z } from "zod";
 
-/**
- * Server action to assign a user's initial app role securely.
- * This runs with full service_role privileges bypassing RLS restrictions.
- */
 export const assignUserRole = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
-      userId: z.string(),
       role: z.enum(["student", "teacher", "admin"]),
+      // userId removed — extracted from server session
     }),
   )
   .handler(async ({ data }) => {
-    const { userId, role } = data;
+    const request = getRequest();
+    let authResult;
     try {
-      console.log(`[assignUserRole] Assigning role: ${role} to user ID: ${userId}`);
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    }
+    const userId = authResult.userId;
+    const { role } = data;
 
-      // 1. Delete default roles to prevent duplicate student assignment
+    try {
       const { error: deleteError } = await supabaseAdmin
         .from("user_roles")
         .delete()
         .eq("user_id", userId);
+      if (deleteError) throw deleteError;
 
-      if (deleteError) {
-        console.error("[assignUserRole] Delete existing roles failed:", deleteError);
-        throw deleteError;
-      }
+      const { error: insertError } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: userId, role });
+      if (insertError) throw insertError;
 
-      // 2. Insert selected role
-      const { error: insertError } = await supabaseAdmin.from("user_roles").insert({
-        user_id: userId,
-        role: role,
-      });
+      // Also ensure profile exists for OAuth users
+      await supabaseAdmin
+        .from("profiles")
+        .upsert(
+          { id: userId, display_name: authResult.user.user_metadata?.full_name ?? null, updated_at: new Date().toISOString() },
+          { onConflict: "id", ignoreDuplicates: true }
+        );
 
-      if (insertError) {
-        console.error("[assignUserRole] Role insertion failed:", insertError);
-        throw insertError;
-      }
-
-      console.log(`[assignUserRole] Role ${role} successfully assigned to user ID: ${userId}`);
       return { success: true };
     } catch (err: any) {
-      console.error("[assignUserRole] Server function failed:", err);
-      throw new Error(err.message || "BFF failed to assign user role securely.");
+      throw new Error(err.message || "Failed to assign user role.");
     }
   });
 

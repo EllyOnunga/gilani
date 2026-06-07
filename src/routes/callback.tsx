@@ -46,8 +46,23 @@ function AuthCallback() {
       }
 
       if (session) {
-        navigate({ to: safePath })
-        return
+        // Check if this user already has a role (existing user)
+        const { data: roleRow } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        if (!roleRow) {
+          // New OAuth user — send to register to pick role
+          navigate({ to: "/register" });
+          return;
+        }
+
+        // Existing user — go to their destination
+
+        navigate({ to: safePath });
+        return;
       }
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {

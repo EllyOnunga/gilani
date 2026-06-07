@@ -87,17 +87,6 @@ function RegisterPage() {
       return toast.error(error.message);
     }
 
-    // 2. Invoke server function to assign their role securely ONLY if the session
-    // is NOT auto-established. If it is auto-established, the checkAndAssignRole
-    // listener inside useAuth hook will handle the server-side role assignment via pending_role.
-    if (data?.user?.id && !data.session) {
-      try {
-        const { assignUserRole } = await import("@/lib/auth-actions");
-        await assignUserRole({ data: { userId: data.user.id, role: role } });
-      } catch (roleErr) {
-        console.error("Failed to assign role securely on server:", roleErr);
-      }
-    }
 
     setBusy(false);
     toast.success("Account created! Check your inbox to verify your email.");
@@ -110,7 +99,7 @@ function RegisterPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/callback`,
         queryParams: {
           access_type: "offline",
           prompt: "select_account",
@@ -150,8 +139,8 @@ function RegisterPage() {
                   type="button"
                   onClick={() => setRole(r)}
                   className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${role === r
-                      ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
-                      : "border-border bg-card text-muted-foreground hover:bg-accent"
+                    ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                    : "border-border bg-card text-muted-foreground hover:bg-accent"
                     }`}
                 >
                   {r}

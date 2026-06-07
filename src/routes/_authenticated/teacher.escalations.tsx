@@ -158,12 +158,12 @@ export const Route = createFileRoute("/_authenticated/teacher/escalations")({
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 const REASON_LABELS: Record<string, { label: string; color: string }> = {
-  distress_keyword: { label: "Distress keyword", color: "text-red-600 bg-red-50 border-red-200" },
+  distress_keyword: { label: "Distress keyword", color: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900" },
   student_request: {
     label: "Student request",
-    color: "text-amber-600 bg-amber-50 border-amber-200",
+    color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900",
   },
-  low_confidence: { label: "Low confidence", color: "text-blue-600 bg-blue-50 border-blue-200" },
+  low_confidence: { label: "Low confidence", color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900" },
 };
 
 function EscalationsPage() {
@@ -429,13 +429,13 @@ function EscalationsPage() {
           {resolved.map((esc) => (
             <div
               key={esc.id}
-              className="rounded-xl border border-green-200 bg-green-50/60 p-4 opacity-80"
+              className="rounded-xl border border-green-200 dark:border-green-900 bg-green-50/60 dark:bg-green-950/30 p-4 opacity-80"
             >
               <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
                 <span className="font-mono text-[10px] text-muted-foreground">
                   Thread: {esc.conversation_id ? esc.conversation_id.slice(0, 8) : ""}…
                 </span>
-                <span className="rounded-full border border-green-300 bg-green-100 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-green-700">
+                <span className="rounded-full border border-green-300 dark:border-green-700 bg-green-100 dark:bg-green-900/40 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-green-700 dark:text-green-400">
                   Resolved
                 </span>
               </div>

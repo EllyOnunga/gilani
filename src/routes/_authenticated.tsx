@@ -108,12 +108,30 @@ function AuthedShell() {
       navigate({ to: "/login", search: { redirect: window.location.href } });
       return;
     }
-    // Redirect teachers/admins to their section if landing on student dashboard
-    if (path === "/dashboard") {
-      if (roles.includes("admin")) {
-        navigate({ to: "/admin/users" as any });
-      } else if (roles.includes("teacher")) {
-        navigate({ to: "/teacher/escalations" as any });
+    if (roles.length === 0) return; // wait for roles to load
+
+    const isAdmin = roles.includes("admin");
+    const isTeacher = roles.includes("teacher");
+    const isStudent = !isAdmin && !isTeacher;
+
+    const studentOnlyPaths = ["/dashboard", "/notes", "/quizzes", "/planner", "/analytics", "/tutor"];
+    const isOnStudentRoute = studentOnlyPaths.some(
+      (p) => path === p || path.startsWith(p + "/")
+    );
+
+    if (isAdmin) {
+      if (isOnStudentRoute) navigate({ to: "/admin/users" as any });
+      return;
+    }
+
+    if (isTeacher) {
+      if (isOnStudentRoute) navigate({ to: "/teacher/escalations" as any });
+      return;
+    }
+
+    if (isStudent) {
+      if (path.startsWith("/admin") || path.startsWith("/teacher")) {
+        navigate({ to: "/dashboard" as any });
       }
     }
   }, [loading, user, roles, path, navigate]);
@@ -202,9 +220,8 @@ function AuthedShell() {
 
       {/* Responsive Aside Navigation Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Brand logo & Mobile Close Button */}
         <div className="flex items-center justify-between mb-8 min-w-0">
@@ -231,9 +248,8 @@ function AuthedShell() {
                 key={to}
                 to={to}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
-                }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
+                  }`}
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -249,11 +265,10 @@ function AuthedShell() {
               <Link
                 to={"/teacher/escalations" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
-                  path.startsWith("/teacher/escalations")
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-black/5"
-                }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/teacher/escalations")
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-black/5"
+                  }`}
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
               </Link>
@@ -267,11 +282,10 @@ function AuthedShell() {
               <Link
                 to={"/admin/users" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
-                  path.startsWith("/admin")
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-black/5"
-                }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/admin")
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-black/5"
+                  }`}
               >
                 <Settings className="h-4 w-4" /> Users & Roles
               </Link>
