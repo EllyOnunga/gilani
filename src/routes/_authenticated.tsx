@@ -31,6 +31,7 @@ import { NotificationBell } from "@/components/notifications";
 import { DisclaimerModal } from "@/components/DisclaimerModal";
 import { Logo } from "@/components/ui/logo";
 import { GilaniLoader } from "@/components/GilaniLoader";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
@@ -158,8 +159,6 @@ function AuthedShell() {
   }
 
   if (!user) {
-    // Hard redirect — don't render anything
-    navigate({ to: "/login", search: { redirect: window.location.href } });
     return <GilaniLoader />;
   }
 
@@ -342,6 +341,7 @@ function AuthedShell() {
         </div>
       </aside>
       <main className="flex-1 min-w-0 overflow-y-auto">
+        <Breadcrumb />
         <Outlet />
       </main>
     </div>
