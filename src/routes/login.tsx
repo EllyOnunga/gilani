@@ -64,7 +64,14 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) return toast.error(error.message);
-    navigate({ to: "/callback", search: { next: search.redirect || "/dashboard", error: undefined, error_description: undefined } });
+    navigate({
+      to: "/callback",
+      search: {
+        next: search.redirect || "/dashboard",
+        error: undefined,
+        error_description: undefined,
+      },
+    });
   };
 
   const onGoogle = async () => {
@@ -86,19 +93,20 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen grid place-items-center bg-background px-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md rounded-2xl border border-border/60 bg-card shadow-xl shadow-black/5 px-8 py-10">
         <div className="w-full flex items-center justify-between mb-2">
-          <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to home
           </Link>
         </div>
         <Logo to="/" size="md" />
-        <h1 className="mt-6 font-serif text-3xl font-bold">Unified Portal Login</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Secure access for students, teachers, and administrators.
-        </p>
-        <form onSubmit={onSubmit} className="mt-6 space-y-3">
+        <h1 className="mt-6 text-2xl font-bold tracking-tight">Welcome back</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Sign in to continue to your portal.</p>
+        <form onSubmit={onSubmit} className="mt-6 space-y-4">
           {search.email && (
             <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-200">
               This email is already registered. If you forgot your password, please use the reset
@@ -111,7 +119,7 @@ function LoginPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
           />
           <div className="space-y-1.5">
             <div className="relative">
@@ -121,7 +129,7 @@ function LoginPage() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
               />
               <button
                 type="button"
@@ -144,17 +152,17 @@ function LoginPage() {
           </div>
           <button
             disabled={busy}
-            className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="w-full rounded-xl bg-primary py-3 shadow-md shadow-primary/20 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {busy ? "Signing in…" : "Sign in"}
           </button>
         </form>
-        <div className="my-4 flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+        <div className="my-5 flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
           <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
         </div>
         <button
           onClick={onGoogle}
-          className="w-full flex items-center justify-center gap-3 rounded-md border border-border bg-white dark:bg-zinc-900 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm"
+          className="w-full flex items-center justify-center gap-3 rounded-xl border border-border bg-white dark:bg-zinc-900 py-3 text-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm"
         >
           <FcGoogle className="h-5 w-5" />
           Continue with Google

@@ -172,63 +172,6 @@ const TESTIMONIALS = [
   },
 ];
 
-const PRICING = [
-  {
-    name: "Free",
-    price: "0",
-    period: "forever",
-    description: "For students getting started",
-    color: "border-border",
-    highlight: false,
-    features: [
-      "10 AI tutor questions / month",
-      "3 quiz sessions / month",
-      "1 notes upload / month",
-      "Basic planner (3 days)",
-      "Community support",
-    ],
-    cta: "Start for free",
-    ctaStyle: "border border-primary text-primary hover:bg-primary/10",
-  },
-  {
-    name: "Scholar",
-    price: "499",
-    period: "month",
-    description: "For serious revision students",
-    color: "border-primary shadow-xl shadow-primary/10",
-    highlight: true,
-    features: [
-      "Unlimited AI tutoring",
-      "Unlimited quizzes",
-      "Unlimited notes uploads",
-      "Full 7-day AI planner",
-      "Performance analytics dashboard",
-      "Teacher escalation (5/month)",
-      "Priority support",
-    ],
-    cta: "Start Scholar",
-    ctaStyle: "bg-primary text-primary-foreground hover:bg-primary/90",
-  },
-  {
-    name: "School",
-    price: "Custom",
-    period: "",
-    description: "For schools and academies",
-    color: "border-border",
-    highlight: false,
-    features: [
-      "Everything in Scholar",
-      "Unlimited teacher accounts",
-      "School-wide analytics",
-      "Bulk student onboarding",
-      "Dedicated account manager",
-      "Custom curriculum alignment",
-    ],
-    cta: "Contact us",
-    ctaStyle: "border border-border hover:bg-accent",
-  },
-];
-
 const FAQS = [
   {
     q: "Which curriculums does GilaniAI support?",
@@ -248,7 +191,7 @@ const FAQS = [
   },
   {
     q: "Is GilaniAI free to use?",
-    a: "There is a free tier with limited usage. For unlimited tutoring, quizzes, notes, and full analytics, upgrade to the Scholar plan for KSh 499/month.",
+    a: "GilaniAI is free to use. Sign up and get started with AI tutoring, quizzes, notes, and your study planner at no cost.",
   },
 ];
 
@@ -361,11 +304,7 @@ function Landing() {
 
                 {/* Trust signals */}
                 <div className="mt-8 flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 text-xs text-muted-foreground">
-                  {[
-                    "No credit card required",
-                    "Free plan available",
-                    "KCSE · CBC · IGCSE aligned",
-                  ].map((t) => (
+                  {["No credit card required", "KCSE · CBC · IGCSE aligned"].map((t) => (
                     <span key={t} className="flex items-center gap-1.5">
                       <Check className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                       {t}
@@ -601,84 +540,6 @@ function Landing() {
           </div>
         </section>
 
-        {/* ── Pricing Section ── */}
-        <section className="bg-muted/20 border-y border-border/40" id="pricing">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16 sm:py-24">
-            <div className="text-center mb-12">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
-                Transparent pricing
-              </p>
-              <h2 className="font-serif text-3xl sm:text-4xl font-black">
-                Plans that grow with you
-              </h2>
-              <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto">
-                Start free. Upgrade when you're ready. Cancel anytime.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-              {PRICING.map(
-                ({
-                  name,
-                  price,
-                  period,
-                  description,
-                  color,
-                  highlight,
-                  features,
-                  cta,
-                  ctaStyle,
-                }) => (
-                  <div
-                    key={name}
-                    className={`relative rounded-2xl border ${color} bg-card p-6 flex flex-col gap-5 transition-shadow ${highlight ? "shadow-xl" : "shadow-sm"}`}
-                  >
-                    {highlight && (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                        <span className="rounded-full bg-primary px-4 py-1 font-mono text-[10px] uppercase tracking-wider text-primary-foreground font-bold shadow">
-                          Most popular
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                        {name}
-                      </p>
-                      <div className="mt-2 flex items-baseline gap-1">
-                        {price === "Custom" ? (
-                          <span className="font-serif text-3xl font-black">Custom</span>
-                        ) : (
-                          <>
-                            <span className="font-mono text-sm text-muted-foreground">KSh</span>
-                            <span className="font-serif text-4xl font-black">{price}</span>
-                            {period && (
-                              <span className="text-sm text-muted-foreground">/{period}</span>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-                    </div>
-                    <ul className="space-y-2.5 flex-1">
-                      {features.map((f) => (
-                        <li key={f} className="flex items-start gap-2.5 text-xs">
-                          <Check className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5" />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link
-                      to="/register"
-                      className={`w-full text-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${ctaStyle}`}
-                    >
-                      {cta}
-                    </Link>
-                  </div>
-                ),
-              )}
-            </div>
-          </div>
-        </section>
-
         {/* ── FAQ Section ── */}
         <section className="mx-auto max-w-3xl px-4 sm:px-6 py-16 sm:py-24">
           <div className="text-center mb-10">
@@ -838,10 +699,10 @@ function Landing() {
             )}
             <div className="space-y-1.5 text-xs text-muted-foreground">
               <p className="flex items-center gap-2">
-                <Mail className="h-3.5 w-3.5 text-primary flex-shrink-0" /> support@gilaniai.edu
+                <Mail className="h-3.5 w-3.5 text-primary flex-shrink-0" /> onungaelly@gmail.com
               </p>
               <p className="flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5 text-primary flex-shrink-0" /> +254 700 000 000
+                <Phone className="h-3.5 w-3.5 text-primary flex-shrink-0" /> 0102880577
               </p>
               <p className="flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" /> Nairobi, Kenya

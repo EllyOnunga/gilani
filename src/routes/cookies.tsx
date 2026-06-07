@@ -55,7 +55,10 @@ function CookiesPage() {
         <div className="flex w-full items-center justify-between px-4 sm:px-6 py-3">
           <Logo to="/" size="md" />
           <nav className="flex items-center gap-3">
-            <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
               <ArrowLeft className="h-3.5 w-3.5" /> Back to home
             </Link>
           </nav>
@@ -220,8 +223,8 @@ function CookiesPage() {
           <Section title="9. Contact">
             <p>
               Questions about our use of cookies? Contact us at{" "}
-              <a href="mailto:privacy@gilaniai.edu" className="text-primary hover:underline">
-                privacy@gilaniai.edu
+              <a href="mailto:onungaelly@gmail.com" className="text-primary hover:underline">
+                onungaelly@gmail.com
               </a>
               .
             </p>

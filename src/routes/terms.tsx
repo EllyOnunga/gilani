@@ -24,7 +24,10 @@ function TermsPage() {
         <div className="flex w-full items-center justify-between px-4 sm:px-6 py-3">
           <Logo to="/" size="md" />
           <nav className="flex items-center gap-3">
-            <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
               <ArrowLeft className="h-3.5 w-3.5" /> Back to home
             </Link>
           </nav>
@@ -166,8 +169,8 @@ function TermsPage() {
           <Section title="11. Contact">
             <p>
               For questions about these Terms, contact us at{" "}
-              <a href="mailto:legal@gilaniai.edu" className="text-primary hover:underline">
-                legal@gilaniai.edu
+              <a href="mailto:onungaelly@gmail.com" className="text-primary hover:underline">
+                onungaelly@gmail.com
               </a>{" "}
               or write to GilaniAI, Nairobi, Kenya.
             </p>
