@@ -18,6 +18,11 @@ config();
 const nitroPreset = process.env.NITRO_PRESET || (process.env.VERCEL === "1" ? "vercel" : undefined);
 
 export default defineConfig({
+  vite: {
+    ssr: {
+      external: ["nodemailer"],
+    },
+  },
   tanstackStart: {
     serverFns: {
       disableCsrfMiddlewareWarning: true,
@@ -35,9 +40,6 @@ export default defineConfig({
             }
           : undefined,
     } : {}),
-    externals: {
-      inline: [],
-      external: ["nodemailer"],
-    },
+
   },
 });

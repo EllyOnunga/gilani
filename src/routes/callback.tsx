@@ -86,7 +86,7 @@ function AuthCallback() {
               // Delete the auto-assigned student role and insert teacher
               await sb.from("user_roles").delete().eq("user_id", session.user.id);
               const { assignUserRole } = await import("@/lib/auth-actions");
-              await assignUserRole({ data: { userId: session.user.id, role: "teacher" } });
+              await assignUserRole({ data: { role: "teacher" } });
               navigate({ to: "/teacher/escalations" as any });
             } catch {
               navigate({ to: safePath });

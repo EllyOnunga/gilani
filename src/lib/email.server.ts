@@ -1,8 +1,7 @@
 /**
- * Backend utility for sending transactional emails via Gmail SMTP.
- * This runs exclusively on the server side.
+ * Backend utility for sending transactional emails via SendGrid API.
+ * Uses fetch — no npm package needed, works on Vercel serverless.
  */
-import nodemailer from "nodemailer";
 
 export interface EmailPayload {
   to: string | string[];
@@ -12,14 +11,6 @@ export interface EmailPayload {
   fromName?: string;
 }
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
-
 export async function sendTransactionalEmail({
   to,
   subject,
@@ -27,72 +18,87 @@ export async function sendTransactionalEmail({
   text,
   fromName = "GilaniAI",
 }: EmailPayload): Promise<boolean> {
-  const senderEmail = process.env.GMAIL_USER;
+  const apiKey = process.env.SENDGRID_API_KEY;
+  const senderEmail = process.env.SENDER_EMAIL || "onboarding@resend.dev";
 
-  if (!senderEmail || !process.env.GMAIL_APP_PASSWORD) {
-    console.warn(`[Email Service] Gmail credentials not configured. Email to "${to}" was skipped.`);
+  if (!apiKey) {
+    console.error("[Email] SENDGRID_API_KEY is not set");
     return false;
   }
 
   const recipients = Array.isArray(to) ? to : [to];
-  const fromAddress = `${fromName} <${senderEmail}>`;
+
+  const body = {
+    personalizations: [
+      {
+        to: recipients.map((email) => ({ email })),
+      },
+    ],
+    from: {
+      email: senderEmail,
+      name: fromName,
+    },
+    subject,
+    content: [
+      ...(text ? [{ type: "text/plain", value: text }] : []),
+      { type: "text/html", value: html },
+    ],
+  };
 
   try {
-    console.log(`[Email Service] Sending email to: ${recipients.join(", ")}`);
-
-    await transporter.sendMail({
-      from: fromAddress,
-      to: recipients.join(", "),
-      subject,
-      html,
-      text,
+    const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
     });
 
-    console.log(`[Email Service] Email successfully sent to: ${recipients.join(", ")}`);
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("[Email] SendGrid error:", response.status, err);
+      return false;
+    }
+
     return true;
-  } catch (error) {
-    console.error("[Email Service] Failed to send email:", error);
+  } catch (err) {
+    console.error("[Email] Failed to send email:", err);
     return false;
   }
 }
 
 export function emailTemplate({
+  title,
   heading,
   body,
   buttonText,
   buttonUrl,
   footerNote,
 }: {
-  heading: string;
+  title?: string;
+  heading?: string;
   body: string;
-  buttonText: string;
-  buttonUrl: string;
+  buttonText?: string;
+  buttonUrl?: string;
   footerNote?: string;
-}) {
+}): string {
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #0a0f1e; color: #e8eaf6; border-radius: 12px; overflow: hidden;">
-      <div style="background: linear-gradient(135deg, #f97316, #ea580c); padding: 1.75rem 2rem; text-align: center;">
-        <h1 style="margin: 0; font-size: 1.4rem; color: #fff; letter-spacing: -0.02em;">GilaniAI</h1>
-        <p style="margin: 0.2rem 0 0; color: rgba(255,255,255,0.8); font-size: 0.8rem;">AI Study Assistant</p>
-      </div>
-      <div style="padding: 2rem;">
-        <h2 style="color: #f1f5f9; font-size: 1.05rem; margin-top: 0;">${heading}</h2>
-        <p style="color: #94a3b8; line-height: 1.7; margin: 0 0 1.5rem;">${body}</p>
-        <div style="text-align: center; margin: 2rem 0;">
-          <a href="${buttonUrl}"
-            style="background: linear-gradient(135deg, #f97316, #ea580c); color: #fff; text-decoration: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; display: inline-block;">
-            ${buttonText}
-          </a>
-        </div>
-        ${footerNote ? `<p style="color: #475569; font-size: 0.78rem; line-height: 1.6;">${footerNote}</p>` : ""}
-      </div>
-      <div style="border-top: 1px solid rgba(255,255,255,0.08); padding: 1rem 2rem; text-align: center;">
-        <p style="color: #475569; font-size: 0.72rem; margin: 0;">
-          © ${new Date().getFullYear()} GilaniAI · Kenya ·
-          <a href="https://gilaniai.vercel.app/privacy" style="color: #f97316; text-decoration: none;">Privacy</a> ·
-          <a href="https://gilaniai.vercel.app/terms" style="color: #f97316; text-decoration: none;">Terms</a>
-        </p>
-      </div>
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;background:#f9fafb;margin:0;padding:2rem">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:2rem;box-shadow:0 1px 4px rgba(0,0,0,0.07)">
+    <div style="margin-bottom:1.5rem">
+      <span style="font-size:1.4rem;font-weight:700;color:#d9531e">G</span><span style="font-size:1.4rem;font-weight:700;color:#111">ilaniAI</span>
     </div>
-  `;
+    <h2 style="color:#111;font-size:1.2rem;margin:0 0 0.25rem">${title || heading}</h2>${heading ? `<p style="color:#666;font-size:0.95rem;margin:0 0 1rem">${heading}</p>` : ""}
+    <div style="color:#444;font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem">${body}</div>
+    ${buttonText && buttonUrl ? `
+    <a href="${buttonUrl}" style="background:#d9531e;color:#fff;text-decoration:none;padding:0.75rem 2rem;border-radius:8px;font-weight:600;font-size:0.9rem;display:inline-block">${buttonText}</a>
+    ` : ""}
+    ${footerNote ? `<p style="color:#999;font-size:0.8rem;margin-top:2rem;border-top:1px solid #eee;padding-top:1rem">${footerNote}</p>` : ""}
+  </div>
+</body>
+</html>`;
 }
