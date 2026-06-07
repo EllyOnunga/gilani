@@ -17,12 +17,12 @@ export function Logo({
 }: LogoProps) {
   const sizeClasses = {
     sm: {
-      img: "h-16 w-48",
+      img: "h-10 w-32 sm:h-16 sm:w-48",
       text: "text-lg",
       container: "gap-2",
     },
     md: {
-      img: "h-20 w-64",
+      img: "h-12 w-36 sm:h-20 sm:w-64",
       text: "text-xl sm:text-2xl",
       container: "gap-2.5",
     },

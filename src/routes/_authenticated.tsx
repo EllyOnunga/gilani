@@ -186,7 +186,7 @@ function AuthedShell() {
         >
           <Menu className="h-6 w-6" />
         </button>
-        <div className="flex-1 flex justify-center">
+        <div className="flex-1 flex justify-start">
           <Logo to="/dashboard" size="sm" />
         </div>
         <NotificationBell userId={user.id} />
@@ -203,7 +203,7 @@ function AuthedShell() {
 
       {/* Responsive Aside Navigation Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -224,7 +224,7 @@ function AuthedShell() {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1">
+        <nav className="flex-1 space-y-1 overflow-y-auto min-h-0">
           {NAV.map(({ to, label, icon: Icon }) => {
             const active = path === to || path.startsWith(to + "/");
             return (

@@ -4,7 +4,7 @@ import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/login")({
@@ -88,6 +88,11 @@ function LoginPage() {
   return (
     <div className="min-h-screen grid place-items-center bg-background px-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-8">
+        <div className="w-full flex items-center justify-between mb-2">
+          <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to home
+          </Link>
+        </div>
         <Logo to="/" size="md" />
         <h1 className="mt-6 font-serif text-3xl font-bold">Unified Portal Login</h1>
         <p className="mt-1 text-sm text-muted-foreground">

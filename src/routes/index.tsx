@@ -291,7 +291,7 @@ function Landing() {
     <div className="min-h-screen bg-background text-foreground flex flex-col overflow-x-hidden">
       {/* ── Sticky Header ── */}
       <header className="border-b border-border/50 sticky top-0 bg-background/80 backdrop-blur-md z-30">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+        <div className="flex w-full items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
           <Logo to="/" size="md" />
           <nav className="flex items-center gap-2 sm:gap-3">
             <Link
