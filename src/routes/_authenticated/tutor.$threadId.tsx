@@ -403,13 +403,21 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             .select("*")
             .eq("conversation_id", threadId)
             .order("created_at", { ascending: true }),
-          supabase
-            .from("escalations")
-            .select("status")
-            .eq("conversation_id", threadId)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle(),
+          (async () => {
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              return await supabase
+                .from("escalations")
+                .select("status")
+                .eq("conversation_id", threadId)
+                .eq("user_id", user?.id ?? "")
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            } catch {
+              return { data: null, error: null };
+            }
+          })(),
         ]);
 
         clearTimeout(timeoutId);
@@ -439,6 +447,9 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           setMessages([]);
         }
 
+        if (escalationRes.error) {
+          console.error("[Escalation] Failed to fetch status:", escalationRes.error.message);
+        }
         setEscalationStatus((escalationRes.data?.status as any) || null);
         setMessagesLoading(false);
       } catch (e) {
