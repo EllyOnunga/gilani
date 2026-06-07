@@ -184,8 +184,14 @@ function AuthedShell() {
     return <GilaniLoader />;
   }
 
-  const isTeacher = roles.includes("teacher") && !roles.includes("admin");
+  // Prevent rendering student content for admin/teacher before redirect fires
   const isAdmin = roles.includes("admin");
+  const isTeacher = roles.includes("teacher") && !roles.includes("admin");
+  const studentOnlyPaths2 = ["/dashboard", "/notes", "/quizzes", "/planner", "/analytics", "/tutor"];
+  const isOnStudentRoute2 = studentOnlyPaths2.some((p) => path === p || path.startsWith(p + "/"));
+  if ((isAdmin || isTeacher) && isOnStudentRoute2) {
+    return <GilaniLoader />;
+  }
 
   const signOut = async () => {
     await supabase.auth.signOut();
