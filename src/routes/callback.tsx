@@ -56,21 +56,23 @@ function AuthCallback() {
           .eq("user_id", session.user.id)
           .maybeSingle();
 
-        if (!roleRow) {
-          // New OAuth user — check for pending role from registration
-          const pendingRole = localStorage.getItem("pending_role") as "student" | "teacher" | null;
-          if (pendingRole && pendingRole === "teacher") {
-            // Assign teacher role via server action
+        const pendingRole = localStorage.getItem("pending_role") as "student" | "teacher" | null;
+        localStorage.removeItem("pending_role");
+
+        if (!roleRow || (pendingRole === "teacher" && roleRow.role === "student")) {
+          // New user or needs role upgrade to teacher
+          if (pendingRole === "teacher") {
             try {
+              const { supabase: sb } = await import("@/integrations/supabase/client");
+              // Delete the auto-assigned student role and insert teacher
+              await sb.from("user_roles").delete().eq("user_id", session.user.id);
               const { assignUserRole } = await import("@/lib/auth-actions");
               await assignUserRole({ data: { userId: session.user.id, role: "teacher" } });
-              localStorage.removeItem("pending_role");
               navigate({ to: "/teacher/escalations" as any });
             } catch {
-              navigate({ to: "/register" });
+              navigate({ to: safePath });
             }
           } else {
-            localStorage.removeItem("pending_role");
             navigate({ to: safePath });
           }
           return;
