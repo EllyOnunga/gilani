@@ -339,7 +339,7 @@ function AuthedShell() {
             </button>
           )}
 
-          <div className="rounded-lg border border-border/50 bg-card p-3">
+          {!isAdmin && !isTeacher && <div className="rounded-lg border border-border/50 bg-card p-3">
             <p className="font-mono text-[11px] text-muted-foreground">REACH A TEACHER</p>
             <p className="mt-2 text-xs leading-relaxed text-pretty">
               Stuck or uncomfortable? Request a human review.
@@ -363,7 +363,7 @@ function AuthedShell() {
             >
               Escalate now
             </Link>
-          </div>
+          </div>}
           <div className="flex items-center justify-between px-1">
             <p className="truncate text-xs text-muted-foreground mr-2" title={user?.email ?? ""}>
               {user?.email}
