@@ -47,7 +47,7 @@ export const assignUserRole = createServerFn({ method: "POST" })
             email: authResult.user.email ?? null,
             updated_at: new Date().toISOString(),
           },
-          { onConflict: "id", ignoreDuplicates: true },
+          { onConflict: "id" },
         );
 
       return { success: true };

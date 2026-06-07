@@ -57,8 +57,22 @@ function AuthCallback() {
           .maybeSingle();
 
         if (!roleRow) {
-          // New OAuth user — send to register to pick role
-          navigate({ to: "/register" });
+          // New OAuth user — check for pending role from registration
+          const pendingRole = localStorage.getItem("pending_role") as "student" | "teacher" | null;
+          if (pendingRole && pendingRole === "teacher") {
+            // Assign teacher role via server action
+            try {
+              const { assignUserRole } = await import("@/lib/auth-actions");
+              await assignUserRole({ data: { userId: session.user.id, role: "teacher" } });
+              localStorage.removeItem("pending_role");
+              navigate({ to: "/teacher/escalations" as any });
+            } catch {
+              navigate({ to: "/register" });
+            }
+          } else {
+            localStorage.removeItem("pending_role");
+            navigate({ to: safePath });
+          }
           return;
         }
 
