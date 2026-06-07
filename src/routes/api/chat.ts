@@ -8,6 +8,23 @@ import { authenticateRequest } from "@/lib/api-auth";
 import { withTimeout } from "@/lib/async";
 import { buildSystemPrompt } from "@/lib/tutor-prompt";
 
+// ─── Server-side Rate Limiter ────────────────────────────────────────────────
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 20;       // max requests
+const RATE_LIMIT_WINDOW = 60000; // per 60 seconds
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(userId);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+}
+
 // ─── Provider Helpers ─────────────────────────────────────────────────────────
 
 function getKey(key: string | undefined): string {
@@ -145,6 +162,15 @@ export const Route = createFileRoute("/api/chat")({
           }
 
           const { userId } = authResult;
+
+          // Server-side rate limit — 20 requests per user per minute
+          if (!checkRateLimit(userId)) {
+            return new Response(
+              JSON.stringify({ error: "Rate limit exceeded. Please wait a minute before sending more messages." }),
+              { status: 429, headers: { "Content-Type": "application/json" } },
+            );
+          }
+
           const body = await request.json().catch(() => ({}));
           const { threadId, messages } = body as { threadId?: string; messages?: any[] };
 

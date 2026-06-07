@@ -23,11 +23,13 @@ export const assignUserRole = createServerFn({ method: "POST" })
     const { role } = data;
 
     try {
-      const { error: deleteError } = await supabaseAdmin
+      // Security: only assign if no role exists yet — prevents privilege escalation.
+      const { data: existing } = await supabaseAdmin
         .from("user_roles")
-        .delete()
-        .eq("user_id", userId);
-      if (deleteError) throw deleteError;
+        .select("role")
+        .eq("user_id", userId)
+        .single();
+      if (existing) throw new Error("Role already assigned. Contact an administrator to change your role.");
 
       const { error: insertError } = await supabaseAdmin
         .from("user_roles")
