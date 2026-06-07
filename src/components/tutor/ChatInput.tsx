@@ -52,7 +52,6 @@ export function ChatInput({
 
   return (
     <div className="px-3 pb-3 pt-2 sm:px-4 sm:pb-4 bg-background border-t border-border/60">
-
       {/* Rate limit / error banner */}
       {isRateLimited && (
         <div className="mb-2 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
@@ -93,7 +92,6 @@ export function ChatInput({
 
       {/* Main input container */}
       <div className="relative flex items-end gap-2 rounded-2xl border border-border bg-card shadow-sm ring-0 transition-all duration-150 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10">
-
         {/* File attach button — inside left of container */}
         <div className="pb-2 pl-2 pt-2">
           <input
@@ -107,9 +105,10 @@ export function ChatInput({
           <label
             htmlFor="chat-file-attachment"
             className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl transition-colors
-              ${isDisabled
-                ? "pointer-events-none opacity-40"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              ${
+                isDisabled
+                  ? "pointer-events-none opacity-40"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             title="Attach a file (PDF, DOCX, TXT, MD, CSV, JPG, PNG, WEBP — max 10 MB)"
           >
@@ -135,9 +134,10 @@ export function ChatInput({
           <label
             htmlFor="chat-camera-capture"
             className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl transition-colors
-              ${isDisabled
-                ? "pointer-events-none opacity-40"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              ${
+                isDisabled
+                  ? "pointer-events-none opacity-40"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             title="Take a photo (OCR will extract text)"
           >
@@ -173,16 +173,18 @@ export function ChatInput({
             onClick={(e) => onSubmit(e as any)}
             disabled={isDisabled || (!input.trim() && !attachedFile)}
             className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150
-              ${isDisabled || (!input.trim() && !attachedFile)
-                ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
-                : "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95"
+              ${
+                isDisabled || (!input.trim() && !attachedFile)
+                  ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                  : "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95"
               }`}
             title="Send (Enter)"
           >
-            {isPending
-              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              : <Send className="h-3.5 w-3.5" />
-            }
+            {isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Send className="h-3.5 w-3.5" />
+            )}
           </button>
         </div>
       </div>
@@ -191,16 +193,17 @@ export function ChatInput({
       <div className="mt-1.5 flex items-center justify-between px-1 min-h-[14px]">
         <p className="font-mono text-[9px] text-muted-foreground/70">
           {isPending ? (
-            <span className="animate-pulse font-bold text-primary/70">
-              GilaniAI is thinking…
-            </span>
+            <span className="animate-pulse font-bold text-primary/70">GilaniAI is thinking…</span>
           ) : (
             "Shift+Enter for new line · PDF, DOCX, TXT supported"
           )}
         </p>
         {input.length > 0 && (
-          <span className={`font-mono text-[9px] font-semibold tabular-nums transition-colors ${input.length > 3000 ? "text-amber-500" : "text-muted-foreground/70"
-            }`}>
+          <span
+            className={`font-mono text-[9px] font-semibold tabular-nums transition-colors ${
+              input.length > 3000 ? "text-amber-500" : "text-muted-foreground/70"
+            }`}
+          >
             {input.length.toLocaleString()} chars
           </span>
         )}

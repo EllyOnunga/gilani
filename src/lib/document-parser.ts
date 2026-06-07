@@ -161,7 +161,7 @@ export async function parseDocument(file: File): Promise<ExtractedDocument> {
             const page = await pdf.getPage(i);
             const blob = await pdfPageToBlob(page);
             const imageFile = new File([blob], `page-${i}.png`, { type: "image/png" });
-            fullText += await ocrImage(imageFile) + "\n";
+            fullText += (await ocrImage(imageFile)) + "\n";
           }
           if (!fullText.trim()) {
             throw new Error("Could not extract text from this PDF even with OCR.");

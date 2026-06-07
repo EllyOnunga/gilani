@@ -650,11 +650,20 @@ function NotesPage() {
         return;
       }
       const note = await withTimeout(
-        ingestNote({ data: { title, heading, subheading, content: attachedFile ? `[Document: ${attachedFile.name}]
+        ingestNote({
+          data: {
+            title,
+            heading,
+            subheading,
+            content: attachedFile
+              ? `[Document: ${attachedFile.name}]
 
 ${attachedFile.text}
 
-${content}`.trim() : content } }),
+${content}`.trim()
+              : content,
+          },
+        }),
         120000,
         "Saving note timed out. Please try again.",
       );
@@ -832,7 +841,9 @@ ${content}`.trim() : content } }),
                     onClick={() => setAttachedFile(null)}
                     className="ml-auto text-muted-foreground hover:text-destructive transition-colors"
                     title="Remove file"
-                  >✕</button>
+                  >
+                    ✕
+                  </button>
                 </div>
               )}
               <textarea

@@ -115,10 +115,15 @@ function AuthedShell() {
     const isTeacher = roles.includes("teacher");
     const isStudent = !isAdmin && !isTeacher;
 
-    const studentOnlyPaths = ["/dashboard", "/notes", "/quizzes", "/planner", "/analytics", "/tutor"];
-    const isOnStudentRoute = studentOnlyPaths.some(
-      (p) => path === p || path.startsWith(p + "/")
-    );
+    const studentOnlyPaths = [
+      "/dashboard",
+      "/notes",
+      "/quizzes",
+      "/planner",
+      "/analytics",
+      "/tutor",
+    ];
+    const isOnStudentRoute = studentOnlyPaths.some((p) => path === p || path.startsWith(p + "/"));
 
     if (isAdmin) {
       if (isOnStudentRoute) navigate({ to: "/admin/users" as any });
@@ -187,7 +192,14 @@ function AuthedShell() {
   // Prevent rendering student content for admin/teacher before redirect fires
   const isAdmin = roles.includes("admin");
   const isTeacher = roles.includes("teacher") && !roles.includes("admin");
-  const studentOnlyPaths2 = ["/dashboard", "/notes", "/quizzes", "/planner", "/analytics", "/tutor"];
+  const studentOnlyPaths2 = [
+    "/dashboard",
+    "/notes",
+    "/quizzes",
+    "/planner",
+    "/analytics",
+    "/tutor",
+  ];
   const isOnStudentRoute2 = studentOnlyPaths2.some((p) => path === p || path.startsWith(p + "/"));
   if ((isAdmin || isTeacher) && isOnStudentRoute2) {
     return <GilaniLoader />;
@@ -230,8 +242,9 @@ function AuthedShell() {
 
       {/* Responsive Aside Navigation Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         {/* Brand logo & Mobile Close Button */}
         <div className="flex items-center justify-between mb-8 min-w-0">
@@ -251,21 +264,24 @@ function AuthedShell() {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto min-h-0">
-          {!isTeacher && !isAdmin && STUDENT_NAV.map(({ to, label, icon: Icon }) => {
-            const active = path === to || path.startsWith(to + "/");
-            return (
-              <Link
-                key={to}
-                to={to}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
+          {!isTeacher &&
+            !isAdmin &&
+            STUDENT_NAV.map(({ to, label, icon: Icon }) => {
+              const active = path === to || path.startsWith(to + "/");
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
                   }`}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            );
-          })}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </Link>
+              );
+            })}
 
           {isTeacher && (
             <>
@@ -275,10 +291,11 @@ function AuthedShell() {
               <Link
                 to={"/teacher/escalations" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/teacher/escalations")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-black/5"
-                  }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
+                  path.startsWith("/teacher/escalations")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-black/5"
+                }`}
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
               </Link>
@@ -299,10 +316,11 @@ function AuthedShell() {
               <Link
                 to={"/admin/users" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path.startsWith("/admin")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-black/5"
-                  }`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
+                  path.startsWith("/admin")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-black/5"
+                }`}
               >
                 <Users className="h-4 w-4" /> Users & Roles
               </Link>
@@ -339,31 +357,33 @@ function AuthedShell() {
             </button>
           )}
 
-          {!isAdmin && !isTeacher && <div className="rounded-lg border border-border/50 bg-card p-3">
-            <p className="font-mono text-[11px] text-muted-foreground">REACH A TEACHER</p>
-            <p className="mt-2 text-xs leading-relaxed text-pretty">
-              Stuck or uncomfortable? Request a human review.
-            </p>
-            <Link
-              to="/tutor"
-              onClick={(e) => {
-                setSidebarOpen(false);
-                const isTutorThread =
-                  path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
-                if (isTutorThread) {
-                  e.preventDefault();
-                  window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
-                } else {
-                  toast.info(
-                    "Please select or create a study session first, then click the Escalate button in the chat header.",
-                  );
-                }
-              }}
-              className="mt-3 block w-full rounded bg-foreground py-2 text-center text-[11px] font-bold uppercase tracking-wider text-background hover:bg-foreground/90"
-            >
-              Escalate now
-            </Link>
-          </div>}
+          {!isAdmin && !isTeacher && (
+            <div className="rounded-lg border border-border/50 bg-card p-3">
+              <p className="font-mono text-[11px] text-muted-foreground">REACH A TEACHER</p>
+              <p className="mt-2 text-xs leading-relaxed text-pretty">
+                Stuck or uncomfortable? Request a human review.
+              </p>
+              <Link
+                to="/tutor"
+                onClick={(e) => {
+                  setSidebarOpen(false);
+                  const isTutorThread =
+                    path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
+                  if (isTutorThread) {
+                    e.preventDefault();
+                    window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
+                  } else {
+                    toast.info(
+                      "Please select or create a study session first, then click the Escalate button in the chat header.",
+                    );
+                  }
+                }}
+                className="mt-3 block w-full rounded bg-foreground py-2 text-center text-[11px] font-bold uppercase tracking-wider text-background hover:bg-foreground/90"
+              >
+                Escalate now
+              </Link>
+            </div>
+          )}
           <div className="flex items-center justify-between px-1">
             <p className="truncate text-xs text-muted-foreground mr-2" title={user?.email ?? ""}>
               {user?.email}

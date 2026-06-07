@@ -87,7 +87,6 @@ function RegisterPage() {
       return toast.error(error.message);
     }
 
-
     setBusy(false);
     toast.success("Account created! Check your inbox to verify your email.");
     navigate({ to: "/login" });
@@ -117,7 +116,10 @@ function RegisterPage() {
     <div className="min-h-screen grid place-items-center bg-background px-4 py-8">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-md">
         <div className="w-full flex items-center justify-between mb-2">
-          <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to home
           </Link>
         </div>
@@ -138,10 +140,11 @@ function RegisterPage() {
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${role === r
-                    ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
-                    : "border-border bg-card text-muted-foreground hover:bg-accent"
-                    }`}
+                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${
+                    role === r
+                      ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                      : "border-border bg-card text-muted-foreground hover:bg-accent"
+                  }`}
                 >
                   {r}
                 </button>

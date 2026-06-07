@@ -158,12 +158,21 @@ export const Route = createFileRoute("/_authenticated/teacher/escalations")({
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 const REASON_LABELS: Record<string, { label: string; color: string }> = {
-  distress_keyword: { label: "Distress keyword", color: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900" },
+  distress_keyword: {
+    label: "Distress keyword",
+    color:
+      "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900",
+  },
   student_request: {
     label: "Student request",
-    color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900",
+    color:
+      "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900",
   },
-  low_confidence: { label: "Low confidence", color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900" },
+  low_confidence: {
+    label: "Low confidence",
+    color:
+      "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900",
+  },
 };
 
 function EscalationsPage() {

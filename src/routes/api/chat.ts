@@ -10,7 +10,7 @@ import { buildSystemPrompt } from "@/lib/tutor-prompt";
 
 // ─── Server-side Rate Limiter ────────────────────────────────────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 20;       // max requests
+const RATE_LIMIT_MAX = 20; // max requests
 const RATE_LIMIT_WINDOW = 60000; // per 60 seconds
 
 function checkRateLimit(userId: string): boolean {
@@ -170,7 +170,9 @@ export const Route = createFileRoute("/api/chat")({
           // Server-side rate limit — 20 requests per user per minute
           if (!checkRateLimit(userId)) {
             return new Response(
-              JSON.stringify({ error: "Rate limit exceeded. Please wait a minute before sending more messages." }),
+              JSON.stringify({
+                error: "Rate limit exceeded. Please wait a minute before sending more messages.",
+              }),
               { status: 429, headers: { "Content-Type": "application/json" } },
             );
           }
@@ -303,15 +305,14 @@ export const Route = createFileRoute("/api/chat")({
           // Cap to last 50 messages to prevent unbounded token cost
           const cappedMessages = messages?.slice(-50) ?? [];
           const aiMessages = [
-            ...(cappedMessages.map((m: any) => {
+            ...cappedMessages.map((m: any) => {
               const textContent = extractText(m);
               return {
                 role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
                 content: textContent,
               };
-            })),
+            }),
           ];
-
 
           // ─── Stream Response (WITH PROVIDER RETRY FALLBACK) ───────────────
           let streamResult: any = null;

@@ -122,11 +122,12 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
           to: reviewerUser.user.email,
           subject: `[GilaniAI] Escalation Assigned: Review Requested`,
           html: emailTemplate({
-            heading: 'New Escalation Assigned',
+            heading: "New Escalation Assigned",
             body: `<strong>${studentName}</strong> has requested your review on their study session. Please check your escalations dashboard to respond.`,
-            buttonText: 'Open Escalations Dashboard',
+            buttonText: "Open Escalations Dashboard",
             buttonUrl: `${appUrl}/teacher/escalations`,
-            footerNote: 'You are receiving this because you are registered as a teacher on GilaniAI.',
+            footerNote:
+              "You are receiving this because you are registered as a teacher on GilaniAI.",
           }),
           text: `Hello Teacher,\n\n${studentName} has requested your review on their study session. You can view and reply to this escalation by visiting your dashboard:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`,
         });
@@ -165,11 +166,12 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
             to: validEmails,
             subject: `[GilaniAI] New Escalation Request Available`,
             html: emailTemplate({
-              heading: 'New Escalation Request Available',
+              heading: "New Escalation Request Available",
               body: `<strong>${studentName}</strong> has requested a teacher review on their study session. Since this request is unassigned, any teacher can claim and review it.`,
-              buttonText: 'View Escalations',
+              buttonText: "View Escalations",
               buttonUrl: `${appUrl}/teacher/escalations`,
-              footerNote: 'You are receiving this because you are registered as a teacher or admin on GilaniAI.',
+              footerNote:
+                "You are receiving this because you are registered as a teacher or admin on GilaniAI.",
             }),
             text: `Hello Teacher/Admin,\n\n${studentName} has requested a teacher review on their study session. Since this request is unassigned, any teacher can claim and review it:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`,
           });
@@ -209,7 +211,8 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
           body: "Great news — your teacher has reviewed your study session and left a response. Click below to view their feedback and continue learning.",
           buttonText: "View Teacher's Response",
           buttonUrl: `${appUrl}/tutor/${conversationId}`,
-          footerNote: 'You are receiving this because you submitted an escalation request on GilaniAI.',
+          footerNote:
+            "You are receiving this because you submitted an escalation request on GilaniAI.",
         }),
         text: `Hello student,\n\nYour teacher has reviewed your study session and left a response! Click the link below to view their response and continue learning:\n\n${appUrl}/tutor/${conversationId}\n\nBest regards,\nThe GilaniAI Team`,
       });

@@ -24,9 +24,14 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload }: 
 
   // Strip DocumentContent XML block from user messages before display
   const rawText = partsText || (m as any).content || "";
-  const displayText = m.role === "user"
-    ? rawText.replace(/<DocumentContent[^>]*>[\s\S]*?<\/DocumentContent>\n\n/g, "").replace(/\[Document Attached: [^\]]+\]\n\n/g, "").replace(/Student Query: (\(See attached document\))?/g, "").trim()
-    : rawText;
+  const displayText =
+    m.role === "user"
+      ? rawText
+          .replace(/<DocumentContent[^>]*>[\s\S]*?<\/DocumentContent>\n\n/g, "")
+          .replace(/\[Document Attached: [^\]]+\]\n\n/g, "")
+          .replace(/Student Query: (\(See attached document\))?/g, "")
+          .trim()
+      : rawText;
   const isStreamActive = isPending;
 
   return (

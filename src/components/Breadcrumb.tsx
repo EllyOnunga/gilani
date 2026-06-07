@@ -33,7 +33,7 @@ function getCrumbs(pathname: string): Crumb[] {
     const isUuid = /^[0-9a-f-]{36}$/i.test(segment);
     const label = isUuid
       ? "Session"
-      : ROUTE_LABELS[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1);
+      : (ROUTE_LABELS[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1));
 
     crumbs.push({ label, href: accumulated });
   }

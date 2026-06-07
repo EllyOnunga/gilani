@@ -29,7 +29,8 @@ export const assignUserRole = createServerFn({ method: "POST" })
         .select("role")
         .eq("user_id", userId)
         .single();
-      if (existing) throw new Error("Role already assigned. Contact an administrator to change your role.");
+      if (existing)
+        throw new Error("Role already assigned. Contact an administrator to change your role.");
 
       const { error: insertError } = await supabaseAdmin
         .from("user_roles")
@@ -40,8 +41,13 @@ export const assignUserRole = createServerFn({ method: "POST" })
       await supabaseAdmin
         .from("profiles")
         .upsert(
-          { id: userId, display_name: authResult.user.user_metadata?.full_name ?? null, email: authResult.user.email ?? null, updated_at: new Date().toISOString() },
-          { onConflict: "id", ignoreDuplicates: true }
+          {
+            id: userId,
+            display_name: authResult.user.user_metadata?.full_name ?? null,
+            email: authResult.user.email ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id", ignoreDuplicates: true },
         );
 
       return { success: true };
