@@ -180,7 +180,7 @@ const ingestNote = createServerFn({ method: "POST" })
     }
     const userId = authResult.userId;
     const { title, heading, subheading, content } = data;
-    if (!title.trim() || !content.trim()) {
+    if (!title.trim() || (!content.trim() && !attachedFile)) {
       throw new Error("Title and content are required");
     }
 
@@ -571,6 +571,7 @@ function NotesPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const [parsingFile, setParsingFile] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string } | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
   // Cache notes whenever they load fresh from the server
@@ -632,7 +633,7 @@ function NotesPage() {
       setTitle(baseName);
       setHeading("");
       setSubheading("");
-      setContent(parsed.text);
+      setAttachedFile({ name: parsed.name, text: parsed.text });
       toast.success("Document text extracted successfully!", { id: toastId });
     } catch (err: any) {
       toast.error(err.message || "Failed to extract text from document", { id: toastId });
@@ -642,7 +643,7 @@ function NotesPage() {
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !content.trim()) {
+    if (!title.trim() || (!content.trim() && !attachedFile)) {
       toast.error("Please fill in both title and content.");
       return;
     }
@@ -655,13 +656,18 @@ function NotesPage() {
         return;
       }
       const note = await withTimeout(
-        ingestNote({ data: { title, heading, subheading, content } }),
+        ingestNote({ data: { title, heading, subheading, content: attachedFile ? `[Document: ${attachedFile.name}]
+
+${attachedFile.text}
+
+${content}`.trim() : content } }),
         120000,
         "Saving note timed out. Please try again.",
       );
       setNotes((prev) => [note as Note, ...prev]);
       setTitle("");
       setContent("");
+      setAttachedFile(null);
       setShowForm(false);
       toast.success("Note ingested & summarised!");
     } catch (err: unknown) {
@@ -804,6 +810,18 @@ function NotesPage() {
               <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-1 block">
                 Content
               </label>
+              {/* Attached file pill */}
+              {attachedFile && (
+                <div className="mb-2 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+                  <span className="truncate font-medium text-foreground">{attachedFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachedFile(null)}
+                    className="ml-auto text-muted-foreground hover:text-destructive transition-colors"
+                    title="Remove file"
+                  >✕</button>
+                </div>
+              )}
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
