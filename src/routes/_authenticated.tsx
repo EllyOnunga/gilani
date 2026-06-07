@@ -180,6 +180,9 @@ function AuthedShell() {
   if (!user) {
     return <GilaniLoader />;
   }
+  if (roles.length === 0) {
+    return <GilaniLoader />;
+  }
 
   const isTeacher = roles.includes("teacher") && !roles.includes("admin");
   const isAdmin = roles.includes("admin");
