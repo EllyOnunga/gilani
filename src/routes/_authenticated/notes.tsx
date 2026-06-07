@@ -770,6 +770,25 @@ ${content}`.trim() : content } }),
               </label>
             </div>
 
+            {/* Camera capture */}
+            <div className="flex items-center justify-center mt-2">
+              <input
+                type="file"
+                id="notes-camera-capture"
+                className="hidden"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                disabled={parsingFile}
+              />
+              <label
+                htmlFor="notes-camera-capture"
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                <span>📷</span> Take a photo
+              </label>
+            </div>
+
             <div>
               <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-1 block">
                 Title

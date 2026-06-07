@@ -1,4 +1,3 @@
-import Tesseract from 'tesseract.js';
 // Dynamic browser-side document text extractor supporting PDF, DOCX, TXT, MD, and CSV files.
 // Performs parsing entirely client-side to guarantee speed, privacy, and zero server storage overhead.
 
@@ -87,6 +86,7 @@ export interface ExtractedDocument {
  * Runs Tesseract OCR on an image File and returns extracted text
  */
 async function ocrImage(file: File): Promise<string> {
+  const { default: Tesseract } = await import("tesseract.js");
   const url = URL.createObjectURL(file);
   try {
     const result = await Tesseract.recognize(url, "eng", {

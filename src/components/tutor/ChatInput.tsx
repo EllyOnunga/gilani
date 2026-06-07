@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { FileText, Loader2, Paperclip, Send, Trash2, AlertCircle } from "lucide-react";
+import { FileText, Loader2, Paperclip, Send, Trash2, AlertCircle, Camera } from "lucide-react";
 
 type AttachedFile = {
   name: string;
@@ -118,6 +118,30 @@ export function ChatInput({
             ) : (
               <Paperclip className="h-4 w-4" />
             )}
+          </label>
+        </div>
+
+        {/* Camera capture button */}
+        <div className="pb-2 pt-2">
+          <input
+            type="file"
+            id="chat-camera-capture"
+            className="hidden"
+            accept="image/*"
+            capture="environment"
+            onChange={onFileChange}
+            disabled={isDisabled}
+          />
+          <label
+            htmlFor="chat-camera-capture"
+            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl transition-colors
+              ${isDisabled
+                ? "pointer-events-none opacity-40"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            title="Take a photo (OCR will extract text)"
+          >
+            <Camera className="h-4 w-4" />
           </label>
         </div>
 
