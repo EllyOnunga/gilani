@@ -209,7 +209,11 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
     try {
       let finalMessage = trimmedInput;
       if (attachedFile) {
-        finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${attachedFile.text}\n</DocumentContent>\n\nStudent Query: ${trimmedInput}`;
+        const MAX_DOC_CHARS = 8000;
+        const docText = attachedFile.text.length > MAX_DOC_CHARS
+          ? attachedFile.text.slice(0, MAX_DOC_CHARS) + "\n\n[Document truncated to 8000 characters due to size limits]"
+          : attachedFile.text;
+        finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${docText}\n</DocumentContent>\n\nStudent Query: ${trimmedInput}`;
       }
 
       const currentThread = threads.find((t) => t.id === threadId);

@@ -22,7 +22,11 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload }: 
       .map((p: any) => p.text || "")
       .join("") || "";
 
-  const displayText = partsText || (m as any).content || "";
+  // Strip DocumentContent XML block from user messages before display
+  const rawText = partsText || (m as any).content || "";
+  const displayText = m.role === "user"
+    ? rawText.replace(/<DocumentContent[^>]*>[\s\S]*?<\/DocumentContent>\n\n/g, "").replace(/\[Document Attached: [^\]]+\]\n\n/g, "").replace(/Student Query: /g, "").trim()
+    : rawText;
   const isStreamActive = isPending;
 
   return (
