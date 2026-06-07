@@ -147,9 +147,9 @@ export function ChatInput({
           <button
             type="button"
             onClick={(e) => onSubmit(e as any)}
-            disabled={isDisabled || !input.trim()}
+            disabled={isDisabled || (!input.trim() && !attachedFile)}
             className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150
-              ${isDisabled || !input.trim()
+              ${isDisabled || (!input.trim() && !attachedFile)
                 ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
                 : "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95"
               }`}

@@ -205,7 +205,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const submit = async (event?: { preventDefault?: () => void }) => {
     event?.preventDefault?.();
     const trimmedInput = input.trim();
-    if (!trimmedInput) return;
+    if (!trimmedInput && !attachedFile) return;
     try {
       let finalMessage = trimmedInput;
       if (attachedFile) {
@@ -213,7 +213,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         const docText = attachedFile.text.length > MAX_DOC_CHARS
           ? attachedFile.text.slice(0, MAX_DOC_CHARS) + "\n\n[Document truncated to 8000 characters due to size limits]"
           : attachedFile.text;
-        finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${docText}\n</DocumentContent>\n\nStudent Query: ${trimmedInput}`;
+        finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${docText}\n</DocumentContent>\n\nStudent Query: ${trimmedInput || "(See attached document)"}`;
       }
 
       const currentThread = threads.find((t) => t.id === threadId);
