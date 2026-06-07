@@ -64,7 +64,7 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) return toast.error(error.message);
-    // Redirection will be handled automatically by the useEffect hook above
+    navigate({ to: "/callback", search: { next: search.redirect || "/dashboard" } });
   };
 
   const onGoogle = async () => {
