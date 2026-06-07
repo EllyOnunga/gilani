@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendTransactionalEmail, emailTemplate } from "@/lib/email.server";
 import { createResolutionNotification } from "@/lib/tutor.server-fns";
 import {
   ShieldAlert,
@@ -98,6 +99,36 @@ const resolveEscalation = createServerFn({ method: "POST" })
       .update({ status: "resolved", detail: expertAnswer } as any)
       .eq("id", id);
     if (error) throw new Error(error.message);
+
+    // Email student notification
+    if (esc?.user_id) {
+      try {
+        const { data: studentUser } = await supabaseAdmin.auth.admin.getUserById(esc.user_id);
+        const studentEmail = studentUser?.user?.email;
+        const { data: studentProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("display_name")
+          .eq("id", esc.user_id)
+          .single();
+        const studentName = studentProfile?.display_name || "Student";
+        const appUrl = process.env.APP_URL || "https://gilaniai.vercel.app";
+        if (studentEmail) {
+          await sendTransactionalEmail({
+            to: studentEmail,
+            subject: "Your teacher has reviewed your study session 📚",
+            html: emailTemplate({
+              heading: `Hi ${studentName}, your teacher has responded!`,
+              body: `Your escalated study session has been reviewed by a teacher. Their response has been added to your conversation. Log in to GilaniAI to continue learning.`,
+              buttonText: "View Response",
+              buttonUrl: `${appUrl}/tutor/${esc.conversation_id}`,
+              footerNote: "You are receiving this because you requested a teacher review on GilaniAI.",
+            }),
+          }).catch((err: any) => console.error("[Student Email] Failed:", err));
+        }
+      } catch (err) {
+        console.error("[Student Notify] Failed to send student email:", err);
+      }
+    }
 
     // Sync response to messages table as a teacher review message
     if (esc?.conversation_id) {
