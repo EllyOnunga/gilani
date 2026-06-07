@@ -43,11 +43,13 @@ export const lookupTeacherByEmail = createServerFn({ method: "POST" })
   .inputValidator(z.string().email())
   .handler(async ({ data: email }) => {
     // Look up user by email using admin API
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-    if (error) throw new Error("Failed to look up teacher");
-
-    const user = data.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-    if (!user) throw new Error("No teacher found with that email address.");
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("email", email.toLowerCase())
+      .single();
+    if (error || !profile) throw new Error("No teacher found with that email address.");
+    const user = { id: profile.id };
 
     // Verify they are a teacher or admin
     const { data: roleCheck } = await supabaseAdmin

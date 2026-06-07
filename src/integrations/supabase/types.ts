@@ -239,6 +239,7 @@ export type Database = {
           created_at: string;
           curriculum: string | null;
           display_name: string | null;
+          email: string | null;
           id: string;
           updated_at: string;
         };
@@ -247,6 +248,7 @@ export type Database = {
           created_at?: string;
           curriculum?: string | null;
           display_name?: string | null;
+          email?: string | null;
           id: string;
           updated_at?: string;
         };
@@ -255,6 +257,7 @@ export type Database = {
           created_at?: string;
           curriculum?: string | null;
           display_name?: string | null;
+          email?: string | null;
           id?: string;
           updated_at?: string;
         };

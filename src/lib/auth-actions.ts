@@ -40,7 +40,7 @@ export const assignUserRole = createServerFn({ method: "POST" })
       await supabaseAdmin
         .from("profiles")
         .upsert(
-          { id: userId, display_name: authResult.user.user_metadata?.full_name ?? null, updated_at: new Date().toISOString() },
+          { id: userId, display_name: authResult.user.user_metadata?.full_name ?? null, email: authResult.user.email ?? null, updated_at: new Date().toISOString() },
           { onConflict: "id", ignoreDuplicates: true }
         );
 
