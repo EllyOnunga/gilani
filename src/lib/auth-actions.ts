@@ -3,6 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth";
 import { z } from "zod";
+import { sendTransactionalEmail, emailTemplate } from "@/lib/email.server";
 
 export const assignUserRole = createServerFn({ method: "POST" })
   .inputValidator(
@@ -43,6 +44,27 @@ export const assignUserRole = createServerFn({ method: "POST" })
           },
           { onConflict: "id" },
         );
+
+      // Send welcome email
+      const userEmail = authResult.user.email;
+      const userName = authResult.user.user_metadata?.full_name || "there";
+      const dashboard =
+        role === "teacher" ? "/teacher/escalations"
+        : role === "admin" ? "/admin/users"
+        : "/dashboard";
+      if (userEmail) {
+        sendTransactionalEmail({
+          to: userEmail,
+          subject: `Welcome to GilaniAI 🎉`,
+          html: emailTemplate({
+            heading: `Welcome, ${userName}!`,
+            body: `Your account has been created successfully as a <strong>${role}</strong>. You're all set to start using GilaniAI — your curriculum-aligned AI study assistant for KCSE & CBC.`,
+            buttonText: "Go to Dashboard",
+            buttonUrl: `${process.env.APP_URL || "https://gilaniai.vercel.app"}${dashboard}`,
+            footerNote: "You're receiving this because you just registered on GilaniAI.",
+          }),
+        }).catch((err) => console.error("[Welcome Email] Failed:", err));
+      }
 
       return { success: true };
     } catch (err: any) {
