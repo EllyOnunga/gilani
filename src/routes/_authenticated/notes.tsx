@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { getRequest } from "@tanstack/react-start/server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth.server";
 import {
   BookOpenText,
   ChevronDown,

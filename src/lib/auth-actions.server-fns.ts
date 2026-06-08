@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth.server";
 import { z } from "zod";
 import { sendTransactionalEmail, emailTemplate } from "@/lib/email.server";
 

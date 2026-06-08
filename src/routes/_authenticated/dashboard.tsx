@@ -20,7 +20,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { getRequest } from "@tanstack/react-start/server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth.server";
 // Carousel import removed — using CSS infinite scroll instead
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -115,7 +115,7 @@ const loadDashboardData = createServerFn({ method: "GET" })
       revisionTopics = revisionTopics.slice(0, 5);
     }
 
-    const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils");
+    const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils.server");
     const { streak } = await calculateUserStreakAndStats(userId);
 
     return {

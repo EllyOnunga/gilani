@@ -85,7 +85,7 @@ function AuthCallback() {
               const { supabase: sb } = await import("@/integrations/supabase/client");
               // Delete the auto-assigned student role and insert teacher
               await sb.from("user_roles").delete().eq("user_id", session.user.id);
-              const { assignUserRole } = await import("@/lib/auth-actions");
+              const { assignUserRole } = await import("@/lib/auth-actions.server-fns");
               await assignUserRole({ data: { role: "teacher" } });
               navigate({ to: "/teacher/escalations" as any });
             } catch {

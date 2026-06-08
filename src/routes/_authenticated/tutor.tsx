@@ -178,6 +178,13 @@ function TutorIndex() {
       error.toLowerCase().includes("unauthorized") ||
       error.toLowerCase().includes("token") ||
       error.toLowerCase().includes("claims");
+    const safeError = isServiceRoleError
+      ? "Server configuration error. Please contact support."
+      : isLovableKeyError
+      ? "AI service configuration error. Please contact support."
+      : isUnauthorizedError
+      ? "Your session has expired. Please sign in again."
+      : "An unexpected error occurred. Please try again.";
 
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center animate-in-slide">
@@ -187,7 +194,7 @@ function TutorIndex() {
         <h3 className="font-serif text-lg font-semibold text-foreground">
           Failed to start tutor chat
         </h3>
-        <p className="mt-2 max-w-sm text-sm text-muted-foreground leading-relaxed">{error}</p>
+        <p className="mt-2 max-w-sm text-sm text-muted-foreground leading-relaxed">{safeError}</p>
         {isServiceRoleError && (
           <div className="mt-4 max-w-md rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-3 text-xs text-amber-800 dark:text-amber-200/90 text-left">
             <strong>Setup Required:</strong> You are missing the{" "}

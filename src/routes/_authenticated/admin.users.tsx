@@ -4,7 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth.server";
 import { Settings, UserCheck, Loader2, Shield, GraduationCap, User } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";

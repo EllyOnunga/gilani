@@ -54,7 +54,7 @@ function RegisterPage() {
     setBusy(true);
 
     try {
-      const { checkEmailExists } = await import("@/lib/auth-actions");
+      const { checkEmailExists } = await import("@/lib/auth-actions.server-fns");
       const { exists } = await checkEmailExists({ data: { email } });
       if (exists) {
         setBusy(false);

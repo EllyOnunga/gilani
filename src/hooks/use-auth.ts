@@ -32,7 +32,7 @@ export function useAuth(): AuthState {
             if (!existing || existing.length === 0) {
               try {
                 localStorage.removeItem("pending_role");
-                const { assignUserRole } = await import("@/lib/auth-actions");
+                const { assignUserRole } = await import("@/lib/auth-actions.server-fns");
                 await assignUserRole({ data: { role: pendingRole as AppRole } });
                 return [pendingRole as AppRole];
               } catch {

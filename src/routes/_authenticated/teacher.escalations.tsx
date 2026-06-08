@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import { z } from "zod";
 import { getRequest } from "@tanstack/react-start/server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth.server";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -89,10 +89,14 @@ const resolveEscalation = createServerFn({ method: "POST" })
     // Fetch the escalation to get conversation and user info
     const { data: esc, error: escErr } = await supabaseAdmin
       .from("escalations")
-      .select("conversation_id, user_id")
+      .select("conversation_id, user_id, reviewer_id")
       .eq("id", id)
       .single();
     if (escErr) throw new Error(escErr.message);
+    const isAdmin = roleCheck.role === "admin";
+    if (!isAdmin && esc.reviewer_id !== userId) {
+      throw new Error("Forbidden: You are not assigned to this escalation");
+    }
 
     const { error } = await supabaseAdmin
       .from("escalations")
@@ -166,6 +170,17 @@ const getConversationMessages = createServerFn({ method: "POST" })
       .single();
 
     if (!roleCheck) throw new Error("Forbidden: Teacher access required");
+
+    const isAdmin = roleCheck.role === "admin";
+    if (!isAdmin) {
+      const { data: escCheck } = await supabaseAdmin
+        .from("escalations")
+        .select("id")
+        .eq("conversation_id", conversationId)
+        .eq("reviewer_id", userId)
+        .single();
+      if (!escCheck) throw new Error("Forbidden: You are not assigned to this conversation");
+    }
 
     const { data: messages, error } = await supabaseAdmin
       .from("messages")

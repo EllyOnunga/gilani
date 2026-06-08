@@ -4,9 +4,9 @@ import { streamText, embed } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth.server";
 import { withTimeout } from "@/lib/async";
-import { buildSystemPrompt } from "@/lib/tutor-prompt";
+import { buildSystemPrompt, sanitizeUntrustedInput, sanitizeCurriculum } from "@/lib/tutor-prompt";
 
 // ─── Server-side Rate Limiter ────────────────────────────────────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -241,7 +241,7 @@ export const Route = createFileRoute("/api/chat")({
 
           // Save user message
           if (lastMessage?.role === "user") {
-            const userText = extractText(lastMessage);
+            const userText = sanitizeUntrustedInput(extractText(lastMessage));
             await supabaseAdmin.from("messages").insert({
               conversation_id: threadId,
               role: "user",
@@ -257,7 +257,7 @@ export const Route = createFileRoute("/api/chat")({
             .select("curriculum")
             .eq("id", userId)
             .maybeSingle();
-          const curriculum = profile?.curriculum || "KCSE";
+          const curriculum = sanitizeCurriculum(profile?.curriculum || "KCSE");
 
           // ─── RAG: Vector Search ─────────────────────────────────────────
           const latestMessageContent = extractText(lastMessage);
@@ -283,7 +283,7 @@ export const Route = createFileRoute("/api/chat")({
                 });
 
                 if (chunks?.length) {
-                  notesContext = chunks.map((c: any) => c.content).join("\n---\n");
+                  notesContext = sanitizeUntrustedInput(chunks.map((c: any) => c.content).join("\n---\n"));
                   console.log(`[RAG] Found ${chunks.length} relevant chunks`);
                 }
               } catch (err: unknown) {

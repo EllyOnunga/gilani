@@ -23,7 +23,7 @@ import {
 } from "recharts";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 import { getRequest } from "@tanstack/react-start/server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth.server";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -54,7 +54,7 @@ const fetchAnalytics = createServerFn({ method: "GET" }).handler(async () => {
     .order("created_at", { ascending: true });
 
   if (!attempts || attempts.length === 0) {
-    const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils");
+    const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils.server");
     const { streak, notesCount } = await calculateUserStreakAndStats(userId);
     return {
       attemptsCount: 0,
@@ -138,7 +138,7 @@ const fetchAnalytics = createServerFn({ method: "GET" }).handler(async () => {
     score: Math.round(data.totalScore / data.count),
   }));
 
-  const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils");
+  const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils.server");
   const { streak, notesCount } = await calculateUserStreakAndStats(userId);
 
   return {

@@ -36,5 +36,31 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    files: ["src/routes/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@/integrations/supabase/client.server",
+              importNames: ["supabaseAdmin"],
+              message:
+                "supabaseAdmin bypasses RLS. In route files it must only be used inside createServerFn handlers. Consider moving to a dedicated *.server-fns.ts file.",
+            },
+          ],
+          patterns: [
+            {
+              group: ["**/client.server*"],
+              importNamePattern: "supabaseAdmin",
+              message:
+                "supabaseAdmin bypasses RLS. Only import it in *.server.ts or *.server-fns.ts files.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   eslintPluginPrettier,
 );

@@ -22,7 +22,7 @@ import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 import { MathText } from "@/components/math-text";
 import { getRequest } from "@tanstack/react-start/server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth.server";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 

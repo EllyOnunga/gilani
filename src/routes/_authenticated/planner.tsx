@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 import { getRequest } from "@tanstack/react-start/server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth.server";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -507,7 +507,7 @@ Generate the JSON now.`;
               id:
                 task.id && task.id !== "task-1" && task.id !== "task-2"
                   ? task.id
-                  : `${day.date}-task-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+                  : `${day.date}-task-${idx}-${crypto.randomUUID().slice(0, 8)}`,
             })),
           );
         } else if (Array.isArray(parsed)) {

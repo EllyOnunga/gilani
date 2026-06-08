@@ -1,52 +1,5 @@
 {
-  "framework": null,
-  "buildCommand": "npm run build",
-  "outputDirectory": ".vercel/output",
   "installCommand": "npm install",
-  "headers": [
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/sw.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/robots.txt",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=3600" }
-      ]
-    },
-    {
-      "source": "/sitemap.xml",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=3600" }
-      ]
-    }
-  ],
-  "rewrites": [
-    { "source": "/robots.txt", "destination": "/robots.txt" },
-    { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
-    { "source": "/manifest.json", "destination": "/manifest.json" },
-    { "source": "/favicon.svg", "destination": "/favicon.svg" },
-    { "source": "/logo.svg", "destination": "/logo.svg" },
-    { "source": "/sw.js", "destination": "/sw.js" },
-    { "source": "/apple-touch-icon.png", "destination": "/apple-touch-icon.png" },
-    { "source": "/icon-192.png", "destination": "/icon-192.png" },
-    { "source": "/icon-192-maskable.png", "destination": "/icon-192-maskable.png" },
-    { "source": "/icon-512.png", "destination": "/icon-512.png" },
-    { "source": "/icon-512-maskable.png", "destination": "/icon-512-maskable.png" },
-    { "source": "/google7c26a136ae5c71ee.html", "destination": "/google7c26a136ae5c71ee.html" }
-  ]
+  "buildCommand": "npm run build",
+  "framework": null
 }

@@ -21,7 +21,7 @@ import {
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth";
+import { authenticateRequest } from "@/lib/api-auth.server";
 
 const deleteAccount = createServerFn({ method: "POST" }).handler(async () => {
   const request = getRequest();
@@ -33,6 +33,15 @@ const deleteAccount = createServerFn({ method: "POST" }).handler(async () => {
   }
 
   const { userId } = authResult;
+
+  const { data: roleRow } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .single();
+  if (roleRow?.role === "admin") {
+    throw new Error("Admin accounts cannot be self-deleted. Transfer ownership first.");
+  }
 
   const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
   if (error) throw new Error(error.message);
