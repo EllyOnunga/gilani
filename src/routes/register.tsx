@@ -72,6 +72,11 @@ function RegisterPage() {
     localStorage.setItem("pending_role", role);
 
     // 1. Sign up user
+    if (password.length < 8) {
+      setBusy(false);
+      return toast.error("Password must be at least 8 characters.");
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -157,6 +162,7 @@ function RegisterPage() {
             placeholder="Your name"
             value={displayName}
             onChange={(e) => setName(e.target.value)}
+                maxLength={80}
             className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 animate-in-slide"
           />
 
@@ -166,17 +172,20 @@ function RegisterPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+                maxLength={254}
             className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 animate-in-slide"
           />
 
           <div className="relative animate-in-slide">
             <input
               type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
               required
               minLength={6}
-              placeholder="Password (min 6 chars)"
+              placeholder="Password (min 8 chars)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+                maxLength={128}
               className="w-full rounded-md border border-border bg-background px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
             />
             <button

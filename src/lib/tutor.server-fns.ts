@@ -88,9 +88,9 @@ export async function createNotification({
 export const createEscalationNotification = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
-      conversationId: z.string(),
-      reviewerId: z.string().nullable(),
-      studentId: z.string(),
+      conversationId: z.string().uuid(),
+      reviewerId: z.string().uuid().nullable(),
+      studentId: z.string().uuid(),
     }),
   )
   .handler(async ({ data }) => {

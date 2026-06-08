@@ -115,9 +115,11 @@ function LoginPage() {
           )}
           <input
             type="email"
+            autoComplete="email"
             required
             placeholder="Email"
             value={email}
+            maxLength={254}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
           />
@@ -125,9 +127,11 @@ function LoginPage() {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
                 required
                 placeholder="Password"
                 value={password}
+                maxLength={128}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
               />
