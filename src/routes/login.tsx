@@ -7,6 +7,13 @@ import { toast } from "sonner";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
+function safeRedirectPath(url: string | undefined): string {
+  if (!url) return "/dashboard";
+  if (url.startsWith("/") && !url.startsWith("//")) return url;
+  return "/dashboard";
+}
+
+
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>): { redirect?: string; email?: string } => ({
     redirect: (s.redirect as string) || undefined,
@@ -14,7 +21,7 @@ export const Route = createFileRoute("/login")({
   }),
   beforeLoad: async ({ search }) => {
     const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: search.redirect || "/dashboard" });
+    if (data.session) throw redirect({ to: safeRedirectPath(search.redirect) });
   },
   head: () => ({
     meta: [
@@ -53,7 +60,7 @@ function LoginPage() {
       } else if (roles.includes("teacher")) {
         navigate({ to: "/teacher/escalations" as any });
       } else {
-        navigate({ to: search.redirect || "/dashboard" });
+        navigate({ to: safeRedirectPath(search.redirect) });
       }
     }
   }, [user, roles, loading, navigate, search.redirect]);
@@ -67,7 +74,7 @@ function LoginPage() {
     navigate({
       to: "/callback",
       search: {
-        next: search.redirect || "/dashboard",
+        next: safeRedirectPath(search.redirect),
         error: undefined,
         error_description: undefined,
       },
@@ -79,7 +86,7 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/callback?next=${search.redirect || "/dashboard"}`,
+        redirectTo: `${window.location.origin}/callback?next=${safeRedirectPath(search.redirect)}`,
         queryParams: {
           access_type: "offline",
           prompt: "select_account",
