@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { createHmac } from "crypto";
+
 
 /**
  * Triggers a Zapier workflow via a secure server-side webhook POST request.
@@ -85,9 +85,15 @@ export async function triggerZapierEscalation({
 
     const body = JSON.stringify(payload);
     const webhookSecret = process.env.ZAPIER_WEBHOOK_SECRET;
-    const sig = webhookSecret
-      ? createHmac("sha256", webhookSecret).update(body).digest("hex")
-      : null;
+    let sig: string | null = null;
+    if (webhookSecret) {
+      const enc = new TextEncoder();
+      const key = await crypto.subtle.importKey(
+        "raw", enc.encode(webhookSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+      );
+      const buf = await crypto.subtle.sign("HMAC", key, enc.encode(body));
+      sig = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
 
     const controller = new AbortController();
     const zapierTimeout = setTimeout(() => controller.abort(), 10000);
