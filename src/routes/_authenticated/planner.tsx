@@ -20,6 +20,7 @@ import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
+import { checkRateLimit, AI_RATE_LIMIT } from "@/lib/rate-limit.server";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -252,6 +253,10 @@ const generatePlan = createServerFn({ method: "POST" }).handler(async () => {
     throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
   }
   const userId = authResult.userId;
+
+  if (!checkRateLimit(`${userId}:generatePlan`, AI_RATE_LIMIT)) {
+    throw new Error("Rate limit exceeded. Please wait a minute before generating a new plan.");
+  }
   // Fetch user's curriculum from profile
   const { data: profile } = await supabaseAdmin
     .from("profiles")
@@ -484,6 +489,10 @@ Generate the JSON now.`;
   console.log("Generating plan with providers...");
   for (const model of models) {
     try {
+      if (models.indexOf(model) > 0) {
+        const { backoffDelay } = await import("@/lib/provider-backoff");
+        await backoffDelay(models.indexOf(model));
+      }
       console.log(`[Planner] Trying model: ${model.provider}/${model.modelId}`);
       const result = await generateText({
         model: model as any,

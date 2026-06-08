@@ -4,9 +4,22 @@ import { z } from "zod";
 import { sendTransactionalEmail, emailTemplate } from "./email.server";
 
 export const deleteThreadFn = createServerFn({ method: "POST" })
-  .inputValidator(z.string())
-  .handler(async ({ data: threadId }) => {
-    const { error } = await supabaseAdmin.from("conversations").delete().eq("id", threadId);
+  .inputValidator(z.object({ threadId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    const request = (await import("@tanstack/react-start/server")).getRequest();
+    const { authenticateRequest } = await import("@/lib/api-auth.server");
+    let authResult: Awaited<ReturnType<typeof authenticateRequest>>;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
+    // Only delete the thread if it belongs to the authenticated user
+    const { error } = await supabaseAdmin
+      .from("conversations")
+      .delete()
+      .eq("id", data.threadId)
+      .eq("user_id", authResult.userId);
     if (error) throw error;
     return true;
   });
@@ -183,8 +196,8 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
 export const createResolutionNotification = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
-      studentId: z.string(),
-      conversationId: z.string(),
+      studentId: z.string().uuid(),
+      conversationId: z.string().uuid(),
     }),
   )
   .handler(async ({ data }) => {

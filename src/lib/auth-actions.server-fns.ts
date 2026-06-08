@@ -84,23 +84,22 @@ export const checkEmailExists = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { email } = data;
     try {
-      const { data: userData, error } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 1000,
-      });
+      // Use profiles table lookup instead of listing all auth users (avoids O(n) scan + data exposure)
+      const { data: profile, error } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("email", email.toLowerCase())
+        .maybeSingle();
 
       if (error) {
-        console.error("[checkEmailExists] Supabase Auth error:", error);
+        // Log generic message only — do not surface Supabase internals
+        console.error("[checkEmailExists] Profile lookup failed");
         return { exists: false };
       }
 
-      const foundUser = userData?.users?.find(
-        (u) => u.email?.toLowerCase() === email.toLowerCase(),
-      );
-
-      return { exists: !!foundUser };
-    } catch (err) {
-      console.error("[checkEmailExists] Server function failed:", err);
+      return { exists: !!profile };
+    } catch {
+      console.error("[checkEmailExists] Server function failed");
       return { exists: false };
     }
   });

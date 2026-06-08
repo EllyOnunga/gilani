@@ -6,6 +6,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
+import { checkRateLimit, AI_RATE_LIMIT } from "@/lib/rate-limit.server";
 import {
   BookOpenText,
   ChevronDown,
@@ -173,6 +174,10 @@ const ingestNote = createServerFn({ method: "POST" })
       throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
     }
     const userId = authResult.userId;
+
+    if (!checkRateLimit(`${userId}:ingestNote`, AI_RATE_LIMIT)) {
+      throw new Error("Rate limit exceeded. Please wait a minute before generating more notes.");
+    }
     const { title, heading, subheading, content } = data;
     if (!title.trim() || !content.trim()) {
       throw new Error("Title and content are required");
@@ -217,7 +222,11 @@ const ingestNote = createServerFn({ method: "POST" })
 
     for (const model of models) {
       try {
-        console.log(`[Notes] Trying model: ${model.provider}/${model.modelId}`);
+        if (models.indexOf(model) > 0) {
+        const { backoffDelay } = await import("@/lib/provider-backoff");
+        await backoffDelay(models.indexOf(model));
+      }
+      console.log(`[Notes] Trying model: ${model.provider}/${model.modelId}`);
         const result = await generateText({
           model: model as any,
           maxTokens: 4000,

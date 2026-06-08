@@ -23,6 +23,7 @@ import { getErrorMessage, withTimeout } from "@/lib/async";
 import { MathText } from "@/components/math-text";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
+import { checkRateLimit, AI_RATE_LIMIT } from "@/lib/rate-limit.server";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -58,6 +59,10 @@ const generateQuiz = createServerFn({ method: "POST" })
       throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
     }
     const userId = authResult.userId;
+
+    if (!checkRateLimit(`${userId}:generateQuiz`, AI_RATE_LIMIT)) {
+      throw new Error("Rate limit exceeded. Please wait a minute before generating more quizzes.");
+    }
     const { topic, count, curriculum } = data;
     if (!topic.trim()) throw new Error("Topic is required");
     if (count < 1 || count > 50) throw new Error("Question count must be between 1 and 50");
@@ -71,6 +76,10 @@ const generateQuiz = createServerFn({ method: "POST" })
 
     for (const model of models) {
       try {
+        if (models.indexOf(model) > 0) {
+          const { backoffDelay } = await import("@/lib/provider-backoff");
+          await backoffDelay(models.indexOf(model));
+        }
         console.log(`[Quiz Generation] Attempting with model: ${model.provider}/${model.modelId}`);
         const result = await generateObject({
           model,

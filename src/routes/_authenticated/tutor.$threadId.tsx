@@ -74,7 +74,7 @@ function TutorThread() {
 
 function TutorThreadInner({ authToken }: { authToken: string | null }) {
   const { threadId } = Route.useParams();
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: '/tutor/$threadId' });
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [chatError, setChatError] = useState<string | null>(null);
@@ -690,11 +690,11 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
             setDeleteConfirmId(null);
             const toastId = toast.loading("Deleting session...");
             try {
-              await deleteThreadFn({ data: id! });
+              await deleteThreadFn({ data: { threadId: id! } });
               setThreads((prev) => prev.filter((t) => t.id !== id));
               toast.success("Session deleted successfully!", { id: toastId });
               if (id === threadId) {
-                navigate({ to: "/tutor" } as any);
+                navigate({ to: "/tutor" as const });
               }
             } catch (err: any) {
               console.error("Failed to delete thread:", err);

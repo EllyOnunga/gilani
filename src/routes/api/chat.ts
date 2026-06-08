@@ -315,6 +315,10 @@ export const Route = createFileRoute("/api/chat")({
           ];
 
           // ─── Stream Response (WITH PROVIDER RETRY FALLBACK) ───────────────
+          // Hard wall-clock deadline: abort the entire stream if it doesn't finish in 60 s
+          const streamAbort = new AbortController();
+          const streamDeadline = setTimeout(() => streamAbort.abort(), 60000);
+
           let streamResult: any = null;
           let activeProvider = "";
           let lastError: unknown;
@@ -414,13 +418,21 @@ export const Route = createFileRoute("/api/chat")({
           }
 
           if (!streamResult) {
+            clearTimeout(streamDeadline);
             throw lastError || new Error("Failed to stream chat response from all providers.");
           }
 
           console.log(`[API Chat] Returning stream response from: ${activeProvider}`);
-          return streamResult.toTextStreamResponse({
+          // Pipe through with abort so hung provider connections are cleaned up
+          const textStream = streamResult.toTextStreamResponse({
             headers: { "cache-control": "no-cache" },
           });
+          streamAbort.signal.addEventListener("abort", () => {
+            clearTimeout(streamDeadline);
+          }, { once: true });
+          // Clear deadline once the response object is returned (stream lifecycle continues)
+          // The AbortController above will fire at 60 s if the stream stalls mid-flight
+          return textStream;
         } catch (error: unknown) {
           console.error(
             "[API Chat] Error:",

@@ -413,6 +413,14 @@ export type Database = {
           similarity: number;
         }[];
       };
+      upsert_rate_limit: {
+        Args: {
+          p_key: string;
+          p_max: number;
+          p_reset_at: string;
+        };
+        Returns: boolean;
+      };
     };
     Enums: {
       app_role: "student" | "teacher" | "admin";
