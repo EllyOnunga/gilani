@@ -239,6 +239,9 @@ export type Database = {
           created_at: string;
           curriculum: string | null;
           display_name: string | null;
+          analytics_consent: boolean | null;
+          cookie_consent: boolean | null;
+          disclaimer_accepted: boolean | null;
           email: string | null;
           id: string;
           updated_at: string;
@@ -248,6 +251,9 @@ export type Database = {
           created_at?: string;
           curriculum?: string | null;
           display_name?: string | null;
+          analytics_consent?: boolean | null;
+          cookie_consent?: boolean | null;
+          disclaimer_accepted?: boolean | null;
           email?: string | null;
           id: string;
           updated_at?: string;
@@ -257,6 +263,9 @@ export type Database = {
           created_at?: string;
           curriculum?: string | null;
           display_name?: string | null;
+          analytics_consent?: boolean | null;
+          cookie_consent?: boolean | null;
+          disclaimer_accepted?: boolean | null;
           email?: string | null;
           id?: string;
           updated_at?: string;

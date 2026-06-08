@@ -13,7 +13,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit
 /**
  * Loads a script dynamically in the browser and returns a promise.
  */
-function loadExternalScript(src: string): Promise<void> {
+function loadExternalScript(src: string, integrity?: string): Promise<void> {
   return new Promise((resolve, reject) => {
     // If script is already in the document, resolve
     const existing = document.querySelector(`script[src="${src}"]`);
@@ -25,6 +25,10 @@ function loadExternalScript(src: string): Promise<void> {
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
+    if (integrity) {
+      script.integrity = integrity;
+      script.crossOrigin = "anonymous";
+    }
     script.onload = () => resolve();
     script.onerror = () => reject(new Error(`Failed to load external script: ${src}`));
     document.head.appendChild(script);
@@ -38,7 +42,7 @@ async function getPdfJsLib(): Promise<any> {
   if (window.pdfjsLib) return window.pdfjsLib;
 
   // Load the core PDF.js library
-  await loadExternalScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js");
+  await loadExternalScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js", "sha384-lrb5efVIYR2lZw+OsuztHZzP9wpGNrhui+0VlpiHb/iPcZSCDT3CeETsL9EMQ8ih");
 
   const pdfjsLib = window.pdfjsLib;
   if (!pdfjsLib) {
@@ -47,7 +51,7 @@ async function getPdfJsLib(): Promise<any> {
 
   // Set the worker source path
   pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+    "/pdf.worker.min.js"; // self-hosted — no external dependency
   return pdfjsLib;
 }
 
@@ -59,6 +63,7 @@ async function getMammoth(): Promise<any> {
 
   await loadExternalScript(
     "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js",
+    "sha384-nFoSjZIoH3CCp8W639jJyQkuPHinJ2NHe7on1xvlUA7SuGfJAfvMldrsoAVm6ECz",
   );
 
   const mammoth = window.mammoth;
@@ -87,7 +92,7 @@ export interface ExtractedDocument {
  */
 async function getTesseract(): Promise<any> {
   if ((window as any).Tesseract) return (window as any).Tesseract;
-  await loadExternalScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
+  await loadExternalScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js", "sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F");
   const Tesseract = (window as any).Tesseract;
   if (!Tesseract) throw new Error("Tesseract.js failed to load.");
   return Tesseract;

@@ -88,9 +88,7 @@ function SettingsPage() {
     // Check theme
     if (typeof window !== "undefined") {
       setIsDark(document.documentElement.classList.contains("dark"));
-      setDisclaimerAccepted(localStorage.getItem("gilani_disclaimer_accepted") === "true");
-      setCookieConsent(localStorage.getItem("gilani_cookie_consent") !== "false");
-      setAnalyticsConsent(localStorage.getItem("gilani_analytics_consent") !== "false");
+      // Consent loaded from DB above
     }
   }, [user?.id]);
 
@@ -143,29 +141,33 @@ function SettingsPage() {
     }
   };
 
-  const handleDisclaimerRevoke = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("gilani_disclaimer_accepted");
-      setDisclaimerAccepted(false);
-      toast.info(
-        "AI Disclaimer consent revoked. You will be prompted to read it again on your next dashboard visit.",
-      );
+  const handleDisclaimerRevoke = async () => {
+    localStorage.removeItem("gilani_disclaimer_accepted");
+    setDisclaimerAccepted(false);
+    if (user?.id) {
+      await supabase.from("profiles").update({
+        disclaimer_accepted: false,
+        updated_at: new Date().toISOString(),
+      }).eq("id", user.id);
     }
+    toast.info("AI Disclaimer consent revoked. You will be prompted to read it again on your next dashboard visit.");
   };
 
-  const toggleConsent = (type: "cookie" | "analytics", value: boolean) => {
-    if (typeof window !== "undefined") {
-      if (type === "cookie") {
-        localStorage.setItem("gilani_cookie_consent", String(value));
-        setCookieConsent(value);
-        toast.success(value ? "Essential cookies enabled." : "Essential cookies disabled.");
-      } else {
-        localStorage.setItem("gilani_analytics_consent", String(value));
-        setAnalyticsConsent(value);
-        toast.success(
-          value ? "Anonymous usage tracking enabled." : "Anonymous usage tracking disabled.",
-        );
-      }
+  const toggleConsent = async (type: "cookie" | "analytics", value: boolean) => {
+    if (type === "cookie") {
+      setCookieConsent(value);
+      localStorage.setItem("gilani_cookie_consent", String(value));
+      toast.success(value ? "Essential cookies enabled." : "Essential cookies disabled.");
+    } else {
+      setAnalyticsConsent(value);
+      localStorage.setItem("gilani_analytics_consent", String(value));
+      toast.success(value ? "Anonymous usage tracking enabled." : "Anonymous usage tracking disabled.");
+    }
+    if (user?.id) {
+      const updateData = type === "cookie"
+        ? { cookie_consent: value, updated_at: new Date().toISOString() }
+        : { analytics_consent: value, updated_at: new Date().toISOString() };
+      await supabase.from("profiles").update(updateData).eq("id", user.id);
     }
   };
 
