@@ -284,6 +284,20 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         return;
       }
 
+      // Duplicate guard — prevent spam escalations on the same thread
+      const { data: existing } = await supabase
+        .from("escalations")
+        .select("id")
+        .eq("conversation_id", threadId)
+        .eq("user_id", userId)
+        .in("status", ["open", "in_review"])
+        .maybeSingle();
+      if (existing) {
+        toast.info("This conversation already has an open escalation.");
+        setEscalating(false);
+        return;
+      }
+
       const { error } = await supabase.from("escalations").insert({
         conversation_id: threadId,
         user_id: userId,
