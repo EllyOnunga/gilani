@@ -296,7 +296,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 
       // Send email notification to teacher
       await createEscalationNotification({
-        data: { conversationId: threadId, reviewerId, studentId: userId },
+        data: { conversationId: threadId, reviewerId },
       });
 
       setEscalationStatus("open");

@@ -41,35 +41,6 @@ function ForgotPasswordPage() {
 
     setBusy(true);
 
-    // Check if email exists before sending reset link
-    const { data: signInCheck } = await supabase.auth.signInWithPassword({
-      email,
-      password: "___invalid_check_only___",
-    });
-
-    // If we get a session somehow (shouldn't happen), sign out
-    if (signInCheck?.session) {
-      await supabase.auth.signOut();
-    }
-
-    // signInWithPassword returns "Invalid login credentials" for existing emails
-    // and "Email not confirmed" for unverified — both mean the email EXISTS
-    // "Invalid login credentials" for non-existent emails too, so we use a different check
-    const { data: existsCheck } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-
-    if (!existsCheck) {
-      setBusy(false);
-      toast.error("No account found with this email address.", { duration: 5000 });
-      setTimeout(() => {
-        navigate({ to: "/register", search: { email } as any });
-      }, 2000);
-      return;
-    }
-
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + "/callback",
     });

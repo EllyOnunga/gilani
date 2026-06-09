@@ -25,8 +25,15 @@ export const deleteThreadFn = createServerFn({ method: "POST" })
   });
 
 export const generateThreadTitleFn = createServerFn({ method: "POST" })
-  .inputValidator(z.string())
+  .inputValidator(z.string().max(500))
   .handler(async ({ data: firstMessage }) => {
+    const request = (await import("@tanstack/react-start/server")).getRequest();
+    const { authenticateRequest } = await import("@/lib/api-auth.server");
+    try {
+      await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -55,6 +62,13 @@ export const generateThreadTitleFn = createServerFn({ method: "POST" })
 export const lookupTeacherByEmail = createServerFn({ method: "POST" })
   .inputValidator(z.string().email())
   .handler(async ({ data: email }) => {
+    const request = (await import("@tanstack/react-start/server")).getRequest();
+    const { authenticateRequest } = await import("@/lib/api-auth.server");
+    try {
+      await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
     // Look up user by email using admin API
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
@@ -103,11 +117,19 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
     z.object({
       conversationId: z.string().uuid(),
       reviewerId: z.string().uuid().nullable(),
-      studentId: z.string().uuid(),
     }),
   )
   .handler(async ({ data }) => {
-    const { conversationId, reviewerId, studentId } = data;
+    const request = (await import("@tanstack/react-start/server")).getRequest();
+    const { authenticateRequest } = await import("@/lib/api-auth.server");
+    let authResult: any;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
+    const studentId = authResult.userId;
+    const { conversationId, reviewerId } = data;
 
     // Fetch student profile details for context
     const { data: profile } = await supabaseAdmin
@@ -203,6 +225,19 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
+    const request = (await import("@tanstack/react-start/server")).getRequest();
+    const { authenticateRequest } = await import("@/lib/api-auth.server");
+    let authResult: any;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
+    // Verify caller is a teacher/admin
+    const { requireRole } = await import("@/lib/api-auth.server");
+    const isTeacher = await requireRole(authResult.userId, "teacher");
+    const isAdmin = await requireRole(authResult.userId, "admin");
+    if (!isTeacher && !isAdmin) throw new Error("Forbidden: Teacher access required");
     const { studentId, conversationId } = data;
 
     // Insert database notification

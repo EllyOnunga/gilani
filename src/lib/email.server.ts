@@ -68,6 +68,15 @@ export async function sendTransactionalEmail({
   }
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export function emailTemplate({
   title,
   heading,
@@ -92,12 +101,12 @@ export function emailTemplate({
     <div style="margin-bottom:1.5rem">
       <span style="font-size:1.4rem;font-weight:700;color:#d9531e">G</span><span style="font-size:1.4rem;font-weight:700;color:#111">ilaniAI</span>
     </div>
-    <h2 style="color:#111;font-size:1.2rem;margin:0 0 0.25rem">${title || heading}</h2>${heading ? `<p style="color:#666;font-size:0.95rem;margin:0 0 1rem">${heading}</p>` : ""}
+    <h2 style="color:#111;font-size:1.2rem;margin:0 0 0.25rem">${escapeHtml(String(title || heading || ""))}</h2>${heading ? `<p style="color:#666;font-size:0.95rem;margin:0 0 1rem">${escapeHtml(heading)}</p>` : ""}
     <div style="color:#444;font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem">${body}</div>
     ${buttonText && buttonUrl ? `
-    <a href="${buttonUrl}" style="background:#d9531e;color:#fff;text-decoration:none;padding:0.75rem 2rem;border-radius:8px;font-weight:600;font-size:0.9rem;display:inline-block">${buttonText}</a>
+    <a href="${encodeURI(buttonUrl)}" style="background:#d9531e;color:#fff;text-decoration:none;padding:0.75rem 2rem;border-radius:8px;font-weight:600;font-size:0.9rem;display:inline-block">${escapeHtml(buttonText)}</a>
     ` : ""}
-    ${footerNote ? `<p style="color:#999;font-size:0.8rem;margin-top:2rem;border-top:1px solid #eee;padding-top:1rem">${footerNote}</p>` : ""}
+    ${footerNote ? `<p style="color:#999;font-size:0.8rem;margin-top:2rem;border-top:1px solid #eee;padding-top:1rem">${escapeHtml(footerNote)}</p>` : ""}
   </div>
 </body>
 </html>`;

@@ -8,25 +8,10 @@ import { authenticateRequest } from "@/lib/api-auth.server";
 import { withTimeout } from "@/lib/async";
 import { buildSystemPrompt, sanitizeUntrustedInput, sanitizeCurriculum } from "@/lib/tutor-prompt";
 
-// ─── Server-side Rate Limiter ────────────────────────────────────────────────
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 20; // max requests
-const RATE_LIMIT_WINDOW = 60000; // per 60 seconds
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  // Prune expired entries to prevent memory leak
-  for (const [key, val] of rateLimitMap.entries()) {
-    if (now > val.resetAt) rateLimitMap.delete(key);
-  }
-  const entry = rateLimitMap.get(userId);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT_MAX) return false;
-  entry.count++;
-  return true;
+// ─── Server-side Rate Limiter (Supabase-backed, survives cold starts) ──────
+import { checkRateLimit as dbCheckRateLimit, AI_RATE_LIMIT } from "@/lib/rate-limit.server";
+async function checkChatRateLimit(userId: string): Promise<boolean> {
+  return dbCheckRateLimit(`${userId}:chat`, AI_RATE_LIMIT);
 }
 
 // ─── Provider Helpers ─────────────────────────────────────────────────────────
@@ -167,8 +152,8 @@ export const Route = createFileRoute("/api/chat")({
 
           const { userId } = authResult;
 
-          // Server-side rate limit — 20 requests per user per minute
-          if (!checkRateLimit(userId)) {
+          // Server-side rate limit — Supabase-backed, survives cold starts
+          if (!(await checkChatRateLimit(userId))) {
             return new Response(
               JSON.stringify({
                 error: "Rate limit exceeded. Please wait a minute before sending more messages.",
