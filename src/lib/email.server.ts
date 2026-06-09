@@ -57,9 +57,12 @@ export async function sendTransactionalEmail({
 
     if (!response.ok) {
       const err = await response.text();
-      console.error("[Email] SendGrid error:", response.status, err);
+      console.error("[Email] SendGrid error:", response.status, response.statusText, err);
+      console.error("[Email] Sender used:", senderEmail);
       return false;
     }
+
+    console.log("[Email] Successfully sent to:", recipients.join(", "));
 
     return true;
   } catch (err) {
