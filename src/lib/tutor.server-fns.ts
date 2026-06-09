@@ -161,7 +161,7 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
             heading: "New Escalation Assigned",
             body: `<strong>${studentName}</strong> has requested your review on their study session. Please check your escalations dashboard to respond.`,
             buttonText: "Open Escalations Dashboard",
-            buttonUrl: `${appUrl}/login?redirect=/teacher/escalations`,
+            buttonUrl: `${appUrl}/login?signout=true&redirect=/teacher/escalations`,
             footerNote:
               "You are receiving this because you are registered as a teacher on GilaniAI.",
           }),
@@ -206,7 +206,7 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
               heading: "New Escalation Request Available",
               body: `<strong>${studentName}</strong> has requested a teacher review on their study session. Since this request is unassigned, any teacher can claim and review it.`,
               buttonText: "View Escalations",
-              buttonUrl: `${appUrl}/login?redirect=/teacher/escalations`,
+              buttonUrl: `${appUrl}/login?signout=true&redirect=/teacher/escalations`,
               footerNote:
                 "You are receiving this because you are registered as a teacher or admin on GilaniAI.",
             }),
@@ -260,7 +260,7 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
           heading: "Your teacher has responded! 🎉",
           body: "Great news — your teacher has reviewed your study session and left a response. Click below to view their feedback and continue learning.",
           buttonText: "View Teacher's Response",
-          buttonUrl: `${appUrl}/login?redirect=/tutor/${conversationId}`,
+          buttonUrl: `${appUrl}/login?signout=true&redirect=/tutor/${conversationId}`,
           footerNote:
             "You are receiving this because you submitted an escalation request on GilaniAI.",
         }),

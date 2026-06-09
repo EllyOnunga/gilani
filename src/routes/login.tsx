@@ -15,11 +15,16 @@ function safeRedirectPath(url: string | undefined): string {
 
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (s: Record<string, unknown>): { redirect?: string; email?: string } => ({
+  validateSearch: (s: Record<string, unknown>): { redirect?: string; email?: string; signout?: boolean } => ({
     redirect: (s.redirect as string) || undefined,
     email: (s.email as string) || undefined,
+    signout: s.signout === "true" || s.signout === true || undefined,
   }),
   beforeLoad: async ({ search }) => {
+    if (search.signout) {
+      await supabase.auth.signOut();
+      return;
+    }
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: safeRedirectPath(search.redirect) });
   },
