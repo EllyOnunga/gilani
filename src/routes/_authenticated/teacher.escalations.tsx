@@ -125,7 +125,7 @@ const resolveEscalation = createServerFn({ method: "POST" })
               heading: `Hi ${studentName}, your teacher has responded!`,
               body: `Your escalated study session has been reviewed by a teacher. Their response has been added to your conversation. Log in to GilaniAI to continue learning.`,
               buttonText: "View Response",
-              buttonUrl: `${appUrl}/tutor/${esc.conversation_id}`,
+              buttonUrl: `${appUrl}/login?redirect=/tutor/${esc.conversation_id}`,
               footerNote: "You are receiving this because you requested a teacher review on GilaniAI.",
             }),
           }).catch((err: any) => console.error("[Student Email] Failed:", err));

@@ -80,7 +80,7 @@ export async function triggerZapierEscalation({
       reason,
       escalated_message: escalatedMessage,
       created_at: new Date().toISOString(),
-      portal_link: `${process.env.APP_URL || "http://localhost:8000"}/teacher/escalations`,
+      portal_link: `${process.env.APP_URL || "http://localhost:8000"}/login?redirect=/teacher/escalations`,
     };
 
     const body = JSON.stringify(payload);
