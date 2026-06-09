@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { sendPasswordResetConfirmationFn } from "@/lib/auth-actions.server-fns";
 import { toast } from "sonner";
 import { Eye, EyeOff, ShieldAlert, Sparkles, CheckCircle2 } from "lucide-react";
 
@@ -46,6 +47,11 @@ function ResetPasswordPage() {
       toast.error(error.message);
       return;
     }
+
+    // Fire confirmation email (don't await — non-blocking)
+    sendPasswordResetConfirmationFn().catch((err) =>
+      console.error("[ResetPassword] Confirmation email failed:", err)
+    );
 
     toast.success("Password has been successfully updated! Redirecting...");
 

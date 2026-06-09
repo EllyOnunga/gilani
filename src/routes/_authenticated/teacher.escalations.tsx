@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -195,6 +196,22 @@ const getConversationMessages = createServerFn({ method: "POST" })
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/teacher/escalations")({
+  beforeLoad: async ({ location }) => {
+    if (typeof window === "undefined") return;
+    const { data } = await supabaseClient.auth.getSession();
+    if (!data.session) {
+      throw redirect({ to: "/login", search: { redirect: location.href } });
+    }
+    const { data: roleCheck } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.session.user.id)
+      .in("role", ["teacher", "admin"])
+      .maybeSingle();
+    if (!roleCheck) {
+      throw redirect({ to: "/dashboard" as any });
+    }
+  },
   head: () => ({
     meta: [{ title: "Escalations — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }],
   }),

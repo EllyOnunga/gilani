@@ -3,7 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { z } from "zod";
-import { sendTransactionalEmail, emailTemplate } from "@/lib/email.server";
+import { sendTransactionalEmail, emailTemplate, passwordResetConfirmationEmail } from "@/lib/email.server";
 
 export const assignUserRole = createServerFn({ method: "POST" })
   .inputValidator(
@@ -102,4 +102,33 @@ export const checkEmailExists = createServerFn({ method: "POST" })
       console.error("[checkEmailExists] Server function failed");
       return { exists: false };
     }
+  });
+
+/**
+ * Called client-side after supabase.auth.updateUser({ password }) succeeds.
+ * Sends a "your password was reset — was this you?" confirmation email.
+ */
+export const sendPasswordResetConfirmationFn = createServerFn({ method: "POST" })
+  .handler(async () => {
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
+
+    const userEmail = authResult.user.email;
+    const userName = authResult.user.user_metadata?.full_name || undefined;
+
+    if (!userEmail) return { sent: false };
+
+    const sent = await sendTransactionalEmail({
+      to: userEmail,
+      subject: "Your GilaniAI Password Was Changed",
+      html: passwordResetConfirmationEmail(userName),
+      text: `Hi ${userName || "there"},\n\nYour GilaniAI password was successfully changed.\n\nIf you did NOT make this change, reset your password immediately at: ${process.env.APP_URL || "https://gilaniai.vercel.app"}/forgot-password\n\nBest regards,\nThe GilaniAI Team`,
+    });
+
+    return { sent };
   });
