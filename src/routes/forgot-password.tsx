@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent, useEffect } from "react";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/forgot-password")({
 function ForgotPasswordPage() {
   const search = Route.useSearch();
   const [email, setEmail] = useState("");
+  const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -39,6 +40,36 @@ function ForgotPasswordPage() {
     if (!email) return;
 
     setBusy(true);
+
+    // Check if email exists before sending reset link
+    const { data: signInCheck } = await supabase.auth.signInWithPassword({
+      email,
+      password: "___invalid_check_only___",
+    });
+
+    // If we get a session somehow (shouldn't happen), sign out
+    if (signInCheck?.session) {
+      await supabase.auth.signOut();
+    }
+
+    // signInWithPassword returns "Invalid login credentials" for existing emails
+    // and "Email not confirmed" for unverified — both mean the email EXISTS
+    // "Invalid login credentials" for non-existent emails too, so we use a different check
+    const { data: existsCheck } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (!existsCheck) {
+      setBusy(false);
+      toast.error("No account found with this email address.", { duration: 5000 });
+      setTimeout(() => {
+        navigate({ to: "/register", search: { email } as any });
+      }, 2000);
+      return;
+    }
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + "/callback",
     });

@@ -51,6 +51,28 @@ function RegisterPage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    // Validate email format
+    const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address (e.g. name@example.com)");
+      return;
+    }
+
+    // Block disposable email domains
+    const blockedDomains = ["mailinator.com", "guerrillamail.com", "tempmail.com", "throwam.com", "sharklasers.com", "trashmail.com", "yopmail.com", "maildrop.cc"];
+    const emailDomain = email.split("@")[1]?.toLowerCase();
+    if (blockedDomains.includes(emailDomain)) {
+      toast.error("Please use a valid email address. Disposable emails are not allowed.");
+      return;
+    }
+
+    // Validate display name
+    if (!displayName.trim() || displayName.trim().length < 2) {
+      toast.error("Please enter your full name (at least 2 characters).");
+      return;
+    }
+
     setBusy(true);
 
     try {

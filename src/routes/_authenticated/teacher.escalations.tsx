@@ -56,7 +56,7 @@ const listEscalations = createServerFn({ method: "POST" }).handler(async () => {
   const { data: escalationsData, error } = await supabaseAdmin
     .from("escalations")
     .select("*")
-    .or(`reviewer_id.eq.${userId},reviewer_id.is.null`)
+    .eq("reviewer_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (escalationsData ?? []) as any[];
