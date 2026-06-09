@@ -643,6 +643,11 @@ function Landing() {
                   FAQ
                 </Link>
               </li>
+              <li>
+                <Link to={"/contact" as any} className="hover:text-primary transition-colors">
+                  Contact us
+                </Link>
+              </li>
             </ul>
           </div>
 

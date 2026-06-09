@@ -16,6 +16,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AboutRouteImport } from './routes/about'
@@ -64,6 +65,12 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
@@ -161,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/callback': typeof CallbackRoute
   '/cookies': typeof CookiesRoute
+  '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -186,6 +194,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/callback': typeof CallbackRoute
   '/cookies': typeof CookiesRoute
+  '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -213,6 +222,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/callback': typeof CallbackRoute
   '/cookies': typeof CookiesRoute
+  '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/callback'
     | '/cookies'
+    | '/contact'
     | '/faq'
     | '/forgot-password'
     | '/login'
@@ -318,6 +329,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   CallbackRoute: typeof CallbackRoute
   CookiesRoute: typeof CookiesRoute
+  ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -371,6 +383,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -547,6 +566,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   CallbackRoute: CallbackRoute,
   CookiesRoute: CookiesRoute,
+  ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,

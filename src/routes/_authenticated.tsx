@@ -23,6 +23,7 @@ import {
   X,
   Smartphone,
   Users,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createServerFn } from "@tanstack/react-start";
@@ -389,6 +390,13 @@ function AuthedShell() {
               {user?.email}
             </p>
           </div>
+          <Link
+            to={"/contact" as any}
+            className="flex items-center gap-2 w-full rounded-lg border border-border px-3 py-2.5 text-xs font-bold text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
+          >
+            <Mail className="h-4 w-4" />
+            Contact us
+          </Link>
           <button
             onClick={signOut}
             className="flex items-center gap-2 w-full rounded-lg border border-border px-3 py-2.5 text-xs font-bold text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
