@@ -22,7 +22,7 @@ export function EscalateModal({
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4 mb-safe">
         <h3 className="font-serif text-lg font-bold text-foreground">Escalate to Teacher</h3>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Enter your teacher's email address to send this conversation directly to them for review.
+          Enter your teacher's email address to send this conversation directly to them for review. Your teacher must be registered on GilaniAI.
         </p>
         <div className="space-y-1.5">
           <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -38,8 +38,8 @@ export function EscalateModal({
           />
           {error && <p className="text-xs text-destructive">{error}</p>}
           {!teacherEmail && (
-            <p className="text-[10px] text-muted-foreground">
-              You must enter your teacher's email to escalate.
+            <p className="text-[10px] text-destructive font-medium">
+              ⚠ Teacher email is required to escalate.
             </p>
           )}
         </div>

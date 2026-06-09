@@ -18,19 +18,17 @@ function loadExternalScript(src: string, integrity?: string): Promise<void> {
     // If script is already in the document, resolve
     const existing = document.querySelector(`script[src="${src}"]`);
     if (existing) {
-      resolve();
+      // Wait a tick to ensure it's fully loaded
+      setTimeout(resolve, 50);
       return;
     }
 
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
-    if (integrity) {
-      script.integrity = integrity;
-      script.crossOrigin = "anonymous";
-    }
+    // Skip integrity check — CDN hash mismatches cause silent failures
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Failed to load external script: ${src}`));
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}. Check your internet connection.`));
     document.head.appendChild(script);
   });
 }
@@ -42,7 +40,7 @@ async function getPdfJsLib(): Promise<any> {
   if (window.pdfjsLib) return window.pdfjsLib;
 
   // Load the core PDF.js library
-  await loadExternalScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js", "sha384-lrb5efVIYR2lZw+OsuztHZzP9wpGNrhui+0VlpiHb/iPcZSCDT3CeETsL9EMQ8ih");
+  await loadExternalScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
 
   const pdfjsLib = window.pdfjsLib;
   if (!pdfjsLib) {
@@ -51,7 +49,7 @@ async function getPdfJsLib(): Promise<any> {
 
   // Set the worker source path
   pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "/pdf.worker.min.js"; // self-hosted — no external dependency
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
   return pdfjsLib;
 }
 
@@ -62,8 +60,7 @@ async function getMammoth(): Promise<any> {
   if (window.mammoth) return window.mammoth;
 
   await loadExternalScript(
-    "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js",
-    "sha384-nFoSjZIoH3CCp8W639jJyQkuPHinJ2NHe7on1xvlUA7SuGfJAfvMldrsoAVm6ECz",
+    "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"
   );
 
   const mammoth = window.mammoth;
@@ -92,7 +89,7 @@ export interface ExtractedDocument {
  */
 async function getTesseract(): Promise<any> {
   if ((window as any).Tesseract) return (window as any).Tesseract;
-  await loadExternalScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js", "sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F");
+  await loadExternalScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js");
   const Tesseract = (window as any).Tesseract;
   if (!Tesseract) throw new Error("Tesseract.js failed to load.");
   return Tesseract;

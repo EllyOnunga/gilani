@@ -260,6 +260,13 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
 
   const handleEscalate = async (email?: string) => {
     if (!threadId) return;
+
+    // Teacher email is required
+    if (!email || !email.trim()) {
+      setEscalateEmailError("Please enter your teacher's email address.");
+      return;
+    }
+
     setEscalating(true);
     try {
       const sessionRes = await supabase.auth.getSession();
@@ -267,15 +274,14 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       const userId = session?.user?.id;
       if (!userId) throw new Error("Not logged in");
 
-      let reviewerId: string | null = null;
-      if (email) {
-        try {
-          reviewerId = await lookupTeacherByEmail({ data: email });
-        } catch (err: any) {
-          setEscalateEmailError(err.message || "No teacher found with that email.");
-          setEscalating(false);
-          return;
-        }
+      // Look up teacher — throws if not found or not a teacher
+      let reviewerId: string;
+      try {
+        reviewerId = await lookupTeacherByEmail({ data: email.trim().toLowerCase() });
+      } catch (err: any) {
+        setEscalateEmailError(err.message || "No teacher found with that email address.");
+        setEscalating(false);
+        return;
       }
 
       const { error } = await supabase.from("escalations").insert({
@@ -288,6 +294,7 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       });
       if (error) throw error;
 
+      // Send email notification to teacher
       await createEscalationNotification({
         data: { conversationId: threadId, reviewerId, studentId: userId },
       });
@@ -295,11 +302,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
       setEscalationStatus("open");
       setEscalateModalOpen(false);
       setTeacherEmail("");
-      toast.success(
-        reviewerId
-          ? "Conversation escalated to your teacher!"
-          : "Conversation escalated to available teachers!",
-      );
+      setEscalateEmailError("");
+      toast.success("Conversation escalated to your teacher! They will be notified by email.");
     } catch (err: any) {
       toast.error(err?.message || "Failed to escalate conversation.");
     } finally {

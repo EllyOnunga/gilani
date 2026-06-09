@@ -130,8 +130,9 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
 
       // Email the specific teacher
       const { data: reviewerUser } = await supabaseAdmin.auth.admin.getUserById(reviewerId);
+      console.log("[Escalation] Sending email to teacher:", reviewerUser?.user?.email);
       if (reviewerUser?.user?.email) {
-        await sendTransactionalEmail({
+        const emailResult = await sendTransactionalEmail({
           to: reviewerUser.user.email,
           subject: `[GilaniAI] Escalation Assigned: Review Requested`,
           html: emailTemplate({
@@ -144,6 +145,7 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
           }),
           text: `Hello Teacher,\n\n${studentName} has requested your review on their study session. You can view and reply to this escalation by visiting your dashboard:\n\n${appUrl}/teacher/escalations\n\nBest regards,\nThe GilaniAI Team`,
         });
+        console.log("[Escalation] Email send result:", emailResult);
       }
     } else {
       // Notify all teachers and admins in DB
