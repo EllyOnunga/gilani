@@ -15,6 +15,7 @@ type Props = {
   isPending: boolean;
   onReload: () => void;
   onEdit?: (messageId: string, newText: string) => void;
+  userId?: string;
 };
 
 function useStreamReveal(text: string, isStreaming: boolean) {
@@ -30,7 +31,7 @@ function useStreamReveal(text: string, isStreaming: boolean) {
   return revealed;
 }
 
-export function MessageBubble({ message: m, idx, isLast, isPending, onReload, onEdit}: Props) {
+export function MessageBubble({ message: m, idx, isLast, isPending, onReload, onEdit, userId}: Props) {
   const [copied, setCopied] = useState(false);
   const [vote, setVote] = useState<1 | -1 | null>(null);
   const [voting, setVoting] = useState(false);
