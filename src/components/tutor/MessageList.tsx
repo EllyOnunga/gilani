@@ -130,6 +130,8 @@ export function MessageList({
             isLast={idx === messages.length - 1}
             isPending={isPending}
             onReload={onReload}
+            onEdit={onEdit}
+            userId={userId}
           />
         ))}
 

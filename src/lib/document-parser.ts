@@ -131,6 +131,7 @@ export async function parseDocument(file: File): Promise<ExtractedDocument> {
   const name = file.name;
   const size = file.size;
   const extension = name.split(".").pop()?.toLowerCase();
+  const mimeType = file.type.toLowerCase();
 
   try {
     switch (extension) {
@@ -189,16 +190,26 @@ export async function parseDocument(file: File): Promise<ExtractedDocument> {
       case "jpg":
       case "jpeg":
       case "png":
-      case "webp": {
+      case "webp":
+      case "gif":
+      case "bmp":
+      case "tiff": {
         const text = await ocrImage(file);
         if (!text) throw new Error("Could not extract any text from this image.");
         return { text, name, size };
       }
 
-      default:
+      default: {
+        // Fall back to mime type for camera captures (no clean extension)
+        if (mimeType.startsWith("image/")) {
+          const text = await ocrImage(file);
+          if (!text) throw new Error("Could not extract any text from this image.");
+          return { text, name, size };
+        }
         throw new Error(
           `Unsupported file type (.${extension}). Please upload a PDF, DOCX, TXT, MD, CSV, or image file (JPG, PNG, WEBP).`,
         );
+      }
     }
   } catch (err: any) {
     console.error(`[DocumentParser] Failed to extract text from ${name}:`, err);
