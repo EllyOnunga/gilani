@@ -15,7 +15,6 @@ type Props = {
   isPending: boolean;
   onReload: () => void;
   onEdit?: (messageId: string, newText: string) => void;
-  userId?: string;
 };
 
 function useStreamReveal(text: string, isStreaming: boolean) {
@@ -31,12 +30,26 @@ function useStreamReveal(text: string, isStreaming: boolean) {
   return revealed;
 }
 
-export function MessageBubble({ message: m, idx, isLast, isPending, onReload, onEdit, userId }: Props) {
+export function MessageBubble({ message: m, idx, isLast, isPending, onReload, onEdit}: Props) {
   const [copied, setCopied] = useState(false);
   const [vote, setVote] = useState<1 | -1 | null>(null);
   const [voting, setVoting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
+  const [collapsed, setCollapsed] = useState(true);
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setResolvedUserId(session?.user?.id ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => setResolvedUserId(session?.user?.id ?? null)
+    );
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const COLLAPSE_THRESHOLD = 300;
   const editRef = useRef<HTMLTextAreaElement>(null);
 
   const partsText =
@@ -56,15 +69,15 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
 
   // Load existing vote for this message
   useEffect(() => {
-    if (!userId || !m.id || m.role !== "assistant") return;
+    if (!resolvedUserId || !m.id || m.role !== "assistant") return;
     supabase
       .from("message_feedback")
       .select("vote")
       .eq("message_id", m.id)
-      .eq("user_id", userId)
+      .eq("user_id", resolvedUserId)
       .maybeSingle()
       .then(({ data }) => { if (data) setVote(data.vote as 1 | -1); });
-  }, [m.id, userId, m.role]);
+  }, [m.id, resolvedUserId, m.role]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(displayText);
@@ -74,17 +87,17 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
   };
 
   const handleVote = async (v: 1 | -1) => {
-    if (!userId || !m.id || voting) return;
+    if (!resolvedUserId || !m.id || voting) return;
     const newVote = vote === v ? null : v;
     setVoting(true);
     try {
       if (newVote === null) {
         await supabase.from("message_feedback").delete()
-          .eq("message_id", m.id).eq("user_id", userId);
+          .eq("message_id", m.id).eq("user_id", resolvedUserId);
         setVote(null);
       } else {
         await supabase.from("message_feedback").upsert(
-          { message_id: m.id, user_id: userId, vote: newVote },
+          { message_id: m.id, user_id: resolvedUserId, vote: newVote },
           { onConflict: "message_id,user_id" }
         );
         setVote(newVote);
@@ -99,6 +112,7 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
 
   const startEdit = () => {
     setEditText(displayText);
+    setCollapsed(false);
     setEditing(true);
     setTimeout(() => { editRef.current?.focus(); editRef.current?.select(); }, 50);
   };
@@ -117,16 +131,10 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
       className="flex relative group"
       style={{ justifyContent: isUser ? "flex-end" : "flex-start" }}
     >
-      {!isUser && (
-        <div className="flex-shrink-0 mt-1 mr-2">
-          <div className="h-6 w-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <span className="font-mono text-[8px] font-bold text-primary">G</span>
-          </div>
-        </div>
-      )}
+
 
       <div
-        className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${
+        className={`${m.role === "user" ? "max-w-[85%] sm:max-w-[75%]" : "w-full"} rounded-2xl px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${
           isUser
             ? "bg-primary text-primary-foreground rounded-tr-sm shadow-sm"
             : "bg-card border border-border text-foreground rounded-tl-sm shadow-sm"
@@ -161,7 +169,7 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
             )}
 
             {displayText && !isStreamActive && (
-              <div className="flex items-center gap-1 mt-2 pt-1.5 border-t border-border/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <div className="flex items-center gap-1 mt-2 pt-1.5 border-t border-border/40 transition-opacity duration-200">
                 {/* Copy */}
                 <button onClick={handleCopy}
                   className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-muted"
@@ -190,7 +198,6 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
                   title="Bad response">
                   <ThumbsDown className="h-3 w-3" />
                 </button>
-                <span className="ml-auto font-mono text-[8px] text-muted-foreground/50">GilaniAI</span>
               </div>
             )}
           </div>
@@ -219,11 +226,25 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
                 </div>
               </div>
             ) : (
-              <span className="whitespace-pre-wrap">{displayText}</span>
+              <div className="flex flex-col gap-1">
+                <span className="whitespace-pre-wrap">
+                  {collapsed && displayText.length > COLLAPSE_THRESHOLD
+                    ? displayText.slice(0, COLLAPSE_THRESHOLD) + "…"
+                    : displayText}
+                </span>
+                {displayText.length > COLLAPSE_THRESHOLD && (
+                  <button
+                    onClick={() => setCollapsed((p) => !p)}
+                    className="self-start text-[10px] font-bold text-primary-foreground/60 hover:text-primary-foreground underline underline-offset-2 transition-colors"
+                  >
+                    {collapsed ? "Show more" : "Show less"}
+                  </button>
+                )}
+              </div>
             )}
 
             {!editing && !isStreamActive && (
-              <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 justify-end">
+              <div className="flex items-center gap-1 mt-1 transition-opacity duration-200 justify-end">
                 <button onClick={handleCopy}
                   className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-primary-foreground/60 hover:text-primary-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-primary-foreground/10"
                   title="Copy">
