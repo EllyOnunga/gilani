@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { checkRateLimit, AI_RATE_LIMIT } from "@/lib/rate-limit.server";
+import { checkDualRateLimit, NOTES_RATE_LIMIT, NOTES_DAILY_LIMIT } from "@/lib/rate-limit.server";
 import {
   BookOpenText,
   ChevronDown,
@@ -175,8 +175,10 @@ const ingestNote = createServerFn({ method: "POST" })
     }
     const userId = authResult.userId;
 
-    if (!checkRateLimit(`${userId}:ingestNote`, AI_RATE_LIMIT)) {
-      throw new Error("Rate limit exceeded. Please wait a minute before generating more notes.");
+    const rlNotes = await checkDualRateLimit(userId, "ingestNote", NOTES_RATE_LIMIT, NOTES_DAILY_LIMIT);
+    if (!rlNotes.allowed) {
+      const s = Math.ceil(rlNotes.retryAfterMs / 1000);
+      throw new Error(rlNotes.isDaily ? `Daily note limit reached. Resets in ${s}s.` : `Rate limit exceeded. Try again in ${s}s.`);
     }
     const { title, heading, subheading, content } = data;
     if (!title.trim() || !content.trim()) {

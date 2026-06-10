@@ -23,7 +23,7 @@ import { getErrorMessage, withTimeout } from "@/lib/async";
 import { MathText } from "@/components/math-text";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { checkRateLimit, AI_RATE_LIMIT } from "@/lib/rate-limit.server";
+import { checkDualRateLimit, QUIZ_RATE_LIMIT, QUIZ_DAILY_LIMIT } from "@/lib/rate-limit.server";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,8 @@ const generateQuiz = createServerFn({ method: "POST" })
     }
     const userId = authResult.userId;
 
-    if (!checkRateLimit(`${userId}:generateQuiz`, AI_RATE_LIMIT)) {
+    const rlQuiz = await checkDualRateLimit(userId, "generateQuiz", QUIZ_RATE_LIMIT, QUIZ_DAILY_LIMIT);
+    if (!rlQuiz.allowed) {
       throw new Error("Rate limit exceeded. Please wait a minute before generating more quizzes.");
     }
     const { topic, count, curriculum } = data;

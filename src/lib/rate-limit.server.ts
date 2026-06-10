@@ -1,33 +1,21 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export interface RateLimitOptions {
-  /** Max requests allowed in the window */
   max: number;
-  /** Window size in milliseconds */
   windowMs: number;
 }
 
 /**
- * Supabase-backed rate limiter.
- * Survives restarts, works across multiple worker processes/instances.
- *
- * Uses an upsert on the rate_limits table:
- *   - If no row exists or it has expired → insert fresh bucket (count = 1)
- *   - If row exists and is live → increment count, reject if over max
- *
- * Key format convention: "<userId>:<action>"  e.g. "abc-123:generateQuiz"
+ * Supabase-backed atomic rate limiter.
+ * Returns { allowed, retryAfterMs } so callers can tell users when to retry.
  */
 export async function checkRateLimit(
   key: string,
   opts: RateLimitOptions,
-): Promise<boolean> {
+): Promise<{ allowed: boolean; retryAfterMs: number }> {
   const now = new Date();
   const resetAt = new Date(now.getTime() + opts.windowMs).toISOString();
 
-  // Atomic upsert:
-  // - INSERT a fresh row (count=1) if key doesn't exist or has expired
-  // - UPDATE by incrementing count if the row is still live
-  // Returns the resulting row so we can check the count.
   const { data, error } = await supabaseAdmin.rpc("upsert_rate_limit", {
     p_key: key,
     p_max: opts.max,
@@ -35,14 +23,63 @@ export async function checkRateLimit(
   });
 
   if (error) {
-    // Fail open: if the DB is unavailable, don't block the user
     console.error("[RateLimit] DB error, failing open:", error.message);
-    return true;
+    return { allowed: true, retryAfterMs: 0 };
   }
 
-  // The function returns TRUE if the request is allowed, FALSE if over limit
-  return data === true;
+  if (data === true) return { allowed: true, retryAfterMs: 0 };
+
+  // Fetch reset time so we can tell the user how long to wait
+  const { data: row } = await supabaseAdmin
+    .from("rate_limits")
+    .select("reset_at")
+    .eq("key", key)
+    .maybeSingle();
+
+  const resetTime = row?.reset_at ? new Date(row.reset_at).getTime() : now.getTime() + opts.windowMs;
+  const retryAfterMs = Math.max(0, resetTime - now.getTime());
+  return { allowed: false, retryAfterMs };
 }
 
-/** 30 AI calls per user per minute for heavy server functions */
-export const AI_RATE_LIMIT: RateLimitOptions = { max: 30, windowMs: 60_000 };
+// ─── Per-action rate limits ──────────────────────────────────────────────────
+
+/** Chat: 20 messages per minute */
+export const CHAT_RATE_LIMIT: RateLimitOptions      = { max: 20,  windowMs: 60_000 };
+
+/** Chat: 200 messages per day */
+export const CHAT_DAILY_LIMIT: RateLimitOptions     = { max: 200, windowMs: 86_400_000 };
+
+/** Quiz generation: 10 per minute, 50 per day */
+export const QUIZ_RATE_LIMIT: RateLimitOptions      = { max: 10,  windowMs: 60_000 };
+export const QUIZ_DAILY_LIMIT: RateLimitOptions     = { max: 50,  windowMs: 86_400_000 };
+
+/** Planner: 10 per minute, 30 per day */
+export const PLANNER_RATE_LIMIT: RateLimitOptions   = { max: 10,  windowMs: 60_000 };
+export const PLANNER_DAILY_LIMIT: RateLimitOptions  = { max: 30,  windowMs: 86_400_000 };
+
+/** Notes ingest: 10 per minute, 50 per day */
+export const NOTES_RATE_LIMIT: RateLimitOptions     = { max: 10,  windowMs: 60_000 };
+export const NOTES_DAILY_LIMIT: RateLimitOptions    = { max: 50,  windowMs: 86_400_000 };
+
+/** Legacy alias used by old imports */
+export const AI_RATE_LIMIT: RateLimitOptions        = CHAT_RATE_LIMIT;
+
+/**
+ * Check both per-minute and daily limits.
+ * Returns the more restrictive result.
+ */
+export async function checkDualRateLimit(
+  userId: string,
+  action: string,
+  minuteLimit: RateLimitOptions,
+  dailyLimit: RateLimitOptions,
+): Promise<{ allowed: boolean; retryAfterMs: number; isDaily: boolean }> {
+  const [minute, daily] = await Promise.all([
+    checkRateLimit(`${userId}:${action}:min`, minuteLimit),
+    checkRateLimit(`${userId}:${action}:day`, dailyLimit),
+  ]);
+
+  if (!minute.allowed) return { ...minute, isDaily: false };
+  if (!daily.allowed)  return { ...daily,  isDaily: true  };
+  return { allowed: true, retryAfterMs: 0, isDaily: false };
+}

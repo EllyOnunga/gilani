@@ -8,6 +8,24 @@ export type Database = {
   };
   public: {
     Tables: {
+      rate_limits: {
+        Row: {
+          key: string;
+          count: number;
+          reset_at: string;
+        };
+        Insert: {
+          key: string;
+          count?: number;
+          reset_at?: string;
+        };
+        Update: {
+          key?: string;
+          count?: number;
+          reset_at?: string;
+        };
+        Relationships: [];
+      };
       contact_messages: {
         Row: {
           id: string;

@@ -20,7 +20,7 @@ import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { checkRateLimit, AI_RATE_LIMIT } from "@/lib/rate-limit.server";
+import { checkDualRateLimit, PLANNER_RATE_LIMIT, PLANNER_DAILY_LIMIT } from "@/lib/rate-limit.server";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -254,7 +254,8 @@ const generatePlan = createServerFn({ method: "POST" }).handler(async () => {
   }
   const userId = authResult.userId;
 
-  if (!checkRateLimit(`${userId}:generatePlan`, AI_RATE_LIMIT)) {
+  const rlPlan = await checkDualRateLimit(userId, "generatePlan", PLANNER_RATE_LIMIT, PLANNER_DAILY_LIMIT);
+  if (!rlPlan.allowed) {
     throw new Error("Rate limit exceeded. Please wait a minute before generating a new plan.");
   }
   // Fetch user's curriculum from profile

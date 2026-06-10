@@ -9,9 +9,9 @@ import { withTimeout } from "@/lib/async";
 import { buildSystemPrompt, sanitizeUntrustedInput, sanitizeCurriculum } from "@/lib/tutor-prompt";
 
 // ─── Server-side Rate Limiter (Supabase-backed, survives cold starts) ──────
-import { checkRateLimit as dbCheckRateLimit, AI_RATE_LIMIT } from "@/lib/rate-limit.server";
-async function checkChatRateLimit(userId: string): Promise<boolean> {
-  return dbCheckRateLimit(`${userId}:chat`, AI_RATE_LIMIT);
+import { checkDualRateLimit, CHAT_RATE_LIMIT, CHAT_DAILY_LIMIT } from "@/lib/rate-limit.server";
+async function checkChatRateLimit(userId: string): Promise<{ allowed: boolean; retryAfterMs: number; isDaily: boolean }> {
+  return checkDualRateLimit(userId, "chat", CHAT_RATE_LIMIT, CHAT_DAILY_LIMIT);
 }
 
 // ─── Provider Helpers ─────────────────────────────────────────────────────────
@@ -153,12 +153,15 @@ export const Route = createFileRoute("/api/chat")({
           const { userId } = authResult;
 
           // Server-side rate limit — Supabase-backed, survives cold starts
-          if (!(await checkChatRateLimit(userId))) {
+          const rlResult = await checkChatRateLimit(userId);
+          if (!rlResult.allowed) {
+            const seconds = Math.ceil(rlResult.retryAfterMs / 1000);
+            const msg = rlResult.isDaily
+              ? `Daily message limit reached. Resets in ${seconds}s.`
+              : `Rate limit exceeded. Try again in ${seconds}s.`;
             return new Response(
-              JSON.stringify({
-                error: "Rate limit exceeded. Please wait a minute before sending more messages.",
-              }),
-              { status: 429, headers: { "Content-Type": "application/json" } },
+              JSON.stringify({ error: msg, retryAfterMs: rlResult.retryAfterMs, isDaily: rlResult.isDaily }),
+              { status: 429, headers: { "Content-Type": "application/json", "Retry-After": String(Math.ceil(rlResult.retryAfterMs / 1000)) } },
             );
           }
 
