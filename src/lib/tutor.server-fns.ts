@@ -3,6 +3,43 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 import { sendTransactionalEmail, emailTemplate } from "./email.server";
 
+export const createEscalationFn = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    conversationId: z.string().uuid(),
+    reason: z.string().default("student_request"),
+    detail: z.string().default("Student manually requested teacher review."),
+    reviewerId: z.string().uuid().nullable(),
+  }))
+  .handler(async ({ data }) => {
+    const request = (await import("@tanstack/react-start/server")).getRequest();
+    const { authenticateRequest } = await import("@/lib/api-auth.server");
+    let authResult: Awaited<ReturnType<typeof authenticateRequest>>;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
+    // Check for existing open escalation
+    const { data: existing } = await supabaseAdmin
+      .from("escalations")
+      .select("id")
+      .eq("conversation_id", data.conversationId)
+      .eq("status", "open")
+      .maybeSingle();
+    if (existing) return { alreadyOpen: true };
+
+    const { error } = await supabaseAdmin.from("escalations").insert({
+      conversation_id: data.conversationId,
+      user_id: authResult.userId,
+      reason: data.reason,
+      status: "open",
+      detail: data.detail,
+      reviewer_id: data.reviewerId,
+    });
+    if (error) throw error;
+    return { alreadyOpen: false };
+  });
+
 export const deleteThreadFn = createServerFn({ method: "POST" })
   .inputValidator(z.object({ threadId: z.string().uuid() }))
   .handler(async ({ data }) => {

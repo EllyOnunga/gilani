@@ -8,6 +8,7 @@ import {
   deleteThreadFn,
   generateThreadTitleFn,
   lookupTeacherByEmail,
+  createEscalationFn,
 } from "@/lib/tutor.server-fns";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
@@ -284,29 +285,20 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
         return;
       }
 
-      // Duplicate guard — prevent spam escalations on the same thread
-      const { data: existing } = await supabase
-        .from("escalations")
-        .select("id")
-        .eq("conversation_id", threadId)
-        .eq("user_id", userId)
-        .in("status", ["open", "in_review"])
-        .maybeSingle();
-      if (existing) {
+      // Server fn handles duplicate guard, auth, and insert atomically
+      const result = await createEscalationFn({
+        data: {
+          conversationId: threadId,
+          reason: "student_request",
+          detail: "Student manually requested teacher review.",
+          reviewerId: reviewerId ?? null,
+        },
+      });
+      if (result.alreadyOpen) {
         toast.info("This conversation already has an open escalation.");
         setEscalating(false);
         return;
       }
-
-      const { error } = await supabase.from("escalations").insert({
-        conversation_id: threadId,
-        user_id: userId,
-        reason: "student_request",
-        status: "open",
-        detail: "Student manually requested teacher review.",
-        reviewer_id: reviewerId,
-      });
-      if (error) throw error;
 
       // Send email notification to teacher
       await createEscalationNotification({ data: { conversationId: threadId, reviewerId: reviewerId ?? null } });

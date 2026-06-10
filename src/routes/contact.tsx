@@ -15,6 +15,12 @@ import { Logo } from "@/components/ui/logo";
 import { submitContactFn } from "@/lib/contact.server-fns";
 
 export const Route = createFileRoute("/contact")({
+  head: () => ({
+    meta: [
+      { title: "Contact Us — GilaniAI" },
+      { name: "description", content: "Get in touch with the GilaniAI team for support, feedback, or partnership enquiries." },
+    ],
+  }),
   component: ContactPage,
 });
 
