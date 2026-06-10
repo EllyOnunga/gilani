@@ -39,7 +39,6 @@ function TutorThread() {
   const { threadId } = Route.useParams();
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
@@ -73,10 +72,10 @@ function TutorThread() {
 
   // key={threadId} forces TutorThreadInner to remount on every thread switch.
   // Fresh mount means messagesLoading starts as true — no empty-state flash.
-  return <TutorThreadInner key={threadId} authToken={authToken} />;
+  return <TutorThreadInner key={threadId} authToken={authToken} userId={userId} />;
 }
 
-function TutorThreadInner({ authToken }: { authToken: string | null }) {
+function TutorThreadInner({ authToken, userId }: { authToken: string | null; userId: string | null }) {
   const { threadId } = Route.useParams();
   const navigate = useNavigate({ from: '/tutor/$threadId' });
 
@@ -657,8 +656,8 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           isPending={isPending}
           onReload={reload}
           onEdit={(messageId, newText) => {
-            setMessages((prev) =>
-              prev.map((m) =>
+            setMessages((prev: UIMessage[]) =>
+              prev.map((m: UIMessage) =>
                 m.id === messageId
                   ? { ...m, parts: [{ type: "text", text: newText }], content: newText }
                   : m
