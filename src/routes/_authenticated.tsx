@@ -206,6 +206,20 @@ function AuthedShell() {
     return <GilaniLoader />;
   }
 
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [userMenuOpen]);
+
   const signOut = async () => {
     await supabase.auth.signOut();
     toast.success("Signed out");
@@ -389,21 +403,36 @@ function AuthedShell() {
             <p className="truncate text-xs text-muted-foreground mr-2" title={user?.email ?? ""}>
               {user?.email}
             </p>
+            <div className="relative flex-shrink-0" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen((v) => !v)}
+                className="flex items-center justify-center rounded-lg border border-border bg-background p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                title="Account actions"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+              {userMenuOpen && (
+                <div className="absolute bottom-full right-0 mb-1 w-44 rounded-lg border border-border bg-popover shadow-md z-50 py-1 text-xs">
+                  <Link
+                    to={"/contact" as any}
+                    onClick={() => { setUserMenuOpen(false); setSidebarOpen(false); }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    Contact us
+                  </Link>
+                  <div className="my-1 border-t border-border/50" />
+                  <button
+                    onClick={signOut}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          <Link
-            to={"/contact" as any}
-            className="flex items-center gap-2 w-full rounded-lg border border-border px-3 py-2.5 text-xs font-bold text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
-          >
-            <Mail className="h-4 w-4" />
-            Contact us
-          </Link>
-          <button
-            onClick={signOut}
-            className="flex items-center gap-2 w-full rounded-lg border border-border px-3 py-2.5 text-xs font-bold text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </button>
         </div>
       </aside>
       <main className="flex-1 min-w-0 overflow-y-auto">
