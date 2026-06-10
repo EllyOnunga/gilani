@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import {
   Mail,
@@ -44,6 +45,7 @@ type FormState = "idle" | "sending" | "success" | "error";
 type Category = "general" | "bug" | "billing" | "account" | "curriculum" | "partnership" | "press" | "other";
 
 function ContactPage() {
+  const { user } = useAuth();
   const [form, setForm] = useState<{
     name: string;
     email: string;
@@ -89,9 +91,16 @@ function ContactPage() {
       {/* Top nav */}
       <header className="sticky top-0 z-20 border-b border-border bg-sidebar/80 backdrop-blur-sm px-6 py-4 flex items-center justify-between">
         <Logo to="/" size="sm" />
-        <Link to="/login" className="text-xs font-semibold text-primary hover:underline">
-          Sign in →
-        </Link>
+        {!user && (
+          <Link to="/login" className="text-xs font-semibold text-primary hover:underline">
+            Sign in →
+          </Link>
+        )}
+        {user && (
+          <Link to={"/dashboard" as any} className="text-xs font-semibold text-primary hover:underline">
+            Dashboard →
+          </Link>
+        )}
       </header>
 
       {/* Hero */}
