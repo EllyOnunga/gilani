@@ -38,6 +38,8 @@ function TutorThread() {
   // race condition where messages=[] and messagesLoading=false flash together.
   const { threadId } = Route.useParams();
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
@@ -48,6 +50,7 @@ function TutorThread() {
         if (!active) return;
         const session = res?.data?.session;
         if (session?.access_token) setAuthToken(session.access_token);
+        if (session?.user?.id) setUserId(session.user.id);
         setAuthLoading(false);
       })
       .catch((err) => {
@@ -653,6 +656,23 @@ function TutorThreadInner({ authToken }: { authToken: string | null }) {
           messagesLoadError={messagesLoadError}
           isPending={isPending}
           onReload={reload}
+          onEdit={(messageId, newText) => {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === messageId
+                  ? { ...m, parts: [{ type: "text", text: newText }], content: newText }
+                  : m
+              )
+            );
+            supabase
+              .from("messages")
+              .update({ content: newText })
+              .eq("id", messageId)
+              .then(({ error }) => {
+                if (error) toast.error("Failed to save edit");
+              });
+          }}
+          userId={userId ?? undefined}
           onPromptClick={(prompt) => {
             setInput(prompt);
           }}

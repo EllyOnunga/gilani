@@ -10,6 +10,8 @@ type Props = {
   isPending: boolean;
   onReload: () => void;
   onPromptClick: (prompt: string) => void;
+  onEdit?: (messageId: string, newText: string) => void;
+  userId?: string;
 };
 
 const THINKING_STEPS = [
@@ -76,6 +78,8 @@ export function MessageList({
   isPending,
   onReload,
   onPromptClick,
+  onEdit,
+  userId,
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);

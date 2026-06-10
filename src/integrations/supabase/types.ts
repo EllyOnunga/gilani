@@ -26,6 +26,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      message_feedback: {
+        Row: {
+          id: string;
+          message_id: string;
+          user_id: string;
+          vote: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          message_id: string;
+          user_id: string;
+          vote: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          message_id?: string;
+          user_id?: string;
+          vote?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       contact_messages: {
         Row: {
           id: string;
