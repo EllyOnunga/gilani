@@ -50,7 +50,19 @@ function createChatModel(provider: string): { model: any; name: string } | null 
         baseURL: "https://api.groq.com/openai/v1",
         apiKey: key,
       });
-      return { model: groq.chatModel("llama-3.3-70b-versatile"), name: "groq" };
+      // Primary: llama-3.1-8b-instant (fast, high limits)
+      // Fallback handled by provider order — llama-4-scout added as groq2
+      return { model: groq.chatModel("llama-3.1-8b-instant"), name: "groq" };
+    }
+    case "groq2": {
+      const key = getKey(process.env.GROQ_API_KEY);
+      if (!key) return null;
+      const groq = createOpenAICompatible({
+        name: "groq",
+        baseURL: "https://api.groq.com/openai/v1",
+        apiKey: key,
+      });
+      return { model: groq.chatModel("meta-llama/llama-4-scout-17b-16e-instruct"), name: "groq2" };
     }
     case "openai": {
       const key = getKey(process.env.OPENAI_API_KEY);
@@ -102,7 +114,7 @@ function createEmbeddingModel(): { model: any; name: string } | null {
       baseURL: "https://api.groq.com/openai/v1",
       apiKey: groqKey,
     });
-    return { model: groq.textEmbeddingModel("bge-large-en-v1.5"), name: "groq" };
+    return { model: groq.textEmbeddingModel("nomic-embed-text"), name: "groq" };
   }
 
   // Try OpenAI as fallback
@@ -179,7 +191,7 @@ export const Route = createFileRoute("/api/chat")({
 
           // ─── Gather Configured Chat Models (UPDATED PRIORITY ORDER) ──────
           // Priority: Groq → OpenAI → Gemini → Mistral → DeepSeek
-          const providerOrder = ["groq", "openai", "gemini", "mistral", "deepseek"];
+          const providerOrder = ["groq", "groq2", "openai", "gemini", "mistral", "deepseek"];
           const configuredProviders = providerOrder
             .map((p) => createChatModel(p))
             .filter((p): p is { model: any; name: string } => p !== null);
