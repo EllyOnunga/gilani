@@ -412,7 +412,7 @@ export const Route = createFileRoute("/api/chat")({
 
           console.log(`[API Chat] Returning stream response from: ${activeProvider}`);
           // Pipe through with abort so hung provider connections are cleaned up
-          const textStream = streamResult.toTextStreamResponse({
+          const textStream = streamResult.toUIMessageStreamResponse({
             headers: { "cache-control": "no-cache" },
           });
           streamAbort.signal.addEventListener("abort", () => {

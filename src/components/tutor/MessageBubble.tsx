@@ -16,47 +16,7 @@ type Props = {
   userId?: string;
 };
 
-function useStreamReveal(text: string, isStreaming: boolean) {
-  const [revealed, setRevealed] = useState(isStreaming ? 0 : text.length);
-  const targetRef = useRef(text.length);
-  const rafRef = useRef<number | null>(null);
-  const revealedRef = useRef(isStreaming ? 0 : text.length);
 
-  // Update target whenever new text arrives — do NOT restart animation
-  useEffect(() => {
-    if (!isStreaming) {
-      targetRef.current = text.length;
-      revealedRef.current = text.length;
-      setRevealed(text.length);
-      return;
-    }
-    targetRef.current = text.length;
-  }, [text, isStreaming]);
-
-  // Single long-running animation loop for the entire stream
-  useEffect(() => {
-    if (!isStreaming) {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      return;
-    }
-    let lastTime = 0;
-    const DELAY_MS = 16;
-    const step = (timestamp: number) => {
-      if (timestamp - lastTime >= DELAY_MS) {
-        lastTime = timestamp;
-        if (revealedRef.current < targetRef.current) {
-          revealedRef.current = Math.min(revealedRef.current + 4, targetRef.current);
-          setRevealed(revealedRef.current);
-        }
-      }
-      rafRef.current = requestAnimationFrame(step);
-    };
-    rafRef.current = requestAnimationFrame(step);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [isStreaming]);
-
-  return revealed;
-}
 
 export function MessageBubble({ message: m, idx, isLast, isPending, onReload, onEdit, userId}: Props) {
   const [copied, setCopied] = useState(false);
@@ -93,8 +53,7 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
       : rawText;
 
   const isStreamActive = isPending && isLast;
-  const revealedCount = useStreamReveal(displayText, isStreamActive);
-  const visibleText = isStreamActive ? displayText.slice(0, revealedCount) : displayText;
+  const visibleText = displayText;
   // Throttle markdown re-renders during streaming — update every 40 chars
 
 
