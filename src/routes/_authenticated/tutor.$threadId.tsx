@@ -235,16 +235,48 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       if (!res.ok || !res.body) throw new Error("Stream failed");
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let accumulated = "";
+      let buffer = "";
+      let textAccumulated = "";
+      let finalMessageId: string | null = null;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        accumulated += decoder.decode(value, { stream: true });
-        const text = accumulated;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          // AI SDK data stream format: text chunks are "0:\"...\""
+          if (line.startsWith("0:")) {
+            try {
+              const chunk = JSON.parse(line.slice(2));
+              if (typeof chunk === "string") textAccumulated += chunk;
+            } catch {}
+          }
+          // Annotation lines carry the saved DB message id: "8:{...}"
+          if (line.startsWith("8:")) {
+            try {
+              const annotation = JSON.parse(line.slice(2));
+              const arr = Array.isArray(annotation) ? annotation : [annotation];
+              for (const a of arr) {
+                if (a?.messageId) finalMessageId = a.messageId;
+              }
+            } catch {}
+          }
+        }
         setMessages((prev: any[]) =>
           prev.map((m: any) =>
             m.id === placeholderId
-              ? { ...m, content: text, parts: [{ type: "text", text }] }
+              ? { ...m, content: textAccumulated, parts: [{ type: "text", text: textAccumulated }] }
+              : m
+          )
+        );
+      }
+      // Swap placeholder id with real DB UUID so voting works
+      if (finalMessageId) {
+        setMessages((prev: any[]) =>
+          prev.map((m: any) =>
+            m.id === placeholderId
+              ? { ...m, id: finalMessageId }
               : m
           )
         );
@@ -767,16 +799,45 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
               if (!res.ok || !res.body) throw new Error("Stream failed");
               const reader = res.body.getReader();
               const decoder = new TextDecoder();
-              let accumulated = "";
+              let buffer = "";
+              let textAccumulated = "";
+              let finalMessageId: string | null = null;
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                accumulated += decoder.decode(value, { stream: true });
-                const text = accumulated;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop() ?? "";
+                for (const line of lines) {
+                  if (line.startsWith("0:")) {
+                    try {
+                      const chunk = JSON.parse(line.slice(2));
+                      if (typeof chunk === "string") textAccumulated += chunk;
+                    } catch {}
+                  }
+                  if (line.startsWith("8:")) {
+                    try {
+                      const annotation = JSON.parse(line.slice(2));
+                      const arr = Array.isArray(annotation) ? annotation : [annotation];
+                      for (const a of arr) {
+                        if (a?.messageId) finalMessageId = a.messageId;
+                      }
+                    } catch {}
+                  }
+                }
                 setMessages((prev: any[]) =>
                   prev.map((m: any) =>
                     m.id === placeholderId
-                      ? { ...m, content: text, parts: [{ type: "text", text }] }
+                      ? { ...m, content: textAccumulated, parts: [{ type: "text", text: textAccumulated }] }
+                      : m
+                  )
+                );
+              }
+              if (finalMessageId) {
+                setMessages((prev: any[]) =>
+                  prev.map((m: any) =>
+                    m.id === placeholderId
+                      ? { ...m, id: finalMessageId }
                       : m
                   )
                 );

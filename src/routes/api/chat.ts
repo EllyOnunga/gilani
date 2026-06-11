@@ -352,7 +352,7 @@ export const Route = createFileRoute("/api/chat")({
                     const thoughtSignature =
                       (providerMetadata as any)?.google?.thoughtSignature || null;
 
-                    await supabaseAdmin.from("messages").insert({
+                    const { data: insertedMsg } = await supabaseAdmin.from("messages").insert({
                       conversation_id: threadId,
                       role: "assistant",
                       content: safeText,
@@ -360,7 +360,10 @@ export const Route = createFileRoute("/api/chat")({
                       confidence: 0.9,
                       user_id: userId,
                       thought_signature: thoughtSignature,
-                    } as any);
+                    } as any).select("id").single();
+                    if (insertedMsg?.id) {
+                      streamResult.experimental_sendMessageAnnotations?.([{ messageId: insertedMsg.id }]);
+                    }
 
                     await supabaseAdmin.from("audit_logs").insert({
                       action: "tutor.message",
