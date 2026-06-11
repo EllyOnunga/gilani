@@ -179,7 +179,9 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
               <div className={`prose-ai relative ${isStreamActive ? "streaming-content" : ""}`}>
                 {!renderMarkdown
                   ? <div className="whitespace-pre-wrap text-sm leading-relaxed">{visibleText}</div>
-                  : <MarkdownRenderer content={displayText} />}
+                  : <div className="animate-in fade-in duration-300">
+                      <MarkdownRenderer content={displayText} />
+                    </div>}
                 {isStreamActive && (
                   <span className="inline-block w-[2px] h-[1em] ml-0.5 bg-primary align-middle"
                     style={{ animation: "cursor-blink 0.7s step-end infinite" }} />
