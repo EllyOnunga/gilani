@@ -48,6 +48,7 @@ The comprehensive_summary is the heart of this response. It must be:
 - Include 2–3 practice questions at the end of comprehensive_summary with full worked solutions
 - Use **bold** for key terms on first use
 - Use LaTeX for all mathematical expressions (see formatting rules below)
+- IMPORTANT: inside JSON strings, escape ALL backslashes: \\\\sqrt{x} not \\sqrt{x}, \\\\frac{a}{b} not \\frac{a}{b}
 - Do NOT summarise vaguely — cover every point from the input notes in detail
 
 ════════════════════════════════════════
@@ -101,6 +102,7 @@ Common:  $a^2 + b^2 = c^2$, $A = \\pi r^2$, $V = \\frac{4}{3}\\pi r^3$
 Chemistry: $\\text{H}_2\\text{O}$, $\\text{CO}_2$, $\\text{SO}_4^{2-}$
 
 NEVER write: x^2, sqrt(x), H2O in plain text.
+INSIDE JSON STRINGS: double-escape all backslashes — \\\\sqrt{x}, \\\\frac{a}{b}, \\\\text{H}_2\\\\text{O}
 
 ════════════════════════════════════════
 RECOMMENDED RESOURCES — STRICT

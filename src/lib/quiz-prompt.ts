@@ -65,7 +65,7 @@ EXAMPLE (Mathematics, easy):
   "question": "A matatu charges Ksh 150 per trip. If the fare increases by 20%, what is the new fare?",
   "options": ["Ksh 160", "Ksh 170", "Ksh 180", "Ksh 200"],
   "correct": 2,
-  "explanation": "20% of 150 = 30. New fare = 150 + 30 = Ksh 180. Option A adds only 10. Option B adds 20 flat. Option D doubles the fare.",
+  "explanation": "20% of 150 = 30. New fare = 150 + 30 = Ksh 180. Ksh 160 adds only 10 (wrong percentage base). Ksh 170 adds 20 flat (not a percentage). Ksh 200 doubles the fare (100% increase, not 20%).",
   "difficulty": "easy",
   "subtopic": "Percentages",
   "curriculum": "KCSE"
@@ -106,10 +106,15 @@ MANDATORY SELF-VERIFICATION (MATH/SCIENCE)
 ════════════════════════════════════════
 
 For EVERY question involving numbers or formulas, BEFORE writing JSON:
-1. Solve the problem completely.
+1. Solve the problem completely. Write out the full working.
 2. Place the correct answer at options[correct] ONLY.
 3. Verify: re-read options[correct] and confirm it matches your answer.
-4. Explanation MUST reference options[correct] by value and explain why each wrong option is incorrect.
+4. For each wrong option, state WHY that specific value is wrong — reference the actual value in the option, not just "Option A/B/C/D". Describe the specific mistake that leads to it (e.g. wrong formula, inverted operation, off-by-one).
+5. NEVER write "Option A/B/C/D is wrong" without also stating the value at that position and the exact error that produces it.
+
+EXPLANATION FORMAT (mandatory for numeric questions):
+"The correct answer is [value] because [full working]. [wrong value 1] results from [specific mistake]. [wrong value 2] results from [specific mistake]. [wrong value 3] results from [specific mistake]."
+"The correct answer is [value] because [full working]. [wrong value 1] results from [specific mistake]. [wrong value 2] results from [specific mistake]. [wrong value 3] results from [specific mistake]."
 
 ════════════════════════════════════════
 MATH FORMATTING — ALWAYS USE LATEX
