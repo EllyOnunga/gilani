@@ -86,6 +86,13 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
   const isStreamActive = isPending && isLast;
   const revealedCount = useStreamReveal(displayText, isStreamActive);
   const visibleText = isStreamActive ? displayText.slice(0, revealedCount) : displayText;
+  // Delay switching to MarkdownRenderer after stream ends to avoid KaTeX reflow jump
+  const [renderMarkdown, setRenderMarkdown] = useState(false);
+  useEffect(() => {
+    if (isStreamActive) { setRenderMarkdown(false); return; }
+    const t = setTimeout(() => setRenderMarkdown(true), 80);
+    return () => clearTimeout(t);
+  }, [isStreamActive]);
 
   // Load existing vote for this message
   useEffect(() => {
@@ -170,9 +177,9 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
             />
             {visibleText ? (
               <div className={`prose-ai relative ${isStreamActive ? "streaming-content" : ""}`}>
-                {isStreamActive
+                {!renderMarkdown
                   ? <div className="whitespace-pre-wrap text-sm leading-relaxed">{visibleText}</div>
-                  : <MarkdownRenderer content={visibleText} />}
+                  : <MarkdownRenderer content={displayText} />}
                 {isStreamActive && (
                   <span className="inline-block w-[2px] h-[1em] ml-0.5 bg-primary align-middle"
                     style={{ animation: "cursor-blink 0.7s step-end infinite" }} />
