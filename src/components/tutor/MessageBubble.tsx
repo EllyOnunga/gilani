@@ -150,9 +150,14 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
                 {isStreamActive
                   ? <div className="whitespace-pre-wrap text-sm leading-relaxed">{visibleText}</div>
                   : <MemoMarkdown content={displayText} />}
-                {isStreamActive && (
-                  <span className="inline-block w-[2px] h-[1em] ml-0.5 bg-primary align-middle"
-                    style={{ animation: "cursor-blink 0.7s step-end infinite" }} />
+                {isStreamActive && !visibleText && (
+                  <span className="inline-flex items-center gap-[3px] ml-1 align-middle">
+                    <span className="text-xs text-muted-foreground font-medium">Thinking</span>
+                    {[0,1,2].map(i => (
+                      <span key={i} className="inline-block w-1 h-1 rounded-full bg-primary"
+                        style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                    ))}
+                  </span>
                 )}
               </div>
             ) : isStreamActive ? null : (
