@@ -714,21 +714,76 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           messagesLoadError={messagesLoadError}
           isPending={isPending || isRetrying}
           onReload={handleReload}
-          onEdit={(messageId, newText) => {
+          onEdit={async (messageId, newText) => {
+            // Update UI and DB
             setMessages((prev: UIMessage[]) =>
               prev.map((m: UIMessage) =>
                 m.id === messageId
-                  ? { ...m, parts: [{ type: "text", text: newText }], content: newText }
+                  ? { ...m, content: newText, parts: [{ type: "text" as const, text: newText }] }
                   : m
               )
             );
-            supabase
+            const { error } = await supabase
               .from("messages")
-              .update({ content: newText })
-              .eq("id", messageId)
-              .then(({ error }) => {
-                if (error) toast.error("Failed to save edit");
+              .update({ content: newText, parts: JSON.stringify([{ type: "text", text: newText }]) })
+              .eq("id", messageId);
+            if (error) {
+              toast.error("Failed to save edit");
+              return;
+            }
+            // Re-trigger AI response after edit — using same retry stream approach
+            const msgs = (messagesRaw as any[]);
+            const editedIdx = msgs.findIndex((m: any) => m.id === messageId);
+            if (editedIdx === -1) return;
+            // Keep messages up to and including edited message
+            const msgsToSend = msgs.slice(0, editedIdx + 1).map((m: any) => ({
+              ...m,
+              content: m.id === messageId ? newText : (m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text).join("") || m.content || ""),
+              parts: m.id === messageId ? [{ type: "text", text: newText }] : m.parts,
+            }));
+            const placeholderId = `edit-${Date.now()}`;
+            setMessages((prev: any[]) => {
+              const base = prev.slice(0, editedIdx + 1).map((m: any) =>
+                m.id === messageId ? { ...m, content: newText, parts: [{ type: "text", text: newText }] } : m
+              );
+              return [...base, { id: placeholderId, role: "assistant", content: "", parts: [{ type: "text", text: "" }] }];
+            });
+            try {
+              const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                },
+                body: JSON.stringify({
+                  threadId,
+                  messages: msgsToSend.map((m: any) => ({
+                    role: m.role,
+                    content: m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text).join("") || m.content || "",
+                  })),
+                }),
               });
+              if (!res.ok || !res.body) throw new Error("Stream failed");
+              const reader = res.body.getReader();
+              const decoder = new TextDecoder();
+              let accumulated = "";
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                accumulated += decoder.decode(value, { stream: true });
+                const text = accumulated;
+                setMessages((prev: any[]) =>
+                  prev.map((m: any) =>
+                    m.id === placeholderId
+                      ? { ...m, content: text, parts: [{ type: "text", text }] }
+                      : m
+                  )
+                );
+              }
+            } catch (err) {
+              console.error("[TutorThread] edit re-stream error:", err);
+              toast.error("Failed to get AI response after edit.");
+            }
           }}
           userId={userId ?? undefined}
           onPromptClick={(prompt) => {
