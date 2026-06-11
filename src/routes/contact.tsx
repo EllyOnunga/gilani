@@ -10,6 +10,7 @@ import {
   CheckCircle,
   AlertCircle,
   ExternalLink,
+  ArrowLeft,
 } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { submitContactFn } from "@/lib/contact.server-fns";
@@ -97,18 +98,22 @@ function ContactPage() {
       {/* Top nav */}
       <header className="sticky top-0 z-20 border-b border-border bg-sidebar/80 backdrop-blur-sm px-6 py-4 flex items-center justify-between">
         <Logo to="/" size="sm" />
-        {!user && (
-          <Link to="/login" className="text-xs font-semibold text-primary hover:underline">
-            Sign in →
+        <nav className="flex items-center gap-3">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to home
           </Link>
-        )}
-        {user && (
-          <Link to={"/dashboard" as any} className="text-xs font-semibold text-primary hover:underline">
-            Dashboard →
-          </Link>
-        )}
+        </nav>
       </header>
 
+      {/* Breadcrumb */}
+      <nav className="px-6 py-2 border-b border-border/50 bg-background/60 text-xs text-muted-foreground flex items-center gap-1.5">
+        <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+        <span>/</span>
+        <span className="text-foreground font-medium">Contact</span>
+      </nav>
       {/* Hero */}
       <section className="bg-sidebar border-b border-border px-6 py-14 text-center">
         <p className="font-mono text-xs uppercase tracking-widest text-primary mb-3">Support</p>

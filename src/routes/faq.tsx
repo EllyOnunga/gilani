@@ -174,6 +174,12 @@ function FAQPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Breadcrumb */}
+      <nav className="px-6 py-2 border-b border-border/50 bg-background/60 text-xs text-muted-foreground flex items-center gap-1.5">
+        <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+        <span>/</span>
+        <span className="text-foreground font-medium">FAQ</span>
+      </nav>
       {/* Header */}
       <header className="border-b border-border/50 sticky top-0 bg-background/80 backdrop-blur-md z-30">
         <div className="flex w-full items-center justify-between px-4 sm:px-6 py-3">
