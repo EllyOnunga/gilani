@@ -18,33 +18,42 @@ type Props = {
 
 function useStreamReveal(text: string, isStreaming: boolean) {
   const [revealed, setRevealed] = useState(isStreaming ? 0 : text.length);
-  const prevTextRef = useRef(text);
+  const targetRef = useRef(text.length);
   const rafRef = useRef<number | null>(null);
+  const revealedRef = useRef(isStreaming ? 0 : text.length);
 
+  // Update target whenever new text arrives — do NOT restart animation
   useEffect(() => {
     if (!isStreaming) {
+      targetRef.current = text.length;
+      revealedRef.current = text.length;
       setRevealed(text.length);
-      prevTextRef.current = text;
       return;
     }
-    const newChars = text.length - prevTextRef.current.length;
-    if (newChars <= 0) return;
-    prevTextRef.current = text;
-    let i = revealed;
-    const target = text.length;
+    targetRef.current = text.length;
+  }, [text, isStreaming]);
+
+  // Single long-running animation loop for the entire stream
+  useEffect(() => {
+    if (!isStreaming) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      return;
+    }
     let lastTime = 0;
-    const DELAY_MS = 12; // ~80 chars/sec — natural reading pace
+    const DELAY_MS = 16;
     const step = (timestamp: number) => {
       if (timestamp - lastTime >= DELAY_MS) {
         lastTime = timestamp;
-        i = Math.min(i + 3, target); // reveal 3 chars per tick
-        setRevealed(i);
+        if (revealedRef.current < targetRef.current) {
+          revealedRef.current = Math.min(revealedRef.current + 4, targetRef.current);
+          setRevealed(revealedRef.current);
+        }
       }
-      if (i < target) rafRef.current = requestAnimationFrame(step);
+      rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [text, isStreaming]);
+  }, [isStreaming]);
 
   return revealed;
 }
