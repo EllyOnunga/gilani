@@ -5,7 +5,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import "katex/dist/katex.min.css";
-import "katex/dist/contrib/mhchem.min.js";
+import "katex/dist/contrib/mhchem.min.js"; // \ce{} chemistry support
 
 const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components"] = {
   h1: ({ children }) => (
@@ -138,6 +138,8 @@ function preprocessLatex(raw: string): string {
   let s = raw.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `$$${inner.trim()}$$`);
   // Inline math: \( ... \) → $ ... $
   s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_m, inner) => `$${inner.trim()}$`);
+  // Chemistry: \ce{...} — already handled by mhchem inside KaTeX
+  // Physics: \vec, \hat, \nabla etc — passed through to KaTeX
   return s;
 }
 
@@ -146,7 +148,17 @@ export function MarkdownRenderer({ content }: Props) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm, remarkMath]}
-      rehypePlugins={[rehypeKatex]}
+      rehypePlugins={[[rehypeKatex, {
+        strict: false,
+        trust: true,
+        throwOnError: false,
+        errorColor: "#cc0000",
+        macros: {
+          "\\vec": "\\overrightarrow{#1}",
+          "\\unit": "\\mathrm{#1}",
+          "\\degree": "^\\circ",
+        }
+      }]]}
       components={markdownComponents}
     >
       {processed}
