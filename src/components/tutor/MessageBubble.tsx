@@ -59,7 +59,8 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
 
   // Load existing vote for this message
   useEffect(() => {
-    if (!resolvedUserId || !m.id || m.role !== "assistant") return;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m.id || "");
+    if (!resolvedUserId || !m.id || !isUUID || m.role !== "assistant") return;
     supabase
       .from("message_feedback")
       .select("vote")
@@ -77,7 +78,8 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
   };
 
   const handleVote = async (v: 1 | -1) => {
-    if (!resolvedUserId || !m.id || voting) return;
+    const isValidId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m.id || "");
+    if (!resolvedUserId || !m.id || !isValidId || voting) return;
     const newVote = vote === v ? null : v;
     setVoting(true);
     try {
