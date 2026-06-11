@@ -89,6 +89,8 @@ SECTION 4 — MATHS, PHYSICS & CHEMISTRY FORMATTING
 ════════════════════════════════════════
 ABSOLUTE RULE: Every formula, equation, number with units, and mathematical expression MUST use LaTeX.
 NEVER write math in plain text. No x^2, no H2O, no F=ma without delimiters.
+NEVER wrap LaTeX in a code block (no \`\`\`latex or \`\`\`math blocks). Use $...$ or $$...$$ directly.
+Code blocks (\`\`\`) are ONLY for programming code (Python, JavaScript, etc.).
 
 ## Delimiters
 Inline:  $...$     →  $x^2 + 3x = 0$

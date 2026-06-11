@@ -92,8 +92,14 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       {children}
     </blockquote>
   ),
-  code: ({ inline, children, ...props }: any) =>
-    inline ? (
+  code: ({ inline, children, className, ...props }: any) => {
+    const lang = (className || "").replace("language-", "").toLowerCase();
+    const text = String(children).trim();
+    // Render latex/math code blocks as display math
+    if (!inline && (lang === "latex" || lang === "math" || lang === "tex")) {
+      return <div className="my-3 overflow-x-auto">{"$$" + text + "$$"}</div>;
+    }
+    return inline ? (
       <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px] text-primary">
         {children}
       </code>
@@ -101,7 +107,8 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       <code className="block bg-[#1e1e2e] text-green-300 font-mono text-[11px] leading-relaxed p-3 rounded-xl overflow-x-auto">
         {children}
       </code>
-    ),
+    );
+  },
   pre: ({ children }) => (
     <pre className="my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">{children}</pre>
   ),
