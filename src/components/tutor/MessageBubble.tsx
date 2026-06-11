@@ -4,9 +4,7 @@ import { toast } from "sonner";
 import { ThoughtAccordion } from "./ThoughtAccordion";
 import { supabase } from "@/integrations/supabase/client";
 
-const LazyMarkdownRenderer = React.lazy(() =>
-  import("./MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer })),
-);
+import { MarkdownRenderer } from "./MarkdownRenderer";
 
 type Props = {
   message: any;
@@ -172,13 +170,7 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
             />
             {visibleText ? (
               <div className={`prose-ai relative ${isStreamActive ? "streaming-content" : ""}`}>
-                <React.Suspense fallback={<div className="space-y-2">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="h-3 bg-muted/50 rounded animate-pulse" style={{ width: `${85 - i * 15}%` }} />
-                  ))}
-                </div>}>
-                  <LazyMarkdownRenderer content={visibleText} />
-                </React.Suspense>
+                <MarkdownRenderer content={visibleText} />
                 {isStreamActive && (
                   <span className="inline-block w-[2px] h-[1em] ml-0.5 bg-primary align-middle"
                     style={{ animation: "cursor-blink 0.7s step-end infinite" }} />
