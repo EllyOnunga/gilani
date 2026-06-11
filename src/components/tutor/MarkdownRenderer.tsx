@@ -9,11 +9,11 @@ import "katex/dist/katex.min.css";
 // mhchem must be loaded into katex's require system before any rendering
 import katex from "katex";
 import "katex/dist/contrib/mhchem.min.js";
-import mermaid from "mermaid";
+
 
 // ─── Mermaid Component ────────────────────────────────────────────────────────
 
-mermaid.initialize({ startOnLoad: false, theme: "neutral" });
+
 
 function MermaidDiagram({ code }: { code: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -21,7 +21,10 @@ function MermaidDiagram({ code }: { code: string }) {
   useEffect(() => {
     if (!ref.current) return;
     const id = `mermaid-${Math.random().toString(36).slice(2)}`;
-    mermaid.render(id, code).then(({ svg }) => {
+    import("mermaid").then((m) => {
+      m.default.initialize({ startOnLoad: false, theme: "neutral" });
+      return m.default.render(id, code);
+    }).then(({ svg }) => {
       if (ref.current) ref.current.innerHTML = svg;
     }).catch(() => {
       if (ref.current) ref.current.textContent = code;
@@ -127,6 +130,7 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
   strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
   em: ({ children }) => <em className="italic text-muted-foreground">{children}</em>,
   a: ({ href, children }) => (
+    <a
     
       href={href}
       target="_blank"
