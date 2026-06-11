@@ -85,53 +85,33 @@ export function MessageList({
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const scrollRafRef = useRef<number | null>(null);
 
-  // Smooth animated scroll to bottom
-  const smoothScrollToBottom = (container: HTMLDivElement) => {
-    if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
-    const animate = () => {
-      const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
-      if (remaining <= 1) return;
-      container.scrollTop += Math.ceil(remaining * 0.12 + 1);
-      scrollRafRef.current = requestAnimationFrame(animate);
-    };
-    scrollRafRef.current = requestAnimationFrame(animate);
-  };
-
-  // Scroll on new messages (non-streaming only)
+  // Scroll on new messages (not during streaming)
   useEffect(() => {
-    if (isPending) return; // streaming scroll handled by loop below
+    if (isPending) return;
     const container = scrollContainerRef.current;
     if (!container || messages.length === 0) return;
-    const threshold = 150;
-    const isAtBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
+    const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
     const lastMessage = messages[messages.length - 1];
-    const justSent = lastMessage?.role === "user";
-    if (isAtBottom || justSent) {
-      smoothScrollToBottom(container);
+    if (remaining < 150 || lastMessage?.role === "user") {
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
     }
   }, [messages]);
 
-  // During streaming: gently ease scroll to bottom as content grows
+  // During streaming: pin to bottom every frame so slow reveal never falls behind
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container) return;
-    if (!isPending) {
-      if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
-      return;
-    }
+    if (!container || !isPending) return;
+    let active = true;
     const loop = () => {
-      const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
-      // Ease toward bottom — step grows with distance so it never stops short
-      if (remaining > 0) {
-        container.scrollTop += Math.max(2, Math.floor(remaining * 0.15));
-      }
+      if (!active) return;
+      container.scrollTop = container.scrollHeight;
       scrollRafRef.current = requestAnimationFrame(loop);
     };
-    // Cancel any prior scroll before starting
-    if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
     scrollRafRef.current = requestAnimationFrame(loop);
-    return () => { if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current); };
+    return () => {
+      active = false;
+      if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+    };
   }, [isPending]);
 
   // Show ThinkingBubble when submitted but no assistant message yet streaming
