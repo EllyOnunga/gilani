@@ -199,19 +199,13 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
   const { messages: messagesRaw, setMessages, sendMessage, status, reload } = chatHelpers;
   const handleReload = () => {
-    const lastUserMsg = [...(messagesRaw as any[])].reverse().find((m: any) => m.role === "user");
-    if (!lastUserMsg) return;
-    // Remove the last assistant message so useChat can re-append the response
+    // Remove last assistant message then reload — no new user bubble shown
     setMessages((prev: any[]) => {
       const idx = [...prev].reverse().findIndex((m: any) => m.role === "assistant");
       if (idx === -1) return prev;
-      const realIdx = prev.length - 1 - idx;
-      return prev.slice(0, realIdx);
+      return prev.slice(0, prev.length - 1 - idx);
     });
-    sendMessage({ text: lastUserMsg.content ?? lastUserMsg.parts?.[0]?.text ?? "" }).catch((err: unknown) => {
-      console.error("[TutorThread] reload error:", err);
-      toast.error("Failed to retry. Please try again.");
-    });
+    setTimeout(() => reload(), 50);
   };
   const messages = messagesRaw as UIMessage[];
   const isPending = status === "submitted" || status === "streaming";
