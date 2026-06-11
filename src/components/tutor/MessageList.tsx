@@ -83,7 +83,21 @@ export function MessageList({
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const scrollRafRef = useRef<number | null>(null);
 
+  // Smooth animated scroll to bottom
+  const smoothScrollToBottom = (container: HTMLDivElement) => {
+    if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+    const animate = () => {
+      const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+      if (remaining <= 1) return;
+      container.scrollTop += Math.ceil(remaining * 0.12 + 1);
+      scrollRafRef.current = requestAnimationFrame(animate);
+    };
+    scrollRafRef.current = requestAnimationFrame(animate);
+  };
+
+  // Scroll on new messages
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || messages.length === 0) return;
@@ -93,9 +107,28 @@ export function MessageList({
     const lastMessage = messages[messages.length - 1];
     const justSent = lastMessage?.role === "user";
     if (isAtBottom || justSent) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      smoothScrollToBottom(container);
     }
   }, [messages, isPending]);
+
+  // Continuous smooth scroll loop during streaming to follow slow reveal
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    if (!isPending) {
+      if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+      return;
+    }
+    const loop = () => {
+      const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+      if (remaining > 2) {
+        container.scrollTop += Math.ceil(remaining * 0.08 + 0.5);
+      }
+      scrollRafRef.current = requestAnimationFrame(loop);
+    };
+    scrollRafRef.current = requestAnimationFrame(loop);
+    return () => { if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current); };
+  }, [isPending]);
 
   // Show ThinkingBubble when submitted but no assistant message yet streaming
   const showThinking =
