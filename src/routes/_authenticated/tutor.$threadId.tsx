@@ -198,14 +198,19 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   });
 
   const { messages: messagesRaw, setMessages, sendMessage, status, reload } = chatHelpers;
+  const [isRetrying, setIsRetrying] = useState(false);
   const handleReload = () => {
+    setIsRetrying(true);
     // Remove last assistant message then reload — no new user bubble shown
     setMessages((prev: any[]) => {
       const idx = [...prev].reverse().findIndex((m: any) => m.role === "assistant");
       if (idx === -1) return prev;
       return prev.slice(0, prev.length - 1 - idx);
     });
-    setTimeout(() => reload(), 50);
+    setTimeout(() => {
+      reload();
+      setIsRetrying(false);
+    }, 50);
   };
   const messages = messagesRaw as UIMessage[];
   const isPending = status === "submitted" || status === "streaming";
@@ -662,7 +667,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           messages={messages}
           messagesLoading={messagesLoading}
           messagesLoadError={messagesLoadError}
-          isPending={isPending}
+          isPending={isPending || isRetrying}
           onReload={handleReload}
           onEdit={(messageId, newText) => {
             setMessages((prev: UIMessage[]) =>
@@ -689,7 +694,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         {/* Input area */}
         <ChatInput
           input={input}
-          isPending={isPending}
+          isPending={isPending || isRetrying}
           parsingFile={parsingFile}
           attachedFile={attachedFile}
           chatError={chatError}
