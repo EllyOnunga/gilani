@@ -200,17 +200,28 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const { messages: messagesRaw, setMessages, sendMessage, status, reload } = chatHelpers;
   const [isRetrying, setIsRetrying] = useState(false);
   const handleReload = () => {
+    const msgs = messagesRaw as any[];
+    const lastUser = [...msgs].reverse().find((m: any) => m.role === "user");
+    if (!lastUser) return;
+    const lastUserText =
+      lastUser.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text).join("") ||
+      lastUser.content || "";
+    if (!lastUserText) return;
     setIsRetrying(true);
-    // Remove last assistant message then reload — no new user bubble shown
+    // Strip last assistant message from UI only
     setMessages((prev: any[]) => {
       const idx = [...prev].reverse().findIndex((m: any) => m.role === "assistant");
       if (idx === -1) return prev;
       return prev.slice(0, prev.length - 1 - idx);
     });
     setTimeout(() => {
-      reload();
-      setIsRetrying(false);
-    }, 50);
+      sendMessage({ text: lastUserText, headers: { "x-retry": "1" } } as any)
+        .catch((err: unknown) => {
+          console.error("[TutorThread] retry error:", err);
+          toast.error("Retry failed. Please try again.");
+        })
+        .finally(() => setIsRetrying(false));
+    }, 80);
   };
   const messages = messagesRaw as UIMessage[];
   const isPending = status === "submitted" || status === "streaming";

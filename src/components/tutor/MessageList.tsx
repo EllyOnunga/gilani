@@ -95,7 +95,7 @@ export function MessageList({
     if (isAtBottom || justSent) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
-  }, [messages]);
+  }, [messages, isPending]);
 
   // Show ThinkingBubble when submitted but no assistant message yet streaming
   const showThinking =

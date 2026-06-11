@@ -34,9 +34,14 @@ function useStreamReveal(text: string, isStreaming: boolean) {
     prevTextRef.current = text;
     let i = revealed;
     const target = text.length;
-    const step = () => {
-      i = Math.min(i + Math.ceil((target - i) * 0.18 + 1), target);
-      setRevealed(i);
+    let lastTime = 0;
+    const DELAY_MS = 18; // ~55 chars/sec — slow, readable pace
+    const step = (timestamp: number) => {
+      if (timestamp - lastTime >= DELAY_MS) {
+        lastTime = timestamp;
+        i = Math.min(i + 2, target); // reveal 2 chars per tick
+        setRevealed(i);
+      }
       if (i < target) rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
