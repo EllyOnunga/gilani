@@ -191,7 +191,7 @@ export const Route = createFileRoute("/api/chat")({
 
           // ─── Gather Configured Chat Models (UPDATED PRIORITY ORDER) ──────
           // Priority: Groq → OpenAI → Gemini → Mistral → DeepSeek
-          const providerOrder = ["groq", "groq2", "openai", "gemini", "mistral", "deepseek"];
+          const providerOrder = ["groq2", "groq", "openai", "gemini", "mistral", "deepseek"];
           const configuredProviders = providerOrder
             .map((p) => createChatModel(p))
             .filter((p): p is { model: any; name: string } => p !== null);
