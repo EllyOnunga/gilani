@@ -33,11 +33,11 @@ function useStreamReveal(text: string, isStreaming: boolean) {
     let i = revealed;
     const target = text.length;
     let lastTime = 0;
-    const DELAY_MS = 18; // ~55 chars/sec — slow, readable pace
+    const DELAY_MS = 12; // ~80 chars/sec — natural reading pace
     const step = (timestamp: number) => {
       if (timestamp - lastTime >= DELAY_MS) {
         lastTime = timestamp;
-        i = Math.min(i + 2, target); // reveal 2 chars per tick
+        i = Math.min(i + 3, target); // reveal 3 chars per tick
         setRevealed(i);
       }
       if (i < target) rafRef.current = requestAnimationFrame(step);
@@ -170,7 +170,9 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
             />
             {visibleText ? (
               <div className={`prose-ai relative ${isStreamActive ? "streaming-content" : ""}`}>
-                <MarkdownRenderer content={visibleText} />
+                {isStreamActive
+                  ? <div className="whitespace-pre-wrap text-sm leading-relaxed">{visibleText}</div>
+                  : <MarkdownRenderer content={visibleText} />}
                 {isStreamActive && (
                   <span className="inline-block w-[2px] h-[1em] ml-0.5 bg-primary align-middle"
                     style={{ animation: "cursor-blink 0.7s step-end infinite" }} />
