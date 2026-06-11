@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { ThoughtAccordion } from "./ThoughtAccordion";
@@ -17,6 +17,11 @@ type Props = {
 };
 
 
+
+const MemoMarkdown = React.memo(
+  ({ content }: { content: string }) => <MarkdownRenderer content={content} />,
+  (prev, next) => prev.content === next.content
+);
 
 export function MessageBubble({ message: m, idx, isLast, isPending, onReload, onEdit, userId}: Props) {
   const [copied, setCopied] = useState(false);
@@ -142,7 +147,9 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
             />
             {visibleText ? (
               <div className={`prose-ai relative ${isStreamActive ? "streaming-content" : ""}`}>
-                <MarkdownRenderer content={visibleText} />
+                {isStreamActive
+                  ? <div className="whitespace-pre-wrap text-sm leading-relaxed">{visibleText}</div>
+                  : <MemoMarkdown content={displayText} />}
                 {isStreamActive && (
                   <span className="inline-block w-[2px] h-[1em] ml-0.5 bg-primary align-middle"
                     style={{ animation: "cursor-blink 0.7s step-end infinite" }} />
