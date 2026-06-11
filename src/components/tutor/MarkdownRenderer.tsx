@@ -145,8 +145,26 @@ function preprocessLatex(raw: string): string {
   let s = raw.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `$$${inner.trim()}$$`);
   // Inline math: \( ... \) → $ ... $
   s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_m, inner) => `$${inner.trim()}$`);
-  // Chemistry: \ce{...} — already handled by mhchem inside KaTeX
-  // Physics: \vec, \hat, \nabla etc — passed through to KaTeX
+
+  // Split on existing LaTeX blocks to avoid double-processing
+  const TOKEN = "\x00LATEX\x00";
+  const latexBlocks: string[] = [];
+  s = s.replace(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g, (match) => {
+    latexBlocks.push(match);
+    return TOKEN;
+  });
+
+  // Auto-convert plain-text math outside LaTeX blocks
+  // x^2, x^n powers
+  s = s.replace(/\b([a-zA-Z])\^(\d+)\b/g, (_m, base, exp) => `$${base}^{${exp}}$`);
+  // sqrt(x)
+  s = s.replace(/\bsqrt\(([^)]+)\)/g, (_m, inner) => `$\\sqrt{${inner}}$`);
+  // d/dx
+  s = s.replace(/\bd\/d([a-z])\b/g, (_m, v) => `$\\frac{d}{d${v}}$`);
+
+  // Restore LaTeX blocks
+  s = s.replace(new RegExp(TOKEN, 'g'), () => latexBlocks.shift()!);
+
   return s;
 }
 
