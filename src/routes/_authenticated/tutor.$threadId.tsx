@@ -11,7 +11,7 @@ import {
   createEscalationFn,
 } from "@/lib/tutor.server-fns";
 import { useChat, type UIMessage } from "@ai-sdk/react";
-import { TextStreamChatTransport } from "ai";
+import { DefaultChatTransport } from "ai";
 import { exportAsPDF, exportAsWord } from "@/lib/export-utils";
 import { withTimeout } from "@/lib/async";
 import { toast } from "sonner";
@@ -181,7 +181,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
   const transport = useMemo(
     () =>
-      new TextStreamChatTransport({
+      new DefaultChatTransport({
         api: "/api/chat",
         body: { threadId },
         headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
