@@ -97,8 +97,9 @@ export function MessageList({
     scrollRafRef.current = requestAnimationFrame(animate);
   };
 
-  // Scroll on new messages
+  // Scroll on new messages (non-streaming only)
   useEffect(() => {
+    if (isPending) return; // streaming scroll handled by loop below
     const container = scrollContainerRef.current;
     if (!container || messages.length === 0) return;
     const threshold = 150;
@@ -109,9 +110,9 @@ export function MessageList({
     if (isAtBottom || justSent) {
       smoothScrollToBottom(container);
     }
-  }, [messages, isPending]);
+  }, [messages]);
 
-  // Continuous smooth scroll loop during streaming to follow slow reveal
+  // During streaming: gently ease scroll to bottom as content grows
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -120,10 +121,15 @@ export function MessageList({
       return;
     }
     const loop = () => {
-      // Always scroll to bottom while streaming — content grows continuously
-      container.scrollTop = container.scrollHeight;
+      const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+      // Ease toward bottom — step grows with distance so it never stops short
+      if (remaining > 0) {
+        container.scrollTop += Math.max(2, Math.floor(remaining * 0.15));
+      }
       scrollRafRef.current = requestAnimationFrame(loop);
     };
+    // Cancel any prior scroll before starting
+    if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
     scrollRafRef.current = requestAnimationFrame(loop);
     return () => { if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current); };
   }, [isPending]);
