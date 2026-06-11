@@ -190,6 +190,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   );
 
   const chatHelpers: any = useChat({
+    id: threadId,
     transport,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
     onFinish: () => {
