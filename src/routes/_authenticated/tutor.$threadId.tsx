@@ -199,24 +199,63 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
   const { messages: messagesRaw, setMessages, sendMessage, status, reload } = chatHelpers;
   const [isRetrying, setIsRetrying] = useState(false);
-  const handleReload = () => {
+  const handleReload = async () => {
+    if (isRetrying) return;
+    const msgs = messagesRaw as any[];
+    // Build messages up to and including last user message (drop last assistant)
+    const lastUserIdx = [...msgs].map((m: any, i: number) => m.role === "user" ? i : -1).filter(i => i >= 0).pop();
+    if (lastUserIdx === undefined) return;
+    const msgsToSend = msgs.slice(0, lastUserIdx + 1);
+
     setIsRetrying(true);
-    // Remove last assistant message from UI, then reload without adding user bubble
+    // Replace last assistant message with empty streaming placeholder
+    const placeholderId = `retry-${Date.now()}`;
     setMessages((prev: any[]) => {
-      const idx = [...prev].reverse().findIndex((m: any) => m.role === "assistant");
-      if (idx === -1) return prev;
-      return prev.slice(0, prev.length - 1 - idx);
+      const lastAsstIdx = [...prev].map((m: any, i: number) => m.role === "assistant" ? i : -1).filter(i => i >= 0).pop();
+      const base = lastAsstIdx !== undefined ? prev.slice(0, lastAsstIdx) : prev;
+      return [...base, { id: placeholderId, role: "assistant", content: "", parts: [{ type: "text", text: "" }] }];
     });
-    setTimeout(() => {
-      try {
-        reload();
-      } catch (err) {
-        console.error("[TutorThread] retry error:", err);
-        toast.error("Retry failed. Please try again.");
-      } finally {
-        setIsRetrying(false);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify({
+          threadId,
+          messages: msgsToSend.map((m: any) => ({
+            role: m.role,
+            content: m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text).join("") || m.content || "",
+          })),
+        }),
+      });
+      if (!res.ok || !res.body) throw new Error("Stream failed");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulated += decoder.decode(value, { stream: true });
+        const text = accumulated;
+        setMessages((prev: any[]) =>
+          prev.map((m: any) =>
+            m.id === placeholderId
+              ? { ...m, content: text, parts: [{ type: "text", text }] }
+              : m
+          )
+        );
       }
-    }, 80);
+    } catch (err) {
+      console.error("[TutorThread] retry error:", err);
+      toast.error("Retry failed. Please try again.");
+      // Restore previous messages on failure
+      setMessages(msgs);
+    } finally {
+      setIsRetrying(false);
+    }
   };
   const messages = messagesRaw as UIMessage[];
   const isPending = status === "submitted" || status === "streaming";
