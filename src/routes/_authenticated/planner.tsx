@@ -18,9 +18,14 @@ import {
 import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
+import { lazy, Suspense } from "react";
+const LazyMarkdownRenderer = lazy(() =>
+  import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer }))
+);
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { checkDualRateLimit, PLANNER_RATE_LIMIT, PLANNER_DAILY_LIMIT } from "@/lib/rate-limit.server";
+import { buildPlannerPrompt } from "@/lib/planner-prompt";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -293,196 +298,12 @@ const generatePlan = createServerFn({ method: "POST" }).handler(async () => {
   endDate.setDate(endDate.getDate() + 6);
   const endDateStr = endDate.toISOString().split("T")[0];
 
-  // Highly structural, robust prompt optimized to completely avoid parse failures
-  const prompt = `You are an expert academic curriculum strategist for Kenyan and International learners.
-
-Generate a STRICTLY STRUCTURED 7-day study plan for a ${curriculum} student.
-
-Start date: ${today}
-End date:   ${endDateStr}
-Curriculum: ${curriculum}
-Weak areas: ${weakTopics.length ? weakTopics.slice(0, 5).join(", ") : "Balanced foundational revision across core subjects"}
-
-════════════════════════════════════════
-OUTPUT RULES (ABSOLUTE)
-════════════════════════════════════════
-
-Return ONLY valid JSON matching the schema below.
-- No markdown, no backticks, no prose outside JSON
-- No trailing commas, no comments
-- Must be JSON.parse() valid
-
-════════════════════════════════════════
-STRUCTURE REQUIREMENTS (HARD LIMITS)
-════════════════════════════════════════
-
-- EXACTLY 7 objects in "daily_plans"
-- EXACTLY 2 tasks per day
-- EXACTLY 14 tasks total across the plan
-- No more, no less — this is non-negotiable
-
-════════════════════════════════════════
-TASK PRIORITY RULES
-════════════════════════════════════════
-
-Assign priorities in this order:
-1. Weak topics listed above → "high" priority (minimum 40% of all tasks)
-2. Core ${curriculum} exam subjects → "medium" priority
-3. General revision → "low" priority
-
-If no weak topics are provided, distribute evenly across core subjects.
-
-════════════════════════════════════════
-CURRICULUM BEHAVIOUR
-════════════════════════════════════════
-
-${
-  curriculum === "KCSE"
-    ? `
-## KCSE
-- Align to KNEC syllabus (KLB / Longhorn logic)
-- Ground at least 40% of task descriptions in Kenyan context:
-  M-Pesa transactions, matatu journeys, shamba farming,
-  SGR railway, Lake Victoria, Rift Valley geography
-- Use KNEC command verbs: state, describe, explain, calculate, outline
-- Cover: Mathematics, Sciences, Humanities, Languages proportionally`
-    : ""
-}
-${
-  curriculum === "CBC"
-    ? `
-## CBC
-- Focus on competencies and real-life application
-- Frame tasks as scenarios the learner acts on (projects, investigations, demonstrations)
-- Prioritise practical skill-building over passive reading
-- Integrate Kenyan daily life contexts throughout`
-    : ""
-}
-${
-  curriculum === "IGCSE"
-    ? `
-## IGCSE
-- Align to Cambridge Assessment objectives
-- Use command verbs by AO level:
-  AO1 (recall)  → state, name, list, identify
-  AO2 (apply)   → describe, explain, calculate, determine
-  AO3 (analyse) → evaluate, discuss, suggest, compare
-- At least 40% of tasks should target AO2 or AO3`
-    : ""
-}
-${
-  curriculum === "MIXED"
-    ? `
-## MIXED
-- Balance KCSE and IGCSE requirements equally
-- Alternate between Kenyan context and Cambridge command verb tasks
-- Cover both KNEC and Cambridge subject requirements`
-    : ""
-}
-
-════════════════════════════════════════
-MATH FORMATTING IN TASKS
-════════════════════════════════════════
-
-When a task involves mathematical content, use LaTeX inside the task and study_tip strings:
-
-Inline:   $x^2 + 3x - 4 = 0$
-Block:    $$ F = ma $$
-
-Powers:   $x^2$, $x^3$, $x^n$
-Roots:    $\\sqrt{x}$, $\\sqrt[3]{x}$, $\\sqrt{b^2 - 4ac}$
-Fractions: $\\frac{a}{b}$, $\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$
-Chemistry: $\\text{H}_2\\text{O}$, $\\text{CO}_2$, $\\text{SO}_4^{2-}$
-
-NEVER write: x^2, sqrt(x), H2O in plain text.
-
-════════════════════════════════════════
-TASK ID RULE
-════════════════════════════════════════
-
-Every task id MUST be unique across the entire plan.
-Use this exact format: "task-{YYYY-MM-DD}-{position}"
-where position is 1 or 2 (the task's position within that day).
-
-✓  "task-${today}-1"
-✓  "task-${today}-2"
-✗  "task-1"
-✗  "task-2"
-✗  Same id on two different tasks
-
-════════════════════════════════════════
-DAILY QUOTE RULE
-════════════════════════════════════════
-
-Each daily_quote MUST be:
-- A real, attributed quote from a known person
-- Relevant to learning, effort, or academic growth
-- Under 20 words
-- Format: Quote text — First Last (Note: DO NOT wrap the quote text itself in double quotes inside the JSON string. The value must be a single JSON string token.)
-
-✓  "Education is the most powerful weapon you can use to change the world. — Nelson Mandela"
-✗  "Education is the most powerful weapon..." — Nelson Mandela
-
-════════════════════════════════════════
-OUTPUT SCHEMA
-════════════════════════════════════════
-
-{
-  "plan_metadata": {
-    "start_date": "${today}",
-    "end_date": "${endDateStr}",
-    "total_tasks": 14,
-    "curriculum": "${curriculum}",
-    "curriculum_details": {
-      "type": "${curriculum}",
-      "specific_requirements": "string"
-    },
-    "focus_areas": ["string"],
-    "weekly_goal": "string",
-    "estimated_weekly_hours": "string"
-  },
-  "daily_plans": [
-    {
-      "date": "YYYY-MM-DD",
-      "day_of_week": "string",
-      "daily_focus": "string describing today's learning goal",
-      "curriculum_focus": "${curriculum}",
-      "tasks": [
-        {
-          "id": "task-YYYY-MM-DD-1",
-          "date": "YYYY-MM-DD",
-          "subject": "string",
-          "topic": "string",
-          "curriculum": "${curriculum}",
-          "task": "string — specific, actionable instruction for the student",
-          "duration": "string e.g. 45 min",
-          "priority": "high | medium | low",
-          "type": "theory | practice | revision | past_paper | project",
-          "study_tip": "string — short actionable tip, LaTeX where relevant",
-          "tags": ["string"]
-        },
-        {
-          "id": "task-YYYY-MM-DD-2",
-          "date": "YYYY-MM-DD",
-          "subject": "string",
-          "topic": "string",
-          "curriculum": "${curriculum}",
-          "task": "string",
-          "duration": "string",
-          "priority": "high | medium | low",
-          "type": "theory | practice | revision | past_paper | project",
-          "study_tip": "string",
-          "tags": ["string"]
-        }
-      ],
-      "daily_quote": "string — attributed quote under 20 words"
-    }
-  ]
-}
-
-The "daily_plans" array MUST contain exactly 7 objects covering ${today} through ${endDateStr}.
-Each "tasks" array MUST contain exactly 2 objects.
-Generate the JSON now.`;
+  const prompt = buildPlannerPrompt({
+    curriculum,
+    today,
+    endDate: endDateStr,
+    weakTopics,
+  });
   let weeklyPlan: WeeklyPlanResponse | null = null;
   let items: PlanTask[] = [];
   let lastError: unknown;
@@ -936,7 +757,7 @@ function PlannerPage() {
                         </p>
                         {task.study_tip && (
                           <p className="text-xs text-primary/70 mt-2 bg-primary/5 rounded-lg px-3 py-2">
-                            💡 {task.study_tip}
+                            💡 <Suspense fallback={<span>{task.study_tip}</span>}><LazyMarkdownRenderer content={task.study_tip} /></Suspense>
                           </p>
                         )}
                       </div>
@@ -950,7 +771,7 @@ function PlannerPage() {
 
               {dailyQuote && (
                 <p className="mt-2 text-[11px] text-muted-foreground italic text-center border-t border-border/40 pt-3">
-                  &ldquo;{dailyQuote}&rdquo;
+                  <Suspense fallback={<span>&ldquo;{dailyQuote}&rdquo;</span>}><LazyMarkdownRenderer content={dailyQuote} /></Suspense>
                 </p>
               )}
             </div>
