@@ -19,13 +19,28 @@ type Props = {
 };
 
 function useStreamReveal(text: string, isStreaming: boolean) {
-  const [revealed, setRevealed] = useState(text.length);
+  const [revealed, setRevealed] = useState(isStreaming ? 0 : text.length);
   const prevTextRef = useRef(text);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!isStreaming) { setRevealed(text.length); return; }
+    if (!isStreaming) {
+      setRevealed(text.length);
+      prevTextRef.current = text;
+      return;
+    }
     const newChars = text.length - prevTextRef.current.length;
-    if (newChars > 0) { setRevealed(text.length); prevTextRef.current = text; }
+    if (newChars <= 0) return;
+    prevTextRef.current = text;
+    let i = revealed;
+    const target = text.length;
+    const step = () => {
+      i = Math.min(i + Math.ceil((target - i) * 0.18 + 1), target);
+      setRevealed(i);
+      if (i < target) rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [text, isStreaming]);
 
   return revealed;
@@ -66,7 +81,8 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
       : rawText;
 
   const isStreamActive = isPending && isLast;
-  useStreamReveal(displayText, isStreamActive);
+  const revealedCount = useStreamReveal(displayText, isStreamActive);
+  const visibleText = isStreamActive ? displayText.slice(0, revealedCount) : displayText;
 
   // Load existing vote for this message
   useEffect(() => {
@@ -147,16 +163,16 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
               messageId={m.id || String(idx)}
               isLastMessage={isLast}
               isStreaming={isPending}
-              messageText={displayText}
+              messageText={visibleText}
             />
-            {displayText ? (
+            {visibleText ? (
               <div className={`prose-ai relative ${isStreamActive ? "streaming-content" : ""}`}>
                 <React.Suspense fallback={<div className="space-y-2">
                   {[...Array(3)].map((_, i) => (
                     <div key={i} className="h-3 bg-muted/50 rounded animate-pulse" style={{ width: `${85 - i * 15}%` }} />
                   ))}
                 </div>}>
-                  <LazyMarkdownRenderer content={displayText} />
+                  <LazyMarkdownRenderer content={visibleText} />
                 </React.Suspense>
                 {isStreamActive && (
                   <span className="inline-block w-[2px] h-[1em] ml-0.5 bg-primary align-middle"
@@ -169,7 +185,7 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
               </span>
             )}
 
-            {displayText && !isStreamActive && (
+            {visibleText && !isStreamActive && (
               <div className="flex items-center gap-1 mt-2 pt-1.5 border-t border-border/40 transition-opacity duration-200">
                 {/* Copy */}
                 <button onClick={handleCopy}
@@ -230,8 +246,8 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
               <div className="flex flex-col gap-1">
                 <span className="whitespace-pre-wrap">
                   {collapsed && displayText.length > COLLAPSE_THRESHOLD
-                    ? displayText.slice(0, COLLAPSE_THRESHOLD) + "…"
-                    : displayText}
+                    ? visibleText.slice(0, COLLAPSE_THRESHOLD) + "…"
+                    : visibleText}
                 </span>
                 {displayText.length > COLLAPSE_THRESHOLD && (
                   <button
