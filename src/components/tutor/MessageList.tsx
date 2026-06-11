@@ -120,10 +120,8 @@ export function MessageList({
       return;
     }
     const loop = () => {
-      const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
-      if (remaining > 2) {
-        container.scrollTop += Math.ceil(remaining * 0.08 + 0.5);
-      }
+      // Always scroll to bottom while streaming — content grows continuously
+      container.scrollTop = container.scrollHeight;
       scrollRafRef.current = requestAnimationFrame(loop);
     };
     scrollRafRef.current = requestAnimationFrame(loop);
