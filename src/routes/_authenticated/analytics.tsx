@@ -3,13 +3,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, TrendingUp, Calendar, Trophy, BookOpen, AlertTriangle } from "lucide-react";
+import { BarChart3, TrendingUp, Flame, Trophy, BookOpen, AlertTriangle } from "lucide-react";
 import { z } from "zod";
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -371,10 +369,8 @@ function AnalyticsPage() {
       />
       {/* Header */}
       <header className="animate-in-slide">
-        <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
-          Analytics
-        </p>
-        <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Performance Insights</h2>
+        <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5"><BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />Analytics</p>
+        <h2 className="mt-1 font-serif text-3xl sm:text-4xl lg:text-5xl">Performance Insights</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Track your learning trajectory, practice quiz performance, and mastery levels across
           syllabus subjects.
@@ -382,13 +378,12 @@ function AnalyticsPage() {
       </header>
 
       {!hasData && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
+        <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
           <div>
-            <p className="text-xs font-semibold text-amber-800">Viewing Demonstration Analytics</p>
-            <p className="text-xs text-amber-700 leading-relaxed mt-0.5">
-              You haven't completed enough practice quizzes yet. Take a few quizzes under **Practice
-              Quizzes** to populate your real-time academic dashboard.
+            <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">Viewing demonstration analytics</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed mt-0.5">
+              You haven't completed enough practice quizzes yet. Take a few practice quizzes to populate your real-time academic dashboard.
             </p>
           </div>
         </div>
@@ -401,7 +396,7 @@ function AnalyticsPage() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 animate-in-slide">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-in-slide">
         {[
           {
             label: "Quizzes Completed",
@@ -418,7 +413,7 @@ function AnalyticsPage() {
           {
             label: "Study Streak",
             value: `${streak} Day${streak === 1 ? "" : "s"}`,
-            icon: Calendar,
+            icon: Flame,
             desc: "Active consistency",
           },
           {
@@ -428,26 +423,26 @@ function AnalyticsPage() {
             desc: "Syllabus grounding",
           },
         ].map((c) => (
-          <div key={c.label} className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div key={c.label} className={`rounded-xl p-3 sm:p-5 lg:p-6 ${c.label === "Study Streak" ? "bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800" : "bg-secondary"}`}>
             <div className="flex items-center justify-between mb-2">
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                 {c.label}
               </p>
-              <c.icon className="h-4 w-4 text-primary" />
+              <c.icon className={`h-4 w-4 ${c.label === "Study Streak" ? "text-amber-600 dark:text-amber-400" : "text-primary"}`} />
             </div>
-            <p className="font-serif text-3xl font-bold leading-none">{c.value}</p>
-            <p className="mt-2 font-mono text-[9px] text-muted-foreground uppercase">{c.desc}</p>
+            <p className={`font-serif text-2xl sm:text-3xl lg:text-4xl font-bold leading-none ${c.label === "Study Streak" ? "text-amber-800 dark:text-amber-300" : ""}`}>{c.value}</p>
+            <p className="mt-2 font-mono text-[10px] sm:text-xs text-muted-foreground uppercase">{c.desc}</p>
           </div>
         ))}
       </div>
 
       {/* Chart Visuals */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         {/* area progress chart */}
-        <div className="lg:col-span-8 rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-8 rounded-xl border border-border bg-card p-5 lg:p-7 flex flex-col justify-between relative overflow-hidden">
           {!hasData && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
-              <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">
+              <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
                 Demo Mode
               </span>
               <p className="mt-2 text-xs font-semibold text-foreground">No Quiz Attempts Yet</p>
@@ -462,7 +457,7 @@ function AnalyticsPage() {
               Average score percentages for recent quizzes.
             </p>
           </div>
-          <div className="h-[280px] w-full">
+          <div className="h-[220px] sm:h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={activeHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -489,10 +484,10 @@ function AnalyticsPage() {
         </div>
 
         {/* radar subject mastery */}
-        <div className="lg:col-span-4 rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-4 rounded-xl border border-border bg-card p-5 lg:p-7 flex flex-col justify-between relative overflow-hidden">
           {!hasData && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
-              <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">
+              <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
                 Demo Mode
               </span>
               <p className="mt-2 text-xs font-semibold text-foreground">Mastery Profile Locked</p>
@@ -507,9 +502,9 @@ function AnalyticsPage() {
               Strengths across different syllabus branches.
             </p>
           </div>
-          <div className="h-[280px] w-full flex items-center justify-center">
+          <div className="h-[240px] sm:h-[280px] w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={activeSubjectMastery}>
+              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={activeSubjectMastery}>
                 <PolarGrid stroke="rgba(0,0,0,0.08)" />
                 <PolarAngleAxis dataKey="subject" style={{ fontSize: 10 }} />
                 <PolarRadiusAxis angle={30} domain={[0, 100]} style={{ fontSize: 8 }} />
@@ -526,10 +521,10 @@ function AnalyticsPage() {
         </div>
 
         {/* weak topics bar chart */}
-        <div className="lg:col-span-12 rounded-xl border border-border bg-card p-6 shadow-sm relative overflow-hidden">
+        <div className="lg:col-span-12 rounded-xl border border-border bg-card p-5 lg:p-7 relative overflow-hidden">
           {!hasData && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
-              <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">
+              <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
                 Demo Mode
               </span>
               <p className="mt-2 text-xs font-semibold text-foreground">Syllabus Weak Spots</p>
@@ -544,36 +539,33 @@ function AnalyticsPage() {
               Specific concepts with most incorrect answers during quizzes.
             </p>
           </div>
-          <div className="h-[240px] w-full">
-            {activeWeakTopics.length === 0 ? (
-              <div className="h-full flex items-center justify-center font-serif text-muted-foreground text-sm">
-                No weak topics found yet. Perfect score record!
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={activeWeakTopics}
-                  layout="vertical"
-                  margin={{ top: 0, right: 10, left: 40, bottom: 0 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    horizontal={false}
-                    stroke="rgba(0,0,0,0.06)"
-                  />
-                  <XAxis type="number" style={{ fontSize: 10 }} />
-                  <YAxis dataKey="name" type="category" style={{ fontSize: 10 }} width={120} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="count"
-                    fill="hsl(22, 75%, 48%)"
-                    radius={[0, 4, 4, 0]}
-                    barSize={20}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
+          {activeWeakTopics.length === 0 ? (
+            <div className="flex items-center justify-center py-8 font-serif text-muted-foreground text-sm">
+              No weak topics found yet — perfect score record!
+            </div>
+          ) : (
+            <div className="mt-2 flex flex-col gap-3 lg:gap-4">
+              {(() => {
+                const max = Math.max(...activeWeakTopics.map((t) => t.count), 1);
+                return activeWeakTopics.map((t) => (
+                  <div key={t.name} className="flex items-center gap-3">
+                    <span className="w-40 sm:w-48 lg:w-56 shrink-0 truncate font-mono text-[11px] text-muted-foreground" title={t.name}>
+                      {t.name}
+                    </span>
+                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-500"
+                        style={{ width: `${Math.round((t.count / max) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-4 shrink-0 text-right font-mono text-[11px] text-muted-foreground">
+                      {t.count}
+                    </span>
+                  </div>
+                ));
+              })()}
+            </div>
+          )}
         </div>
       </div>
     </div>
