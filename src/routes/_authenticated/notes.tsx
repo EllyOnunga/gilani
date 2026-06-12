@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,15 +17,59 @@ import {
   FileText,
   X,
   Upload,
+  Clock,
+  CreditCard,
+  AlertCircle,
 } from "lucide-react";
 import { parseDocument } from "@/lib/document-parser";
 import { toast } from "sonner";
 import { z } from "zod";
-import { getErrorMessage, withTimeout } from "@/lib/async";
+import { getErrorMessage, withTimeout, friendlyError } from "@/lib/async";
 import { buildNotesPrompt } from "@/lib/notes-prompt";
 const LazyMarkdownRenderer = lazy(() =>
   import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer })),
 );
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────────
+
+function formatTime(seconds: number): string {
+  if (seconds <= 0) return "";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const parts: string[] = [];
+  if (h > 0) parts.push(`${h}h`);
+  if (m > 0 || h > 0) parts.push(`${m}m`);
+  parts.push(`${s}s`);
+  return parts.join(" ");
+}
+
+function useRateLimitCountdown(errorMsg: string | null) {
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [isDaily, setIsDaily] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!errorMsg) { setSecondsLeft(0); return; }
+    const daily = errorMsg.toLowerCase().includes("daily");
+    setIsDaily(daily);
+    const match = errorMsg.match(/(\d+)s[./]?/);
+    const secs = match ? parseInt(match[1], 10) : 0;
+    if (secs > 0) {
+      setSecondsLeft(secs);
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setSecondsLeft((prev) => {
+          if (prev <= 1) { clearInterval(timerRef.current!); return 0; }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [errorMsg]);
+
+  return { secondsLeft, isDaily };
+}
 
 // ─── JSON Repair Helper ───────────────────────────────────────────────────────
 
@@ -401,6 +445,13 @@ function NotesPage() {
   const [parsingFile, setParsingFile] = useState(false);
   const [attachedFile, setAttachedFile] = useState<{ name: string; text: string } | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [notesRateError, setNotesRateError] = useState<string | null>(null);
+
+  const isRateLimited = !!(
+    notesRateError?.toLowerCase().includes("limit") ||
+    notesRateError?.toLowerCase().includes("rate")
+  );
+  const { secondsLeft, isDaily } = useRateLimitCountdown(isRateLimited ? notesRateError : null);
 
   // Load notes client-side on mount (Stale-While-Revalidate)
   useEffect(() => {
@@ -477,7 +528,7 @@ function NotesPage() {
       setAttachedFile({ name: parsed.name, text: parsed.text });
       toast.success("Document text extracted successfully!", { id: toastId });
     } catch (err: any) {
-      toast.error(err.message || "Failed to extract text from document", { id: toastId });
+      toast.error(friendlyError(err, "Failed to extract text from document."), { id: toastId });
     } finally {
       setParsingFile(false);
     }
@@ -522,7 +573,9 @@ ${content}`.trim()
       toast.success("Note ingested & summarised!");
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to save note");
-      if (message.toLowerCase().includes("limit")) {
+      const isLimit = message.toLowerCase().includes("limit") || message.toLowerCase().includes("rate");
+      if (isLimit) {
+        setNotesRateError(message);
         toast.error(message, {
           action: {
             label: "Upgrade",
@@ -547,6 +600,72 @@ ${content}`.trim()
             <strong>Offline mode</strong> — Viewing cached notes from your last session. New notes
             will sync when you reconnect.
           </span>
+        </div>
+      )}
+
+      {/* Rate Limit Banner */}
+      {notesRateError && (
+        <div className={`rounded-xl border overflow-hidden animate-in-slide ${
+          isRateLimited
+            ? "border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30"
+            : "border-destructive/30 bg-destructive/10"
+        }`}>
+          <div className="flex items-start gap-2.5 px-4 py-3">
+            <div className="flex-shrink-0 mt-0.5">
+              {isRateLimited
+                ? (secondsLeft > 0
+                    ? <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    : <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />)
+                : <AlertCircle className="h-4 w-4 text-destructive" />
+              }
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-xs font-semibold ${
+                isRateLimited ? "text-amber-800 dark:text-amber-300" : "text-destructive"
+              }`}>
+                {isRateLimited
+                  ? (isDaily ? "Daily notes limit reached" : "Slow down a little…")
+                  : "Note saving failed"}
+              </p>
+              <p className={`text-[11px] mt-0.5 ${
+                isRateLimited ? "text-amber-700/80 dark:text-amber-400/80" : "text-destructive/80"
+              }`}>
+                {isRateLimited
+                  ? (isDaily
+                      ? `You've used your daily notes allowance on your current plan. It resets at midnight.`
+                      : "You're saving notes too fast. Take a short break.")
+                  : notesRateError}
+                {isRateLimited && secondsLeft > 0 && (
+                  <span className="ml-1 font-mono font-bold text-amber-900 dark:text-amber-300 tabular-nums">
+                    (retry in {formatTime(secondsLeft)})
+                  </span>
+                )}
+              </p>
+            </div>
+            {isRateLimited && (
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("custom:open-plans"))}
+                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all"
+              >
+                <CreditCard className="h-3 w-3" /> Upgrade
+              </button>
+            )}
+            <button
+              onClick={() => setNotesRateError(null)}
+              className="flex-shrink-0 rounded-lg p-1 text-muted-foreground hover:bg-muted transition-colors"
+              title="Dismiss"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          {isRateLimited && secondsLeft > 0 && !isDaily && (
+            <div className="h-0.5 bg-amber-200/50 dark:bg-amber-800/50">
+              <div
+                className="h-full bg-amber-400 dark:bg-amber-500 transition-all duration-1000 ease-linear"
+                style={{ width: `${Math.min(100, (secondsLeft / 60) * 100)}%` }}
+              />
+            </div>
+          )}
         </div>
       )}
 

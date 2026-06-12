@@ -7,6 +7,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { Settings, UserCheck, Loader2, Shield, GraduationCap, User, MessageSquare, Mail, Clock, CheckCircle, CheckCircle2, Inbox, ThumbsUp, ThumbsDown, Search, BarChart3, AlertTriangle, RefreshCw, CreditCard, DollarSign, TrendingUp, Calendar, Crown, BookOpen, Activity } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/async";
 import { z } from "zod";
 import { PLANS, type PlanId } from "@/lib/plans";
 
@@ -427,7 +428,7 @@ function AdminUsersPage() {
       setProfileState((prev) => prev.map((p) => (p.id === userId ? { ...p, role } : p)));
       toast.success(`Role updated to ${role}`);
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to update role");
+      toast.error(friendlyError(err, "Failed to update role."));
     } finally {
       setUpdating(null);
     }
@@ -440,7 +441,7 @@ function AdminUsersPage() {
       setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)));
       toast.success(`Marked as ${status}`);
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to update status");
+      toast.error(friendlyError(err, "Failed to update status."));
     } finally {
       setUpdatingMsg(null);
     }
@@ -454,7 +455,7 @@ function AdminUsersPage() {
       setProfileState((prev) => prev.map((p) => (p.id === userId ? { ...p, plan, plan_expiry: expiry } : p)));
       toast.success(`Plan updated to ${PLANS[plan as PlanId]?.label ?? plan}`);
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to update plan");
+      toast.error(friendlyError(err, "Failed to update plan."));
     } finally {
       setUpdatingPlan(null);
     }

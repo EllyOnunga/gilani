@@ -6,6 +6,7 @@ import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { friendlyError } from "@/lib/async";
 
 export const Route = createFileRoute("/register")({
   beforeLoad: async () => {
@@ -111,7 +112,7 @@ function RegisterPage() {
     if (error) {
       localStorage.removeItem("pending_role");
       setBusy(false);
-      return toast.error(error.message);
+      return toast.error(friendlyError(error, "Registration failed. Please try again."));
     }
 
     setBusy(false);
@@ -135,7 +136,7 @@ function RegisterPage() {
     if (error) {
       localStorage.removeItem("pending_role");
       setBusy(false);
-      return toast.error("Google sign-in failed: " + error.message);
+      return toast.error(friendlyError(error, "Google sign-in failed. Please try again."));
     }
   };
 
@@ -150,9 +151,9 @@ function RegisterPage() {
             <ArrowLeft className="h-3.5 w-3.5" /> Back to home
           </Link>
         </div>
-        <Logo to="/" size="md" />
-        <h1 className="mt-6 font-serif text-3xl font-bold">Create your account</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <Logo to="/" size="md" className="mx-auto" />
+        <h1 className="mt-6 font-serif text-3xl font-bold text-center">Create your account</h1>
+        <p className="mt-1 text-sm text-muted-foreground text-center">
           Free for students. Powerful tools for teachers.
         </p>
 

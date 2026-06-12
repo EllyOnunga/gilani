@@ -13,7 +13,7 @@ import {
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { exportAsPDF, exportAsWord } from "@/lib/export-utils";
-import { withTimeout } from "@/lib/async";
+import { withTimeout, friendlyError } from "@/lib/async";
 import { toast } from "sonner";
 import { ChatHeader } from "@/components/tutor/ChatHeader";
 import { ChatInput } from "@/components/tutor/ChatInput";
@@ -117,7 +117,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         setAttachedFile(parsed);
         toast.success("Document attached successfully!", { id: toastId });
       } catch (err: any) {
-        toast.error(err.message || "Failed to attach document", { id: toastId });
+        toast.error(friendlyError(err, "Failed to attach document."), { id: toastId });
       } finally {
         setParsingFile(false);
         e.target.value = "";
@@ -164,7 +164,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       if (error) throw error;
       toast.success(`Curriculum switched to ${newVal}!`, { id: toastId });
     } catch (err: any) {
-      toast.error(err.message || "Failed to update curriculum", { id: toastId });
+      toast.error(friendlyError(err, "Failed to update curriculum."), { id: toastId });
     }
   };
 
@@ -189,6 +189,19 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         api: "/api/chat",
         body: { threadId },
         headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+        fetch: async (input, init) => {
+          const res = await fetch(input, init);
+          if (!res.ok) {
+            let errText = "";
+            try {
+              errText = await res.text();
+            } catch {
+              errText = res.statusText;
+            }
+            throw new Error(errText);
+          }
+          return res;
+        },
       }),
     [threadId, authToken],
   );
@@ -338,7 +351,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       setEscalateEmailError("");
       toast.success("Conversation escalated to your teacher! They will be notified by email.");
     } catch (err: any) {
-      toast.error(err?.message || "Failed to escalate conversation.");
+      toast.error(friendlyError(err, "Failed to escalate conversation."));
     } finally {
       setEscalating(false);
     }
@@ -805,7 +818,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
               }
             } catch (err: any) {
               console.error("Failed to delete thread:", err);
-              toast.error(err.message || "Failed to delete session", { id: toastId });
+              toast.error(friendlyError(err, "Failed to delete session."), { id: toastId });
             }
           }}
           onCancel={() => setDeleteConfirmId(null)}

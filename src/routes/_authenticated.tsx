@@ -77,6 +77,66 @@ const STUDENT_NAV = [
   { to: "/settings" as any, label: "Settings", icon: Settings },
 ] as const;
 
+function PresetAvatarSVG({ preset }: { preset: string }) {
+  switch (preset) {
+    case "socrates":
+      return (
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-amber-500 to-amber-700 p-1.5 text-white">
+          <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" strokeWidth="1" />
+          <path d="M12 24h8M16 24V14M13 14h6M11 11h10v3H11z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "curie":
+      return (
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-emerald-500 to-emerald-700 p-1.5 text-white">
+          <path d="M11 23h10M13 23v-7a3 3 0 0 1-1-2.5v-3.5h8v3.5a3 3 0 0 1-1 2.5v7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="16" cy="7" r="1" fill="currentColor" />
+          <circle cx="12" cy="15" r="1.2" fill="currentColor" />
+          <circle cx="20" cy="17" r="0.8" fill="currentColor" />
+        </svg>
+      );
+    case "galileo":
+      return (
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-blue-500 to-blue-700 p-1.5 text-white">
+          <path d="M9 23l7-7M23 9l-7 7M16 16l4 4M21 7l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+          <circle cx="24" cy="16" r="0.8" fill="currentColor" />
+          <polygon points="12,7 13,9 15,9 13,10 14,12 12,11 10,12 11,10 9,9 11,9" fill="currentColor" />
+        </svg>
+      );
+    case "lovelace":
+      return (
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-purple-500 to-purple-700 p-1.5 text-white">
+          <circle cx="16" cy="16" r="5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+          <path d="M16 8v3M16 21v3M8 16h3M21 16h3M10.5 10.5l2 2M19.5 19.5l2 2M10.5 19.5l2-2M19.5 10.5l2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      );
+    case "hypatia":
+      return (
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-pink-500 to-pink-700 p-1.5 text-white">
+          <circle cx="16" cy="16" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" />
+          <line x1="16" y1="9" x2="16" y2="23" stroke="currentColor" strokeWidth="1" />
+          <line x1="9" y1="16" x2="23" y2="16" stroke="currentColor" strokeWidth="1" />
+          <polygon points="16,11 19,16 16,21 13,16" stroke="currentColor" strokeWidth="1" fill="none" />
+        </svg>
+      );
+    case "einstein":
+      return (
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-rose-500 to-rose-700 p-1.5 text-white">
+          <path d="M12 15a4 4 0 0 1 8 0c0 2.5-2 3.5-2 5h-4c0-1.5-2-2.5-2-5zM13 23h6M14 26h4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="16" y1="7" x2="16" y2="9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <line x1="8" y1="11" x2="10" y2="12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <line x1="24" y1="11" x2="22" y2="12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      );
+    default:
+      return (
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-primary to-primary/80 p-1.5 text-white">
+          <circle cx="16" cy="16" r="12" fill="currentColor" opacity="0.2" />
+        </svg>
+      );
+  }
+}
+
 function AuthedShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { roles, user, loading } = useAuth();
@@ -92,23 +152,40 @@ function AuthedShell() {
   const [showPlans, setShowPlans] = useState(false);
   const [currentPlan, setCurrentPlan] = useState("free");
 
-  // Load plan from profile
-  useEffect(() => {
+  const [profileName, setProfileName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  const fetchProfile = async () => {
     if (!user?.id) return;
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from("profiles")
-          .select("plan")
-          .eq("id", user.id)
-          .maybeSingle();
-        if (data?.plan) {
-          setCurrentPlan(data.plan);
-        }
-      } catch (err) {
-        console.error("Failed to load plan:", err);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("plan, display_name, avatar_url")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!error && data) {
+        if (data.plan) setCurrentPlan(data.plan);
+        setProfileName(data.display_name || "");
+        setAvatarUrl(data.avatar_url || null);
       }
-    })();
+    } catch (err) {
+      console.error("Failed to load profile for sidebar:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleProfileUpdate = () => {
+      fetchProfile();
+    };
+    window.addEventListener("custom:profile-updated", handleProfileUpdate);
+    return () => {
+      window.removeEventListener("custom:profile-updated", handleProfileUpdate);
+    };
   }, [user?.id]);
 
   // Listen for dynamic open-plans events from other pages
@@ -437,10 +514,32 @@ function AuthedShell() {
               </Link>
             </div>
           )}
-          <div className="flex items-center justify-between px-1">
-            <p className="truncate text-xs text-muted-foreground mr-2" title={user?.email ?? ""}>
-              {user?.email}
-            </p>
+          <div className="flex items-center justify-between gap-2 border border-border/20 rounded-xl bg-card/50 p-2 shadow-xs min-w-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-primary/20 bg-background/50 shadow-inner">
+                {avatarUrl ? (
+                  avatarUrl.startsWith("preset:") ? (
+                    <PresetAvatarSVG preset={avatarUrl.substring(7)} />
+                  ) : (
+                    <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  )
+                ) : (
+                  <span className="font-serif text-[11px] font-bold text-primary">
+                    {(profileName || user?.email || "U").substring(0, 2).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-bold leading-tight text-foreground" title={profileName || user?.email || ""}>
+                  {profileName || user?.email?.split("@")[0]}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wider text-primary">
+                    {currentPlan}
+                  </span>
+                </div>
+              </div>
+            </div>
             <div className="relative flex-shrink-0" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen((v) => !v)}

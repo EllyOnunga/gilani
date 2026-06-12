@@ -6,6 +6,7 @@ import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { friendlyError } from "@/lib/async";
 
 function safeRedirectPath(url: string | undefined): string {
   if (!url) return "/dashboard";
@@ -75,7 +76,7 @@ function LoginPage() {
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     navigate({
       to: "/callback",
       search: {
@@ -100,7 +101,7 @@ function LoginPage() {
     });
     if (error) {
       setBusy(false);
-      return toast.error("Google sign-in failed: " + error.message);
+      return toast.error(friendlyError(error, "Google sign-in failed. Please try again."));
     }
   };
 
@@ -115,9 +116,9 @@ function LoginPage() {
             <ArrowLeft className="h-3.5 w-3.5" /> Back to home
           </Link>
         </div>
-        <Logo to="/" size="md" />
-        <h1 className="mt-6 text-2xl font-bold tracking-tight">Welcome back</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Sign in to continue to your portal.</p>
+        <Logo to="/" size="md" className="mx-auto" />
+        <h1 className="mt-6 text-2xl font-bold tracking-tight text-center">Welcome back</h1>
+        <p className="mt-1 text-sm text-muted-foreground text-center">Sign in to continue to your portal.</p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           {search.email && (
             <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-200">

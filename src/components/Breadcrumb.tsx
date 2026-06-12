@@ -18,27 +18,63 @@ const ROUTE_LABELS: Record<string, string> = {
 type Crumb = {
   label: string;
   href: string;
+  navigable: boolean; // false = render as plain text, not a link
 };
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Intermediate layout paths that exist in the router but have no meaningful
+ * standalone content — clicking them is confusing, so we suppress the link.
+ */
+const NON_NAVIGABLE_INTERMEDIATES = new Set(["/tutor"]);
 
 function getCrumbs(pathname: string): Crumb[] {
   const segments = pathname.split("/").filter(Boolean);
 
-  const crumbs: Crumb[] = [{ label: "Home", href: "/dashboard" }];
+  // Always start with Home → Dashboard
+  const crumbs: Crumb[] = [{ label: "Home", href: "/dashboard", navigable: true }];
 
   let accumulated = "";
-  for (const segment of segments) {
+
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i];
     accumulated += `/${segment}`;
 
-    // Skip UUIDs — show as "Session" instead
-    const isUuid = /^[0-9a-f-]{36}$/i.test(segment);
-    const label = isUuid
-      ? "Session"
-      : (ROUTE_LABELS[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1));
+    const isUuid = UUID_RE.test(segment);
 
-    crumbs.push({ label, href: accumulated });
+    if (isUuid) {
+      // Dynamic param — label based on the parent segment
+      const parent = segments[i - 1] ?? "";
+      const label =
+        parent === "tutor" ? "Chat Session" :
+        parent === "escalations" ? "Escalation" :
+        "Session";
+      crumbs.push({ label, href: accumulated, navigable: true });
+      continue;
+    }
+
+    // Compound routes: teacher/escalations, admin/users — collapse parent into
+    // a non-navigable label and emit the full path as the leaf
+    const nextSegment = segments[i + 1];
+    if (nextSegment && !UUID_RE.test(nextSegment) && (segment === "teacher" || segment === "admin")) {
+      const parentLabel = ROUTE_LABELS[segment] ?? segment;
+      crumbs.push({ label: parentLabel, href: accumulated, navigable: false });
+      accumulated += `/${nextSegment}`;
+      const leafLabel =
+        ROUTE_LABELS[nextSegment] ??
+        nextSegment.charAt(0).toUpperCase() + nextSegment.slice(1);
+      crumbs.push({ label: leafLabel, href: accumulated, navigable: true });
+      i++; // consumed nextSegment
+      continue;
+    }
+
+    const label = ROUTE_LABELS[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1);
+    const navigable = !NON_NAVIGABLE_INTERMEDIATES.has(accumulated);
+    crumbs.push({ label, href: accumulated, navigable });
   }
 
-  // Remove duplicate if first crumb after Home is also Dashboard
+  // Remove duplicate if first crumb after Home is also /dashboard
   if (crumbs.length > 1 && crumbs[1].href === "/dashboard") {
     return crumbs.slice(1);
   }
@@ -50,7 +86,7 @@ export function Breadcrumb() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const crumbs = getCrumbs(pathname);
 
-  // Don't show breadcrumb on dashboard root
+  // Don't show breadcrumb on dashboard root or single-crumb pages
   if (pathname === "/dashboard" || crumbs.length <= 1) return null;
 
   return (
@@ -63,8 +99,10 @@ export function Breadcrumb() {
         return (
           <span key={crumb.href} className="flex items-center gap-1 whitespace-nowrap">
             {i === 0 && <Home className="h-3 w-3 flex-shrink-0" />}
-            {isLast ? (
-              <span className="font-semibold text-foreground">{crumb.label}</span>
+            {isLast || !crumb.navigable ? (
+              <span className={isLast ? "font-semibold text-foreground" : "opacity-60"}>
+                {crumb.label}
+              </span>
             ) : (
               <Link
                 to={crumb.href as any}

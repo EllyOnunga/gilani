@@ -22,6 +22,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/async";
 import { z } from "zod";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
@@ -426,7 +427,7 @@ function EscalationsPage() {
         const rows = await listEscalations();
         if (mounted) setEscalations(rows as Escalation[]);
       } catch (err: any) {
-        if (mounted) toast.error(err?.message ?? "Failed to load escalations");
+        if (mounted) toast.error(friendlyError(err, "Failed to load escalations."));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -451,7 +452,7 @@ function EscalationsPage() {
         });
         setConvoMessages(msgs);
       } catch (err: any) {
-        toast.error(err?.message ?? "Failed to load messages");
+        toast.error(friendlyError(err, "Failed to load messages."));
       } finally {
         setLoadingMessages(false);
       }
@@ -485,7 +486,7 @@ function EscalationsPage() {
         });
       }
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to resolve");
+      toast.error(friendlyError(err, "Failed to resolve escalation. Please try again."));
     } finally {
       setSaving(false);
     }

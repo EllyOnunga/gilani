@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AlertTriangle, BookOpen, Shield, Heart, Cookie, BarChart } from "lucide-react";
+import { friendlyError } from "@/lib/async";
 
 export function DisclaimerModal() {
   const { user, loading: authLoading } = useAuth();
@@ -91,7 +92,7 @@ export function DisclaimerModal() {
       setIsOpen(false);
       toast.success("Consent preferences saved! Welcome to GilaniAI ✨");
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to save preferences. Please try again.");
+      toast.error(friendlyError(err, "Failed to save preferences. Please try again."));
     }
   };
 

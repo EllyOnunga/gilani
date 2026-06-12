@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { sendPasswordResetConfirmationFn } from "@/lib/auth-actions.server-fns";
 import { toast } from "sonner";
 import { Eye, EyeOff, ShieldAlert, Sparkles, CheckCircle2 } from "lucide-react";
+import { friendlyError } from "@/lib/async";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -44,7 +45,7 @@ function ResetPasswordPage() {
     setBusy(false);
 
     if (error) {
-      toast.error(error.message);
+      toast.error(friendlyError(error, "Failed to update password. Please try again."));
       return;
     }
 

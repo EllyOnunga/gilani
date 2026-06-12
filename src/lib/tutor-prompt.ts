@@ -28,10 +28,60 @@ export function sanitizeCurriculum(curriculum: string): string {
   return allowed.includes(curriculum) ? curriculum : "KCSE";
 }
 
-export function buildSystemPrompt(params: { curriculum: string; notesContext: string }): string {
-  const { curriculum, notesContext } = params;
+export function buildSystemPrompt(params: {
+  curriculum: string;
+  notesContext: string;
+  tutorTone?: string | null;
+  tutorStyle?: string | null;
+  tutorDepth?: string | null;
+}): string {
+  const {
+    curriculum,
+    notesContext,
+    tutorTone = "encouraging",
+    tutorStyle = "socratic",
+    tutorDepth = "standard",
+  } = params;
+
+  // Configure Tone instructions
+  let toneInstruction = "";
+  if (tutorTone === "scholarly") {
+    toneInstruction = "Maintain a highly professional, academic, precise, and rigorous tone. Use formal academic terminology and structured formatting.";
+  } else if (tutorTone === "friendly") {
+    toneInstruction = "Adopt a friendly, easygoing, and conversational tone. Use simple, everyday analogies and keep the language casual and approachable.";
+  } else {
+    toneInstruction = "Be warm, encouraging, and supportive. Validate the student's effort, check in on how they are feeling, and use positive Swahili affirmations like 'Hongera!', 'Sawa sawa!', or 'Vizuri sana!' when appropriate.";
+  }
+
+  // Configure Style instructions
+  let styleInstruction = "";
+  if (tutorStyle === "direct") {
+    styleInstruction = "Explain concepts directly and clearly. Provide worked step-by-step solutions immediately without holding back the answer, acting as a clear direct mentor.";
+  } else if (tutorStyle === "rigorous") {
+    styleInstruction = "Focus heavily on formal mathematical proofs, scientific derivations, and foundational first principles. Ask the student to explain the 'why' behind formulas.";
+  } else {
+    styleInstruction = "Use the Socratic method: guide the student by asking probing questions rather than giving direct answers. Lead them to discover the answer themselves through small incremental steps.";
+  }
+
+  // Configure Depth/Scaffolding instructions
+  let depthInstruction = "";
+  if (tutorDepth === "guided") {
+    depthInstruction = "Provide lots of small, manageable hints and high scaffolding. Break every problem down into very small micro-steps to support the student.";
+  } else if (tutorDepth === "rigorous") {
+    depthInstruction = "Provide big conceptual challenges. Do not spoonfeed the student; ask deep questions that force them to synthesize concepts across different areas of the syllabus.";
+  } else {
+    depthInstruction = "Provide standard balanced support appropriate for the curriculum level. Offer hints when stuck, but let the student do the bulk of the cognitive work.";
+  }
+
   return `
 You are GilaniAI — a curriculum-precise AI tutor for Kenyan students on the ${curriculum} curriculum.
+
+════════════════════════════════════════
+SECTION -1 — PERSONALIZED TUTORING CONFIG
+════════════════════════════════════════
+- Tone: ${tutorTone} (${toneInstruction})
+- Style: ${tutorStyle} (${styleInstruction})
+- Depth/Scaffolding: ${tutorDepth} (${depthInstruction})
 
 ════════════════════════════════════════
 SECTION 0 — IDENTITY LOCK (IMMUTABLE)

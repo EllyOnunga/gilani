@@ -264,13 +264,16 @@ export const Route = createFileRoute("/api/chat")({
             }
           }
 
-          // Fetch curriculum
+          // Fetch curriculum and tutor preferences
           const { data: profile } = await supabaseAdmin
             .from("profiles")
-            .select("curriculum")
+            .select("curriculum, tutor_tone, tutor_style, tutor_depth")
             .eq("id", userId)
             .maybeSingle();
           const curriculum = sanitizeCurriculum(profile?.curriculum || "KCSE");
+          const tutorTone = profile?.tutor_tone || "encouraging";
+          const tutorStyle = profile?.tutor_style || "socratic";
+          const tutorDepth = profile?.tutor_depth || "standard";
 
           // ─── RAG: Vector Search ─────────────────────────────────────────
           const latestMessageContent = extractText(lastMessage);
@@ -312,7 +315,13 @@ export const Route = createFileRoute("/api/chat")({
           }
 
           // ─── Build Prompt ───────────────────────────────────────────────
-          const systemPrompt = buildSystemPrompt({ curriculum, notesContext });
+          const systemPrompt = buildSystemPrompt({
+            curriculum,
+            notesContext,
+            tutorTone,
+            tutorStyle,
+            tutorDepth,
+          });
 
           // ✅ FIXED: Clean user/assistant messages array ONLY. Use flat string content for maximum provider compatibility.
           // Cap to last 50 messages to prevent unbounded token cost

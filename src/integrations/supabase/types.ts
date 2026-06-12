@@ -358,6 +358,9 @@ export type Database = {
           email: string | null;
           id: string;
           updated_at: string;
+          tutor_tone: string | null;
+          tutor_style: string | null;
+          tutor_depth: string | null;
         };
         Insert: {
           avatar_url?: string | null;
@@ -372,6 +375,9 @@ export type Database = {
           email?: string | null;
           id: string;
           updated_at?: string;
+          tutor_tone?: string | null;
+          tutor_style?: string | null;
+          tutor_depth?: string | null;
         };
         Update: {
           avatar_url?: string | null;
@@ -386,6 +392,9 @@ export type Database = {
           email?: string | null;
           id?: string;
           updated_at?: string;
+          tutor_tone?: string | null;
+          tutor_style?: string | null;
+          tutor_depth?: string | null;
         };
         Relationships: [];
       };

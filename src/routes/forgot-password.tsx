@@ -3,6 +3,7 @@ import { useState, type FormEvent, useEffect } from "react";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/async";
 import { ArrowLeft, Mail, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/forgot-password")({
@@ -47,7 +48,7 @@ function ForgotPasswordPage() {
     setBusy(false);
 
     if (error) {
-      toast.error(error.message);
+      toast.error(friendlyError(error, "Failed to send reset email. Please try again."));
       return;
     }
 

@@ -20,6 +20,20 @@ type Props = {
   onUpgrade?: () => void;
 };
 
+function formatTime(seconds: number): string {
+  if (seconds <= 0) return "";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  const parts = [];
+  if (h > 0) parts.push(`${h}h`);
+  if (m > 0 || h > 0) parts.push(`${m}m`);
+  parts.push(`${s}s`);
+
+  return parts.join(" ");
+}
+
 function useRateLimitCountdown(chatError: string | null) {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [isDaily, setIsDaily] = useState(false);
@@ -28,13 +42,29 @@ function useRateLimitCountdown(chatError: string | null) {
   useEffect(() => {
     if (!chatError) { setSecondsLeft(0); return; }
 
-    // Parse "Try again in Xs" or "Resets in Xs"
-    const match = chatError.match(/(?:Try again|Resets) in (\d+)s/);
-    const daily = chatError.toLowerCase().includes("daily");
+    let secs = 0;
+    let daily = chatError.toLowerCase().includes("daily");
+
+    // Try to parse JSON from Supabase/API response
+    try {
+      const parsed = JSON.parse(chatError);
+      if (parsed.retryAfterMs) {
+        secs = Math.ceil(parsed.retryAfterMs / 1000);
+      }
+      if (parsed.isDaily !== undefined) {
+        daily = !!parsed.isDaily;
+      }
+    } catch {
+      // Fallback: Parse "Try again in Xs" or "Resets in Xs"
+      const match = chatError.match(/(?:Try again|Resets) in (\d+)s/);
+      if (match) {
+        secs = parseInt(match[1], 10);
+      }
+    }
+
     setIsDaily(daily);
 
-    if (match) {
-      const secs = parseInt(match[1], 10);
+    if (secs > 0) {
       setSecondsLeft(secs);
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
@@ -113,8 +143,8 @@ export function ChatInput({
                   ? "You’ve hit your daily AI message cap. It resets at midnight."
                   : "You’re sending messages too fast. Take a short break."}
                 {secondsLeft > 0 && (
-                  <span className="ml-1 font-mono font-bold tabular-nums">
-                    {secondsLeft}s
+                  <span className="ml-1 font-mono font-bold text-amber-900 dark:text-amber-300 tabular-nums">
+                    (in {formatTime(secondsLeft)})
                   </span>
                 )}
               </p>
@@ -227,7 +257,7 @@ export function ChatInput({
           rows={1} value={input} onChange={onInputChange}
           placeholder={
             isPending       ? "Waiting for response…" :
-            isRateLimited   ? secondsLeft > 0 ? `Cooling down… ${secondsLeft}s` : "Rate limit reached…" :
+            isRateLimited   ? secondsLeft > 0 ? `Cooling down… ${formatTime(secondsLeft)}` : "Rate limit reached…" :
             parsingFile     ? "Parsing document…" :
                               "Ask anything…"
           }

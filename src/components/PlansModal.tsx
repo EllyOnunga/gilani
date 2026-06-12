@@ -4,6 +4,7 @@ import { PLANS, PlanId } from "@/lib/plans";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Zap, GraduationCap, Star, School, X, Loader2 } from "lucide-react";
+import { friendlyError } from "@/lib/async";
 
 const PLAN_ICONS: Record<PlanId, typeof Zap> = {
   free:    Zap,
@@ -50,7 +51,7 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
       setSent(true);
       toast.success("📱 M-Pesa prompt sent! Enter your PIN to activate.");
     } catch (err: any) {
-      toast.error(err?.message ?? "Payment failed. Try again.");
+      toast.error(friendlyError(err, "Payment failed. Please try again."));
     } finally {
       setLoading(false);
     }

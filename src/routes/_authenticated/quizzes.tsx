@@ -1,5 +1,5 @@
 // app/routes/_authenticated/quizzes.tsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,9 @@ import {
   BookOpen,
   GraduationCap,
   Globe,
+  Clock,
+  CreditCard,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -25,6 +28,48 @@ import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import { buildQuizPrompt } from "@/lib/quiz-prompt";
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatTime(seconds: number): string {
+  if (seconds <= 0) return "";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const parts: string[] = [];
+  if (h > 0) parts.push(`${h}h`);
+  if (m > 0 || h > 0) parts.push(`${m}m`);
+  parts.push(`${s}s`);
+  return parts.join(" ");
+}
+
+function useRateLimitCountdown(errorMsg: string | null) {
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [isDaily, setIsDaily] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!errorMsg) { setSecondsLeft(0); return; }
+    const daily = errorMsg.toLowerCase().includes("daily");
+    setIsDaily(daily);
+    // Parse seconds from message like "Resets in 42s." or "try again in 42s"
+    const match = errorMsg.match(/(\d+)s[.\/]?/);
+    const secs = match ? parseInt(match[1], 10) : 0;
+    if (secs > 0) {
+      setSecondsLeft(secs);
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setSecondsLeft((prev) => {
+          if (prev <= 1) { clearInterval(timerRef.current!); return 0; }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [errorMsg]);
+
+  return { secondsLeft, isDaily };
+}
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -390,6 +435,12 @@ function QuizzesPage() {
 
   const activeTopic = customTopic.trim() || topic;
 
+  const isRateLimited = !!(
+    quizError?.toLowerCase().includes("limit") ||
+    quizError?.toLowerCase().includes("rate")
+  );
+  const { secondsLeft, isDaily } = useRateLimitCountdown(isRateLimited ? quizError : null);
+
   useEffect(() => {
     const fetchCurriculum = async () => {
       try {
@@ -547,17 +598,60 @@ function QuizzesPage() {
 
         <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm space-y-5">
           {quizError && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in-slide">
-              <span className="flex-1">
-                {quizError} {!quizError.toLowerCase().includes("limit") && "If this keeps happening, reduce question count or try another topic."}
-              </span>
-              {quizError.toLowerCase().includes("limit") && (
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("custom:open-plans"))}
-                  className="rounded bg-destructive px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/80 transition-colors self-start sm:self-auto flex-shrink-0"
-                >
-                  Upgrade Plan
-                </button>
+            <div className={`rounded-xl border overflow-hidden animate-in-slide ${
+              isRateLimited
+                ? "border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30"
+                : "border-destructive/30 bg-destructive/10"
+            }`}>
+              <div className="flex items-start gap-2.5 px-4 py-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  {isRateLimited
+                    ? (secondsLeft > 0
+                        ? <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        : <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />)
+                    : <AlertCircle className="h-4 w-4 text-destructive" />
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-semibold ${
+                    isRateLimited ? "text-amber-800 dark:text-amber-300" : "text-destructive"
+                  }`}>
+                    {isRateLimited
+                      ? (isDaily ? "Daily quiz limit reached" : "Slow down a little…")
+                      : "Quiz generation failed"}
+                  </p>
+                  <p className={`text-[11px] mt-0.5 ${
+                    isRateLimited ? "text-amber-700/80 dark:text-amber-400/80" : "text-destructive/80"
+                  }`}>
+                    {isRateLimited
+                      ? (isDaily
+                          ? `You've used your daily quiz allowance on your current plan. It resets at midnight.`
+                          : "You're generating quizzes too fast. Take a short break.")
+                      : quizError}
+                    {isRateLimited && secondsLeft > 0 && (
+                      <span className="ml-1 font-mono font-bold text-amber-900 dark:text-amber-300 tabular-nums">
+                        (retry in {formatTime(secondsLeft)})
+                      </span>
+                    )}
+                    {!isRateLimited && " If this keeps happening, reduce question count or try a different topic."}
+                  </p>
+                </div>
+                {isRateLimited && (
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("custom:open-plans"))}
+                    className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all"
+                  >
+                    <CreditCard className="h-3 w-3" /> Upgrade
+                  </button>
+                )}
+              </div>
+              {isRateLimited && secondsLeft > 0 && !isDaily && (
+                <div className="h-0.5 bg-amber-200/50 dark:bg-amber-800/50">
+                  <div
+                    className="h-full bg-amber-400 dark:bg-amber-500 transition-all duration-1000 ease-linear"
+                    style={{ width: `${Math.min(100, (secondsLeft / 60) * 100)}%` }}
+                  />
+                </div>
               )}
             </div>
           )}
