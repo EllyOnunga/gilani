@@ -35,8 +35,11 @@ export function Logo({
 
   const currentSize = sizeClasses[size];
 
+  const isCentered = className.includes("mx-auto");
+  const innerClass = className.replace("mx-auto", "").trim();
+
   const logoContent = (
-    <div className={`flex items-center ${currentSize.container} ${className}`}>
+    <div className={`flex items-center ${currentSize.container} ${innerClass}`}>
       {/* GilaniAI Logo — neural-network book icon from Canva */}
       <img
         src="/gilanilogo.png"
@@ -51,7 +54,9 @@ export function Logo({
     <Link
       to={to as any}
       onClick={onClick}
-      className="hover:opacity-90 transition-opacity block select-none"
+      className={`hover:opacity-90 transition-opacity select-none ${
+        isCentered ? "block w-fit mx-auto" : "block"
+      }`}
     >
       {logoContent}
     </Link>
