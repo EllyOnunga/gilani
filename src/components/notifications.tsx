@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, X, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -16,6 +16,7 @@ type Notification = {
 export function NotificationBell({ userId }: { userId: string }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -85,6 +86,23 @@ export function NotificationBell({ userId }: { userId: string }) {
     setOpen(false);
   };
 
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    // Prevent the notification click handler from firing
+    e.stopPropagation();
+    setDeleting(id);
+    try {
+      await (supabase as any).from("notifications").delete().eq("id", id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const handleClearAll = async () => {
+    await (supabase as any).from("notifications").delete().eq("user_id", userId);
+    setNotifications([]);
+  };
+
   const typeColors: Record<string, string> = {
     escalation: "bg-amber-50 border-amber-200 text-amber-700",
     success: "bg-green-50 border-green-200 text-green-700",
@@ -111,17 +129,32 @@ export function NotificationBell({ userId }: { userId: string }) {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl border border-border bg-card shadow-xl overflow-hidden">
+            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h3 className="font-semibold text-sm">Notifications</h3>
-              {unread > 0 && (
-                <button
-                  onClick={markAllRead}
-                  className="text-[10px] font-mono uppercase tracking-wider text-primary hover:underline"
-                >
-                  Mark all read
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {unread > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    className="text-[10px] font-mono uppercase tracking-wider text-primary hover:underline"
+                  >
+                    Mark all read
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button
+                    onClick={handleClearAll}
+                    title="Clear all notifications"
+                    className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Clear all
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* List */}
             <div className="max-h-80 overflow-y-auto">
               {notifications.length === 0 ? (
                 <div className="py-10 text-center">
@@ -130,35 +163,54 @@ export function NotificationBell({ userId }: { userId: string }) {
                 </div>
               ) : (
                 notifications.map((n) => (
-                  <button
+                  <div
                     key={n.id}
-                    onClick={() => handleClick(n)}
-                    className={`w-full text-left px-4 py-3 border-b border-border/50 hover:bg-accent transition-colors ${!n.read ? "bg-primary/5" : ""}`}
+                    className={`group relative flex items-start border-b border-border/50 transition-colors ${!n.read ? "bg-primary/5" : ""}`}
                   >
-                    <div className="flex items-start gap-2">
-                      <span
-                        className={`mt-0.5 rounded-full border px-2 py-0.5 font-mono text-[8px] uppercase tracking-wider flex-shrink-0 ${typeColors[n.type] ?? typeColors.info}`}
-                      >
-                        {n.type}
-                      </span>
-                      <div className="min-w-0">
-                        <p
-                          className={`text-xs font-semibold truncate ${!n.read ? "text-foreground" : "text-muted-foreground"}`}
+                    {/* Clickable content area */}
+                    <button
+                      onClick={() => handleClick(n)}
+                      className="flex-1 text-left px-4 py-3 hover:bg-accent transition-colors"
+                    >
+                      <div className="flex items-start gap-2">
+                        <span
+                          className={`mt-0.5 rounded-full border px-2 py-0.5 font-mono text-[8px] uppercase tracking-wider flex-shrink-0 ${typeColors[n.type] ?? typeColors.info}`}
                         >
-                          {n.title}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                          {n.message}
-                        </p>
-                        <p className="font-mono text-[9px] text-muted-foreground/60 mt-1">
-                          {new Date(n.created_at).toLocaleString("en-KE")}
-                        </p>
+                          {n.type}
+                        </span>
+                        <div className="min-w-0">
+                          <p
+                            className={`text-xs font-semibold truncate ${!n.read ? "text-foreground" : "text-muted-foreground"}`}
+                          >
+                            {n.title}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                            {n.message}
+                          </p>
+                          <p className="font-mono text-[9px] text-muted-foreground/60 mt-1">
+                            {new Date(n.created_at).toLocaleString("en-KE")}
+                          </p>
+                        </div>
+                        {!n.read && (
+                          <span className="ml-auto flex-shrink-0 h-2 w-2 rounded-full bg-primary mt-1" />
+                        )}
                       </div>
-                      {!n.read && (
-                        <span className="ml-auto flex-shrink-0 h-2 w-2 rounded-full bg-primary mt-1" />
+                    </button>
+
+                    {/* Delete button — visible on hover */}
+                    <button
+                      onClick={(e) => handleDelete(e, n.id)}
+                      disabled={deleting === n.id}
+                      title="Delete notification"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 flex-shrink-0 p-1.5 rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all disabled:opacity-50"
+                    >
+                      {deleting === n.id ? (
+                        <span className="h-3.5 w-3.5 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin block" />
+                      ) : (
+                        <X className="h-3.5 w-3.5" />
                       )}
-                    </div>
-                  </button>
+                    </button>
+                  </div>
                 ))
               )}
             </div>
