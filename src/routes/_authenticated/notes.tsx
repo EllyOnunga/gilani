@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { checkDualRateLimit, NOTES_RATE_LIMIT, NOTES_DAILY_LIMIT } from "@/lib/rate-limit.server";
+import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import {
   BookOpenText,
   ChevronDown,
@@ -176,10 +176,14 @@ const ingestNote = createServerFn({ method: "POST" })
     }
     const userId = authResult.userId;
 
-    const rlNotes = await checkDualRateLimit(userId, "ingestNote", NOTES_RATE_LIMIT, NOTES_DAILY_LIMIT);
+    const rlNotes = await checkPlanRateLimit(userId, "notes");
     if (!rlNotes.allowed) {
       const s = Math.ceil(rlNotes.retryAfterMs / 1000);
-      throw new Error(rlNotes.isDaily ? `Daily note limit reached. Resets in ${s}s.` : `Rate limit exceeded. Try again in ${s}s.`);
+      throw new Error(
+        rlNotes.isDaily
+          ? `Daily notes ingest limit reached for your ${rlNotes.plan} plan. Resets in ${s}s.`
+          : `Rate limit exceeded. Please try again in ${s}s.`
+      );
     }
     const { title, heading, subheading, content } = data;
     if (!title.trim() || !content.trim()) {
@@ -517,7 +521,17 @@ ${content}`.trim()
       setShowForm(false);
       toast.success("Note ingested & summarised!");
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, "Failed to save note"));
+      const message = getErrorMessage(err, "Failed to save note");
+      if (message.toLowerCase().includes("limit")) {
+        toast.error(message, {
+          action: {
+            label: "Upgrade",
+            onClick: () => window.dispatchEvent(new CustomEvent("custom:open-plans")),
+          },
+        });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setSaving(false);
     }

@@ -88,12 +88,15 @@ export async function checkDualRateLimit(
 
 import { getPlanLimits } from "@/lib/plans";
 
+export type RateLimitAction = "chat" | "quiz" | "planner" | "notes";
+
 /**
  * Fetch the user's current plan from profiles, then check
- * both per-minute and daily limits against their plan allowance.
+ * both per-minute and daily limits against their plan allowance for the given action.
  */
 export async function checkPlanRateLimit(
   userId: string,
+  action: RateLimitAction = "chat",
 ): Promise<{ allowed: boolean; retryAfterMs: number; isDaily: boolean; plan: string }> {
   // Get user plan from profiles
   const { data: profile } = await supabaseAdmin
@@ -111,9 +114,31 @@ export async function checkPlanRateLimit(
 
   const limits = getPlanLimits(plan);
 
-  const minuteLimit: RateLimitOptions = { max: 20, windowMs: 60_000 };
-  const dailyLimit: RateLimitOptions  = { max: limits.dailyMessages, windowMs: 86_400_000 };
+  let minuteMax = 20;
+  let dailyMax = 10;
 
-  const result = await checkDualRateLimit(userId, "chat", minuteLimit, dailyLimit);
+  switch (action) {
+    case "chat":
+      minuteMax = plan === "free" ? 5 : plan === "basic" ? 10 : 20;
+      dailyMax = limits.dailyMessages;
+      break;
+    case "quiz":
+      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
+      dailyMax = limits.dailyQuizzes;
+      break;
+    case "planner":
+      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
+      dailyMax = limits.dailyPlanners;
+      break;
+    case "notes":
+      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
+      dailyMax = limits.dailyNotes;
+      break;
+  }
+
+  const minuteLimit: RateLimitOptions = { max: minuteMax, windowMs: 60_000 };
+  const dailyLimit: RateLimitOptions  = { max: dailyMax, windowMs: 86_400_000 };
+
+  const result = await checkDualRateLimit(userId, action, minuteLimit, dailyLimit);
   return { ...result, plan };
 }

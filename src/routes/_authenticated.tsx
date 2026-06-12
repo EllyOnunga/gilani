@@ -35,6 +35,7 @@ import { DisclaimerModal } from "@/components/DisclaimerModal";
 import { Logo } from "@/components/ui/logo";
 import { GilaniLoader } from "@/components/GilaniLoader";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { PlansModal } from "@/components/PlansModal";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
@@ -88,6 +89,39 @@ function AuthedShell() {
     return document.documentElement.classList.contains("dark");
   });
   const [pwaInstallable, setPwaInstallable] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState("free");
+
+  // Load plan from profile
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("plan")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (data?.plan) {
+          setCurrentPlan(data.plan);
+        }
+      } catch (err) {
+        console.error("Failed to load plan:", err);
+      }
+    })();
+  }, [user?.id]);
+
+  // Listen for dynamic open-plans events from other pages
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleOpenPlans = () => {
+      setShowPlans(true);
+    };
+    window.addEventListener("custom:open-plans", handleOpenPlans);
+    return () => {
+      window.removeEventListener("custom:open-plans", handleOpenPlans);
+    };
+  }, []);
 
   // Listen for PWA install events dispatched from __root.tsx
   useEffect(() => {
@@ -231,6 +265,9 @@ function AuthedShell() {
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden lg:flex-row bg-background text-foreground">
       {/* Disclaimer Modal - shows once on first visit */}
       <DisclaimerModal />
+
+      {/* Global Subscription/Upgrade plans Modal */}
+      {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
 
       {/* Mobile Top Navigation Header */}
       <header className="flex h-16 w-full items-center justify-between border-b border-border bg-sidebar px-4 lg:hidden sticky top-0 z-30">

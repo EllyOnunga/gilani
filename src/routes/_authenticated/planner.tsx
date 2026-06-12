@@ -24,7 +24,7 @@ const LazyMarkdownRenderer = lazy(() =>
 );
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { checkDualRateLimit, PLANNER_RATE_LIMIT, PLANNER_DAILY_LIMIT } from "@/lib/rate-limit.server";
+import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import { buildPlannerPrompt } from "@/lib/planner-prompt";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -259,9 +259,14 @@ const generatePlan = createServerFn({ method: "POST" }).handler(async () => {
   }
   const userId = authResult.userId;
 
-  const rlPlan = await checkDualRateLimit(userId, "generatePlan", PLANNER_RATE_LIMIT, PLANNER_DAILY_LIMIT);
+  const rlPlan = await checkPlanRateLimit(userId, "planner");
   if (!rlPlan.allowed) {
-    throw new Error("Rate limit exceeded. Please wait a minute before generating a new plan.");
+    const s = Math.ceil(rlPlan.retryAfterMs / 1000);
+    throw new Error(
+      rlPlan.isDaily
+        ? `Daily planner limit reached for your ${rlPlan.plan} plan. Resets in ${s}s.`
+        : `Rate limit exceeded. Please try again in ${s}s.`
+    );
   }
   // Fetch user's curriculum from profile
   const { data: profile } = await supabaseAdmin
@@ -511,7 +516,16 @@ function PlannerPage() {
       const message = getErrorMessage(err, "Failed to generate plan");
       setError(message);
       setDebugInfo(`Error: ${message}`);
-      toast.error(message);
+      if (message.toLowerCase().includes("limit")) {
+        toast.error(message, {
+          action: {
+            label: "Upgrade",
+            onClick: () => window.dispatchEvent(new CustomEvent("custom:open-plans")),
+          },
+        });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -618,8 +632,16 @@ function PlannerPage() {
       )}
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in-slide">
+          <span className="flex-1">{error}</span>
+          {error.toLowerCase().includes("limit") && (
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("custom:open-plans"))}
+              className="rounded bg-destructive px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/80 transition-colors self-start sm:self-auto flex-shrink-0"
+            >
+              Upgrade Plan
+            </button>
+          )}
         </div>
       )}
 

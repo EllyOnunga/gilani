@@ -23,7 +23,7 @@ import { getErrorMessage, withTimeout } from "@/lib/async";
 import { MathText } from "@/components/math-text";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { checkDualRateLimit, QUIZ_RATE_LIMIT, QUIZ_DAILY_LIMIT } from "@/lib/rate-limit.server";
+import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import { buildQuizPrompt } from "@/lib/quiz-prompt";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -61,9 +61,14 @@ const generateQuiz = createServerFn({ method: "POST" })
     }
     const userId = authResult.userId;
 
-    const rlQuiz = await checkDualRateLimit(userId, "generateQuiz", QUIZ_RATE_LIMIT, QUIZ_DAILY_LIMIT);
+    const rlQuiz = await checkPlanRateLimit(userId, "quiz");
     if (!rlQuiz.allowed) {
-      throw new Error("Rate limit exceeded. Please wait a minute before generating more quizzes.");
+      const s = Math.ceil(rlQuiz.retryAfterMs / 1000);
+      throw new Error(
+        rlQuiz.isDaily
+          ? `Daily quiz limit reached for your ${rlQuiz.plan} plan. Resets in ${s}s.`
+          : `Rate limit exceeded. Please try again in ${s}s.`
+      );
     }
     const { topic, count, curriculum } = data;
     if (!topic.trim()) throw new Error("Topic is required");
@@ -448,7 +453,16 @@ function QuizzesPage() {
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to generate quiz");
       setQuizError(message);
-      toast.error(message);
+      if (message.toLowerCase().includes("limit")) {
+        toast.error(message, {
+          action: {
+            label: "Upgrade",
+            onClick: () => window.dispatchEvent(new CustomEvent("custom:open-plans")),
+          },
+        });
+      } else {
+        toast.error(message);
+      }
       setPhase("setup");
     } finally {
       setIsGenerating(false);
@@ -533,8 +547,18 @@ function QuizzesPage() {
 
         <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm space-y-5">
           {quizError && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
-              {quizError} If this keeps happening, reduce question count or try another topic.
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in-slide">
+              <span className="flex-1">
+                {quizError} {!quizError.toLowerCase().includes("limit") && "If this keeps happening, reduce question count or try another topic."}
+              </span>
+              {quizError.toLowerCase().includes("limit") && (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("custom:open-plans"))}
+                  className="rounded bg-destructive px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/80 transition-colors self-start sm:self-auto flex-shrink-0"
+                >
+                  Upgrade Plan
+                </button>
+              )}
             </div>
           )}
 

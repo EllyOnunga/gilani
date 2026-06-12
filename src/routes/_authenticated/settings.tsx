@@ -83,7 +83,7 @@ function SettingsPage() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("display_name, curriculum")
+          .select("display_name, curriculum, plan")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -92,6 +92,9 @@ function SettingsPage() {
         if (data) {
           setDisplayName(data.display_name || "");
           setCurriculum(data.curriculum || "KCSE");
+          if ((data as any).plan) {
+            setCurrentPlan((data as any).plan);
+          }
         }
       } catch (err) {
         console.error("Failed to load user profile:", err);
