@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Suspense, lazy } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,6 +19,12 @@ import {
   CheckCircle2,
   BarChart3,
   Sparkles,
+  TrendingUp,
+  Clock,
+  Target,
+  Zap,
+  BookOpen,
+  ChevronRight,
 } from "lucide-react";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
@@ -183,122 +190,107 @@ function Dashboard() {
     return null;
   }
 
+  const isLoading = !data;
+
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8 lg:p-12 sm:space-y-8 lg:space-y-12">
-      {/* Welcome Header */}
-      <header className="animate-in-slide flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
-            Dashboard
-          </p>
-          <h2 className="mt-1 font-serif text-2xl sm:text-3xl lg:text-4xl text-balance">
-            Habari, <span className="capitalize">{name}</span>. Ready to study?
+    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-10">
+
+      {/* ── Hero Header ── */}
+      <header className="animate-in-slide">
+        <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-primary mb-1">
+          Dashboard
+        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-balance leading-tight">
+            Habari, <span className="text-primary capitalize">{name}</span>. Ready to study?
           </h2>
-        </div>
-        {/* Stats row — sits below greeting on mobile, inline on sm+ */}
-        <div className="flex gap-4 shrink-0">
-          <div className="text-right">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground flex items-center gap-1 justify-end">
-              <Flame className="h-3 w-3 text-orange-500 fill-orange-500" /> Streak
-            </p>
-            <p className="font-serif text-2xl leading-none mt-1">{streak} days</p>
-          </div>
-          <div className="border-l border-border pl-4 text-right">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground flex items-center gap-1 justify-end">
-              <Award className="h-3 w-3 text-yellow-500" /> Quizzes
-            </p>
-            <p className="font-serif text-2xl leading-none mt-1">{quizzesCompleted}</p>
+          {/* Stat pills */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 bg-orange-50 dark:bg-orange-950/30 px-4 py-2">
+              <Flame className="h-4 w-4 text-orange-500 fill-orange-400" />
+              <div>
+                <p className="font-serif text-lg leading-none font-bold text-orange-600 dark:text-orange-400">
+                  {isLoading ? "—" : streak}
+                </p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-orange-500/80 mt-0.5">
+                  day streak
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-full border border-yellow-300/60 bg-yellow-50 dark:bg-yellow-950/30 px-4 py-2">
+              <Award className="h-4 w-4 text-yellow-500" />
+              <div>
+                <p className="font-serif text-lg leading-none font-bold text-yellow-600 dark:text-yellow-400">
+                  {isLoading ? "—" : quizzesCompleted}
+                </p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-yellow-500/80 mt-0.5">
+                  quizzes
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Study Suite — static grid */}
-      <section className="animate-in-slide [animation-delay:50ms] w-full">
-        <div className="mb-6">
-          <h3 className="font-serif text-2xl font-semibold">Your Study Suite</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Explore curriculum tools and practice systems
-          </p>
+      {/* ── Quick Actions ── */}
+      <section className="animate-in-slide [animation-delay:40ms]">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-serif text-lg font-semibold">Quick Actions</h3>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            {
-              title: "Socratic AI Tutor",
-              description: "Curriculum-precise AI tutor. Direct answers, worked proofs, teacher escalation.",
-              icon: MessageCircle,
-              to: "/tutor",
-              accent: "from-blue-500/20 to-indigo-500/10",
-              iconColor: "text-blue-600 dark:text-blue-400",
-              cta: "Start a session",
-              badge: "01",
-            },
-            {
-              title: "Study Notes",
-              description: "Upload notes or paste text. Get AI-generated summaries, key concepts & flashcards.",
-              icon: BookOpenText,
-              to: "/notes",
-              accent: "from-emerald-500/20 to-teal-500/10",
-              iconColor: "text-emerald-600 dark:text-emerald-400",
-              cta: "Summarise notes",
-              badge: "02",
-            },
-            {
-              title: "Practice Quizzes",
-              description: "AI-generated MCQs tuned to your weak topics, with full explanations and difficulty tiers.",
-              icon: ListChecks,
-              to: "/quizzes",
-              accent: "from-orange-500/20 to-red-500/10",
-              iconColor: "text-orange-600 dark:text-orange-400",
-              cta: "Take a quiz",
-              badge: "03",
-            },
-            {
-              title: "Syllabus Planner",
-              description: "7-day personalised study schedule built from your quiz history and weak areas.",
-              icon: CalendarDays,
-              to: "/planner",
-              accent: "from-violet-500/20 to-purple-500/10",
-              iconColor: "text-violet-600 dark:text-violet-400",
-              cta: "Manage calendar",
-              badge: "04",
-            },
-            {
-              title: "Performance Analytics",
-              description: "Track mastery scores, daily streaks, and flagged focus concepts over time.",
-              icon: BarChart3,
-              to: "/analytics",
-              accent: "from-pink-500/20 to-rose-500/10",
-              iconColor: "text-pink-600 dark:text-pink-400",
-              cta: "View progress",
-              badge: "05",
-            },
-          ].map((item, idx) => {
+            { label: "Ask the Tutor", icon: MessageCircle, to: "/tutor", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/40 border-blue-200/60 dark:border-blue-800/60" },
+            { label: "Take a Quiz", icon: ListChecks, to: "/quizzes", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/40 border-orange-200/60 dark:border-orange-800/60" },
+            { label: "Upload Notes", icon: BookOpenText, to: "/notes", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/60 dark:border-emerald-800/60" },
+            { label: "Study Planner", icon: CalendarDays, to: "/planner", color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/40 border-violet-200/60 dark:border-violet-800/60" },
+          ].map(({ label, icon: Icon, to, color, bg }) => (
+            <Link
+              key={to}
+              to={to as any}
+              className={`group flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${bg}`}
+            >
+              <div className={`rounded-lg p-2.5 bg-white/60 dark:bg-black/20 ${color} transition-transform duration-200 group-hover:scale-110`}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <span className={`text-xs font-semibold ${color}`}>{label}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Study Suite ── */}
+      <section className="animate-in-slide [animation-delay:80ms]">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-serif text-lg font-semibold">Your Study Suite</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">All curriculum tools in one place</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+          {[
+            { title: "AI Tutor", description: "Curriculum-precise answers, worked proofs & teacher escalation.", icon: MessageCircle, to: "/tutor", accent: "from-blue-500/15 to-indigo-500/10", iconColor: "text-blue-600 dark:text-blue-400", cta: "Start session" },
+            { title: "Study Notes", description: "Upload notes, get AI summaries, key concepts & flashcards.", icon: BookOpenText, to: "/notes", accent: "from-emerald-500/15 to-teal-500/10", iconColor: "text-emerald-600 dark:text-emerald-400", cta: "Add notes" },
+            { title: "Quizzes", description: "AI-generated MCQs with explanations and difficulty tiers.", icon: ListChecks, to: "/quizzes", accent: "from-orange-500/15 to-red-500/10", iconColor: "text-orange-600 dark:text-orange-400", cta: "Practice now" },
+            { title: "Planner", description: "7-day schedule built from your quiz history and weak areas.", icon: CalendarDays, to: "/planner", accent: "from-violet-500/15 to-purple-500/10", iconColor: "text-violet-600 dark:text-violet-400", cta: "View plan" },
+            { title: "Analytics", description: "Track mastery scores, streaks and focus concepts over time.", icon: BarChart3, to: "/analytics", accent: "from-pink-500/15 to-rose-500/10", iconColor: "text-pink-600 dark:text-pink-400", cta: "View stats" },
+          ].map((item) => {
             const Icon = item.icon;
             return (
               <Link
-                key={idx}
+                key={item.to}
                 to={item.to as any}
-                className="group flex flex-col justify-between h-[200px] rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/60 hover:-translate-y-1 overflow-hidden"
+                className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5"
               >
                 <div>
-                  <div className={`p-2.5 rounded-lg w-fit bg-gradient-to-br ${item.accent} ${item.iconColor} transition-transform duration-300 group-hover:scale-110`}>
-                    <Icon className="h-5 w-5" />
+                  <div className={`p-2 rounded-lg w-fit bg-gradient-to-br ${item.accent} ${item.iconColor} mb-3 transition-transform duration-200 group-hover:scale-105`}>
+                    <Icon className="h-4 w-4" />
                   </div>
-                  <h4 className="mt-3 font-serif text-base font-bold group-hover:text-primary transition-colors flex items-center gap-1.5">
-                    {item.title}
-                    <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                  </h4>
-                  <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
-                    {item.description}
-                  </p>
+                  <p className="text-sm font-bold group-hover:text-primary transition-colors">{item.title}</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">{item.description}</p>
                 </div>
-                <div className="flex items-center justify-between border-t border-border/40 pt-3 mt-3">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-primary font-bold">
-                    {item.cta}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    {item.badge}
-                  </span>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
+                  <span className={`text-[10px] font-mono uppercase tracking-widest font-bold ${item.iconColor}`}>{item.cta}</span>
+                  <ChevronRight className={`h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ${item.iconColor}`} />
                 </div>
               </Link>
             );
@@ -306,33 +298,47 @@ function Dashboard() {
         </div>
       </section>
 
-            {/* Widgets Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 animate-in-slide [animation-delay:100ms]">
-        {/* Dynamic Study Plan Widget */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              Recent Planner Tasks
-            </p>
-            <h3 className="font-serif text-xl mt-2 mb-4">Today's Schedule</h3>
+      {/* ── Widgets Grid ── */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 animate-in-slide [animation-delay:120ms]">
 
-            {plannerTasks.length === 0 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground italic">
-                No active planner tasks. Generate a study plan to start organizing your week.
+        {/* Today's Schedule */}
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
+              <h3 className="font-serif text-base font-semibold">Today's Schedule</h3>
+            </div>
+            <Link to="/planner" className="font-mono text-[10px] uppercase tracking-widest text-primary hover:underline">
+              Full plan →
+            </Link>
+          </div>
+          <div className="p-5">
+            {isLoading ? (
+              <div className="space-y-2">
+                {[1,2,3].map(i => <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />)}
+              </div>
+            ) : plannerTasks.length === 0 ? (
+              <div className="py-8 text-center flex flex-col items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
+                  <CalendarDays className="h-5 w-5 text-muted-foreground/50" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">No tasks scheduled</p>
+                  <Link to="/planner" className="text-xs text-primary hover:underline mt-1 inline-block">Generate a study plan →</Link>
+                </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {plannerTasks.map((t, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border/50"
-                  >
-                    <CheckCircle2 className="h-4.5 w-4.5 text-muted-foreground/60 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold">{t.subject}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{t.task}</p>
+                  <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/40 hover:bg-muted/50 transition-colors">
+                    <div className="flex-shrink-0 h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Target className="h-3.5 w-3.5 text-primary" />
                     </div>
-                    <span className="font-mono text-[10px] text-muted-foreground">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold leading-tight">{t.subject}</p>
+                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{t.task}</p>
+                    </div>
+                    <span className="flex-shrink-0 font-mono text-[10px] text-muted-foreground bg-background border border-border/50 rounded-md px-1.5 py-0.5">
                       {t.duration}
                     </span>
                   </div>
@@ -340,63 +346,58 @@ function Dashboard() {
               </div>
             )}
           </div>
-          {plannerTasks.length > 0 && (
-            <Link
-              to="/planner"
-              className="text-xs font-semibold text-primary mt-4 inline-block hover:underline"
-            >
-              View full calendar plan →
-            </Link>
-          )}
         </div>
 
-        {/* Revision Topics / Mastery Widget */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              Today's Focus
-            </p>
-            <h3 className="font-serif text-xl mt-2 mb-4">Target Revision</h3>
-
-            {revisionTopics.length === 0 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground italic flex flex-col items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-muted-foreground/50" />
-                No revision targets yet. Generate a study plan to get started!
+        {/* Target Revision */}
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              <h3 className="font-serif text-base font-semibold">Focus Topics</h3>
+            </div>
+            <Link to="/planner" className="font-mono text-[10px] uppercase tracking-widest text-primary hover:underline">
+              View plan →
+            </Link>
+          </div>
+          <div className="p-5">
+            {isLoading ? (
+              <div className="space-y-2">
+                {[1,2,3].map(i => <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />)}
+              </div>
+            ) : revisionTopics.length === 0 ? (
+              <div className="py-8 text-center flex flex-col items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground/50" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">No revision targets yet</p>
+                  <Link to="/quizzes" search={{} as any} className="text-xs text-primary hover:underline mt-1 inline-block">Take a quiz to find weak areas →</Link>
+                </div>
               </div>
             ) : (
               <div className="space-y-2">
                 {revisionTopics.map((rt, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-background"
-                  >
-                    <div className="flex-shrink-0 mt-0.5">
-                      <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary/15 text-primary font-mono text-[9px] font-bold">
-                        {idx + 1}
-                      </span>
-                    </div>
+                  <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/40 hover:bg-muted/50 transition-colors">
+                    <span className="flex-shrink-0 inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary font-mono text-[10px] font-bold">
+                      {idx + 1}
+                    </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-foreground leading-tight">
-                        {rt.subject}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                        {rt.topic}
-                      </p>
+                      <p className="text-xs font-semibold leading-tight">{rt.subject}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{rt.topic}</p>
                     </div>
+                    <Link
+                      to="/quizzes" search={{ topic: rt.topic } as any}
+                      className="flex-shrink-0 font-mono text-[10px] text-primary border border-primary/30 rounded-md px-2 py-0.5 hover:bg-primary/10 transition-colors"
+                    >
+                      Quiz
+                    </Link>
                   </div>
                 ))}
               </div>
             )}
           </div>
-          {revisionTopics.length > 0 && (
-            <Link
-              to="/planner"
-              className="text-xs font-semibold text-primary mt-4 inline-block hover:underline"
-            >
-              View full study plan →
-            </Link>
-          )}
         </div>
+
       </div>
     </div>
   );
