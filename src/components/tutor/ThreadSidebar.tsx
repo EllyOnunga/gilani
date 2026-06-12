@@ -149,7 +149,7 @@ export function ThreadSidebar({
             >
               <button
                 onClick={() => { onSelectThread(t.id); onClose(); }}
-                className="flex-1 text-left px-3 py-2.5 min-w-0"
+                className="flex-1 text-left px-3 py-3 sm:py-2.5 min-w-0"
               >
                 <div className="flex items-start gap-2 min-w-0">
                   <div className={`flex-shrink-0 mt-0.5 h-5 w-5 rounded-full flex items-center justify-center ${
@@ -173,7 +173,7 @@ export function ThreadSidebar({
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onDeleteClick(t.id); }}
-                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 p-1.5 mr-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
+                className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 p-2 sm:p-1.5 mr-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
                 title="Delete session"
               >
                 <Trash2 className="h-3 w-3" />
@@ -219,7 +219,7 @@ export function ThreadSidebar({
 
       {/* Mobile sidebar — has close button */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out overflow-y-auto lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(80%,18rem)] flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out overflow-y-auto lg:hidden ${
           threadsOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

@@ -15,12 +15,12 @@ type Props = {
 
 export function EmptyState({ onPromptClick }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center h-full px-4 py-8 text-center">
-      <div className="mb-6">
-        <div className="mx-auto h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-          <span className="text-3xl">🎓</span>
+    <div className="flex flex-col items-center justify-center h-full px-4 py-4 sm:py-8 text-center">
+      <div className="mb-4 sm:mb-6">
+        <div className="mx-auto h-12 w-12 sm:h-16 sm:w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-3 sm:mb-4">
+          <span className="text-2xl sm:text-3xl">🎓</span>
         </div>
-        <h3 className="font-serif text-xl font-bold text-foreground mb-1">
+        <h3 className="font-serif text-lg sm:text-xl font-bold text-foreground mb-1">
           Welcome to GilaniAI Tutor
         </h3>
         <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
@@ -34,12 +34,12 @@ export function EmptyState({ onPromptClick }: Props) {
         <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
           Try asking...
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
           {STARTER_PROMPTS.map((prompt) => (
             <button
               key={prompt}
               onClick={() => onPromptClick(prompt)}
-              className="text-left rounded-xl border border-border bg-card px-3 py-2.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground hover:border-primary/30 transition-all leading-relaxed"
+              className="text-left rounded-xl border border-border bg-card px-3 py-3 sm:py-2.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground hover:border-primary/30 active:bg-accent transition-all leading-relaxed"
             >
               {prompt}
             </button>
