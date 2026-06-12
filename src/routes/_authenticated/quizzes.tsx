@@ -517,7 +517,7 @@ function QuizzesPage() {
   // ── Setup screen ────────────────────────────────────────────────────────────
   if (phase === "setup") {
     return (
-      <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12">
+      <div className="mx-auto max-w-2xl space-y-5 p-4 sm:p-6 lg:p-10">
         <header className="animate-in-slide">
           <div className="flex items-center gap-2 mb-2">
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
@@ -525,13 +525,13 @@ function QuizzesPage() {
             </p>
             <CurriculumBadge curriculum={curriculum} />
           </div>
-          <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Test Your Knowledge</h2>
+          <h2 className="mt-1 font-serif text-2xl sm:text-4xl">Test Your Knowledge</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             GilaniAI generates {curriculum}-aligned MCQ questions and tracks your weak topics.
           </p>
         </header>
 
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-5">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm space-y-5">
           {quizError && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
               {quizError} If this keeps happening, reduce question count or try another topic.
@@ -548,7 +548,7 @@ function QuizzesPage() {
                 <button
                   key={curr}
                   onClick={() => setCurriculum(curr)}
-                  className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-lg border px-3 py-3 sm:py-2 text-sm font-medium transition-colors ${
                     curriculum === curr
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border hover:bg-accent"
@@ -591,29 +591,30 @@ function QuizzesPage() {
 
           <div>
             <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2 block">
-              Number of Questions: {questionCount}
+              Number of Questions
             </label>
-            <input
-              type="range"
-              min={5}
-              max={20}
-              step={5}
-              value={questionCount}
-              onChange={(e) => setQuestionCount(Number(e.target.value))}
-              className="w-full accent-[hsl(22,75%,48%)]"
-            />
-            <div className="flex justify-between font-mono text-[10px] text-muted-foreground mt-1">
-              <span>5</span>
-              <span>10</span>
-              <span>15</span>
-              <span>20</span>
+            <div className="grid grid-cols-4 gap-2">
+              {[5, 10, 15, 20].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setQuestionCount(n)}
+                  className={`rounded-lg border py-2.5 text-sm font-bold transition-colors ${
+                    questionCount === n
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:bg-accent text-muted-foreground"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
             </div>
           </div>
 
           <button
             onClick={startQuiz}
             disabled={isGenerating}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3.5 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow hover:bg-primary/90 active:scale-[0.98] transition-all"
           >
             <ListChecks className="h-4 w-4" />
             {isGenerating ? "Generating…" : "Generate Quiz"}
@@ -719,20 +720,20 @@ function QuizzesPage() {
             : "Need more revision.";
 
     return (
-      <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12 text-center">
+      <div className="mx-auto max-w-2xl space-y-5 p-4 sm:p-6 lg:p-10 text-center">
         <div className="animate-in-slide">
-          <Trophy className="mx-auto h-14 w-14 text-primary mb-4" />
-          <h2 className="font-serif text-3xl sm:text-4xl">{grade}</h2>
+          <Trophy className="mx-auto h-10 w-10 sm:h-14 sm:w-14 text-primary mb-3" />
+          <h2 className="font-serif text-2xl sm:text-4xl">{grade}</h2>
           <p className="mt-2 text-muted-foreground text-sm">
             Topic: <strong>{activeTopic}</strong> • <CurriculumBadge curriculum={curriculum} />
           </p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-5 sm:p-8 shadow-sm">
           <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
             Your Score
           </p>
-          <p className="font-serif text-6xl font-bold text-primary">{pct}%</p>
+          <p className="font-serif text-5xl sm:text-6xl font-bold text-primary">{pct}%</p>
           <p className="mt-2 text-sm text-muted-foreground">
             {score} / {questions.length} correct
           </p>
@@ -754,7 +755,7 @@ function QuizzesPage() {
             return (
               <div
                 key={i}
-                className={`flex gap-3 p-3 rounded-lg ${
+                className={`flex gap-2.5 p-3 rounded-xl ${
                   correct
                     ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
                     : "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"
@@ -812,7 +813,7 @@ function QuizzesPage() {
             setQuestions([]);
             setQuizId(null);
           }}
-          className="flex items-center gap-2 mx-auto rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-semibold hover:bg-accent transition-colors"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 mx-auto rounded-xl border border-border bg-card px-5 py-3 sm:py-2.5 text-sm font-semibold hover:bg-accent active:scale-[0.98] transition-all"
         >
           <RotateCcw className="h-4 w-4" /> Try Another Quiz
         </button>
@@ -824,15 +825,14 @@ function QuizzesPage() {
   const progress = ((current + (answered[current] ? 1 : 0)) / questions.length) * 100;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-8 lg:p-12">
+    <div className="mx-auto max-w-2xl space-y-4 p-4 sm:p-6 lg:p-10">
       {/* Progress */}
       <div className="animate-in-slide space-y-2">
-        <div className="flex items-center justify-between font-mono text-[11px] text-muted-foreground uppercase tracking-widest">
-          <span>
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">
             Question {current + 1} / {questions.length}
           </span>
-          <div className="flex items-center gap-2">
-            <span>{activeTopic}</span>
+          <div className="flex items-center gap-1.5">
             <CurriculumBadge curriculum={curriculum} />
           </div>
         </div>
@@ -842,13 +842,30 @@ function QuizzesPage() {
             style={{ width: `${progress}%` }}
           />
         </div>
+        {/* Question dots — hidden on very small screens */}
+        <div className="hidden xs:flex gap-1 flex-wrap">
+          {questions.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i < current
+                  ? userAnswers[i] === questions[i]?.correct
+                    ? "bg-green-500 w-4"
+                    : "bg-red-400 w-4"
+                  : i === current
+                    ? "bg-primary w-4"
+                    : "bg-muted w-2"
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Question card */}
       {q && (
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-5">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-5">
           <div className="flex items-start gap-2 flex-wrap">
-            <h3 className="font-serif text-xl leading-snug flex-1">
+            <h3 className="font-serif text-lg sm:text-xl leading-snug flex-1">
               <MathText text={q.question} />
             </h3>
             {q.difficulty && (
@@ -871,7 +888,7 @@ function QuizzesPage() {
 
           <div className="space-y-3">
             {q.options.map((opt, i) => {
-              let cls = "w-full text-left rounded-lg border px-4 py-3 text-sm transition-colors ";
+              let cls = "w-full text-left rounded-xl border px-4 py-3.5 sm:py-3 text-sm transition-all duration-150 ";
               if (!answered[current]) {
                 cls +=
                   selected === i
@@ -893,7 +910,7 @@ function QuizzesPage() {
                   disabled={answered[current]}
                   onClick={() => setSelected(i)}
                 >
-                  <span className="font-mono text-[11px] mr-2 uppercase">
+                  <span className="font-mono text-[11px] mr-2.5 uppercase font-bold opacity-60">
                     {["A", "B", "C", "D"][i]}.
                   </span>
                   <MathText text={opt} />
@@ -903,24 +920,24 @@ function QuizzesPage() {
           </div>
 
           {showExplain && (
-            <div className="rounded-lg border border-border/50 bg-muted/50 px-4 py-3 text-sm text-muted-foreground italic animate-in-slide">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground animate-in-slide">
               💡 <MathText text={q.explanation} />
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-1">
             {!answered[current] ? (
               <button
                 onClick={confirm}
                 disabled={selected === null}
-                className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 sm:py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-40 hover:bg-primary/90 active:scale-[0.98] transition-all"
               >
                 Confirm Answer
               </button>
             ) : (
               <button
                 onClick={next}
-                className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 sm:py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all"
               >
                 {current + 1 >= questions.length ? "See Results" : "Next"}
                 <ChevronRight className="h-4 w-4" />
