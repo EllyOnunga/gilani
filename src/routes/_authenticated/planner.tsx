@@ -550,9 +550,9 @@ function PlannerPage() {
       : (sortedDates[0] ?? selectedDate);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8 lg:p-12">
+    <div className="mx-auto max-w-4xl space-y-5 p-4 sm:p-6 lg:p-10">
       {/* Header */}
-      <header className="animate-in-slide flex items-end justify-between flex-wrap gap-4">
+      <header className="animate-in-slide flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
@@ -562,7 +562,7 @@ function PlannerPage() {
               <CurriculumBadge curriculum={plan.plan_metadata.curriculum_details.type} />
             )}
           </div>
-          <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Your Study Planner</h2>
+          <h2 className="mt-1 font-serif text-2xl sm:text-4xl">Your Study Planner</h2>
           <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
             {plan?.plan_metadata?.weekly_goal ||
               "AI-generated daily study tasks based on your quiz performance and weak topics."}
@@ -571,7 +571,7 @@ function PlannerPage() {
         <button
           onClick={handleGenerate}
           disabled={loading}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60 transition-colors"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60 active:scale-[0.98] transition-all"
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -584,25 +584,21 @@ function PlannerPage() {
         </button>
       </header>
 
-      {/* Debug info */}
-      {debugInfo && (
-        <div className="text-xs text-muted-foreground bg-muted/30 rounded p-2">{debugInfo}</div>
-      )}
-
       {/* Progress bar */}
       {plan && totalTasks > 0 && (
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-              Weekly Progress
+              {doneTasks === totalTasks && totalTasks > 0 ? "🎉 All done!" : "Weekly Progress"}
             </p>
-            <p className="font-mono text-[11px] text-muted-foreground">
-              {doneTasks} / {totalTasks} tasks
+            <p className="font-mono text-[11px] font-bold text-foreground">
+              {doneTasks} / {totalTasks}
+              <span className="text-muted-foreground font-normal ml-1">({totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0}%)</span>
             </p>
           </div>
-          <div className="h-3 rounded-full bg-muted overflow-hidden">
+          <div className="h-2.5 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full rounded-full bg-primary transition-all duration-700"
+              className={`h-full rounded-full transition-all duration-700 ${doneTasks === totalTasks && totalTasks > 0 ? "bg-green-500" : "bg-primary"}`}
               style={{ width: totalTasks ? `${(doneTasks / totalTasks) * 100}%` : "0%" }}
             />
           </div>
@@ -611,7 +607,7 @@ function PlannerPage() {
 
       {/* Empty state */}
       {!plan && !loading && (
-        <div className="rounded-xl border border-dashed border-border p-8 sm:p-16 text-center">
+        <div className="rounded-xl border border-dashed border-border p-8 sm:p-12 text-center">
           <CalendarDays className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
           <p className="font-serif text-xl text-muted-foreground">No plan yet</p>
           <p className="text-sm text-muted-foreground mt-1">
@@ -650,7 +646,7 @@ function PlannerPage() {
                 <button
                   key={date}
                   onClick={() => setSelectedDate(date)}
-                  className={`flex flex-col items-center rounded-xl px-3 py-2 min-w-[60px] border transition-all ${
+                  className={`flex flex-col items-center rounded-xl px-3 py-2.5 min-w-[60px] border transition-all ${
                     isSelected
                       ? "border-primary bg-primary/10 text-primary shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:bg-accent"
@@ -718,7 +714,7 @@ function PlannerPage() {
                     <button
                       key={task.id}
                       onClick={() => toggleTask(task.id)}
-                      className={`w-full flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
+                      className={`w-full flex items-start gap-3 rounded-xl border p-4 sm:p-5 text-left transition-all active:scale-[0.99] ${
                         done
                           ? "border-border/40 bg-muted/40 opacity-60"
                           : "border-border bg-card shadow-sm hover:shadow-md"
@@ -732,7 +728,7 @@ function PlannerPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <p
-                            className={`text-sm font-bold ${done ? "line-through text-muted-foreground" : ""}`}
+                            className={`text-sm font-bold leading-tight ${done ? "line-through text-muted-foreground" : ""}`}
                           >
                             {task.subject}
                           </p>
@@ -756,12 +752,12 @@ function PlannerPage() {
                           {task.task}
                         </p>
                         {task.study_tip && (
-                          <p className="text-xs text-primary/70 mt-2 bg-primary/5 rounded-lg px-3 py-2">
+                          <p className="text-xs text-primary/80 mt-2 bg-primary/5 border border-primary/15 rounded-lg px-3 py-2 leading-relaxed">
                             💡 <Suspense fallback={<span>{task.study_tip}</span>}><LazyMarkdownRenderer content={task.study_tip} /></Suspense>
                           </p>
                         )}
                       </div>
-                      <span className="font-mono text-[10px] text-muted-foreground flex-shrink-0 whitespace-nowrap">
+                      <span className="font-mono text-[10px] text-muted-foreground flex-shrink-0 whitespace-nowrap bg-muted/60 rounded-full px-2 py-0.5">
                         {task.duration}
                       </span>
                     </button>
@@ -770,7 +766,7 @@ function PlannerPage() {
               </div>
 
               {dailyQuote && (
-                <p className="mt-2 text-[11px] text-muted-foreground italic text-center border-t border-border/40 pt-3">
+                <p className="mt-2 text-[11px] text-muted-foreground italic text-center border-t border-border/40 pt-3 px-4">
                   <Suspense fallback={<span>&ldquo;{dailyQuote}&rdquo;</span>}><LazyMarkdownRenderer content={dailyQuote} /></Suspense>
                 </p>
               )}
