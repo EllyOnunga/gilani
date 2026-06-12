@@ -575,7 +575,7 @@ ${content}`.trim()
                 {parsingFile ? (
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 ) : (
-                  <Upload className="h-8 w-8 text-primary/70 animate-pulse" />
+                  <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-primary/70 animate-pulse" />
                 )}
                 <div>
                   <span className="font-semibold text-primary underline underline-offset-2">
@@ -602,7 +602,7 @@ ${content}`.trim()
               />
               <label
                 htmlFor="notes-camera-capture"
-                className="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                className="flex cursor-pointer items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               >
                 <span>📷</span> Take a photo
               </label>
@@ -650,15 +650,16 @@ ${content}`.trim()
               </label>
               {/* Attached file pill */}
               {attachedFile && (
-                <div className="mb-2 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-                  <span className="truncate font-medium text-foreground">{attachedFile.name}</span>
+                <div className="mb-2 flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/5 px-3 py-2">
+                  <FileText className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                  <span className="truncate text-xs font-semibold text-foreground flex-1">{attachedFile.name}</span>
                   <button
                     type="button"
                     onClick={() => setAttachedFile(null)}
-                    className="ml-auto text-muted-foreground hover:text-destructive transition-colors"
+                    className="flex-shrink-0 rounded-lg p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                     title="Remove file"
                   >
-                    ✕
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               )}
@@ -666,24 +667,24 @@ ${content}`.trim()
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Paste your class notes here…"
-                rows={10}
+                rows={6}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none leading-relaxed"
               />
               <p className="mt-1 font-mono text-[10px] text-muted-foreground">
                 {content.length.toLocaleString()} characters
               </p>
             </div>
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
               <button
                 onClick={() => setShowForm(false)}
-                className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60 transition-colors"
+                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60 active:scale-[0.98] transition-all"
               >
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                 {saving ? "Processing…" : "Save & Summarise"}
@@ -695,7 +696,7 @@ ${content}`.trim()
 
       {/* Notes List */}
       {notes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-8 sm:p-16 text-center">
+        <div className="rounded-xl border border-dashed border-border p-8 sm:p-12 text-center">
           <BookOpenText className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
           <p className="font-serif text-xl text-muted-foreground">No notes yet</p>
           <p className="text-sm text-muted-foreground mt-1">Add your first note to get started.</p>
@@ -707,10 +708,10 @@ ${content}`.trim()
             return (
               <div
                 key={note.id}
-                className="rounded-xl border border-border bg-card shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+                className="rounded-xl border border-border bg-card shadow-sm overflow-hidden transition-shadow hover:shadow-md group"
               >
                 <button
-                  className="w-full flex items-center justify-between p-5 text-left gap-4"
+                  className="w-full flex items-center justify-between px-4 py-4 sm:p-5 text-left gap-4"
                   onClick={() => setExpanded(open ? null : note.id)}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -736,7 +737,7 @@ ${content}`.trim()
                 </button>
 
                 {open && (
-                  <div className="border-t border-border px-5 pb-5 pt-4 space-y-4 animate-in-slide">
+                  <div className="border-t border-border px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4 space-y-4 animate-in-slide">
                     {note.summary && (
                       <div>
                         <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
@@ -762,7 +763,7 @@ ${content}`.trim()
                           {(note.key_concepts as string[]).map((c) => (
                             <span
                               key={c}
-                              className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                              className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary max-w-[200px] truncate" title={c}
                             >
                               {c}
                             </span>
