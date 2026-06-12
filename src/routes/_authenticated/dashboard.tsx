@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Suspense, lazy } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,21 +15,17 @@ import {
   Award,
   AlertCircle,
   ArrowRight,
-  CheckCircle2,
   BarChart3,
-  Sparkles,
-  TrendingUp,
   Clock,
   Target,
   Zap,
-  BookOpen,
   ChevronRight,
+  User,
+  BookOpen,
+  FileText,
 } from "lucide-react";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-// Carousel import removed — using CSS infinite scroll instead
-
-// ─── Types ─────────────────────────────────────────────────────────────────────
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -40,8 +35,17 @@ type RevisionTopic = {
 };
 
 type DashboardData = {
+  // Profile
+  displayName: string;
+  curriculum: string;
+  plan: string;
+  memberSince: string;
+  // Stats
   streak: number;
   quizzesCompleted: number;
+  messagesCount: number;
+  notesCount: number;
+  // Content
   revisionTopics: RevisionTopic[];
   plannerTasks: { subject: string; task: string; duration: string }[];
 };
@@ -61,7 +65,14 @@ const loadDashboardData = createServerFn({ method: "GET" })
     const userId = authResult.userId;
     const { localDate } = data;
 
-    // 1. Fetch quiz attempts to get completed count
+    // 1. Fetch user profile (display name, curriculum, plan, created_at)
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name, plan, curriculum, created_at")
+      .eq("id", userId)
+      .maybeSingle();
+
+    // 2. Fetch quiz attempts count
     const { data: attempts } = await supabaseAdmin
       .from("quiz_attempts")
       .select("id")
@@ -69,7 +80,19 @@ const loadDashboardData = createServerFn({ method: "GET" })
 
     const quizCount = attempts?.length ?? 0;
 
-    // 2. Fetch the latest study plan
+    // 3. Fetch total messages count
+    const { count: messagesCount } = await supabaseAdmin
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    // 4. Fetch total notes / documents uploaded
+    const { count: notesCount } = await supabaseAdmin
+      .from("notes")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    // 5. Fetch the latest study plan
     const { data: plan } = await supabaseAdmin
       .from("study_plans")
       .select("items")
@@ -96,7 +119,7 @@ const loadDashboardData = createServerFn({ method: "GET" })
       // Filter tasks for the user's local date
       const dateFiltered = allTasks.filter((t: any) => t.date === localDate);
 
-      // Fallback: if no tasks match today, just take the first 3 tasks of the plan
+      // Fallback: if no tasks match today, take the first 3 tasks of the plan
       const displayTasks = dateFiltered.length > 0 ? dateFiltered : allTasks;
 
       plannerTasks = displayTasks.slice(0, 3).map((item: any) => ({
@@ -105,7 +128,7 @@ const loadDashboardData = createServerFn({ method: "GET" })
         duration: item.duration || "45 min",
       }));
 
-      // Extract unique subject+topic pairs from today's tasks (or full plan as fallback)
+      // Extract unique subject+topic pairs
       const topicSources = dateFiltered.length > 0 ? dateFiltered : allTasks;
       const seen = new Set<string>();
       for (const item of topicSources) {
@@ -118,16 +141,26 @@ const loadDashboardData = createServerFn({ method: "GET" })
           revisionTopics.push({ subject, topic: topic || "General Revision" });
         }
       }
-      // Cap at 5 unique topic entries
       revisionTopics = revisionTopics.slice(0, 5);
     }
 
     const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils.server");
     const { streak } = await calculateUserStreakAndStats(userId);
 
+    // Format member since date
+    const memberSince = profile?.created_at
+      ? new Date(profile.created_at).toLocaleDateString("en-KE", { month: "long", year: "numeric" })
+      : "";
+
     return {
+      displayName: profile?.display_name || authResult.user?.email?.split("@")[0] || "Student",
+      curriculum: profile?.curriculum || "KCSE",
+      plan: profile?.plan || "Free",
+      memberSince,
       streak,
       quizzesCompleted: quizCount,
+      messagesCount: messagesCount ?? 0,
+      notesCount: notesCount ?? 0,
       revisionTopics,
       plannerTasks,
     };
@@ -155,35 +188,35 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
-function Dashboard() {
-  const { user, roles, loading } = useAuth();
-  const name =
-    (user?.user_metadata?.display_name as string) || user?.email?.split("@")[0] || "Student";
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Habari za asubuhi";
+  if (h < 17) return "Habari za mchana";
+  return "Habari za jioni";
+}
+
+// ─── Component ─────────────────────────────────────────────────────────────────
+
+function Dashboard() {
+  const { roles, loading } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    if (!user?.id) return;
-
     (async () => {
       try {
         const d = new Date();
         const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
           d.getDate(),
         ).padStart(2, "0")}`;
-
         const res = await loadDashboardData({ data: { localDate } });
         setData(res);
       } catch (err) {
         console.error("[Dashboard] load error:", err);
       }
     })();
-  }, [user?.id]);
-
-  const streak = data?.streak ?? 0;
-  const quizzesCompleted = data?.quizzesCompleted ?? 0;
-  const revisionTopics = data?.revisionTopics ?? [];
-  const plannerTasks = data?.plannerTasks ?? [];
+  }, []);
 
   // Block admin/teacher from rendering student dashboard
   if (!loading && roles.length > 0 && (roles.includes("admin") || roles.includes("teacher"))) {
@@ -191,6 +224,31 @@ function Dashboard() {
   }
 
   const isLoading = !data;
+
+  const streak = data?.streak ?? 0;
+  const quizzesCompleted = data?.quizzesCompleted ?? 0;
+  const messagesCount = data?.messagesCount ?? 0;
+  const notesCount = data?.notesCount ?? 0;
+  const revisionTopics = data?.revisionTopics ?? [];
+  const plannerTasks = data?.plannerTasks ?? [];
+
+  const displayName = data?.displayName ?? "";
+  const curriculum = data?.curriculum ?? "";
+  const plan = data?.plan ?? "";
+  const memberSince = data?.memberSince ?? "";
+
+  // Curriculum pill colours
+  const curriculumColor =
+    curriculum === "CBC"
+      ? "bg-teal-500/10 text-teal-600 border-teal-300/60"
+      : curriculum === "IGCSE"
+        ? "bg-violet-500/10 text-violet-600 border-violet-300/60"
+        : "bg-blue-500/10 text-blue-600 border-blue-300/60";
+
+  const planColor =
+    plan === "Free"
+      ? "bg-muted text-muted-foreground border-border"
+      : "bg-amber-500/10 text-amber-600 border-amber-300/60";
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-10">
@@ -200,13 +258,51 @@ function Dashboard() {
         <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-primary mb-1">
           Dashboard
         </p>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-balance leading-tight">
-            Habari, <span className="text-primary capitalize">{name}</span>. Ready to study?
-          </h2>
+
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          {/* Greeting */}
+          <div className="flex-1 min-w-0">
+            {isLoading ? (
+              <div className="space-y-2">
+                <div className="h-8 w-48 rounded-lg bg-muted/50 animate-pulse" />
+                <div className="h-4 w-32 rounded-lg bg-muted/50 animate-pulse" />
+              </div>
+            ) : (
+              <>
+                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-balance leading-tight">
+                  {getGreeting()},{" "}
+                  <span className="text-primary capitalize">{displayName}</span>. Ready to study?
+                </h2>
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  {curriculum && (
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${curriculumColor}`}
+                    >
+                      <GraduationCap className="h-3 w-3" />
+                      {curriculum}
+                    </span>
+                  )}
+                  {plan && (
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${planColor}`}
+                    >
+                      {plan === "Free" ? "Free Plan" : `⭐ ${plan}`}
+                    </span>
+                  )}
+                  {memberSince && (
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      Member since {memberSince}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Stat pills */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 bg-orange-50 dark:bg-orange-950/30 px-4 py-2">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* Streak */}
+            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 bg-orange-50 dark:bg-orange-950/30 px-3 sm:px-4 py-2">
               <Flame className="h-4 w-4 text-orange-500 fill-orange-400" />
               <div>
                 <p className="font-serif text-lg leading-none font-bold text-orange-600 dark:text-orange-400">
@@ -217,7 +313,8 @@ function Dashboard() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-yellow-300/60 bg-yellow-50 dark:bg-yellow-950/30 px-4 py-2">
+            {/* Quizzes */}
+            <div className="flex items-center gap-2 rounded-full border border-yellow-300/60 bg-yellow-50 dark:bg-yellow-950/30 px-3 sm:px-4 py-2">
               <Award className="h-4 w-4 text-yellow-500" />
               <div>
                 <p className="font-serif text-lg leading-none font-bold text-yellow-600 dark:text-yellow-400">
@@ -225,6 +322,30 @@ function Dashboard() {
                 </p>
                 <p className="font-mono text-[9px] uppercase tracking-widest text-yellow-500/80 mt-0.5">
                   quizzes
+                </p>
+              </div>
+            </div>
+            {/* Messages */}
+            <div className="flex items-center gap-2 rounded-full border border-blue-300/60 bg-blue-50 dark:bg-blue-950/30 px-3 sm:px-4 py-2">
+              <MessageCircle className="h-4 w-4 text-blue-500" />
+              <div>
+                <p className="font-serif text-lg leading-none font-bold text-blue-600 dark:text-blue-400">
+                  {isLoading ? "—" : messagesCount}
+                </p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-blue-500/80 mt-0.5">
+                  messages
+                </p>
+              </div>
+            </div>
+            {/* Notes */}
+            <div className="flex items-center gap-2 rounded-full border border-emerald-300/60 bg-emerald-50 dark:bg-emerald-950/30 px-3 sm:px-4 py-2">
+              <FileText className="h-4 w-4 text-emerald-500" />
+              <div>
+                <p className="font-serif text-lg leading-none font-bold text-emerald-600 dark:text-emerald-400">
+                  {isLoading ? "—" : notesCount}
+                </p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-emerald-500/80 mt-0.5">
+                  notes
                 </p>
               </div>
             </div>
@@ -315,7 +436,7 @@ function Dashboard() {
           <div className="p-5">
             {isLoading ? (
               <div className="space-y-2">
-                {[1,2,3].map(i => <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />)}
+                {[1, 2, 3].map(i => <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />)}
               </div>
             ) : plannerTasks.length === 0 ? (
               <div className="py-8 text-center flex flex-col items-center gap-3">
@@ -348,7 +469,7 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Target Revision */}
+        {/* Focus Topics */}
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border/50">
             <div className="flex items-center gap-2">
@@ -362,7 +483,7 @@ function Dashboard() {
           <div className="p-5">
             {isLoading ? (
               <div className="space-y-2">
-                {[1,2,3].map(i => <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />)}
+                {[1, 2, 3].map(i => <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />)}
               </div>
             ) : revisionTopics.length === 0 ? (
               <div className="py-8 text-center flex flex-col items-center gap-3">
