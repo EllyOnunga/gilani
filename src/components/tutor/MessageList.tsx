@@ -16,7 +16,7 @@ type Props = {
 
 const THINKING_STEPS = [
   "Reading your question…",
-  "Checking curriculum context…",
+  "Reviewing note context…",
   "Retrieving your notes…",
   "Composing a response…",
 ];

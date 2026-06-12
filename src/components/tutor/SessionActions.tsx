@@ -12,17 +12,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { PomodoroTimer } from "./PomodoroTimer";
 
-const CURRICULA = [
-  { value: "KCSE", label: "KCSE (KNEC)" },
-  { value: "CBC", label: "CBC Curriculum" },
-  { value: "8-4-4", label: "8-4-4 Standards" },
-  { value: "IGCSE Cambridge", label: "IGCSE Cambridge" },
-  { value: "IGCSE Edexcel", label: "IGCSE Edexcel" },
-];
-
 type Props = {
-  curriculum: string;
-  onCurriculumChange: (val: string) => void;
   escalationStatus: "open" | "in_review" | "resolved" | null;
   escalating: boolean;
   messagesLoading: boolean;
@@ -35,8 +25,6 @@ type Props = {
 };
 
 export function SessionActions({
-  curriculum,
-  onCurriculumChange,
   escalationStatus,
   escalating,
   messagesLoading,
@@ -70,27 +58,16 @@ export function SessionActions({
         Session
       </p>
 
-      {/* Curriculum select + actions menu */}
+      {/* Session Actions Menu */}
       <div className="flex items-center gap-1.5">
-        <select
-          value={curriculum}
-          onChange={(e) => onCurriculumChange(e.target.value)}
-          className="flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
-        >
-          {CURRICULA.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-
-        {/* ··· menu button */}
-        <div className="relative flex-shrink-0" ref={menuRef}>
+        {/* Actions menu button */}
+        <div className="relative flex-1" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center justify-center rounded-lg border border-border bg-background p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            className="w-full flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             title="Session actions"
           >
+            <span>Session Actions</span>
             <MoreHorizontal className="h-4 w-4" />
           </button>
 

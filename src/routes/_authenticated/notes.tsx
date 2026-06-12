@@ -729,7 +729,7 @@ ${content}`.trim()
                 type="file"
                 id="notes-file-upload"
                 className="hidden"
-                accept=".pdf,.docx,.txt,.md,.csv,.jpg,.jpeg,.png,.webp"
+                accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/markdown,text/x-markdown,text/csv,image/*,.pdf,.docx,.doc,.txt,.md,.csv,.jpg,.jpeg,.png,.webp"
                 onChange={handleFileChange}
                 disabled={parsingFile}
               />

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 const TAGLINES = [
   "Thinking through your question…",
-  "Grounding in your curriculum…",
+  "Grounding in your study notes…",
   "Preparing your session…",
   "Almost ready…",
 ];

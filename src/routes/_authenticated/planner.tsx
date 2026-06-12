@@ -423,42 +423,7 @@ const PRIORITY_COLOR: Record<string, string> = {
   low: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 backdrop-blur-sm font-semibold",
 };
 
-const CURRICULUM_BADGE: Record<string, { bg: string; text: string; icon: any }> = {
-  KCSE: {
-    bg: "bg-green-100 dark:bg-green-900/30",
-    text: "text-green-700 dark:text-green-400",
-    icon: BookOpen,
-  },
-  CBC: {
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
-    icon: GraduationCap,
-  },
-  IGCSE: {
-    bg: "bg-purple-100 dark:bg-purple-900/30",
-    text: "text-purple-700 dark:text-purple-400",
-    icon: Globe,
-  },
-  MIXED: {
-    bg: "bg-orange-100 dark:bg-orange-900/30",
-    text: "text-orange-700 dark:text-orange-400",
-    icon: BookOpen,
-  },
-};
 
-function CurriculumBadge({ curriculum }: { curriculum: string }) {
-  const badge = CURRICULUM_BADGE[curriculum] || CURRICULUM_BADGE.KCSE;
-  const Icon = badge.icon;
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${badge.bg} ${badge.text}`}
-    >
-      <Icon className="h-3 w-3" />
-      {curriculum}
-    </span>
-  );
-}
 
 function todayStr() {
   const d = new Date();
@@ -574,9 +539,6 @@ function PlannerPage() {
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
               Study Planner
             </p>
-            {plan?.plan_metadata?.curriculum_details?.type && (
-              <CurriculumBadge curriculum={plan.plan_metadata.curriculum_details.type} />
-            )}
           </div>
           <h2 className="mt-1 font-serif text-2xl sm:text-4xl">Your Study Planner</h2>
           <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
@@ -727,7 +689,6 @@ function PlannerPage() {
                     <p className="text-xs text-muted-foreground mt-0.5 italic">🎯 {dayFocus}</p>
                   )}
                 </div>
-                {curriculumFocus && <CurriculumBadge curriculum={curriculumFocus} />}
               </div>
 
               {/* Task cards */}

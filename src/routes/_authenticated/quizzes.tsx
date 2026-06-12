@@ -334,38 +334,7 @@ const TOPICS = [
 
 type Phase = "setup" | "loading" | "quiz" | "results";
 
-const CURRICULUM_BADGE: Record<string, { bg: string; text: string; icon: any }> = {
-  KCSE: {
-    bg: "bg-green-100 dark:bg-green-900/30",
-    text: "text-green-700 dark:text-green-400",
-    icon: BookOpen,
-  },
-  CBC: {
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
-    icon: GraduationCap,
-  },
-  IGCSE: {
-    bg: "bg-purple-100 dark:bg-purple-900/30",
-    text: "text-purple-700 dark:text-purple-400",
-    icon: Globe,
-  },
-};
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
-
-function CurriculumBadge({ curriculum }: { curriculum: string }) {
-  const badge = CURRICULUM_BADGE[curriculum] || CURRICULUM_BADGE.KCSE;
-  const Icon = badge.icon;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${badge.bg} ${badge.text}`}
-    >
-      <Icon className="h-3 w-3" />
-      {curriculum}
-    </span>
-  );
-}
 
 function LoadingStep({ label, detail, index }: { label: string; detail: string; index: number }) {
   const [state, setState] = useState<"waiting" | "active" | "done">("waiting");
@@ -590,11 +559,10 @@ function QuizzesPage() {
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
               Practice Quizzes
             </p>
-            <CurriculumBadge curriculum={curriculum} />
           </div>
           <h2 className="mt-1 font-serif text-2xl sm:text-4xl">Test Your Knowledge</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            GilaniAI generates {curriculum}-aligned MCQ questions and tracks your weak topics.
+            GilaniAI generates tailored MCQ questions and tracks your weak topics.
           </p>
         </header>
 
@@ -658,27 +626,7 @@ function QuizzesPage() {
             </div>
           )}
 
-          {/* Curriculum Selector */}
-          <div>
-            <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2 block">
-              Curriculum
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["KCSE", "CBC", "IGCSE"] as CurriculumType[]).map((curr) => (
-                <button
-                  key={curr}
-                  onClick={() => setCurriculum(curr)}
-                  className={`rounded-lg border px-3 py-3 sm:py-2 text-sm font-medium transition-colors ${
-                    curriculum === curr
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:bg-accent"
-                  }`}
-                >
-                  {curr}
-                </button>
-              ))}
-            </div>
-          </div>
+
 
           <div>
             <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2 block">
@@ -747,7 +695,7 @@ function QuizzesPage() {
   // ── Loading screen ──────────────────────────────────────────────────────────
   if (phase === "loading") {
     const steps = [
-      { label: "Reading curriculum standards", detail: `Aligning to ${curriculum}` },
+      { label: "Checking query context", detail: `Aligning to topic` },
       { label: "Crafting questions", detail: `${questionCount} MCQs on ${activeTopic}` },
       { label: "Adding distractors", detail: "Based on common student mistakes" },
       { label: "Writing explanations", detail: "With Kenyan context where relevant" },
@@ -787,7 +735,6 @@ function QuizzesPage() {
                   <ListChecks className="h-3 w-3" />
                   {questionCount} questions
                 </span>
-                <CurriculumBadge curriculum={curriculum} />
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground truncate max-w-[180px]">
                   {activeTopic}
                 </span>
@@ -845,7 +792,7 @@ function QuizzesPage() {
           <Trophy className="mx-auto h-10 w-10 sm:h-14 sm:w-14 text-primary mb-3" />
           <h2 className="font-serif text-2xl sm:text-4xl">{grade}</h2>
           <p className="mt-2 text-muted-foreground text-sm">
-            Topic: <strong>{activeTopic}</strong> • <CurriculumBadge curriculum={curriculum} />
+            Topic: <strong>{activeTopic}</strong>
           </p>
         </div>
 
@@ -953,7 +900,6 @@ function QuizzesPage() {
             Question {current + 1} / {questions.length}
           </span>
           <div className="flex items-center gap-1.5">
-            <CurriculumBadge curriculum={curriculum} />
           </div>
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">

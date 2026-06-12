@@ -481,23 +481,6 @@ function SettingsPage() {
                       />
                     </div>
 
-                    <div>
-                      <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                        Preferred Curriculum
-                      </label>
-                      <select
-                        value={curriculum}
-                        onChange={(e) => setCurriculum(e.target.value)}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer"
-                      >
-                        <option value="KCSE">KCSE (Kenya Certificate of Secondary Education)</option>
-                        <option value="CBC">CBC (Competency-Based Curriculum)</option>
-                        <option value="IGCSE">IGCSE (International General Certificate of Secondary Education)</option>
-                      </select>
-                      <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1">
-                        <GraduationCap className="h-3.5 w-3.5" /> Adjusts the Socratic AI tutor's reference syllabus.
-                      </p>
-                    </div>
                   </div>
 
                   <div className="flex justify-end pt-2">

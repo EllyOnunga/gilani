@@ -3,18 +3,8 @@ import { CheckCircle2, Clock, Download, ListChecks, Loader2, ShieldAlert } from 
 import { PomodoroTimer } from "./PomodoroTimer";
 import { ExportMenu } from "./ExportModal";
 
-const CURRICULA = [
-  { value: "KCSE", label: "KCSE (KNEC)" },
-  { value: "CBC", label: "CBC Curriculum" },
-  { value: "8-4-4", label: "8-4-4 Standards" },
-  { value: "IGCSE Cambridge", label: "IGCSE Cambridge" },
-  { value: "IGCSE Edexcel", label: "IGCSE Edexcel" },
-];
-
 type Props = {
   title: string;
-  curriculum: string;
-  onCurriculumChange: (val: string) => void;
   escalationStatus: "open" | "in_review" | "resolved" | null;
   escalating: boolean;
   messagesLoading: boolean;
@@ -27,8 +17,6 @@ type Props = {
 
 export function ChatHeader({
   title,
-  curriculum,
-  onCurriculumChange,
   escalationStatus,
   escalating,
   messagesLoading,
@@ -47,24 +35,12 @@ export function ChatHeader({
       <div className="min-w-0 flex-1">
         <h2 className="text-sm font-semibold truncate leading-tight">{title || "New session"}</h2>
         <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground mt-0.5 hidden sm:block">
-          {curriculum} · Curriculum-grounded AI
+          Socratic Study Session
         </p>
       </div>
 
       {/* Actions */}
       <div className="flex items-center gap-1 flex-shrink-0">
-        {/* Curriculum Selector */}
-        <select
-          value={curriculum}
-          onChange={(e) => onCurriculumChange(e.target.value)}
-          className="hidden sm:block rounded-lg border border-border bg-background px-2 py-1.5 text-[9px] font-bold uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-accent transition-colors"
-          title="Select your study curriculum"
-        >
-          {CURRICULA.map((c) => (
-            <option key={c.value} value={c.value}>{c.label}</option>
-          ))}
-        </select>
-
         {/* Pomodoro — hidden on xs */}
         <div className="hidden sm:block">
           <PomodoroTimer />

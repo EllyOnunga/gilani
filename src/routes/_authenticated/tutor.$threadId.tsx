@@ -104,8 +104,8 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     text: string;
     size: number;
   } | null>(null);
+
   const [parsingFile, setParsingFile] = useState(false);
-  const [curriculum, setCurriculum] = useState<string>("KCSE");
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -125,7 +125,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     }
   };
 
-  // Load curriculum
+  // Load user plan profile for billing plan checks
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -135,38 +135,19 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         if (!userId) return;
         const { data, error } = await supabase
           .from("profiles")
-          .select("curriculum, plan")
+          .select("plan")
           .eq("id", userId)
           .maybeSingle();
         if (error) throw error;
-        if (mounted && data?.curriculum) setCurriculum(data.curriculum);
         if (mounted && (data as any)?.plan) setCurrentPlan((data as any).plan);
       } catch (err) {
-        console.error("Failed to load user curriculum profile:", err);
+        console.error("Failed to load user plan profile:", err);
       }
     })();
     return () => {
       mounted = false;
     };
   }, []);
-
-  const handleCurriculumChange = async (newVal: string) => {
-    setCurriculum(newVal);
-    const toastId = toast.loading(`Updating curriculum to ${newVal}...`);
-    try {
-      const sessionRes = await supabase.auth.getSession();
-      const userId = sessionRes?.data?.session?.user?.id;
-      if (!userId) throw new Error("Not logged in");
-      const { error } = await supabase
-        .from("profiles")
-        .update({ curriculum: newVal })
-        .eq("id", userId);
-      if (error) throw error;
-      toast.success(`Curriculum switched to ${newVal}!`, { id: toastId });
-    } catch (err: any) {
-      toast.error(friendlyError(err, "Failed to update curriculum."), { id: toastId });
-    }
-  };
 
   // Safety timeout
   useEffect(() => {
@@ -237,7 +218,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     },
   });
 
-  const { messages: messagesRaw, setMessages, sendMessage, status, reload } = chatHelpers;
+  const { messages: messagesRaw, setMessages, sendMessage, status, regenerate } = chatHelpers;
   const messages = messagesRaw as UIMessage[];
   const isPending = status === "submitted" || status === "streaming";
 
@@ -636,8 +617,6 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         onNewThread={createNewThread}
         onDeleteClick={setDeleteConfirmId}
         onClose={() => setThreadsOpen(false)}
-        curriculum={curriculum}
-        onCurriculumChange={handleCurriculumChange}
         escalationStatus={escalationStatus}
         escalating={escalating}
         messagesLoading={messagesLoading}
@@ -666,7 +645,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
               {threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
             </p>
             <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-              {curriculum} · tap to switch
+              tap to switch
             </p>
           </button>
           <button
@@ -682,8 +661,6 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         {/* Chat header — desktop only */}
         <ChatHeader
           title={threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
-          curriculum={curriculum}
-          onCurriculumChange={handleCurriculumChange}
           escalationStatus={escalationStatus}
           escalating={escalating}
           messagesLoading={messagesLoading}
@@ -700,7 +677,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           messagesLoading={messagesLoading}
           messagesLoadError={messagesLoadError}
           isPending={isPending}
-          onReload={() => reload({ body: { isRetry: true } })}
+          onReload={() => regenerate({ body: { isRetry: true } })}
           onEdit={async (messageId, newText) => {
             // Find the message we are editing to get its created_at
             const { data: editedMsg } = await supabase
@@ -758,7 +735,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
             setMessages(baseMessages);
 
             // Trigger reload to generate the new assistant response
-            reload({
+            regenerate({
               body: { isRetry: true }
             });
           }}

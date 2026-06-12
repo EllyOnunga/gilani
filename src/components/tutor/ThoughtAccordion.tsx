@@ -9,7 +9,7 @@ interface ThoughtAccordionProps {
 }
 
 const STEPS = [
-  { icon: BookOpen,   label: "Consulting your curriculum",        detail: "Aligning with KCSE, CBC or IGCSE syllabus" },
+  { icon: BookOpen,   label: "Retrieving study context",          detail: "Aligning explanation with notes context" },
   { icon: Globe,      label: "Retrieving your study notes",       detail: "Scanning uploaded documents for context" },
   { icon: Brain,      label: "Reasoning through the concept",     detail: "Building a clear, step-by-step explanation" },
   { icon: Lightbulb,  label: "Finding real-world illustrations",  detail: "Connecting theory to Kenyan everyday examples" },

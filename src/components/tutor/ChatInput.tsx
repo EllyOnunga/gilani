@@ -219,7 +219,7 @@ export function ChatInput({
         {/* Attach button */}
         <div className="pb-2 pl-2 pt-2">
           <input type="file" id="chat-file-attachment" className="hidden"
-            accept=".pdf,.docx,.txt,.md,.csv,.jpg,.jpeg,.png,.webp"
+            accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/markdown,text/x-markdown,text/csv,image/*,.pdf,.docx,.doc,.txt,.md,.csv,.jpg,.jpeg,.png,.webp"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-file-attachment"
             className={`flex h-9 w-9 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
@@ -274,7 +274,7 @@ export function ChatInput({
       </div>
 
       {/* Footer hint — desktop only */}
-      <div className="mt-1.5 hidden sm:flex items-center justify-between px-1 min-h-[14px]">
+      <div className="mt-1.5 hidden md:flex items-center justify-between px-1 min-h-[14px]">
         <p className="font-mono text-[9px] text-muted-foreground/70">
           {isPending
             ? <span className="animate-pulse font-bold text-primary/70">GilaniAI is thinking…</span>

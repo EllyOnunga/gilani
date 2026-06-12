@@ -20,8 +20,6 @@ type Props = {
   onDeleteClick: (id: string) => void;
   onClose: () => void;
   // Session actions props
-  curriculum: string;
-  onCurriculumChange: (val: string) => void;
   escalationStatus: "open" | "in_review" | "resolved" | null;
   escalating: boolean;
   messagesLoading: boolean;
@@ -43,8 +41,6 @@ export function ThreadSidebar({
   onNewThread,
   onDeleteClick,
   onClose,
-  curriculum,
-  onCurriculumChange,
   escalationStatus,
   escalating,
   messagesLoading,
@@ -186,8 +182,6 @@ export function ThreadSidebar({
       {/* Session Actions - mobile only, desktop has ChatHeader */}
       <div className="lg:hidden mt-3 border-t border-border pt-3">
         <SessionActions
-          curriculum={curriculum}
-          onCurriculumChange={onCurriculumChange}
           escalationStatus={escalationStatus}
           escalating={escalating}
           messagesLoading={messagesLoading}

@@ -58,8 +58,31 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
       : rawText;
 
   const isStreamActive = isPending && isLast;
-  const visibleText = displayText;
-  // Throttle markdown re-renders during streaming — update every 40 chars
+  const [visibleText, setVisibleText] = useState(displayText);
+  const lastUpdateRef = useRef(0);
+
+  useEffect(() => {
+    if (!isStreamActive) {
+      setVisibleText(displayText);
+      lastUpdateRef.current = 0;
+      return;
+    }
+
+    const now = Date.now();
+    const timeSinceLastUpdate = now - lastUpdateRef.current;
+
+    if (timeSinceLastUpdate >= 100) {
+      setVisibleText(displayText);
+      lastUpdateRef.current = now;
+    } else {
+      const delay = 100 - timeSinceLastUpdate;
+      const timer = setTimeout(() => {
+        setVisibleText(displayText);
+        lastUpdateRef.current = Date.now();
+      }, delay);
+      return () => clearTimeout(timer);
+    }
+  }, [displayText, isStreamActive]);
 
 
   // Load existing vote for this message
@@ -145,22 +168,29 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
               isStreaming={isPending}
               messageText={visibleText}
             />
-            {visibleText ? (
+            {visibleText || isStreamActive ? (
               <div className={`prose-ai relative ${isStreamActive ? "streaming-content" : ""}`}>
-                {isStreamActive
-                  ? <div className="whitespace-pre-wrap text-sm leading-relaxed">{visibleText}</div>
-                  : <MemoMarkdown content={displayText} />}
+                {visibleText ? (
+                  isStreamActive ? (
+                    <MarkdownRenderer content={visibleText} />
+                  ) : (
+                    <MemoMarkdown content={displayText} />
+                  )
+                ) : null}
                 {isStreamActive && !visibleText && (
                   <span className="inline-flex items-center gap-[3px] ml-1 align-middle">
                     <span className="text-xs text-muted-foreground font-medium">Thinking</span>
-                    {[0,1,2].map(i => (
-                      <span key={i} className="inline-block w-1 h-1 rounded-full bg-primary"
-                        style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                    {[0, 1, 2].map((i) => (
+                      <span
+                        key={i}
+                        className="inline-block w-1 h-1 rounded-full bg-primary"
+                        style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                      />
                     ))}
                   </span>
                 )}
               </div>
-            ) : isStreamActive ? null : (
+            ) : (
               <span className="text-xs text-muted-foreground italic mt-1">
                 No response generated. Please resend your question.
               </span>
