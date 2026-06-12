@@ -476,7 +476,7 @@ function NotesPage() {
           const secs = Math.ceil(status.retryAfterMs / 1000);
           setNotesRateError(
             status.isDaily
-              ? `Daily notes limit reached. Resets at midnight.`
+              ? `Daily notes limit reached. Resets in ${secs}s.`
               : `Rate limit exceeded. Please try again in ${secs}s.`
           );
         }
@@ -670,8 +670,8 @@ ${content}`.trim()
               }`}>
                 {isRateLimited
                   ? (isDaily
-                      ? `You've used your daily notes allowance on your current plan. It resets at midnight.`
-                      : "You're saving notes too fast. Take a short break.")
+                      ? `You've used your daily notes allowance.${secondsLeft > 0 ? ` Resets in ${formatTime(secondsLeft)}.` : " Resets at midnight (EAT)."}` 
+                      : `You're saving notes too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`)
                   : notesRateError}
               </p>
             </div>
@@ -698,11 +698,11 @@ ${content}`.trim()
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
-          {isRateLimited && secondsLeft > 0 && !isDaily && (
+          {isRateLimited && secondsLeft > 0 && (
             <div className="h-0.5 bg-amber-200/50 dark:bg-amber-800/50">
               <div
                 className="h-full bg-amber-400 dark:bg-amber-500 transition-all duration-1000 ease-linear"
-                style={{ width: `${Math.min(100, (secondsLeft / 60) * 100)}%` }}
+                style={{ width: `${Math.min(100, (secondsLeft / (isDaily ? 86400 : 60)) * 100)}%` }}
               />
             </div>
           )}

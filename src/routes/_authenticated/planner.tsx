@@ -500,7 +500,7 @@ function PlannerPage() {
           const secs = Math.ceil(status.retryAfterMs / 1000);
           setError(
             status.isDaily
-              ? `Daily planner limit reached. Resets at midnight.`
+              ? `Daily planner limit reached. Resets in ${secs}s.`
               : `Rate limit exceeded. Please try again in ${secs}s.`
           );
         }
@@ -694,35 +694,16 @@ function PlannerPage() {
               }`}>
                 {isRateLimited
                   ? (isDaily
-                      ? "You've used your daily plan generation allowance. It resets at midnight."
-                      : "You're generating plans too fast. Take a short break.")
+                      ? `You've used your daily plan generation allowance.${secondsLeft > 0 ? ` Resets in ${formatTime(secondsLeft)}.` : " Resets at midnight (EAT)."}`
+                      : `You're generating plans too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`)
                   : error}
-                {isRateLimited && secondsLeft > 0 && (
-                  <span className="ml-1 font-mono font-bold text-amber-900 dark:text-amber-300 tabular-nums">
-                    (retry in {formatTime(secondsLeft)})
-                  </span>
-                )}
               </p>
             </div>
-            {/* Countdown ring for short rate limits */}
-            {isRateLimited && secondsLeft > 0 && !isDaily && (
+            {/* Countdown pill */}
+            {isRateLimited && secondsLeft > 0 && (
               <div className="flex-shrink-0 flex items-center justify-center">
-                <div className="relative h-10 w-10">
-                  <svg className="h-10 w-10 -rotate-90" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor"
-                      className="text-amber-200 dark:text-amber-900" strokeWidth="3" />
-                    <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor"
-                      className="text-amber-500 dark:text-amber-400"
-                      strokeWidth="3"
-                      strokeDasharray={`${2 * Math.PI * 14}`}
-                      strokeDashoffset={`${2 * Math.PI * 14 * (1 - secondsLeft / 60)}`}
-                      strokeLinecap="round"
-                      style={{ transition: "stroke-dashoffset 1s linear" }}
-                    />
-                  </svg>
-                  <span className="absolute inset-0 flex items-center justify-center font-mono text-[10px] font-bold text-amber-700 dark:text-amber-400">
-                    {secondsLeft}
-                  </span>
+                <div className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/20 px-3 py-1.5 text-[10px] font-bold text-amber-900 dark:text-amber-300 tabular-nums border border-amber-500/30">
+                  <Clock className="h-3 w-3" /> {formatTime(secondsLeft)}
                 </div>
               </div>
             )}
@@ -736,12 +717,12 @@ function PlannerPage() {
               </button>
             )}
           </div>
-          {/* Draining progress bar for short rate limits */}
-          {isRateLimited && secondsLeft > 0 && !isDaily && (
+          {/* Draining progress bar */}
+          {isRateLimited && secondsLeft > 0 && (
             <div className="h-0.5 bg-amber-200/50 dark:bg-amber-800/50">
               <div
                 className="h-full bg-amber-400 dark:bg-amber-500 transition-all duration-1000 ease-linear"
-                style={{ width: `${Math.min(100, (secondsLeft / 60) * 100)}%` }}
+                style={{ width: `${Math.min(100, (secondsLeft / (isDaily ? 86400 : 60)) * 100)}%` }}
               />
             </div>
           )}

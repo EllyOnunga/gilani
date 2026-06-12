@@ -173,7 +173,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
             retryAfterMs: status.retryAfterMs,
             isDaily: status.isDaily,
             message: status.isDaily
-              ? `Daily message limit reached. Resets at midnight.`
+              ? `Daily message limit reached. Resets in ${secs}s.`
               : `Rate limit exceeded. Try again in ${secs}s.`,
           }));
         }

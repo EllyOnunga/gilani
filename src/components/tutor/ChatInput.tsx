@@ -151,8 +151,8 @@ export function ChatInput({
               </p>
               <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
                 {isDaily
-                  ? "You’ve hit your daily AI message cap. It resets at midnight."
-                  : "You’re sending messages too fast. Take a short break."}
+                  ? `You've hit your daily AI message cap.${secondsLeft > 0 ? ` Resets in ${formatTime(secondsLeft)}.` : " Resets at midnight (EAT)."}`
+                  : `You're sending messages too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`}
               </p>
             </div>
             <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
@@ -172,7 +172,7 @@ export function ChatInput({
             </div>
           </div>
           {/* Progress bar draining down */}
-          {secondsLeft > 0 && !isDaily && (
+          {secondsLeft > 0 && (
             <div className="h-0.5 bg-amber-200/50 dark:bg-amber-800/50">
               <div
                 className="h-full bg-amber-400 dark:bg-amber-500 transition-all duration-1000 ease-linear"
