@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
@@ -265,19 +265,21 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
       if (!data.session) throw redirect({ to: "/login", search: { redirect: "/admin/users" } });
     }
   },
-  loader: async () => {
-    const [profiles, messages, feedback, rateLimits, payments, escalations, platformStats] = await Promise.all([
-      listProfiles(), listContactMessages(), listFeedback(), listRateLimits(), listPayments(),
-      listEscalations(), listPlatformStats(),
-    ]);
+  loader: () => {
     return {
-      profiles: profiles as Profile[],
-      messages: messages as ContactMessage[],
-      feedback: feedback as MessageFeedback[],
-      rateLimits: rateLimits as RateLimitRow[],
-      payments: payments as Payment[],
-      escalations: escalations as Escalation[],
-      platformStats: platformStats as PlatformStats,
+      profiles: [] as Profile[],
+      messages: [] as ContactMessage[],
+      feedback: [] as MessageFeedback[],
+      rateLimits: [] as RateLimitRow[],
+      payments: [] as Payment[],
+      escalations: [] as Escalation[],
+      platformStats: {
+        totalConversations: 0,
+        totalMessages: 0,
+        totalNotes: 0,
+        totalEscalations: 0,
+        openEscalations: 0,
+      } as PlatformStats,
     };
   },
   component: AdminUsersPage,
@@ -301,18 +303,21 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 };
 
 function AdminUsersPage() {
-  const loaderData = Route.useLoaderData() as {
-    profiles: Profile[]; messages: ContactMessage[];
-    feedback: MessageFeedback[]; rateLimits: RateLimitRow[]; payments: Payment[];
-    escalations: Escalation[]; platformStats: PlatformStats;
-  };
-  const [profileState, setProfileState] = useState<Profile[]>(loaderData?.profiles ?? []);
-  const [messages, setMessages] = useState<ContactMessage[]>(loaderData?.messages ?? []);
-  const feedback = loaderData?.feedback ?? [];
-  const rateLimits = loaderData?.rateLimits ?? [];
-  const payments = loaderData?.payments ?? [];
-  const escalations = loaderData?.escalations ?? [];
-  const platformStats = loaderData?.platformStats ?? { totalConversations: 0, totalMessages: 0, totalNotes: 0, totalEscalations: 0, openEscalations: 0 };
+  const [loadingData, setLoadingData] = useState(true);
+  const [profileState, setProfileState] = useState<Profile[]>([]);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [feedback, setFeedback] = useState<MessageFeedback[]>([]);
+  const [rateLimits, setRateLimits] = useState<RateLimitRow[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [escalations, setEscalations] = useState<Escalation[]>([]);
+  const [platformStats, setPlatformStats] = useState<PlatformStats>({
+    totalConversations: 0,
+    totalMessages: 0,
+    totalNotes: 0,
+    totalEscalations: 0,
+    openEscalations: 0,
+  });
+
   const [planSearch, setPlanSearch] = useState("");
   const [updatingPlan, setUpdatingPlan] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -322,6 +327,49 @@ function AdminUsersPage() {
   const [escalationFilter, setEscalationFilter] = useState<"all" | "open" | "resolved" | "pending">("all");
   const [tab, setTab] = useState<"users" | "feedback" | "messages" | "ratelimits" | "subscriptions" | "escalations">("users");
   const [expandedMsg, setExpandedMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const loadDashboardData = async () => {
+      try {
+        const [profiles, contactMsgs, fb, rl, pay, esc, stats] = await Promise.all([
+          listProfiles(),
+          listContactMessages(),
+          listFeedback(),
+          listRateLimits(),
+          listPayments(),
+          listEscalations(),
+          listPlatformStats(),
+        ]);
+        if (!active) return;
+        setProfileState(profiles as Profile[]);
+        setMessages(contactMsgs as ContactMessage[]);
+        setFeedback(fb as MessageFeedback[]);
+        setRateLimits(rl as RateLimitRow[]);
+        setPayments(pay as Payment[]);
+        setEscalations(esc as Escalation[]);
+        setPlatformStats(stats as PlatformStats);
+      } catch (err) {
+        console.error("Failed to load admin data:", err);
+        toast.error("Failed to load admin data");
+      } finally {
+        if (active) setLoadingData(false);
+      }
+    };
+    loadDashboardData();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (loadingData) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground font-medium">Loading admin dashboard...</p>
+      </div>
+    );
+  }
 
   const unreadCount = messages.filter((m) => m.status === "unread").length;
   const positiveCount = feedback.filter((f) => f.vote === 1).length;

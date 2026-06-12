@@ -175,7 +175,7 @@ export const Route = createFileRoute("/api/chat")({
           }
 
           const body = await request.json().catch(() => ({}));
-          const { threadId, messages } = body as { threadId?: string; messages?: any[] };
+          const { threadId, messages, isRetry } = body as { threadId?: string; messages?: any[]; isRetry?: boolean };
 
           // Validate threadId is a UUID
           const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -236,8 +236,8 @@ export const Route = createFileRoute("/api/chat")({
             return (msg.content as string) || "";
           };
 
-          // Save user message
-          if (lastMessage?.role === "user") {
+          // Save user message (skip on retry)
+          if (lastMessage?.role === "user" && !isRetry) {
             const userText = sanitizeUntrustedInput(extractText(lastMessage));
             await supabaseAdmin.from("messages").insert({
               conversation_id: threadId,
@@ -246,6 +246,22 @@ export const Route = createFileRoute("/api/chat")({
               parts: JSON.stringify([{ type: "text", text: userText }]),
               user_id: userId,
             });
+          } else if (isRetry) {
+            // Delete the last assistant message if it is the latest message in the DB
+            const { data: lastMsg } = await supabaseAdmin
+              .from("messages")
+              .select("id, role")
+              .eq("conversation_id", threadId)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (lastMsg?.role === "assistant") {
+              await supabaseAdmin
+                .from("messages")
+                .delete()
+                .eq("id", lastMsg.id);
+            }
           }
 
           // Fetch curriculum

@@ -197,103 +197,34 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     id: threadId,
     transport,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
-    onFinish: () => {
+    onFinish: (message: any) => {
       setChatError(null);
+      let dbMessageId: string | null = null;
+      if (Array.isArray(message.annotations)) {
+        for (const ann of message.annotations) {
+          const arr = Array.isArray(ann) ? ann : [ann];
+          for (const a of arr) {
+            if (a?.messageId) {
+              dbMessageId = a.messageId;
+              break;
+            }
+          }
+          if (dbMessageId) break;
+        }
+      }
+      if (dbMessageId) {
+        setMessages((prev: any[]) =>
+          prev.map((m: any) =>
+            m.id === message.id
+              ? { ...m, id: dbMessageId }
+              : m
+          )
+        );
+      }
     },
   });
 
   const { messages: messagesRaw, setMessages, sendMessage, status, reload } = chatHelpers;
-  const [isRetrying, setIsRetrying] = useState(false);
-  const handleReload = async () => {
-    if (isRetrying) return;
-    const msgs = messagesRaw as any[];
-    // Build messages up to and including last user message (drop last assistant)
-    const lastUserIdx = [...msgs].map((m: any, i: number) => m.role === "user" ? i : -1).filter(i => i >= 0).pop();
-    if (lastUserIdx === undefined) return;
-    const msgsToSend = msgs.slice(0, lastUserIdx + 1);
-
-    setIsRetrying(true);
-    // Replace last assistant message with empty streaming placeholder
-    const placeholderId = `retry-${Date.now()}`;
-    setMessages((prev: any[]) => {
-      const lastAsstIdx = [...prev].map((m: any, i: number) => m.role === "assistant" ? i : -1).filter(i => i >= 0).pop();
-      const base = lastAsstIdx !== undefined ? prev.slice(0, lastAsstIdx) : prev;
-      return [...base, { id: placeholderId, role: "assistant", content: "", parts: [{ type: "text", text: "" }] }];
-    });
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-        },
-        body: JSON.stringify({
-          threadId,
-          messages: msgsToSend.map((m: any) => ({
-            role: m.role,
-            content: m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text).join("") || m.content || "",
-          })),
-        }),
-      });
-      if (!res.ok || !res.body) throw new Error("Stream failed");
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let textAccumulated = "";
-      let finalMessageId: string | null = null;
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          // AI SDK data stream format: text chunks are "0:\"...\""
-          if (line.startsWith("0:")) {
-            try {
-              const chunk = JSON.parse(line.slice(2));
-              if (typeof chunk === "string") textAccumulated += chunk;
-            } catch {}
-          }
-          // Annotation lines carry the saved DB message id: "8:{...}"
-          if (line.startsWith("8:")) {
-            try {
-              const annotation = JSON.parse(line.slice(2));
-              const arr = Array.isArray(annotation) ? annotation : [annotation];
-              for (const a of arr) {
-                if (a?.messageId) finalMessageId = a.messageId;
-              }
-            } catch {}
-          }
-        }
-        setMessages((prev: any[]) =>
-          prev.map((m: any) =>
-            m.id === placeholderId
-              ? { ...m, content: textAccumulated, parts: [{ type: "text", text: textAccumulated }] }
-              : m
-          )
-        );
-      }
-      // Swap placeholder id with real DB UUID so voting works
-      if (finalMessageId) {
-        setMessages((prev: any[]) =>
-          prev.map((m: any) =>
-            m.id === placeholderId
-              ? { ...m, id: finalMessageId }
-              : m
-          )
-        );
-      }
-    } catch (err) {
-      console.error("[TutorThread] retry error:", err);
-      toast.error("Retry failed. Please try again.");
-      // Restore previous messages on failure
-      setMessages(msgs);
-    } finally {
-      setIsRetrying(false);
-    }
-  };
   const messages = messagesRaw as UIMessage[];
   const isPending = status === "submitted" || status === "streaming";
 
@@ -755,9 +686,21 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           messages={messages}
           messagesLoading={messagesLoading}
           messagesLoadError={messagesLoadError}
-          isPending={isPending || isRetrying}
-          onReload={handleReload}
+          isPending={isPending}
+          onReload={() => reload({ body: { isRetry: true } })}
           onEdit={async (messageId, newText) => {
+            // Find the message we are editing to get its created_at
+            const { data: editedMsg } = await supabase
+              .from("messages")
+              .select("created_at")
+              .eq("id", messageId)
+              .maybeSingle();
+
+            if (!editedMsg) {
+              toast.error("Message not found");
+              return;
+            }
+
             // Update UI and DB
             setMessages((prev: UIMessage[]) =>
               prev.map((m: UIMessage) =>
@@ -766,96 +709,45 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
                   : m
               )
             );
-            const { error } = await supabase
+
+            const { error: updateError } = await supabase
               .from("messages")
               .update({ content: newText, parts: JSON.stringify([{ type: "text", text: newText }]) })
               .eq("id", messageId);
-            if (error) {
+
+            if (updateError) {
               toast.error("Failed to save edit");
               return;
             }
-            // Re-trigger AI response after edit — using same retry stream approach
+
+            // Delete all subsequent messages in this conversation in the DB
+            const { error: deleteError } = await supabase
+              .from("messages")
+              .delete()
+              .eq("conversation_id", threadId)
+              .gt("created_at", editedMsg.created_at);
+
+            if (deleteError) {
+              console.error("Failed to clean up subsequent messages:", deleteError);
+            }
+
+            // Update local state: keep messages up to and including the edited user message
             const msgs = (messagesRaw as any[]);
             const editedIdx = msgs.findIndex((m: any) => m.id === messageId);
             if (editedIdx === -1) return;
-            // Keep messages up to and including edited message
-            const msgsToSend = msgs.slice(0, editedIdx + 1).map((m: any) => ({
-              ...m,
-              content: m.id === messageId ? newText : (m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text).join("") || m.content || ""),
-              parts: m.id === messageId ? [{ type: "text", text: newText }] : m.parts,
-            }));
-            const placeholderId = `edit-${Date.now()}`;
-            setMessages((prev: any[]) => {
-              const base = prev.slice(0, editedIdx + 1).map((m: any) =>
-                m.id === messageId ? { ...m, content: newText, parts: [{ type: "text", text: newText }] } : m
-              );
-              return [...base, { id: placeholderId, role: "assistant", content: "", parts: [{ type: "text", text: "" }] }];
+
+            const baseMessages = msgs.slice(0, editedIdx + 1).map((m: any) =>
+              m.id === messageId
+                ? { ...m, content: newText, parts: [{ type: "text", text: newText }] }
+                : m
+            );
+
+            setMessages(baseMessages);
+
+            // Trigger reload to generate the new assistant response
+            reload({
+              body: { isRetry: true }
             });
-            try {
-              const res = await fetch("/api/chat", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-                },
-                body: JSON.stringify({
-                  threadId,
-                  messages: msgsToSend.map((m: any) => ({
-                    role: m.role,
-                    content: m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text).join("") || m.content || "",
-                  })),
-                }),
-              });
-              if (!res.ok || !res.body) throw new Error("Stream failed");
-              const reader = res.body.getReader();
-              const decoder = new TextDecoder();
-              let buffer = "";
-              let textAccumulated = "";
-              let finalMessageId: string | null = null;
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split("\n");
-                buffer = lines.pop() ?? "";
-                for (const line of lines) {
-                  if (line.startsWith("0:")) {
-                    try {
-                      const chunk = JSON.parse(line.slice(2));
-                      if (typeof chunk === "string") textAccumulated += chunk;
-                    } catch {}
-                  }
-                  if (line.startsWith("8:")) {
-                    try {
-                      const annotation = JSON.parse(line.slice(2));
-                      const arr = Array.isArray(annotation) ? annotation : [annotation];
-                      for (const a of arr) {
-                        if (a?.messageId) finalMessageId = a.messageId;
-                      }
-                    } catch {}
-                  }
-                }
-                setMessages((prev: any[]) =>
-                  prev.map((m: any) =>
-                    m.id === placeholderId
-                      ? { ...m, content: textAccumulated, parts: [{ type: "text", text: textAccumulated }] }
-                      : m
-                  )
-                );
-              }
-              if (finalMessageId) {
-                setMessages((prev: any[]) =>
-                  prev.map((m: any) =>
-                    m.id === placeholderId
-                      ? { ...m, id: finalMessageId }
-                      : m
-                  )
-                );
-              }
-            } catch (err) {
-              console.error("[TutorThread] edit re-stream error:", err);
-              toast.error("Failed to get AI response after edit.");
-            }
           }}
           userId={userId ?? undefined}
           onPromptClick={(prompt) => {
@@ -866,7 +758,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         {/* Input area */}
         <ChatInput
           input={input}
-          isPending={isPending || isRetrying}
+          isPending={isPending}
           parsingFile={parsingFile}
           attachedFile={attachedFile}
           chatError={chatError}
