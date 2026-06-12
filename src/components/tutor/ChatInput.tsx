@@ -91,7 +91,7 @@ export function ChatInput({
     : 0;
 
   return (
-    <div className="px-3 pb-3 pt-2 sm:px-4 sm:pb-4 bg-background border-t border-border/60">
+    <div className="px-2 pb-2 pt-1.5 sm:px-4 sm:pb-4 sm:pt-3 bg-background border-t border-border/60">
       {/* Rate limit banner with countdown */}
       {isRateLimited && (
         <div className="mb-2 rounded-xl border border-amber-300/50 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-700/40 overflow-hidden">
@@ -175,23 +175,37 @@ export function ChatInput({
       )}
 
       {/* Main input */}
-      <div className="relative flex items-end gap-2 rounded-2xl border border-border bg-card shadow-sm ring-0 transition-all duration-150 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10">
+      <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border bg-card shadow-sm ring-0 transition-all duration-150 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10">
+        {/* Attach button */}
         <div className="pb-2 pl-2 pt-2">
           <input type="file" id="chat-file-attachment" className="hidden"
             accept=".pdf,.docx,.txt,.md,.csv,.jpg,.jpeg,.png,.webp"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-file-attachment"
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl transition-colors ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+            className={`flex h-9 w-9 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-xl transition-colors ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
             title="Attach a file (PDF, DOCX, TXT, MD, CSV, JPG, PNG, WEBP — max 10 MB)">
             {parsingFile ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Paperclip className="h-4 w-4" />}
           </label>
         </div>
 
-        <div className="pb-2 pt-2">
+        {/* Camera — hidden on desktop, shown on mobile */}
+        <div className="pb-2 pt-2 sm:hidden">
           <input type="file" id="chat-camera-capture" className="hidden"
             accept="image/*" capture="environment"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-camera-capture"
+            className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-colors ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+            title="Take a photo (OCR will extract text)">
+            <Camera className="h-4 w-4" />
+          </label>
+        </div>
+
+        {/* Camera — desktop only */}
+        <div className="pb-2 pt-2 hidden sm:block">
+          <input type="file" id="chat-camera-capture-desktop" className="hidden"
+            accept="image/*" capture="environment"
+            onChange={onFileChange} disabled={isDisabled} />
+          <label htmlFor="chat-camera-capture-desktop"
             className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl transition-colors ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
             title="Take a photo (OCR will extract text)">
             <Camera className="h-4 w-4" />
@@ -199,27 +213,28 @@ export function ChatInput({
         </div>
 
         <textarea ref={textareaRef}
-          className="min-h-[40px] flex-1 resize-none bg-transparent py-2.5 pr-1 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-[44px] sm:min-h-[40px] flex-1 resize-none bg-transparent py-3 sm:py-2.5 pr-1 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           rows={1} value={input} onChange={onInputChange}
           placeholder={
             isPending       ? "Waiting for response…" :
             isRateLimited   ? secondsLeft > 0 ? `Cooling down… ${secondsLeft}s` : "Rate limit reached…" :
             parsingFile     ? "Parsing document…" :
-                              "Ask a question… (Enter to send)"
+                              "Ask anything…"
           }
           disabled={isDisabled} onKeyDown={handleKeyDown} style={{ maxHeight: 160 }} />
 
         <div className="pb-2 pr-2 pt-2">
           <button type="button" onClick={(e) => onSubmit(e as any)}
             disabled={isDisabled || (!input.trim() && !attachedFile)}
-            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150 ${isDisabled || (!input.trim() && !attachedFile) ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed" : "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95"}`}
+            className={`flex h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150 ${isDisabled || (!input.trim() && !attachedFile) ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed" : "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95"}`}
             title="Send (Enter)">
-            {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      <div className="mt-1.5 flex items-center justify-between px-1 min-h-[14px]">
+      {/* Footer hint — desktop only */}
+      <div className="mt-1.5 hidden sm:flex items-center justify-between px-1 min-h-[14px]">
         <p className="font-mono text-[9px] text-muted-foreground/70">
           {isPending
             ? <span className="animate-pulse font-bold text-primary/70">GilaniAI is thinking…</span>
@@ -234,6 +249,14 @@ export function ChatInput({
           </span>
         )}
       </div>
+      {/* Mobile: only show char count when typing */}
+      {input.length > 0 && (
+        <div className="mt-1 flex justify-end px-1 sm:hidden">
+          <span className={`font-mono text-[9px] font-semibold tabular-nums ${input.length > 3000 ? "text-amber-500" : "text-muted-foreground/70"}`}>
+            {input.length.toLocaleString()} chars
+          </span>
+        </div>
+      )}
     </div>
   );
 }
