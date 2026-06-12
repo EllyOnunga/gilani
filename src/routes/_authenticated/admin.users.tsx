@@ -5,18 +5,22 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { Settings, UserCheck, Loader2, Shield, GraduationCap, User, MessageSquare, Mail, Clock, CheckCircle, CheckCircle2, Inbox, ThumbsUp, ThumbsDown, Search, BarChart3, AlertTriangle, RefreshCw } from "lucide-react";
+import { Settings, UserCheck, Loader2, Shield, GraduationCap, User, MessageSquare, Mail, Clock, CheckCircle, CheckCircle2, Inbox, ThumbsUp, ThumbsDown, Search, BarChart3, AlertTriangle, RefreshCw, CreditCard, DollarSign, TrendingUp, Calendar, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { PLANS, type PlanId } from "@/lib/plans";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 type Profile = {
   id: string;
   display_name: string | null;
+  email: string | null;
   curriculum: string | null;
   created_at: string | null;
   role: string;
+  plan: string;
+  plan_expiry: string | null;
 };
 
 type ContactMessage = {
@@ -43,6 +47,18 @@ type RateLimitRow = {
   key: string; count: number; reset_at: string;
 };
 
+type Payment = {
+  id: string;
+  user_id: string;
+  phone_number: string;
+  amount: number;
+  plan: string;
+  mpesa_receipt: string | null;
+  status: string;
+  created_at: string;
+  profiles?: { display_name: string | null; email: string | null } | null;
+};
+
 // ─── Server Functions ──────────────────────────────────────────────────────────
 async function verifyAdmin(request: Request): Promise<string> {
   const authHeader = request.headers.get("authorization");
@@ -58,7 +74,7 @@ const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
   try { await verifyAdmin(request); } catch { return []; }
   const { data: profiles, error } = await supabaseAdmin
-    .from("profiles").select("id, display_name, curriculum, created_at").order("created_at", { ascending: false });
+    .from("profiles").select("id, display_name, email, curriculum, created_at, plan, plan_expiry").order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role");
   const roleMap: Record<string, string> = {};
@@ -135,6 +151,38 @@ const listRateLimits = createServerFn({ method: "GET" }).handler(async () => {
   return (data ?? []) as RateLimitRow[];
 });
 
+const listPayments = createServerFn({ method: "GET" }).handler(async () => {
+  const request = getRequest();
+  try { await verifyAdmin(request); } catch { return []; }
+  const { data, error } = await supabaseAdmin
+    .from("payments").select("*").order("created_at", { ascending: false }).limit(200);
+  if (error) return [];
+  const userIds = [...new Set((data ?? []).map((p: any) => p.user_id).filter(Boolean))];
+  let profileMap: Record<string, { display_name: string | null; email: string | null }> = {};
+  if (userIds.length > 0) {
+    const { data: profileData } = await supabaseAdmin
+      .from("profiles").select("id, display_name, email").in("id", userIds);
+    profileMap = Object.fromEntries((profileData ?? []).map((p: any) => [p.id, { display_name: p.display_name, email: p.email }]));
+  }
+  return (data ?? []).map((p: any) => ({ ...p, profiles: profileMap[p.user_id] ?? null })) as unknown as Payment[];
+});
+
+const updateUserPlan = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    userId: z.string(),
+    plan: z.enum(["free", "basic", "premium", "school"]),
+    planExpiry: z.string().nullable().optional(),
+  }))
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    await verifyAdmin(request);
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ plan: data.plan, plan_expiry: data.planExpiry ?? null })
+      .eq("id", data.userId);
+    if (error) throw new Error(error.message);
+  });
+
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
@@ -151,10 +199,10 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
     }
   },
   loader: async () => {
-    const [profiles, messages, feedback, rateLimits] = await Promise.all([
-      listProfiles(), listContactMessages(), listFeedback(), listRateLimits(),
+    const [profiles, messages, feedback, rateLimits, payments] = await Promise.all([
+      listProfiles(), listContactMessages(), listFeedback(), listRateLimits(), listPayments(),
     ]);
-    return { profiles: profiles as Profile[], messages: messages as ContactMessage[], feedback: feedback as MessageFeedback[], rateLimits: rateLimits as RateLimitRow[] };
+    return { profiles: profiles as Profile[], messages: messages as ContactMessage[], feedback: feedback as MessageFeedback[], rateLimits: rateLimits as RateLimitRow[], payments: payments as Payment[] };
   },
   component: AdminUsersPage,
 });
@@ -179,17 +227,20 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 function AdminUsersPage() {
   const loaderData = Route.useLoaderData() as {
     profiles: Profile[]; messages: ContactMessage[];
-    feedback: MessageFeedback[]; rateLimits: RateLimitRow[];
+    feedback: MessageFeedback[]; rateLimits: RateLimitRow[]; payments: Payment[];
   };
   const [profileState, setProfileState] = useState<Profile[]>(loaderData?.profiles ?? []);
   const [messages, setMessages] = useState<ContactMessage[]>(loaderData?.messages ?? []);
   const feedback = loaderData?.feedback ?? [];
   const rateLimits = loaderData?.rateLimits ?? [];
+  const payments = loaderData?.payments ?? [];
+  const [planSearch, setPlanSearch] = useState("");
+  const [updatingPlan, setUpdatingPlan] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [updatingMsg, setUpdatingMsg] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rlSearch, setRlSearch] = useState("");
-  const [tab, setTab] = useState<"users" | "feedback" | "messages" | "ratelimits">("users");
+  const [tab, setTab] = useState<"users" | "feedback" | "messages" | "ratelimits" | "subscriptions">("users");
   const [expandedMsg, setExpandedMsg] = useState<string | null>(null);
 
   const unreadCount = messages.filter((m) => m.status === "unread").length;
@@ -235,10 +286,50 @@ function AdminUsersPage() {
     }
   };
 
+  const handlePlanChange = async (userId: string, plan: string) => {
+    setUpdatingPlan(userId);
+    try {
+      const expiry = plan === "free" ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      await updateUserPlan({ data: { userId, plan: plan as any, planExpiry: expiry } });
+      setProfileState((prev) => prev.map((p) => (p.id === userId ? { ...p, plan, plan_expiry: expiry } : p)));
+      toast.success(`Plan updated to ${PLANS[plan as PlanId]?.label ?? plan}`);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to update plan");
+    } finally {
+      setUpdatingPlan(null);
+    }
+  };
+
   const counts = ROLES.reduce(
     (acc, r) => { acc[r] = profileState.filter((p) => p.role === r).length; return acc; },
     {} as Record<Role, number>,
   );
+
+  const planCounts = (Object.keys(PLANS) as PlanId[]).reduce((acc, pid) => {
+    acc[pid] = profileState.filter((u) => (u.plan ?? "free") === pid).length;
+    return acc;
+  }, {} as Record<PlanId, number>);
+
+  const mrr = (Object.keys(PLANS) as PlanId[]).reduce((sum, pid) => sum + PLANS[pid].price * planCounts[pid], 0);
+
+  const totalRevenue = payments.filter((p) => p.status === "completed").reduce((sum, p) => sum + p.amount, 0);
+
+  const activeSubs = profileState.filter((u) => u.plan !== "free" && u.plan_expiry && new Date(u.plan_expiry) > new Date()).length;
+
+  const expiringSoon = profileState.filter((u) => {
+    if (!u.plan_expiry || u.plan === "free") return false;
+    const days = (new Date(u.plan_expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    return days > 0 && days <= 7;
+  }).length;
+
+  const filteredForPlans = useMemo(() => {
+    const q = planSearch.toLowerCase();
+    return !q ? profileState : profileState.filter((p) =>
+      p.display_name?.toLowerCase().includes(q) ||
+      p.email?.toLowerCase().includes(q) ||
+      (p.plan ?? "free").toLowerCase().includes(q)
+    );
+  }, [profileState, planSearch]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-10">
@@ -293,6 +384,7 @@ function AdminUsersPage() {
           { id: "feedback",   label: "Feedback",    icon: ThumbsUp },
           { id: "messages",   label: "Messages",    icon: MessageSquare, badge: unreadCount },
           { id: "ratelimits", label: "Rate Limits", icon: BarChart3 },
+          { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
         ] as const).map((t) => {
           const Icon = t.icon;
           return (
@@ -599,6 +691,172 @@ function AdminUsersPage() {
               </div>
               <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{filteredRateLimits.length} keys</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Subscriptions tab ── */}
+      {tab === "subscriptions" && (
+        <div className="space-y-4">
+          {/* Revenue summary */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">MRR Estimate</p>
+                <TrendingUp className="h-4 w-4 text-green-600" />
+              </div>
+              <p className="font-serif text-3xl font-bold text-green-600">KES {mrr.toLocaleString()}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total Revenue</p>
+                <DollarSign className="h-4 w-4 text-primary" />
+              </div>
+              <p className="font-serif text-3xl font-bold text-primary">KES {totalRevenue.toLocaleString()}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Active Subscriptions</p>
+                <Crown className="h-4 w-4 text-amber-500" />
+              </div>
+              <p className="font-serif text-3xl font-bold text-amber-500">{activeSubs}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Expiring ≤7 Days</p>
+                <Calendar className="h-4 w-4 text-red-500" />
+              </div>
+              <p className="font-serif text-3xl font-bold text-red-500">{expiringSoon}</p>
+            </div>
+          </div>
+
+          {/* Plan distribution */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {(Object.keys(PLANS) as PlanId[]).map((pid) => (
+              <div key={pid} className="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
+                <p className="font-serif text-3xl font-bold">{planCounts[pid]}</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{PLANS[pid].label}</p>
+                <p className="font-mono text-[10px] text-muted-foreground mt-0.5">KES {PLANS[pid].price.toLocaleString()}/mo</p>
+              </div>
+            ))}
+          </div>
+
+          {/* User plan management */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input value={planSearch} onChange={(e) => setPlanSearch(e.target.value)}
+              placeholder="Search by name, email, or plan…"
+              className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          </div>
+
+          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    {["User", "Email", "Plan", "Expires", "Action"].map((h) => (
+                      <th key={h} className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredForPlans.length === 0 && (
+                    <tr><td colSpan={5} className="py-12 text-center font-serif text-muted-foreground">No users found</td></tr>
+                  )}
+                  {filteredForPlans.map((p) => {
+                    const plan = (p.plan ?? "free") as PlanId;
+                    const isUpdating = updatingPlan === p.id;
+                    const expiry = p.plan_expiry ? new Date(p.plan_expiry) : null;
+                    const isExpired = expiry ? expiry < new Date() : false;
+                    return (
+                      <tr key={p.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                        <td className="px-5 py-3">
+                          <p className="font-semibold">{p.display_name ?? "—"}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id.slice(0, 8)}…</p>
+                        </td>
+                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
+                        <td className="px-5 py-3">
+                          <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary bg-primary/5 border-primary/20">
+                            {PLANS[plan]?.label ?? plan}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 font-mono text-xs">
+                          {expiry ? (
+                            <span className={isExpired ? "text-destructive" : "text-muted-foreground"}>
+                              {expiry.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                              {isExpired ? " (expired)" : ""}
+                            </span>
+                          ) : <span className="text-muted-foreground">—</span>}
+                        </td>
+                        <td className="px-5 py-3">
+                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
+                            <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
+                              className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
+                              {(Object.keys(PLANS) as PlanId[]).map((pid) => (
+                                <option key={pid} value={pid}>{PLANS[pid].label}</option>
+                              ))}
+                            </select>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
+              <p className="font-mono text-[10px] text-muted-foreground">{filteredForPlans.length} of {profileState.length} users</p>
+            </div>
+          </div>
+
+          {/* Payment history */}
+          <h2 className="font-serif text-xl mt-6">Payment History</h2>
+          {payments.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card py-16 text-center">
+              <CreditCard className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
+              <p className="font-serif text-muted-foreground">No payments yet</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                      {["User", "Plan", "Amount", "Phone", "Receipt", "Status", "Date"].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payments.map((pay) => (
+                      <tr key={pay.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                        <td className="px-4 py-3">
+                          <p className="font-semibold">{pay.profiles?.display_name ?? "—"}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">{pay.profiles?.email ?? `${pay.user_id.slice(0, 8)}…`}</p>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs capitalize">{pay.plan}</td>
+                        <td className="px-4 py-3 font-semibold">KES {pay.amount.toLocaleString()}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{pay.phone_number}</td>
+                        <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">{pay.mpesa_receipt ?? "—"}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${
+                            pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
+                            pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
+                            "text-amber-600 bg-amber-50 border-amber-200"
+                          }`}>{pay.status}</span>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                          {new Date(pay.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
+                <p className="font-mono text-[10px] text-muted-foreground">{payments.length} payments · KES {totalRevenue.toLocaleString()} completed</p>
               </div>
             </div>
           )}

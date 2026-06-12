@@ -71,25 +71,44 @@ export const generateThreadTitleFn = createServerFn({ method: "POST" })
     } catch {
       throw new Error("Unauthorized");
     }
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: 20,
-        messages: [
-          {
-            role: "user",
-            content: `Generate a short 3-5 word title for a study session that starts with this question: "${firstMessage.slice(0, 200)}". Reply with only the title itself. Do not wrap in quotes. Do not include prefixes like "Title:". No punctuation.`,
-          },
-        ],
-      }),
-    });
-    const data = await response.json();
-    let title = data.choices?.[0]?.message?.content?.trim() || "";
+
+    const { createGoogleAiProvider } = await import("@/lib/ai-gateway.server");
+    const { generateText } = await import("ai");
+
+    const gateway = createGoogleAiProvider();
+    const models = gateway.getAllChatModels();
+
+    let title = "";
+    let lastError: unknown;
+
+    for (const model of models) {
+      try {
+        if (models.indexOf(model) > 0) {
+          const { backoffDelay } = await import("@/lib/provider-backoff");
+          await backoffDelay(models.indexOf(model));
+        }
+        console.log(`[Title Gen] Attempting title generation...`);
+        const result = await generateText({
+          model: model as any,
+          maxTokens: 20,
+          prompt: `Generate a short 3-5 word title for a study session that starts with this question: "${firstMessage.slice(0, 200)}". Reply with only the title itself. Do not wrap in quotes. Do not include prefixes like "Title:". No punctuation.`,
+        } as any);
+        
+        if (result.text) {
+          title = result.text.trim();
+          console.log(`[Title Gen] Successfully generated title.`);
+          break;
+        }
+      } catch (err) {
+        console.warn(`[Title Gen] Attempt failed:`, err);
+        lastError = err;
+      }
+    }
+
+    if (!title && lastError) {
+      throw lastError;
+    }
+
     // Clean quotes or conversational prefix/suffix
     title = title.replace(/^["'“”‘“]|["'“”’]$/g, "").trim();
     title = title.replace(/^(title|session|study session):\s*/i, "").trim();

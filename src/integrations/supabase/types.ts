@@ -362,6 +362,8 @@ export type Database = {
         Insert: {
           avatar_url?: string | null;
           created_at?: string;
+          plan?: string;
+          plan_expiry?: string | null;
           curriculum?: string | null;
           display_name?: string | null;
           analytics_consent?: boolean | null;
@@ -374,6 +376,8 @@ export type Database = {
         Update: {
           avatar_url?: string | null;
           created_at?: string;
+          plan?: string;
+          plan_expiry?: string | null;
           curriculum?: string | null;
           display_name?: string | null;
           analytics_consent?: boolean | null;

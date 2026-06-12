@@ -279,31 +279,50 @@ const ingestNote = createServerFn({ method: "POST" })
       chunks.push(fullChunkText);
     }
 
-    // Process embeddings in parallel
-    const chunkPromises = chunks.map(async (chunkText, index) => {
-      let embedding: number[] | null = null;
-      try {
-        const { embed } = await import("ai");
-        const embeddingModel = createLovableAiGatewayProvider().textEmbeddingModel();
-        const res = await embed({
-          model: embeddingModel,
-          value: chunkText,
-          maxRetries: 0,
-        });
-        embedding = res.embedding;
-      } catch (err) {
-        console.error(`Failed to generate embedding for chunk ${index}`, err);
-      }
+    // Process embeddings in batches of 5 to avoid upstream rate limits
+    const chunkData: any[] = [];
+    const concurrencyLimit = 5;
+    for (let i = 0; i < chunks.length; i += concurrencyLimit) {
+      const batch = chunks.slice(i, i + concurrencyLimit);
+      const batchPromises = batch.map(async (chunkText, batchIdx) => {
+        const index = i + batchIdx;
+        let embedding: number[] | null = null;
+        let retries = 3;
+        let delayMs = 1000;
+        
+        while (retries > 0) {
+          try {
+            const { embed } = await import("ai");
+            const embeddingModel = createLovableAiGatewayProvider().textEmbeddingModel();
+            const res = await embed({
+              model: embeddingModel,
+              value: chunkText,
+              maxRetries: 0,
+            });
+            embedding = res.embedding;
+            break;
+          } catch (err) {
+            retries--;
+            console.warn(`[Embedding] Failed for chunk ${index}. Retries remaining: ${retries}. Error:`, err);
+            if (retries === 0) {
+              console.error(`[Embedding] Failed for chunk ${index} after all retries.`);
+              break;
+            }
+            await new Promise((res) => setTimeout(res, delayMs + Math.random() * 200));
+            delayMs *= 2;
+          }
+        }
 
-      return {
-        note_id: (note as any).id,
-        content: chunkText,
-        user_id: userId,
-        embedding: embedding ? JSON.stringify(embedding) : null,
-      };
-    });
-
-    const chunkData = await Promise.all(chunkPromises);
+        return {
+          note_id: (note as any).id,
+          content: chunkText,
+          user_id: userId,
+          embedding: embedding ? JSON.stringify(embedding) : null,
+        };
+      });
+      const batchResults = await Promise.all(batchPromises);
+      chunkData.push(...batchResults);
+    }
 
     // Bulk insert chunks
     const { error: chunksErr } = await supabaseAdmin.from("note_chunks").insert(chunkData);

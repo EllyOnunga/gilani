@@ -160,6 +160,13 @@ export async function parseDocument(file: File): Promise<ExtractedDocument> {
 
         if (!fullText.trim()) {
           // Scanned PDF — fall back to Tesseract OCR page by page
+          const MAX_OCR_PAGES = 5;
+          if (pdf.numPages > MAX_OCR_PAGES) {
+            throw new Error(
+              `This PDF appears to be a scanned document and contains ${pdf.numPages} pages. To prevent browser memory exhaustion and tab crashes, client-side OCR is limited to a maximum of ${MAX_OCR_PAGES} pages. Please upload a text-searchable PDF or split the file.`
+            );
+          }
+          
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const blob = await pdfPageToBlob(page);
