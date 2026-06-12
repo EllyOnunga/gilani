@@ -52,7 +52,9 @@ export async function initiateSTKPush(
     PartyA: normalized,
     PartyB: process.env.MPESA_SHORTCODE,
     PhoneNumber: normalized,
-    CallBackURL: `${process.env.APP_URL}/api/mpesa/callback`,
+    // CS-AUTHZ-001: Embed callback secret in URL so only requests from Safaricom
+    // (who received this URL) will carry the correct token
+    CallBackURL: `${process.env.APP_URL}/api/mpesa/callback?token=${encodeURIComponent(process.env.MPESA_CALLBACK_SECRET || "")}`,
     AccountReference: `GILANI_${plan.toUpperCase()}_${userId.slice(0, 8)}`,
     TransactionDesc: `Gilani AI ${plan} Plan`,
   };

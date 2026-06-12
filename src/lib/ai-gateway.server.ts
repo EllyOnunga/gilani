@@ -37,7 +37,12 @@ export const createGoogleAiProvider = (apiKey?: string) => {
   if (mistralKey) activeProviders.push("mistral");
 
   if (activeProviders.length === 0) {
-    activeProviders.push("google"); // fallback default to Google Generative AI
+    // CS-SECRETS-001: Fail loudly rather than silently constructing a client
+    // with an empty key, which produces opaque 401 errors at runtime.
+    throw new Error(
+      "[AI Gateway] No AI provider API key configured. " +
+      "Set at least one of: GEMINI_API_KEY, GROQ_API_KEY, OPENAI_API_KEY, MISTRAL_API_KEY."
+    );
   }
 
   const instantiatedProviders = activeProviders.map((providerName) => {

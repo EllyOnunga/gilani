@@ -9,6 +9,19 @@ export const Route = createFileRoute("/api/mpesa/callback")({
       POST: async () => {
         try {
           const request = getRequest();
+
+          // CS-AUTHZ-001: Verify the shared callback secret embedded in the URL
+          // MPESA_CALLBACK_SECRET must be set in environment variables.
+          // The secret is appended to CallBackURL in mpesa.server.ts, so only
+          // Safaricom (who received it) can produce a valid callback.
+          const url = new URL(request.url);
+          const providedToken = url.searchParams.get("token");
+          const expectedToken = process.env.MPESA_CALLBACK_SECRET;
+          if (!expectedToken || providedToken !== expectedToken) {
+            console.warn("[M-Pesa Callback] Rejected request with invalid or missing token");
+            return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
+          }
+
           const body = await request.json().catch(() => ({}));
           const callback = body?.Body?.stkCallback;
 

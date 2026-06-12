@@ -17,6 +17,10 @@ export const submitContactFn = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data }) => {
+    // CS-XSS-002: Escape all user-supplied values before inserting into HTML emails
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+
     // 1. Save to DB
     const { error } = await supabaseAdmin
       .from("contact_messages")
@@ -40,12 +44,12 @@ export const submitContactFn = createServerFn({ method: "POST" })
       subject: `[GilaniAI Contact] ${data.category} — ${data.subject || data.name}`,
       html: `
         <h2>New contact message</h2>
-        <p><strong>Name:</strong> ${data.name}</p>
-        <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Category:</strong> ${data.category}</p>
-        <p><strong>Subject:</strong> ${data.subject || "—"}</p>
+        <p><strong>Name:</strong> ${esc(data.name)}</p>
+        <p><strong>Email:</strong> ${esc(data.email)}</p>
+        <p><strong>Category:</strong> ${esc(data.category)}</p>
+        <p><strong>Subject:</strong> ${esc(data.subject || "—")}</p>
         <hr/>
-        <p>${data.message.replace(/\n/g, "<br/>")}</p>
+        <p>${esc(data.message).replace(/\n/g, "<br/>")}</p>
       `,
       text: `Name: ${data.name}\nEmail: ${data.email}\nCategory: ${data.category}\nSubject: ${data.subject || "—"}\n\n${data.message}`,
     });

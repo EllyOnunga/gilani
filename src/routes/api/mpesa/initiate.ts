@@ -4,6 +4,10 @@ import { authenticateRequest } from "@/lib/api-auth.server";
 import { initiateSTKPush } from "@/lib/mpesa.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { PLANS } from "@/lib/plans";
+import { z } from "zod";
+
+// CS-INJ-001: Validates Kenyan phone numbers: 07xx, 01xx, +2547xx, +2541xx, 2547xx
+const KENYAN_PHONE_RE = /^(?:\+?254|0)[17]\d{8}$/;
 
 export const Route = createFileRoute("/api/mpesa/initiate")({
   server: {
@@ -26,6 +30,13 @@ export const Route = createFileRoute("/api/mpesa/initiate")({
 
           if (!phone || !plan) {
             return new Response(JSON.stringify({ error: "phone and plan are required" }), {
+              status: 400, headers: { "Content-Type": "application/json" },
+            });
+          }
+
+          // CS-INJ-001: Validate phone number format before sending to Safaricom
+          if (!KENYAN_PHONE_RE.test(phone)) {
+            return new Response(JSON.stringify({ error: "Invalid phone number. Use format: 07XXXXXXXX or +2547XXXXXXXX" }), {
               status: 400, headers: { "Content-Type": "application/json" },
             });
           }

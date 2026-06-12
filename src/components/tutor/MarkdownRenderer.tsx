@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import DOMPurify from "dompurify";
 import { ExternalLink, AlertCircle, Lightbulb, AlertTriangle, Info } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
@@ -25,7 +26,8 @@ function MermaidDiagram({ code }: { code: string }) {
       m.default.initialize({ startOnLoad: false, theme: "neutral" });
       return m.default.render(id, code);
     }).then(({ svg }) => {
-      if (ref.current) ref.current.innerHTML = svg;
+      // CS-XSS-001: Sanitize Mermaid SVG before DOM injection to prevent XSS
+      if (ref.current) ref.current.innerHTML = DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } });
     }).catch(() => {
       if (ref.current) ref.current.textContent = code;
     });
@@ -221,11 +223,12 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
     // Render fenced math/latex/tex blocks as KaTeX display math
     if (!inline && (lang === "latex" || lang === "math" || lang === "tex")) {
       try {
+        // CS-KATEX-001: trust:false prevents \href javascript: URI injection
         const html = katex.renderToString(text, {
           displayMode: true,
           throwOnError: false,
           strict: false,
-          trust: true,
+          trust: false,
           macros: KATEX_MACROS,
         });
         return (
@@ -242,11 +245,12 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
     // Render fenced chemistry blocks
     if (!inline && (lang === "chemistry" || lang === "chem")) {
       try {
+        // CS-KATEX-001: trust:false prevents \href javascript: URI injection
         const html = katex.renderToString(`\\ce{${text}}`, {
           displayMode: true,
           throwOnError: false,
           strict: false,
-          trust: true,
+          trust: false,
           macros: KATEX_MACROS,
         });
         return (
@@ -405,7 +409,8 @@ export function MarkdownRenderer({ content }: Props) {
       rehypePlugins={[
         [rehypeKatex, {
           strict: false,
-          trust: true,
+          // CS-KATEX-001: trust:false prevents \href javascript: URI injection
+          trust: false,
           throwOnError: false,
           errorColor: "#cc0000",
           macros: KATEX_MACROS,

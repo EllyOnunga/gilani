@@ -207,8 +207,9 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
       } as any);
 
       // Email the specific teacher
+      // CS-LOG-001: Log reviewer ID only — never log email addresses to prevent PII leakage in server logs
+      console.log("[Escalation] Sending email to teacher ID:", reviewerId);
       const { data: reviewerUser } = await supabaseAdmin.auth.admin.getUserById(reviewerId);
-      console.log("[Escalation] Sending email to teacher:", reviewerUser?.user?.email);
       if (reviewerUser?.user?.email) {
         const emailResult = await sendTransactionalEmail({
           to: reviewerUser.user.email,
