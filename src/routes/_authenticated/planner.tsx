@@ -24,7 +24,7 @@ const LazyMarkdownRenderer = lazy(() =>
 );
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { checkPlanRateLimit } from "@/lib/rate-limit.server";
+import { checkPlanRateLimit, getRateLimitStatus } from "@/lib/rate-limit.server";
 import { buildPlannerPrompt } from "@/lib/planner-prompt";
 import { sanitizeUntrustedInput } from "@/lib/tutor-prompt";
 
@@ -436,8 +436,32 @@ function PlannerPage() {
   const [initialised, setInitialised] = useState(false);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const isRateLimited = !!(
+    error?.toLowerCase().includes("limit") ||
+    error?.toLowerCase().includes("rate")
+  );
   const [debugInfo, setDebugInfo] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>(todayStr());
+
+  // Restore rate limit warning after page refresh
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const status = await getRateLimitStatus({ data: "planner" });
+        if (mounted && status.isRateLimited && !error) {
+          const secs = Math.ceil(status.retryAfterMs / 1000);
+          setError(
+            status.isDaily
+              ? `Daily planner limit reached. Resets at midnight.`
+              : `Rate limit exceeded. Please try again in ${secs}s.`
+          );
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { mounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -548,7 +572,7 @@ function PlannerPage() {
         </div>
         <button
           onClick={handleGenerate}
-          disabled={loading}
+          disabled={loading || isRateLimited}
           className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60 active:scale-[0.98] transition-all"
         >
           {loading ? (

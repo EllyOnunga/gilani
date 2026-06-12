@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { checkPlanRateLimit } from "@/lib/rate-limit.server";
+import { checkPlanRateLimit, getRateLimitStatus } from "@/lib/rate-limit.server";
 import {
   BookOpenText,
   ChevronDown,
@@ -43,6 +43,13 @@ function formatTime(seconds: number): string {
   if (m > 0 || h > 0) parts.push(`${m}m`);
   parts.push(`${s}s`);
   return parts.join(" ");
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
 function useRateLimitCountdown(errorMsg: string | null) {
@@ -448,15 +455,36 @@ function NotesPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const [parsingFile, setParsingFile] = useState(false);
-  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string } | null>(null);
+  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; size: number } | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [notesRateError, setNotesRateError] = useState<string | null>(null);
+  const [docUploadError, setDocUploadError] = useState<string | null>(null);
 
   const isRateLimited = !!(
     notesRateError?.toLowerCase().includes("limit") ||
     notesRateError?.toLowerCase().includes("rate")
   );
   const { secondsLeft, isDaily } = useRateLimitCountdown(isRateLimited ? notesRateError : null);
+
+  // Restore rate limit warning after page refresh
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const status = await getRateLimitStatus({ data: "notes" });
+        if (mounted && status.isRateLimited && !notesRateError) {
+          const secs = Math.ceil(status.retryAfterMs / 1000);
+          setNotesRateError(
+            status.isDaily
+              ? `Daily notes limit reached. Resets at midnight.`
+              : `Rate limit exceeded. Please try again in ${secs}s.`
+          );
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { mounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load notes client-side on mount (Stale-While-Revalidate)
   useEffect(() => {
@@ -509,6 +537,7 @@ function NotesPage() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
+    setDocUploadError(null);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       await handleFileParsing(e.dataTransfer.files[0]);
@@ -516,6 +545,7 @@ function NotesPage() {
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDocUploadError(null);
     if (e.target.files && e.target.files[0]) {
       await handleFileParsing(e.target.files[0]);
     }
@@ -523,6 +553,7 @@ function NotesPage() {
 
   const handleFileParsing = async (file: File) => {
     setParsingFile(true);
+    setDocUploadError(null);
     const toastId = toast.loading(`Extracting text from ${file.name}...`);
     try {
       const parsed = await parseDocument(file);
@@ -530,10 +561,12 @@ function NotesPage() {
       setTitle(baseName);
       setHeading("");
       setSubheading("");
-      setAttachedFile({ name: parsed.name, text: parsed.text });
+      setAttachedFile({ name: parsed.name, text: parsed.text, size: parsed.size });
       toast.success("Document text extracted successfully!", { id: toastId });
     } catch (err: any) {
-      toast.error(friendlyError(err, "Failed to extract text from document."), { id: toastId });
+      const errMsg = friendlyError(err, "Failed to extract text from document.");
+      setDocUploadError(errMsg);
+      toast.error(errMsg, { id: toastId });
     } finally {
       setParsingFile(false);
     }
@@ -688,7 +721,7 @@ ${content}`.trim()
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          disabled={isOffline}
+          disabled={isOffline || isRateLimited}
           className="self-start sm:self-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
           {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
@@ -773,6 +806,27 @@ ${content}`.trim()
               </label>
             </div>
 
+            {/* Inline upload error banner */}
+            {docUploadError && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive/5 p-3.5 text-left text-xs dark:bg-destructive/10 dark:border-destructive/30 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
+                <AlertCircle className="h-4 w-4 text-destructive dark:text-red-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-destructive dark:text-red-300">Document Upload Issue</span>
+                  <p className="text-destructive/80 dark:text-red-400/85 mt-0.5 font-medium leading-relaxed">
+                    {docUploadError}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDocUploadError(null)}
+                  className="rounded-lg p-1 text-destructive/60 hover:bg-destructive/10 hover:text-destructive transition-colors flex-shrink-0"
+                  title="Dismiss error"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
             <div>
               <label className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-1 block">
                 Title
@@ -817,10 +871,18 @@ ${content}`.trim()
               {attachedFile && (
                 <div className="mb-2 flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/5 px-3 py-2">
                   <FileText className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                  <span className="truncate text-xs font-semibold text-foreground flex-1">{attachedFile.name}</span>
+                  <span className="truncate text-xs font-semibold text-foreground flex-1">
+                    {attachedFile.name}{" "}
+                    <span className="font-mono text-[10px] text-muted-foreground font-normal">
+                      ({formatFileSize(attachedFile.size)})
+                    </span>
+                  </span>
                   <button
                     type="button"
-                    onClick={() => setAttachedFile(null)}
+                    onClick={() => {
+                      setAttachedFile(null);
+                      setDocUploadError(null);
+                    }}
                     className="flex-shrink-0 rounded-lg p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                     title="Remove file"
                   >
@@ -848,7 +910,7 @@ ${content}`.trim()
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={saving}
+                disabled={saving || isRateLimited}
                 className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60 active:scale-[0.98] transition-all"
               >
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}

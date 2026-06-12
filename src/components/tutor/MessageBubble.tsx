@@ -11,6 +11,7 @@ type Props = {
   idx: number;
   isLast: boolean;
   isPending: boolean;
+  isRateLimited?: boolean;
   onReload: () => void;
   onEdit?: (messageId: string, newText: string) => void;
   userId?: string;
@@ -23,7 +24,7 @@ const MemoMarkdown = React.memo(
   (prev, next) => prev.content === next.content
 );
 
-export function MessageBubble({ message: m, idx, isLast, isPending, onReload, onEdit, userId}: Props) {
+export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEdit, userId}: Props) {
   const [copied, setCopied] = useState(false);
   const [vote, setVote] = useState<1 | -1 | null>(null);
   const [voting, setVoting] = useState(false);
@@ -206,9 +207,14 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
                 </button>
                 {/* Retry */}
                 {isLast && (
-                  <button onClick={onReload}
-                    className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
-                    title="Retry">
+                  <button onClick={isRateLimited ? undefined : onReload}
+                    disabled={isRateLimited}
+                    className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded ${
+                      isRateLimited
+                        ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                    title={isRateLimited ? "Rate limit reached" : "Retry"}>
                     <RefreshCw className="h-3 w-3" />
                   </button>
                 )}
@@ -279,9 +285,14 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
                   {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 </button>
                 {onEdit && (
-                  <button onClick={startEdit}
-                    className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-primary-foreground/60 hover:text-primary-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-primary-foreground/10"
-                    title="Edit message">
+                  <button onClick={isRateLimited ? undefined : startEdit}
+                    disabled={isRateLimited}
+                    className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-1.5 py-0.5 rounded ${
+                      isRateLimited
+                        ? "opacity-40 cursor-not-allowed text-primary-foreground/40"
+                        : "text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                    }`}
+                    title={isRateLimited ? "Rate limit reached" : "Edit message"}>
                     <Pencil className="h-3 w-3" />
                   </button>
                 )}

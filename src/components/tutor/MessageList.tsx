@@ -8,6 +8,7 @@ type Props = {
   messagesLoading: boolean;
   messagesLoadError: string | null;
   isPending: boolean;
+  isRateLimited?: boolean;
   onReload: () => void;
   onPromptClick: (prompt: string) => void;
   onEdit?: (messageId: string, newText: string) => void;
@@ -76,6 +77,7 @@ export function MessageList({
   messagesLoading,
   messagesLoadError,
   isPending,
+  isRateLimited,
   onReload,
   onPromptClick,
   onEdit,
@@ -146,6 +148,7 @@ export function MessageList({
             idx={idx}
             isLast={idx === messages.length - 1}
             isPending={isPending}
+            isRateLimited={isRateLimited}
             onReload={onReload}
             onEdit={onEdit}
             userId={userId}

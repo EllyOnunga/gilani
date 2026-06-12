@@ -1,4 +1,8 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
+import { authenticateRequest } from "@/lib/api-auth.server";
+import { z } from "zod";
 
 export interface RateLimitOptions {
   max: number;
@@ -136,9 +140,109 @@ export async function checkPlanRateLimit(
       break;
   }
 
+  const now = new Date();
+  const nextMidnight = new Date(now);
+  nextMidnight.setUTCHours(24, 0, 0, 0); // next midnight UTC
+  const msUntilMidnight = nextMidnight.getTime() - now.getTime();
+
   const minuteLimit: RateLimitOptions = { max: minuteMax, windowMs: 60_000 };
-  const dailyLimit: RateLimitOptions  = { max: dailyMax, windowMs: 86_400_000 };
+  const dailyLimit: RateLimitOptions  = { max: dailyMax, windowMs: msUntilMidnight };
 
   const result = await checkDualRateLimit(userId, action, minuteLimit, dailyLimit);
   return { ...result, plan };
 }
+
+/**
+ * Read-only status checker to check if user is rate limited without incrementing the counters.
+ */
+export async function getPlanRateLimitStatus(
+  userId: string,
+  action: RateLimitAction = "chat",
+): Promise<{ isRateLimited: boolean; retryAfterMs: number; isDaily: boolean }> {
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("plan, plan_expiry")
+    .eq("id", userId)
+    .maybeSingle();
+
+  let plan = profile?.plan ?? "free";
+  if (profile?.plan_expiry) {
+    const expiry = new Date(profile.plan_expiry);
+    if (expiry < new Date()) plan = "free";
+  }
+
+  const limits = getPlanLimits(plan);
+  let minuteMax = 20;
+  let dailyMax = 10;
+
+  switch (action) {
+    case "chat":
+      minuteMax = plan === "free" ? 5 : plan === "basic" ? 10 : 20;
+      dailyMax = limits.dailyMessages;
+      break;
+    case "quiz":
+      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
+      dailyMax = limits.dailyQuizzes;
+      break;
+    case "planner":
+      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
+      dailyMax = limits.dailyPlanners;
+      break;
+    case "notes":
+      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
+      dailyMax = limits.dailyNotes;
+      break;
+  }
+
+  const now = new Date();
+
+  // Check daily limit key
+  const dailyKey = `${userId}:${action}:day`;
+  const { data: dailyRow } = await supabaseAdmin
+    .from("rate_limits")
+    .select("count, reset_at")
+    .eq("key", dailyKey)
+    .maybeSingle();
+
+  if (dailyRow && new Date(dailyRow.reset_at) > now && dailyRow.count >= dailyMax) {
+    const resetTime = new Date(dailyRow.reset_at).getTime();
+    return {
+      isRateLimited: true,
+      retryAfterMs: Math.max(0, resetTime - now.getTime()),
+      isDaily: true,
+    };
+  }
+
+  // Check minute limit key
+  const minuteKey = `${userId}:${action}:min`;
+  const { data: minRow } = await supabaseAdmin
+    .from("rate_limits")
+    .select("count, reset_at")
+    .eq("key", minuteKey)
+    .maybeSingle();
+
+  if (minRow && new Date(minRow.reset_at) > now && minRow.count >= minuteMax) {
+    const resetTime = new Date(minRow.reset_at).getTime();
+    return {
+      isRateLimited: true,
+      retryAfterMs: Math.max(0, resetTime - now.getTime()),
+      isDaily: false,
+    };
+  }
+
+  return { isRateLimited: false, retryAfterMs: 0, isDaily: false };
+}
+
+export const getRateLimitStatus = createServerFn({ method: "POST" })
+  .inputValidator(z.string())
+  .handler(async ({ data }) => {
+    const action = data as RateLimitAction;
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch {
+      return { isRateLimited: false, retryAfterMs: 0, isDaily: false };
+    }
+    return getPlanRateLimitStatus(authResult.userId, action);
+  });

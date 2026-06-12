@@ -54,6 +54,29 @@ const ERROR_PATTERNS: Array<{ test: RegExp | string; message: string }> = [
  * Falls back to the original message only if it looks safe (short, no stack traces, no technical jargon).
  */
 function sanitizeErrorMessage(raw: string, fallback: string): string {
+  // Friendly rate limit and daily limit formatting
+  if (raw.toLowerCase().includes("daily") && (raw.toLowerCase().includes("limit") || raw.toLowerCase().includes("cap"))) {
+    const match = raw.match(/resets in (\d+)s/i);
+    if (match) {
+      const seconds = parseInt(match[1], 10);
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      if (h > 0) {
+        return `You've reached your daily limit for this feature. It resets at midnight (in ${h}h ${m}m). Upgrade your plan for higher limits!`;
+      }
+      return `You've reached your daily limit for this feature. It resets at midnight (in ${m}m). Upgrade your plan for higher limits!`;
+    }
+    return "You've reached your daily limit for this feature. It resets at midnight. Upgrade your plan for higher limits!";
+  }
+
+  if (raw.toLowerCase().includes("rate limit") || raw.toLowerCase().includes("too many requests")) {
+    const match = raw.match(/(?:try again|resets) in (\d+)s/i);
+    if (match) {
+      return `You're sending requests too fast. Please take a short break and try again in ${match[1]}s.`;
+    }
+    return "You're sending requests too fast. Please take a short break and try again in a moment.";
+  }
+
   for (const { test, message } of ERROR_PATTERNS) {
     const matched = typeof test === "string" ? raw.includes(test) : test.test(raw);
     if (matched) return message;

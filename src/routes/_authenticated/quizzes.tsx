@@ -26,7 +26,7 @@ import { getErrorMessage, withTimeout } from "@/lib/async";
 import { MathText } from "@/components/math-text";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { checkPlanRateLimit } from "@/lib/rate-limit.server";
+import { checkPlanRateLimit, getRateLimitStatus } from "@/lib/rate-limit.server";
 import { buildQuizPrompt } from "@/lib/quiz-prompt";
 import { sanitizeUntrustedInput } from "@/lib/tutor-prompt";
 
@@ -412,6 +412,26 @@ function QuizzesPage() {
   );
   const { secondsLeft, isDaily } = useRateLimitCountdown(isRateLimited ? quizError : null);
 
+  // Restore rate limit warning after page refresh
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const status = await getRateLimitStatus({ data: "quiz" });
+        if (mounted && status.isRateLimited && !quizError) {
+          const secs = Math.ceil(status.retryAfterMs / 1000);
+          setQuizError(
+            status.isDaily
+              ? `Daily quiz limit reached. Resets at midnight.`
+              : `Rate limit exceeded. Please try again in ${secs}s.`
+          );
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { mounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const fetchCurriculum = async () => {
       try {
@@ -681,7 +701,7 @@ function QuizzesPage() {
 
           <button
             onClick={startQuiz}
-            disabled={isGenerating}
+            disabled={isGenerating || isRateLimited}
             className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3.5 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow hover:bg-primary/90 active:scale-[0.98] transition-all"
           >
             <ListChecks className="h-4 w-4" />

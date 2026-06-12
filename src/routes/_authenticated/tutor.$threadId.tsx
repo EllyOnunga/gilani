@@ -22,6 +22,7 @@ import { ThreadSidebar } from "@/components/tutor/ThreadSidebar";
 import { DeleteModal } from "@/components/tutor/DeleteModal";
 import { EscalateModal } from "@/components/tutor/EscalateModal";
 import { MessageList } from "@/components/tutor/MessageList";
+import { getRateLimitStatus } from "@/lib/rate-limit.server";
 
 export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
   component: TutorThread,
@@ -82,6 +83,13 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [chatError, setChatError] = useState<string | null>(null);
+  const isRateLimited = !!(
+    chatError?.includes("Rate limit") ||
+    chatError?.includes("rate limit") ||
+    chatError?.includes("Daily") ||
+    chatError?.includes("daily") ||
+    chatError?.includes("quota")
+  );
   const [showPlans, setShowPlans] = useState(false);
   const [currentPlan, setCurrentPlan] = useState("free");
   const [messagesLoading, setMessagesLoading] = useState(true);
@@ -106,10 +114,12 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   } | null>(null);
 
   const [parsingFile, setParsingFile] = useState(false);
+  const [docUploadError, setDocUploadError] = useState<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setParsingFile(true);
+      setDocUploadError(null);
       const file = e.target.files[0];
       const toastId = toast.loading(`Extracting text from ${file.name}...`);
       try {
@@ -117,7 +127,9 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         setAttachedFile(parsed);
         toast.success("Document attached successfully!", { id: toastId });
       } catch (err: any) {
-        toast.error(friendlyError(err, "Failed to attach document."), { id: toastId });
+        const errMsg = friendlyError(err, "Failed to attach document.");
+        setDocUploadError(errMsg);
+        toast.error(errMsg, { id: toastId });
       } finally {
         setParsingFile(false);
         e.target.value = "";
@@ -149,7 +161,26 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     };
   }, []);
 
-  // Safety timeout
+  // Check rate limit status on page load so warning persists after refresh
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const status = await getRateLimitStatus({ data: "chat" });
+        if (mounted && status.isRateLimited) {
+          const secs = Math.ceil(status.retryAfterMs / 1000);
+          setChatError(JSON.stringify({
+            retryAfterMs: status.retryAfterMs,
+            isDaily: status.isDaily,
+            message: status.isDaily
+              ? `Daily message limit reached. Resets at midnight.`
+              : `Rate limit exceeded. Try again in ${secs}s.`,
+          }));
+        }
+      } catch { /* ignore – not signed in */ }
+    })();
+    return () => { mounted = false; };
+  }, []);
   useEffect(() => {
     const safety = setTimeout(() => {
       setMessagesLoading((prev) => {
@@ -677,6 +708,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           messagesLoading={messagesLoading}
           messagesLoadError={messagesLoadError}
           isPending={isPending}
+          isRateLimited={isRateLimited}
           onReload={() => regenerate({ body: { isRetry: true } })}
           onEdit={async (messageId, newText) => {
             // Find the message we are editing to get its created_at
@@ -752,10 +784,15 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           parsingFile={parsingFile}
           attachedFile={attachedFile}
           chatError={chatError}
+          docUploadError={docUploadError}
+          onClearDocError={() => setDocUploadError(null)}
           onInputChange={handleInputChange}
           onSubmit={submit}
           onFileChange={handleFileChange}
-          onRemoveFile={() => setAttachedFile(null)}
+          onRemoveFile={() => {
+            setAttachedFile(null);
+            setDocUploadError(null);
+          }}
           onUpgrade={() => setShowPlans(true)}
         />
       </main>

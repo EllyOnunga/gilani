@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FileText, Loader2, Paperclip, Send, Trash2, AlertCircle, Camera, Clock, CreditCard } from "lucide-react";
+import { FileText, Loader2, Paperclip, Send, Trash2, AlertCircle, Camera, Clock, CreditCard, X } from "lucide-react";
 
 type AttachedFile = {
   name: string;
@@ -13,12 +13,21 @@ type Props = {
   parsingFile: boolean;
   attachedFile: AttachedFile | null;
   chatError: string | null;
+  docUploadError: string | null;
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: () => void;
+  onClearDocError: () => void;
   onUpgrade?: () => void;
 };
+
+function formatFileSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
 
 function formatTime(seconds: number): string {
   if (seconds <= 0) return "";
@@ -86,10 +95,12 @@ export function ChatInput({
   parsingFile,
   attachedFile,
   chatError,
+  docUploadError,
   onInputChange,
   onSubmit,
   onFileChange,
   onRemoveFile,
+  onClearDocError,
   onUpgrade,
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -191,6 +202,33 @@ export function ChatInput({
         </div>
       )}
 
+      {/* Document Upload Error Banner */}
+      {docUploadError && (
+        <div className="mb-3.5 rounded-2xl border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 dark:border-destructive/30 backdrop-blur-sm shadow-sm">
+          <div className="flex items-start gap-2.5 px-3.5 py-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <AlertCircle className="h-4 w-4 text-destructive dark:text-red-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-destructive dark:text-red-300">
+                Document Upload Issue
+              </p>
+              <p className="text-[11px] text-destructive/80 dark:text-red-400/85 mt-0.5 font-medium">
+                {docUploadError}
+              </p>
+            </div>
+            <button
+              onClick={onClearDocError}
+              className="flex-shrink-0 rounded-lg p-1 text-destructive/60 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+              title="Dismiss error"
+              type="button"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Attached file pill */}
       {attachedFile && (
         <div className="mb-3.5 flex items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5/30 backdrop-blur-sm px-4 py-3 shadow-sm">
@@ -200,7 +238,7 @@ export function ChatInput({
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-foreground leading-tight">{attachedFile.name}</p>
             <p className="font-mono text-[9px] text-muted-foreground mt-1 leading-tight">
-              {(attachedFile.size / 1024).toFixed(1)} KB
+              {formatFileSize(attachedFile.size)}
               {attachedFile.text.length > 8000 && (
                 <span className="ml-1.5 text-amber-500 font-medium">· will be truncated to 8 000 chars</span>
               )}
