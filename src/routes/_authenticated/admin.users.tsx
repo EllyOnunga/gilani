@@ -179,11 +179,24 @@ const listFeedback = createServerFn({ method: "GET" }).handler(async () => {
   if (!roleCheck) throw new Error("Forbidden");
   const { data, error } = await supabaseAdmin
     .from("message_feedback")
-    .select("*, profiles(display_name)")
+    .select("*")
     .order("created_at", { ascending: false })
     .limit(200);
   if (error) throw new Error(error.message);
-  return (data ?? []) as unknown as MessageFeedback[];
+  // Enrich with display names via separate profiles fetch
+  const userIds = [...new Set((data ?? []).map((f: any) => f.user_id).filter(Boolean))];
+  let profileMap: Record<string, string> = {};
+  if (userIds.length > 0) {
+    const { data: profileData } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", userIds);
+    profileMap = Object.fromEntries((profileData ?? []).map((p: any) => [p.id, p.display_name]));
+  }
+  return (data ?? []).map((f: any) => ({
+    ...f,
+    profiles: { display_name: profileMap[f.user_id] ?? null },
+  })) as unknown as MessageFeedback[];
 });
 
 // ─── Route ─────────────────────────────────────────────────────────────────────
