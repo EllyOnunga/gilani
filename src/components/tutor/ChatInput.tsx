@@ -153,42 +153,23 @@ export function ChatInput({
                 {isDaily
                   ? "You’ve hit your daily AI message cap. It resets at midnight."
                   : "You’re sending messages too fast. Take a short break."}
-                {secondsLeft > 0 && (
-                  <span className="ml-1 font-mono font-bold text-amber-900 dark:text-amber-300 tabular-nums">
-                    (in {formatTime(secondsLeft)})
-                  </span>
-                )}
               </p>
             </div>
-            {isDaily && onUpgrade && (
-              <button
-                onClick={onUpgrade}
-                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200"
-              >
-                <CreditCard className="h-3 w-3" /> Upgrade
-              </button>
-            )}
-            {secondsLeft > 0 && !isDaily && (
-              <div className="flex-shrink-0 flex items-center justify-center">
-                <div className="relative h-8 w-8">
-                  <svg className="h-8 w-8 -rotate-90" viewBox="0 0 32 32">
-                    <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor"
-                      className="text-amber-200 dark:text-amber-850" strokeWidth="3" />
-                    <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor"
-                      className="text-amber-550 dark:text-amber-400"
-                      strokeWidth="3"
-                      strokeDasharray={`${2 * Math.PI * 12}`}
-                      strokeDashoffset={`${2 * Math.PI * 12 * (1 - (secondsLeft / 60))}`}
-                      strokeLinecap="round"
-                      style={{ transition: "stroke-dashoffset 1s linear" }}
-                    />
-                  </svg>
-                  <span className="absolute inset-0 flex items-center justify-center font-mono text-[9px] font-bold text-amber-600 dark:text-amber-400">
-                    {secondsLeft}
-                  </span>
+            <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
+              {secondsLeft > 0 && (
+                <div className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/20 px-3 py-1.5 text-[11px] font-bold text-amber-900 dark:text-amber-300 tabular-nums border border-amber-500/30">
+                  <Clock className="h-3 w-3" /> {formatTime(secondsLeft)}
                 </div>
-              </div>
-            )}
+              )}
+              {isDaily && onUpgrade && (
+                <button
+                  onClick={onUpgrade}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200"
+                >
+                  <CreditCard className="h-3 w-3" /> Upgrade
+                </button>
+              )}
+            </div>
           </div>
           {/* Progress bar draining down */}
           {secondsLeft > 0 && !isDaily && (

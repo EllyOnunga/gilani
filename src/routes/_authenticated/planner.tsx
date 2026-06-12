@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,9 @@ import {
   BookOpen,
   GraduationCap,
   Globe,
+  Clock,
+  AlertCircle,
+  CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -85,6 +88,49 @@ interface StudyPlan {
 }
 
 // ─── Helper Functions ──────────────────────────────────────────────────────────
+
+function formatTime(s: number) {
+  if (s >= 3600) return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+  if (s >= 60) return `${Math.floor(s / 60)}m ${s % 60}s`;
+  return `${s}s`;
+}
+
+function useRateLimitCountdown(errorMsg: string | null) {
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [isDaily, setIsDaily] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!errorMsg) { setSecondsLeft(0); return; }
+
+    let secs = 0;
+    let daily = errorMsg.toLowerCase().includes("daily") || errorMsg.toLowerCase().includes("midnight");
+
+    try {
+      const parsed = JSON.parse(errorMsg);
+      if (parsed.retryAfterMs) secs = Math.ceil(parsed.retryAfterMs / 1000);
+      if (parsed.isDaily !== undefined) daily = !!parsed.isDaily;
+    } catch {
+      const match = errorMsg.match(/(?:Try again|Resets|try again) in (\d+)s/);
+      if (match) secs = parseInt(match[1], 10);
+    }
+
+    setIsDaily(daily);
+    if (secs > 0) {
+      setSecondsLeft(secs);
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setSecondsLeft((s) => {
+          if (s <= 1) { clearInterval(timerRef.current!); return 0; }
+          return s - 1;
+        });
+      }, 1000);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [errorMsg]);
+
+  return { secondsLeft, isDaily };
+}
 
 function convertToStudyPlan(data: any): StudyPlan | null {
   if (!data) return null;
@@ -440,6 +486,7 @@ function PlannerPage() {
     error?.toLowerCase().includes("limit") ||
     error?.toLowerCase().includes("rate")
   );
+  const { secondsLeft, isDaily } = useRateLimitCountdown(isRateLimited ? error : null);
   const [debugInfo, setDebugInfo] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>(todayStr());
 
@@ -620,19 +667,83 @@ function PlannerPage() {
       )}
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in-slide">
-          <span className="flex-1">
-            {isRateLimited
-              ? "You've reached your daily planner limit. It will reset at midnight. Upgrade your plan for higher limits!"
-              : error}
-          </span>
-          {isRateLimited && (
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent("custom:open-plans"))}
-              className="rounded bg-destructive px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/80 transition-colors self-start sm:self-auto flex-shrink-0"
-            >
-              Upgrade Plan
-            </button>
+        <div className={`rounded-xl border overflow-hidden animate-in-slide ${
+          isRateLimited
+            ? "border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30"
+            : "border-destructive/30 bg-destructive/10"
+        }`}>
+          <div className="flex items-start gap-2.5 px-4 py-3">
+            <div className="flex-shrink-0 mt-0.5">
+              {isRateLimited
+                ? (secondsLeft > 0
+                    ? <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    : <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />)
+                : <AlertCircle className="h-4 w-4 text-destructive" />
+              }
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-xs font-semibold ${
+                isRateLimited ? "text-amber-800 dark:text-amber-300" : "text-destructive"
+              }`}>
+                {isRateLimited
+                  ? (isDaily ? "Daily planner limit reached" : "Slow down a little…")
+                  : "Plan generation failed"}
+              </p>
+              <p className={`text-[11px] mt-0.5 ${
+                isRateLimited ? "text-amber-700/80 dark:text-amber-400/80" : "text-destructive/80"
+              }`}>
+                {isRateLimited
+                  ? (isDaily
+                      ? "You've used your daily plan generation allowance. It resets at midnight."
+                      : "You're generating plans too fast. Take a short break.")
+                  : error}
+                {isRateLimited && secondsLeft > 0 && (
+                  <span className="ml-1 font-mono font-bold text-amber-900 dark:text-amber-300 tabular-nums">
+                    (retry in {formatTime(secondsLeft)})
+                  </span>
+                )}
+              </p>
+            </div>
+            {/* Countdown ring for short rate limits */}
+            {isRateLimited && secondsLeft > 0 && !isDaily && (
+              <div className="flex-shrink-0 flex items-center justify-center">
+                <div className="relative h-10 w-10">
+                  <svg className="h-10 w-10 -rotate-90" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor"
+                      className="text-amber-200 dark:text-amber-900" strokeWidth="3" />
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor"
+                      className="text-amber-500 dark:text-amber-400"
+                      strokeWidth="3"
+                      strokeDasharray={`${2 * Math.PI * 14}`}
+                      strokeDashoffset={`${2 * Math.PI * 14 * (1 - secondsLeft / 60)}`}
+                      strokeLinecap="round"
+                      style={{ transition: "stroke-dashoffset 1s linear" }}
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center font-mono text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                    {secondsLeft}
+                  </span>
+                </div>
+              </div>
+            )}
+            {/* Upgrade CTA */}
+            {isRateLimited && (
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("custom:open-plans"))}
+                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all"
+              >
+                <CreditCard className="h-3 w-3" /> Upgrade
+              </button>
+            )}
+          </div>
+          {/* Draining progress bar for short rate limits */}
+          {isRateLimited && secondsLeft > 0 && !isDaily && (
+            <div className="h-0.5 bg-amber-200/50 dark:bg-amber-800/50">
+              <div
+                className="h-full bg-amber-400 dark:bg-amber-500 transition-all duration-1000 ease-linear"
+                style={{ width: `${Math.min(100, (secondsLeft / 60) * 100)}%` }}
+              />
+            </div>
           )}
         </div>
       )}

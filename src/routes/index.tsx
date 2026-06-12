@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Logo } from "@/components/ui/logo";
 import { useAuth } from "@/hooks/use-auth";
+import { PLANS } from "@/lib/plans";
 
 import {
   ArrowRight,
@@ -690,122 +691,73 @@ function Landing() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-            {/* Free Plan */}
-            <div className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between hover:border-muted-foreground/30 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-              <div>
-                <div className="mb-4">
-                  <span className="rounded-full bg-muted/60 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-                    Starter
-                  </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+            {Object.values(PLANS).map((plan) => {
+              const isPremium = plan.id === "premium";
+              const isSchool = plan.id === "school";
+              
+              return (
+                <div 
+                  key={plan.id}
+                  className={`relative rounded-2xl border ${
+                    isPremium ? "border-2 border-primary bg-card/65 backdrop-blur-sm" : "border-border bg-card"
+                  } p-6 flex flex-col justify-between hover:scale-[1.02] hover:shadow-lg transition-all duration-300`}
+                >
+                  {isPremium && (
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm whitespace-nowrap">
+                      Most Popular
+                    </div>
+                  )}
+                  <div>
+                    <div className="mb-4 mt-1">
+                      <span className={`rounded-full px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold ${
+                        isPremium ? "bg-primary/10 text-primary" : 
+                        isSchool ? "bg-violet-500/10 text-violet-500" :
+                        "bg-muted/60 text-muted-foreground"
+                      }`}>
+                        {plan.id === "free" ? "Starter" : 
+                         plan.id === "basic" ? "Basic" :
+                         plan.id === "premium" ? "Monthly Saver" : "Institutional"}
+                      </span>
+                    </div>
+                    <h3 className="font-serif text-xl font-bold mb-1">{plan.label}</h3>
+                    <p className="text-xs text-muted-foreground mb-6">{plan.description}</p>
+                    <div className="flex items-baseline gap-1 mb-6">
+                      <span className="font-serif text-3xl font-black text-foreground">KES {plan.price.toLocaleString()}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {plan.id === "free" ? "/ forever" : plan.id === "school" ? "/ term" : "/ month"}
+                      </span>
+                    </div>
+                    <ul className="space-y-3 text-xs text-muted-foreground mb-8">
+                      {[
+                        `${plan.dailyMessages === 999999 ? "Unlimited" : plan.dailyMessages} AI tutor messages/day`,
+                        `${plan.dailyQuizzes} practice quizzes/day`,
+                        `${plan.dailyNotes} notes uploads/day`,
+                        `${plan.dailyPlanners} syllabus planner gens/day`,
+                        isPremium || isSchool ? "Priority Teacher Escalation" : "Community support"
+                      ].map((feat) => (
+                        <li key={feat} className="flex gap-2.5 items-start">
+                          <Check className={`h-4 w-4 flex-shrink-0 ${
+                            isPremium ? "text-primary" : isSchool ? "text-violet-500" : "text-emerald-500"
+                          }`} />
+                          <span className={isPremium ? "text-foreground/90 font-medium" : ""}>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <Link
+                    to="/register"
+                    className={`w-full inline-flex items-center justify-center rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all ${
+                      isPremium 
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20" 
+                        : "border border-border text-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {plan.price === 0 ? "Get Started Free" : "Upgrade Plan"}
+                  </Link>
                 </div>
-                <h3 className="font-serif text-xl font-bold mb-1">Free Student Plan</h3>
-                <p className="text-xs text-muted-foreground mb-6">Perfect for basic daily homework help and exam preparation.</p>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="font-serif text-3xl font-black text-foreground">KES 0</span>
-                  <span className="text-xs text-muted-foreground">/ forever</span>
-                </div>
-                <ul className="space-y-3 text-xs text-muted-foreground mb-8">
-                  {[
-                    "10 Socratic AI tutor messages per day",
-                    "3 practice quiz attempts per day",
-                    "2 notes uploads/summaries per day",
-                    "Standard 7-day syllabus planner",
-                    "Community support access"
-                  ].map((feat) => (
-                    <li key={feat} className="flex gap-2.5 items-start">
-                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <Link
-                to="/register"
-                className="w-full inline-flex items-center justify-center rounded-xl border border-border py-3 text-xs font-bold uppercase tracking-wider text-foreground hover:bg-accent transition-all"
-              >
-                Get Started Free
-              </Link>
-            </div>
-
-            {/* Premium Monthly */}
-            <div className="relative rounded-2xl border-2 border-primary bg-card/65 backdrop-blur-sm p-6 flex flex-col justify-between hover:scale-[1.02] hover:shadow-xl transition-all duration-300">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm">
-                Most Popular
-              </div>
-              <div>
-                <div className="mb-4 mt-1">
-                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary font-semibold">
-                    Monthly Saver
-                  </span>
-                </div>
-                <h3 className="font-serif text-xl font-bold mb-1">Premium Monthly</h3>
-                <p className="text-xs text-muted-foreground mb-6">Full unlimited study suite for dedicated secondary school students.</p>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="font-serif text-3xl font-black text-foreground">KES 300</span>
-                  <span className="text-xs text-muted-foreground">/ month</span>
-                </div>
-                <ul className="space-y-3 text-xs text-muted-foreground mb-8">
-                  {[
-                    "Unlimited Socratic AI tutor queries",
-                    "Unlimited quiz generations (MCQs/Short answers)",
-                    "Unlimited document summaries (PDF/images)",
-                    "Advanced analytics & mastery score alerts",
-                    "Priority Human Teacher escalation review",
-                    "Pay easily with M-Pesa Till/Paybill"
-                  ].map((feat) => (
-                    <li key={feat} className="flex gap-2.5 items-start">
-                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span className="text-foreground/90 font-medium">{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <Link
-                to="/register"
-                className="w-full inline-flex items-center justify-center rounded-xl bg-primary py-3 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
-              >
-                Upgrade to Premium
-              </Link>
-            </div>
-
-            {/* Premium Termly */}
-            <div className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between hover:border-muted-foreground/30 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-              <div>
-                <div className="mb-4">
-                  <span className="rounded-full bg-violet-500/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-violet-500 font-semibold">
-                    Best Value (Save 11%)
-                  </span>
-                </div>
-                <h3 className="font-serif text-xl font-bold mb-1">Premium Termly</h3>
-                <p className="text-xs text-muted-foreground mb-6">Ensure academic success for the entire school term.</p>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="font-serif text-3xl font-black text-foreground">KES 800</span>
-                  <span className="text-xs text-muted-foreground">/ term (3 months)</span>
-                </div>
-                <ul className="space-y-3 text-xs text-muted-foreground mb-8">
-                  {[
-                    "All Premium Monthly features included",
-                    "Guaranteed term-long access (no interruptions)",
-                    "Priority human grading for mock papers",
-                    "Exclusive study streak reward tokens",
-                    "Dedicated parent dashboard progress reports",
-                    "Pay once per term via M-Pesa"
-                  ].map((feat) => (
-                    <li key={feat} className="flex gap-2.5 items-start">
-                      <Check className="h-4 w-4 text-violet-500 flex-shrink-0" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <Link
-                to="/register"
-                className="w-full inline-flex items-center justify-center rounded-xl border border-violet-500/30 hover:border-violet-500 py-3 text-xs font-bold uppercase tracking-wider text-foreground hover:bg-accent transition-all"
-              >
-                Get Termly Pass
-              </Link>
-            </div>
+              );
+            })}
           </div>
         </section>
 

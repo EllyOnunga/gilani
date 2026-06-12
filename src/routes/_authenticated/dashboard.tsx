@@ -360,20 +360,20 @@ function Dashboard() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Ask the Tutor", icon: MessageCircle, to: "/tutor", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/40 border-blue-200/60 dark:border-blue-800/60" },
-            { label: "Take a Quiz", icon: ListChecks, to: "/quizzes", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/40 border-orange-200/60 dark:border-orange-800/60" },
-            { label: "Upload Notes", icon: BookOpenText, to: "/notes", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/60 dark:border-emerald-800/60" },
-            { label: "Study Planner", icon: CalendarDays, to: "/planner", color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/40 border-violet-200/60 dark:border-violet-800/60" },
-          ].map(({ label, icon: Icon, to, color, bg }) => (
+            { label: "Ask the Tutor", icon: MessageCircle, to: "/tutor" },
+            { label: "Take a Quiz", icon: ListChecks, to: "/quizzes" },
+            { label: "Upload Notes", icon: BookOpenText, to: "/notes" },
+            { label: "Study Planner", icon: CalendarDays, to: "/planner" },
+          ].map(({ label, icon: Icon, to }) => (
             <Link
               key={to}
               to={to as any}
-              className={`group flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${bg}`}
+              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40"
             >
-              <div className={`rounded-lg p-2.5 bg-white/60 dark:bg-black/20 ${color} transition-transform duration-200 group-hover:scale-110`}>
+              <div className="rounded-lg p-2.5 bg-background text-primary transition-transform duration-200 group-hover:scale-110">
                 <Icon className="h-5 w-5" />
               </div>
-              <span className={`text-xs font-semibold ${color}`}>{label}</span>
+              <span className="text-xs font-semibold text-primary">{label}</span>
             </Link>
           ))}
         </div>
@@ -389,11 +389,11 @@ function Dashboard() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {[
-            { title: "AI Tutor", description: "Curriculum-precise answers, worked proofs & teacher escalation.", icon: MessageCircle, to: "/tutor", accent: "from-blue-500/15 to-indigo-500/10", iconColor: "text-blue-600 dark:text-blue-400", cta: "Start session" },
-            { title: "Study Notes", description: "Upload notes, get AI summaries, key concepts & flashcards.", icon: BookOpenText, to: "/notes", accent: "from-emerald-500/15 to-teal-500/10", iconColor: "text-emerald-600 dark:text-emerald-400", cta: "Add notes" },
-            { title: "Quizzes", description: "AI-generated MCQs with explanations and difficulty tiers.", icon: ListChecks, to: "/quizzes", accent: "from-orange-500/15 to-red-500/10", iconColor: "text-orange-600 dark:text-orange-400", cta: "Practice now" },
-            { title: "Planner", description: "7-day schedule built from your quiz history and weak areas.", icon: CalendarDays, to: "/planner", accent: "from-violet-500/15 to-purple-500/10", iconColor: "text-violet-600 dark:text-violet-400", cta: "View plan" },
-            { title: "Analytics", description: "Track mastery scores, streaks and focus concepts over time.", icon: BarChart3, to: "/analytics", accent: "from-pink-500/15 to-rose-500/10", iconColor: "text-pink-600 dark:text-pink-400", cta: "View stats" },
+            { title: "AI Tutor", description: "Curriculum-precise answers, worked proofs & teacher escalation.", icon: MessageCircle, to: "/tutor", cta: "Start session" },
+            { title: "Study Notes", description: "Upload notes, get AI summaries, key concepts & flashcards.", icon: BookOpenText, to: "/notes", cta: "Add notes" },
+            { title: "Quizzes", description: "AI-generated MCQs with explanations and difficulty tiers.", icon: ListChecks, to: "/quizzes", cta: "Practice now" },
+            { title: "Planner", description: "7-day schedule built from your quiz history and weak areas.", icon: CalendarDays, to: "/planner", cta: "View plan" },
+            { title: "Analytics", description: "Track mastery scores, streaks and focus concepts over time.", icon: BarChart3, to: "/analytics", cta: "View stats" },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -403,15 +403,15 @@ function Dashboard() {
                 className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5"
               >
                 <div>
-                  <div className={`p-2 rounded-lg w-fit bg-gradient-to-br ${item.accent} ${item.iconColor} mb-3 transition-transform duration-200 group-hover:scale-105`}>
+                  <div className="p-2 rounded-lg w-fit bg-primary/10 text-primary mb-3 transition-transform duration-200 group-hover:scale-105">
                     <Icon className="h-4 w-4" />
                   </div>
                   <p className="text-sm font-bold group-hover:text-primary transition-colors">{item.title}</p>
                   <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">{item.description}</p>
                 </div>
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
-                  <span className={`text-[10px] font-mono uppercase tracking-widest font-bold ${item.iconColor}`}>{item.cta}</span>
-                  <ChevronRight className={`h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ${item.iconColor}`} />
+                  <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-primary">{item.cta}</span>
+                  <ChevronRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-primary" />
                 </div>
               </Link>
             );

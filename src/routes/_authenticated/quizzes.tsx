@@ -618,22 +618,24 @@ function QuizzesPage() {
                           ? `You've used your daily quiz allowance on your current plan. It resets at midnight.`
                           : "You're generating quizzes too fast. Take a short break.")
                       : quizError}
-                    {isRateLimited && secondsLeft > 0 && (
-                      <span className="ml-1 font-mono font-bold text-amber-900 dark:text-amber-300 tabular-nums">
-                        (retry in {formatTime(secondsLeft)})
-                      </span>
-                    )}
                     {!isRateLimited && " If this keeps happening, reduce question count or try a different topic."}
                   </p>
                 </div>
-                {isRateLimited && (
-                  <button
-                    onClick={() => window.dispatchEvent(new CustomEvent("custom:open-plans"))}
-                    className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all"
-                  >
-                    <CreditCard className="h-3 w-3" /> Upgrade
-                  </button>
-                )}
+                <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
+                  {isRateLimited && secondsLeft > 0 && (
+                    <div className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/20 px-3 py-1.5 text-[10px] font-bold text-amber-900 dark:text-amber-300 tabular-nums border border-amber-500/30">
+                      <Clock className="h-3 w-3" /> {formatTime(secondsLeft)}
+                    </div>
+                  )}
+                  {isRateLimited && (
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent("custom:open-plans"))}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all"
+                    >
+                      <CreditCard className="h-3 w-3" /> Upgrade
+                    </button>
+                  )}
+                </div>
               </div>
               {isRateLimited && secondsLeft > 0 && !isDaily && (
                 <div className="h-0.5 bg-amber-200/50 dark:bg-amber-800/50">

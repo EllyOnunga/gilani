@@ -141,9 +141,17 @@ export async function checkPlanRateLimit(
   }
 
   const now = new Date();
-  const nextMidnight = new Date(now);
-  nextMidnight.setUTCHours(24, 0, 0, 0); // next midnight UTC
-  const msUntilMidnight = nextMidnight.getTime() - now.getTime();
+  
+  // Convert now to EAT (UTC+3)
+  const eatOffsetMs = 3 * 60 * 60 * 1000;
+  const nowEat = new Date(now.getTime() + eatOffsetMs);
+  
+  // Find next midnight in EAT
+  const nextMidnightEat = new Date(nowEat);
+  nextMidnightEat.setUTCHours(24, 0, 0, 0); 
+  
+  // The difference in MS is identical regardless of timezone base
+  const msUntilMidnight = nextMidnightEat.getTime() - nowEat.getTime();
 
   const minuteLimit: RateLimitOptions = { max: minuteMax, windowMs: 60_000 };
   const dailyLimit: RateLimitOptions  = { max: dailyMax, windowMs: msUntilMidnight };
