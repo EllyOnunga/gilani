@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PlansModal } from "@/components/PlansModal";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,7 @@ import {
   CheckCircle,
   AlertTriangle,
   Trash2,
+  CreditCard,
 } from "lucide-react";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
@@ -60,6 +62,8 @@ function SettingsPage() {
   const [curriculum, setCurriculum] = useState("KCSE");
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState("free");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Theme State
@@ -181,6 +185,7 @@ function SettingsPage() {
   };
 
   return (
+    <>
     <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8 lg:p-12 animate-in-slide">
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-border pb-4">
@@ -454,6 +459,30 @@ function SettingsPage() {
               </Link>
             </div>
           </section>
+          {/* Plans Section */}
+          <section id="plans" className="rounded-xl border border-primary/20 bg-card p-6 shadow-sm">
+            <h3 className="font-serif text-xl font-bold flex items-center gap-2 mb-2 text-foreground">
+              <CreditCard className="h-5 w-5 text-primary" /> Subscription Plan
+            </h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Manage your plan to unlock more daily messages and features.
+            </p>
+            <div className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3">
+              <div>
+                <p className="text-sm font-bold capitalize">{currentPlan} Plan</p>
+                <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
+                  {currentPlan === "free" ? "10 messages/day" : currentPlan === "basic" ? "50 messages/day" : "Unlimited messages"}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowPlans(true)}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <CreditCard className="h-3.5 w-3.5" /> Upgrade
+              </button>
+            </div>
+          </section>
+
           {/* Danger Zone */}
           <section
             id="danger"
@@ -502,5 +531,7 @@ function SettingsPage() {
         </div>
       </div>
     </div>
+      {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
+    </>
   );
 }

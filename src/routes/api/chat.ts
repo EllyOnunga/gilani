@@ -9,10 +9,7 @@ import { withTimeout } from "@/lib/async";
 import { buildSystemPrompt, sanitizeUntrustedInput, sanitizeCurriculum } from "@/lib/tutor-prompt";
 
 // ─── Server-side Rate Limiter (Supabase-backed, survives cold starts) ──────
-import { checkDualRateLimit, CHAT_RATE_LIMIT, CHAT_DAILY_LIMIT } from "@/lib/rate-limit.server";
-async function checkChatRateLimit(userId: string): Promise<{ allowed: boolean; retryAfterMs: number; isDaily: boolean }> {
-  return checkDualRateLimit(userId, "chat", CHAT_RATE_LIMIT, CHAT_DAILY_LIMIT);
-}
+import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 
 // ─── Provider Helpers ─────────────────────────────────────────────────────────
 
@@ -165,7 +162,7 @@ export const Route = createFileRoute("/api/chat")({
           const { userId } = authResult;
 
           // Server-side rate limit — Supabase-backed, survives cold starts
-          const rlResult = await checkChatRateLimit(userId);
+          const rlResult = await checkPlanRateLimit(userId);
           if (!rlResult.allowed) {
             const seconds = Math.ceil(rlResult.retryAfterMs / 1000);
             const msg = rlResult.isDaily

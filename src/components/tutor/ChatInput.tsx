@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FileText, Loader2, Paperclip, Send, Trash2, AlertCircle, Camera, Clock } from "lucide-react";
+import { FileText, Loader2, Paperclip, Send, Trash2, AlertCircle, Camera, Clock, CreditCard } from "lucide-react";
 
 type AttachedFile = {
   name: string;
@@ -17,6 +17,7 @@ type Props = {
   onSubmit: (e: React.FormEvent) => void;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: () => void;
+  onUpgrade?: () => void;
 };
 
 function useRateLimitCountdown(chatError: string | null) {
@@ -59,6 +60,7 @@ export function ChatInput({
   onSubmit,
   onFileChange,
   onRemoveFile,
+  onUpgrade,
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const isRateLimited = !!(
@@ -117,6 +119,14 @@ export function ChatInput({
                 )}
               </p>
             </div>
+            {isDaily && onUpgrade && (
+              <button
+                onClick={onUpgrade}
+                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <CreditCard className="h-3 w-3" /> Upgrade
+              </button>
+            )}
             {secondsLeft > 0 && !isDaily && (
               <div className="flex-shrink-0 flex items-center justify-center">
                 <div className="relative h-8 w-8">

@@ -83,3 +83,37 @@ export async function checkDualRateLimit(
   if (!daily.allowed)  return { ...daily,  isDaily: true  };
   return { allowed: true, retryAfterMs: 0, isDaily: false };
 }
+
+// ─── Plan-aware daily limit ───────────────────────────────────────────────────
+
+import { getPlanLimits } from "@/lib/plans";
+
+/**
+ * Fetch the user's current plan from profiles, then check
+ * both per-minute and daily limits against their plan allowance.
+ */
+export async function checkPlanRateLimit(
+  userId: string,
+): Promise<{ allowed: boolean; retryAfterMs: number; isDaily: boolean; plan: string }> {
+  // Get user plan from profiles
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("plan, plan_expiry")
+    .eq("id", userId)
+    .maybeSingle();
+
+  // Fall back to free if no plan or plan expired
+  let plan = profile?.plan ?? "free";
+  if (profile?.plan_expiry) {
+    const expiry = new Date(profile.plan_expiry);
+    if (expiry < new Date()) plan = "free";
+  }
+
+  const limits = getPlanLimits(plan);
+
+  const minuteLimit: RateLimitOptions = { max: 20, windowMs: 60_000 };
+  const dailyLimit: RateLimitOptions  = { max: limits.dailyMessages, windowMs: 86_400_000 };
+
+  const result = await checkDualRateLimit(userId, "chat", minuteLimit, dailyLimit);
+  return { ...result, plan };
+}

@@ -17,6 +17,7 @@ import { withTimeout } from "@/lib/async";
 import { toast } from "sonner";
 import { ChatHeader } from "@/components/tutor/ChatHeader";
 import { ChatInput } from "@/components/tutor/ChatInput";
+import { PlansModal } from "@/components/PlansModal";
 import { ThreadSidebar } from "@/components/tutor/ThreadSidebar";
 import { DeleteModal } from "@/components/tutor/DeleteModal";
 import { EscalateModal } from "@/components/tutor/EscalateModal";
@@ -81,6 +82,8 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [showPlans, setShowPlans] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState("free");
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
   const [threadsLoading, setThreadsLoading] = useState(true);
@@ -132,11 +135,12 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         if (!userId) return;
         const { data, error } = await supabase
           .from("profiles")
-          .select("curriculum")
+          .select("curriculum, plan")
           .eq("id", userId)
           .maybeSingle();
         if (error) throw error;
         if (mounted && data?.curriculum) setCurriculum(data.curriculum);
+        if (mounted && (data as any)?.plan) setCurrentPlan((data as any).plan);
       } catch (err) {
         console.error("Failed to load user curriculum profile:", err);
       }
@@ -870,8 +874,10 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           onSubmit={submit}
           onFileChange={handleFileChange}
           onRemoveFile={() => setAttachedFile(null)}
+          onUpgrade={() => setShowPlans(true)}
         />
       </main>
+      {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
       {/* Escalate Modal */}
       {escalateModalOpen && (
         <EscalateModal

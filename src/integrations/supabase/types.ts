@@ -308,10 +308,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      payments: {
+        Row: {
+          id: string;
+          user_id: string;
+          phone_number: string;
+          amount: number;
+          plan: string;
+          mpesa_receipt: string | null;
+          checkout_request_id: string | null;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          phone_number: string;
+          amount: number;
+          plan: string;
+          mpesa_receipt?: string | null;
+          checkout_request_id?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          phone_number?: string;
+          amount?: number;
+          plan?: string;
+          mpesa_receipt?: string | null;
+          checkout_request_id?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
           created_at: string;
+          plan: string;
+          plan_expiry: string | null;
           curriculum: string | null;
           display_name: string | null;
           analytics_consent: boolean | null;
