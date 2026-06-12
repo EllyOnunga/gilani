@@ -329,9 +329,10 @@ export const Route = createFileRoute("/api/chat")({
           const aiMessages = [
             ...cappedMessages.map((m: any) => {
               const textContent = extractText(m);
+              const isUser = m.role !== "assistant";
               return {
-                role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
-                content: textContent,
+                role: (isUser ? "user" : "assistant") as "user" | "assistant",
+                content: isUser ? sanitizeUntrustedInput(textContent) : textContent,
               };
             }),
           ];

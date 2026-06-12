@@ -28,6 +28,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import { buildQuizPrompt } from "@/lib/quiz-prompt";
+import { sanitizeUntrustedInput } from "@/lib/tutor-prompt";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -115,7 +116,8 @@ const generateQuiz = createServerFn({ method: "POST" })
           : `Rate limit exceeded. Please try again in ${s}s.`
       );
     }
-    const { topic, count, curriculum } = data;
+    const topic = sanitizeUntrustedInput(data.topic || "");
+    const { count, curriculum } = data;
     if (!topic.trim()) throw new Error("Topic is required");
     if (count < 1 || count > 50) throw new Error("Question count must be between 1 and 50");
 

@@ -26,6 +26,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import { buildPlannerPrompt } from "@/lib/planner-prompt";
+import { sanitizeUntrustedInput } from "@/lib/tutor-prompt";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -289,7 +290,8 @@ const generatePlan = createServerFn({ method: "POST" }).handler(async () => {
   if (attempts) {
     for (const a of attempts) {
       if (Array.isArray(a.weak_topics)) {
-        weakTopics.push(...(a.weak_topics as string[]));
+        const sanitized = (a.weak_topics as string[]).map((t) => sanitizeUntrustedInput(t || ""));
+        weakTopics.push(...sanitized);
       }
     }
   }

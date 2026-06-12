@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout, friendlyError } from "@/lib/async";
 import { buildNotesPrompt } from "@/lib/notes-prompt";
+import { sanitizeUntrustedInput } from "@/lib/tutor-prompt";
 const LazyMarkdownRenderer = lazy(() =>
   import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer })),
 );
@@ -229,7 +230,10 @@ const ingestNote = createServerFn({ method: "POST" })
           : `Rate limit exceeded. Please try again in ${s}s.`
       );
     }
-    const { title, heading, subheading, content } = data;
+    const title = sanitizeUntrustedInput(data.title || "");
+    const heading = data.heading ? sanitizeUntrustedInput(data.heading) : "";
+    const subheading = data.subheading ? sanitizeUntrustedInput(data.subheading) : "";
+    const content = sanitizeUntrustedInput(data.content || "");
     if (!title.trim() || !content.trim()) {
       throw new Error("Title and content are required");
     }
@@ -266,6 +270,7 @@ const ingestNote = createServerFn({ method: "POST" })
         link?: string;
       }>;
       quick_review_cards: Array<{ front: string; back: string }>;
+      safety_warning?: string | null;
     }
 
     let parsed: StudyMaterialResponse | null = null;
