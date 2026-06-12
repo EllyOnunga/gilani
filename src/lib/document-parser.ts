@@ -13,22 +13,30 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit
 /**
  * Loads a script dynamically in the browser and returns a promise.
  */
-function loadExternalScript(src: string, integrity?: string): Promise<void> {
+function loadExternalScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    // If script is already in the document, resolve
-    const existing = document.querySelector(`script[src="${src}"]`);
+    const existing = document.querySelector(`script[src="${src}"]`) as HTMLScriptElement | null;
     if (existing) {
-      // Wait a tick to ensure it's fully loaded
-      setTimeout(resolve, 50);
+      // Already fully loaded (readyState = 'complete' for classic scripts)
+      if ((existing as any).readyState === "complete" || existing.getAttribute("data-loaded") === "1") {
+        resolve();
+        return;
+      }
+      // Still loading — wait for its load event
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error(`Script failed to load: ${src}`)), { once: true });
       return;
     }
 
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
-    // Skip integrity check — CDN hash mismatches cause silent failures
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Failed to load script: ${src}. Check your internet connection.`));
+    script.onload = () => { script.setAttribute("data-loaded", "1"); resolve(); };
+    script.onerror = () => reject(new Error(
+      `Could not load required library from ${new URL(src).hostname}. ` +
+      `This is usually caused by a network error or a Content Security Policy restriction. ` +
+      `Please check your internet connection and try again.`
+    ));
     document.head.appendChild(script);
   });
 }
