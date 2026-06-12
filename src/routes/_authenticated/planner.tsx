@@ -621,8 +621,12 @@ function PlannerPage() {
 
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in-slide">
-          <span className="flex-1">{error}</span>
-          {error.toLowerCase().includes("limit") && (
+          <span className="flex-1">
+            {isRateLimited
+              ? "You've reached your daily planner limit. It will reset at midnight. Upgrade your plan for higher limits!"
+              : error}
+          </span>
+          {isRateLimited && (
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("custom:open-plans"))}
               className="rounded bg-destructive px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/80 transition-colors self-start sm:self-auto flex-shrink-0"

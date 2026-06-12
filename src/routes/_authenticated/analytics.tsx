@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, TrendingUp, Flame, Trophy, BookOpen, AlertTriangle } from "lucide-react";
+import { BarChart3, TrendingUp, Flame, Trophy, BookOpen, AlertTriangle, MessageCircle, CalendarDays } from "lucide-react";
 import { z } from "zod";
 import {
   AreaChart,
@@ -31,6 +31,19 @@ type AnalyticsData = {
   attemptsHistory: { date: string; score: number }[];
   weakTopics: { name: string; count: number }[];
   subjectMastery: { subject: string; score: number }[];
+  streak: number;
+  notesCount: number;
+  messagesCount: number;
+  plansCount: number;
+  totalCorrectAnswers: number;
+  totalIncorrectAnswers: number;
+  totalQuestionsCount: number;
+  profile: {
+    full_name: string;
+    plan: string;
+    curriculum: string;
+    created_at: string;
+  };
 };
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
@@ -44,12 +57,39 @@ const fetchAnalytics = createServerFn({ method: "GET" }).handler(async () => {
     throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
   }
   const userId = authResult.userId;
-  // 1. Fetch attempts
+
+  // Fetch attempts
   const { data: attempts } = await supabaseAdmin
     .from("quiz_attempts")
     .select("score, created_at, weak_topics, quiz_id")
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
+
+  // Fetch profile details
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("display_name, plan, curriculum, created_at")
+    .eq("id", userId)
+    .maybeSingle();
+
+  // Fetch total messages sent
+  const { count: messagesCount } = await supabaseAdmin
+    .from("messages")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  // Fetch total study plans
+  const { count: plansCount } = await supabaseAdmin
+    .from("study_plans")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  const profileData = {
+    full_name: profile?.display_name || "Student",
+    plan: profile?.plan || "Free",
+    curriculum: profile?.curriculum || "KCSE",
+    created_at: profile?.created_at || new Date().toISOString(),
+  };
 
   if (!attempts || attempts.length === 0) {
     const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils.server");
@@ -62,6 +102,12 @@ const fetchAnalytics = createServerFn({ method: "GET" }).handler(async () => {
       subjectMastery: [],
       streak,
       notesCount,
+      messagesCount: messagesCount || 0,
+      plansCount: plansCount || 0,
+      totalCorrectAnswers: 0,
+      totalIncorrectAnswers: 0,
+      totalQuestionsCount: 0,
+      profile: profileData,
     };
   }
 
@@ -85,8 +131,13 @@ const fetchAnalytics = createServerFn({ method: "GET" }).handler(async () => {
   // Process attempts count and average
   const attemptsCount = attempts.length;
   let totalScorePercent = 0;
+  let totalCorrect = 0;
+  let totalQuestions = 0;
+
   for (const a of attempts) {
     const qLen = quizLengthMap[a.quiz_id] || 10;
+    totalCorrect += a.score;
+    totalQuestions += qLen;
     totalScorePercent += Math.round((a.score / qLen) * 100);
   }
   const averageScore = attemptsCount > 0 ? Math.round(totalScorePercent / attemptsCount) : 0;
@@ -147,6 +198,12 @@ const fetchAnalytics = createServerFn({ method: "GET" }).handler(async () => {
     subjectMastery,
     streak,
     notesCount,
+    messagesCount: messagesCount || 0,
+    plansCount: plansCount || 0,
+    totalCorrectAnswers: totalCorrect,
+    totalIncorrectAnswers: Math.max(0, totalQuestions - totalCorrect),
+    totalQuestionsCount: totalQuestions,
+    profile: profileData,
   };
 });
 
@@ -355,8 +412,19 @@ function AnalyticsPage() {
   const activeSubjectMastery = hasData ? data.subjectMastery : mockSubjectMastery;
   const attemptsCount = data ? data.attemptsCount : 0;
   const averageScore = data ? data.averageScore : 0;
-  const streak = data ? (data as any).streak : 0;
-  const notesCount = data ? (data as any).notesCount : 0;
+  const streak = data ? data.streak : 0;
+  const notesCount = data ? data.notesCount : 0;
+  const messagesCount = data ? data.messagesCount : 0;
+  const plansCount = data ? data.plansCount : 0;
+  const totalCorrectAnswers = data ? data.totalCorrectAnswers : 0;
+  const totalIncorrectAnswers = data ? data.totalIncorrectAnswers : 0;
+  const totalQuestionsCount = data ? data.totalQuestionsCount : 0;
+  const profile = data ? data.profile : {
+    full_name: "Student",
+    plan: "Free",
+    curriculum: "KCSE",
+    created_at: new Date().toISOString(),
+  };
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8 lg:p-12">
@@ -367,15 +435,39 @@ function AnalyticsPage() {
         className="fixed inset-0 z-50 pointer-events-none"
         style={{ width: "100vw", height: "100vh" }}
       />
-      {/* Header */}
-      <header className="animate-in-slide">
-        <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5"><BarChart3 className="h-3.5 w-3.5" aria-hidden="true" />Analytics</p>
-        <h2 className="mt-1 font-serif text-3xl sm:text-4xl lg:text-5xl">Performance Insights</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Track your learning trajectory, practice quiz performance, and mastery levels across
-          syllabus subjects.
-        </p>
-      </header>
+      {/* Header & Student Profile Card */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center border-b border-border/40 pb-6 animate-in-slide">
+        <div className="md:col-span-7 space-y-2">
+          <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" /> Analytics
+          </p>
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-black">Performance Insights</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Track your learning trajectory, practice quiz performance, and mastery levels across syllabus subjects.
+          </p>
+        </div>
+        
+        {/* Student Profile Card */}
+        <div className="md:col-span-5 rounded-2xl border border-border bg-card/60 backdrop-blur-md p-4 sm:p-5 shadow-sm flex items-center gap-4 transition-all duration-300 hover:border-primary/30">
+          <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-primary to-orange-500 flex items-center justify-center text-primary-foreground font-serif text-lg font-black shadow-md shrink-0 select-none">
+            {profile.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1 space-y-1">
+            <h3 className="font-serif font-bold text-base text-foreground truncate">{profile.full_name}</h3>
+            <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold">
+              <span className="rounded-full bg-primary/10 text-primary px-2.5 py-0.5 border border-primary/20 uppercase tracking-wide">
+                {profile.plan} Plan
+              </span>
+              <span className="rounded-full bg-secondary text-muted-foreground px-2.5 py-0.5 border border-border uppercase tracking-wide">
+                {profile.curriculum}
+              </span>
+            </div>
+            <p className="font-mono text-[9px] text-muted-foreground/85 leading-tight">
+              Member since: {new Date(profile.created_at).toLocaleDateString("en-KE", { year: "numeric", month: "short", day: "numeric" })}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {!hasData && (
         <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 flex items-start gap-3">
@@ -396,7 +488,7 @@ function AnalyticsPage() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 animate-in-slide">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 animate-in-slide">
         {[
           {
             label: "Quizzes Completed",
@@ -405,7 +497,7 @@ function AnalyticsPage() {
             desc: "Total attempts",
           },
           {
-            label: "Average Score",
+            label: "Average Accuracy",
             value: `${averageScore}%`,
             icon: BarChart3,
             desc: "Concept mastery",
@@ -414,24 +506,39 @@ function AnalyticsPage() {
             label: "Study Streak",
             value: `${streak} Day${streak === 1 ? "" : "s"}`,
             icon: Flame,
-            desc: "Active consistency",
+            desc: "Consecutive active",
+            highlight: true,
           },
           {
             label: "Notes Uploaded",
-            value: `${notesCount} Note${notesCount === 1 ? "" : "s"}`,
+            value: `${notesCount}`,
             icon: BookOpen,
-            desc: "Syllabus grounding",
+            desc: "Syllabus resources",
+          },
+          {
+            label: "Tutor Chats",
+            value: `${messagesCount}`,
+            icon: MessageCircle,
+            desc: "AI conversations",
+          },
+          {
+            label: "Schedules Built",
+            value: `${plansCount}`,
+            icon: CalendarDays,
+            desc: "Revision plans",
           },
         ].map((c) => (
-          <div key={c.label} className={`rounded-xl p-3 sm:p-5 lg:p-6 ${c.label === "Study Streak" ? "bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800" : "bg-secondary"}`}>
-            <div className="flex items-center justify-between mb-2">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          <div key={c.label} className={`rounded-xl p-3.5 sm:p-5 flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:scale-[1.01] ${c.highlight ? "bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-850 shadow-sm shadow-amber-500/5" : "bg-secondary border border-border/40 bg-secondary/50"}`}>
+            <div className="flex items-center justify-between gap-1 mb-2">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground truncate">
                 {c.label}
               </p>
-              <c.icon className={`h-4 w-4 ${c.label === "Study Streak" ? "text-amber-600 dark:text-amber-400" : "text-primary"}`} />
+              <c.icon className={`h-4 w-4 shrink-0 ${c.highlight ? "text-amber-600 dark:text-amber-400" : "text-primary/70"}`} />
             </div>
-            <p className={`font-serif text-2xl sm:text-3xl lg:text-4xl font-bold leading-none ${c.label === "Study Streak" ? "text-amber-800 dark:text-amber-300" : ""}`}>{c.value}</p>
-            <p className="mt-2 font-mono text-[10px] sm:text-xs text-muted-foreground uppercase">{c.desc}</p>
+            <div>
+              <p className={`font-serif text-2xl sm:text-3xl font-black leading-none tracking-tight ${c.highlight ? "text-amber-800 dark:text-amber-300" : ""}`}>{c.value}</p>
+              <p className="mt-2 font-mono text-[9px] sm:text-[10px] text-muted-foreground uppercase leading-none">{c.desc}</p>
+            </div>
           </div>
         ))}
       </div>
@@ -521,7 +628,7 @@ function AnalyticsPage() {
         </div>
 
         {/* weak topics bar chart */}
-        <div className="lg:col-span-12 rounded-xl border border-border bg-card p-5 lg:p-7 relative overflow-hidden">
+        <div className="lg:col-span-6 rounded-xl border border-border bg-card p-5 lg:p-7 relative overflow-hidden">
           {!hasData && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
               <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
@@ -549,7 +656,7 @@ function AnalyticsPage() {
                 const max = Math.max(...activeWeakTopics.map((t) => t.count), 1);
                 return activeWeakTopics.map((t) => (
                   <div key={t.name} className="flex items-center gap-3">
-                    <span className="w-40 sm:w-48 lg:w-56 shrink-0 truncate font-mono text-[11px] text-muted-foreground" title={t.name}>
+                    <span className="w-24 sm:w-32 shrink-0 truncate font-mono text-[11px] text-muted-foreground" title={t.name}>
                       {t.name}
                     </span>
                     <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
@@ -566,6 +673,86 @@ function AnalyticsPage() {
               })()}
             </div>
           )}
+        </div>
+
+        {/* Practice Accuracy Breakdown */}
+        <div className="lg:col-span-6 rounded-xl border border-border bg-card p-5 lg:p-7 relative overflow-hidden flex flex-col justify-between">
+          {!hasData && (
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
+              <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
+                Demo Mode
+              </span>
+              <p className="mt-2 text-xs font-semibold text-foreground">Accuracy Locked</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground max-w-[200px]">
+                Complete quizzes to analyze correct vs incorrect question distributions.
+              </p>
+            </div>
+          )}
+          <div>
+            <h3 className="font-serif text-xl">Practice Question Accuracy</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Distribution of correct vs incorrect answers across all quiz attempts.
+            </p>
+          </div>
+
+          <div className="my-6 space-y-4">
+            {/* Accuracy Summary */}
+            <div className="flex items-center justify-between border-b border-border/40 pb-3">
+              <div>
+                <p className="font-serif text-3xl font-black text-foreground">
+                  {totalQuestionsCount > 0 ? Math.round((totalCorrectAnswers / totalQuestionsCount) * 100) : 0}%
+                </p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mt-0.5">Overall Accuracy Rate</p>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-sm font-semibold text-foreground">{totalQuestionsCount}</p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mt-0.5">Total Attempted</p>
+              </div>
+            </div>
+
+            {/* Progress Bar Distribution */}
+            <div className="space-y-3">
+              {/* Correct Answers Bar */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] font-mono font-medium">
+                  <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" /> Correct Answers
+                  </span>
+                  <span className="text-muted-foreground">
+                    {totalCorrectAnswers} ({totalQuestionsCount > 0 ? Math.round((totalCorrectAnswers / totalQuestionsCount) * 100) : 0}%)
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                    style={{ width: `${totalQuestionsCount > 0 ? Math.round((totalCorrectAnswers / totalQuestionsCount) * 100) : 0}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Incorrect Answers Bar */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] font-mono font-medium">
+                  <span className="text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                    <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse" /> Incorrect Answers
+                  </span>
+                  <span className="text-muted-foreground">
+                    {totalIncorrectAnswers} ({totalQuestionsCount > 0 ? Math.round((totalIncorrectAnswers / totalQuestionsCount) * 100) : 0}%)
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-rose-500 transition-all duration-500"
+                    style={{ width: `${totalQuestionsCount > 0 ? Math.round((totalIncorrectAnswers / totalQuestionsCount) * 100) : 0}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-muted-foreground/80 leading-normal bg-secondary/50 rounded-lg p-2.5 border border-border/30">
+            💡 <strong>Study Tip:</strong> Focus on weak topics to turn red bars green. Use note summaries to review.
+          </div>
         </div>
       </div>
     </div>

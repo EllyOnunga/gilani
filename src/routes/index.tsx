@@ -499,6 +499,142 @@ function Landing() {
           </div>
         </section>
 
+        {/* ── Guidelines & Navigation Guide ── */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24 border-b border-border/40">
+          <div className="text-center mb-12">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
+              Application Guide & Instructions
+            </p>
+            <h2 className="font-serif text-3xl sm:text-4xl font-black">
+              How to Navigate & Use GilaniAI
+            </h2>
+            <p className="mt-3 text-sm text-muted-foreground max-w-2xl mx-auto">
+              Follow these simple guidelines to make the most out of your AI-powered study companion. Align your revision to KCSE, CBC, or IGCSE syllabi.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Brain,
+                title: "1. Socratic AI Tutor",
+                badge: "Active Tutoring",
+                desc: "Engage in dialogue to understand concepts deeply. The tutor uses Socratic questioning to guide you to the solution instead of just feeding you answers.",
+                instructions: [
+                  "Select your curriculum and subject at the top.",
+                  "Ask conceptual questions or paste difficult homework questions.",
+                  "Follow the AI's leading hints to solve problems yourself."
+                ],
+                color: "from-blue-500/10 via-indigo-500/5 to-transparent",
+                borderColor: "hover:border-blue-500/40",
+              },
+              {
+                icon: BookOpenText,
+                title: "2. Smart Notes Summariser",
+                badge: "Study Materials",
+                desc: "Convert heavy textbooks, lecture notes, or handwritten diagrams into concise, high-yield study summaries.",
+                instructions: [
+                  "Upload files up to 10MB (PDF, DOCX, or images).",
+                  "Review auto-generated summaries, core definitions, and flashcards.",
+                  "Export key terms or copy summaries to your note-taking app."
+                ],
+                color: "from-emerald-500/10 via-teal-500/5 to-transparent",
+                borderColor: "hover:border-emerald-500/40",
+              },
+              {
+                icon: ListChecks,
+                title: "3. Practice Quizzes",
+                badge: "Self-Assessment",
+                desc: "Test your mastery with automated quizzes mapped exactly to your syllabus and target exam formats.",
+                instructions: [
+                  "Choose a topic and preferred difficulty tier.",
+                  "Answer the multiple-choice or short-answer questions.",
+                  "Read detailed explanations for every correct/incorrect response."
+                ],
+                color: "from-orange-500/10 via-red-500/5 to-transparent",
+                borderColor: "hover:border-orange-500/40",
+              },
+              {
+                icon: CalendarDays,
+                title: "4. Personalised Planner",
+                badge: "Time Management",
+                desc: "Say goodbye to study block. Get a dynamic 7-day revision schedule built specifically for your learning pace.",
+                instructions: [
+                  "Click 'Generate Plan' in the Planner dashboard.",
+                  "Let the AI aggregate your weak subject topics and deadlines.",
+                  "Follow the custom task list daily to stay on track."
+                ],
+                color: "from-violet-500/10 via-purple-500/5 to-transparent",
+                borderColor: "hover:border-violet-500/40",
+              },
+              {
+                icon: BarChart3,
+                title: "5. Performance Analytics",
+                badge: "Progress Tracking",
+                desc: "Keep an eye on your strengths and weaknesses. The dashboard aggregates data from all your actions.",
+                instructions: [
+                  "Visit the Analytics page to view your active study streak.",
+                  "Inspect the accuracy gauge and overall question success rate.",
+                  "Target subjects highlighted as needing review."
+                ],
+                color: "from-pink-500/10 via-rose-500/5 to-transparent",
+                borderColor: "hover:border-pink-500/40",
+              },
+              {
+                icon: ShieldCheck,
+                title: "6. Teacher Escalation",
+                badge: "Human Feedback",
+                desc: "When the AI leaves you confused or if you need certified human grading, escalate the problem to expert Kenyan teachers.",
+                instructions: [
+                  "Click the 'Escalate to Teacher' button in your tutor session.",
+                  "A verified curriculum teacher from your school will review the chat.",
+                  "Receive expert annotations, grades, and tips in your inbox."
+                ],
+                color: "from-cyan-500/10 via-sky-500/5 to-transparent",
+                borderColor: "hover:border-cyan-500/40",
+              }
+            ].map((guide, idx) => {
+              const Icon = guide.icon;
+              return (
+                <div
+                  key={idx}
+                  className={`rounded-2xl border border-border bg-gradient-to-br ${guide.color} p-6 transition-all duration-300 ${guide.borderColor} flex flex-col justify-between hover:scale-[1.02] hover:shadow-lg`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="rounded-xl bg-card border border-border p-2.5 w-fit text-primary">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span className="rounded-full bg-muted/60 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                        {guide.badge}
+                      </span>
+                    </div>
+                    <h3 className="font-serif text-base font-bold text-foreground mb-2">
+                      {guide.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                      {guide.desc}
+                    </p>
+                  </div>
+                  <div className="border-t border-border/40 pt-4 mt-auto">
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-2">
+                      Step-by-Step Instructions:
+                    </p>
+                    <ul className="space-y-1.5 text-xs text-muted-foreground">
+                      {guide.instructions.map((step, sIdx) => (
+                        <li key={sIdx} className="flex gap-2 items-start">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary/80 mt-1.5 flex-shrink-0" />
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
         {/* ── Testimonials ── */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24">
           <div className="text-center mb-12">
@@ -537,6 +673,139 @@ function Landing() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── Pricing Plans Section ── */}
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24 border-b border-border/40 bg-muted/10">
+          <div className="text-center mb-12">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
+              Fair & Transparent Pricing
+            </p>
+            <h2 className="font-serif text-3xl sm:text-4xl font-black">
+              Choose the Plan that Fits Your Study Goals
+            </h2>
+            <p className="mt-3 text-sm text-muted-foreground max-w-xl mx-auto">
+              Unlock the full potential of GilaniAI. Upgrade to Premium easily using M-Pesa to study with no limits and connect with real teachers.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+            {/* Free Plan */}
+            <div className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between hover:border-muted-foreground/30 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+              <div>
+                <div className="mb-4">
+                  <span className="rounded-full bg-muted/60 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                    Starter
+                  </span>
+                </div>
+                <h3 className="font-serif text-xl font-bold mb-1">Free Student Plan</h3>
+                <p className="text-xs text-muted-foreground mb-6">Perfect for basic daily homework help and exam preparation.</p>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="font-serif text-3xl font-black text-foreground">KES 0</span>
+                  <span className="text-xs text-muted-foreground">/ forever</span>
+                </div>
+                <ul className="space-y-3 text-xs text-muted-foreground mb-8">
+                  {[
+                    "10 Socratic AI tutor messages per day",
+                    "3 practice quiz attempts per day",
+                    "2 notes uploads/summaries per day",
+                    "Standard 7-day syllabus planner",
+                    "Community support access"
+                  ].map((feat) => (
+                    <li key={feat} className="flex gap-2.5 items-start">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Link
+                to="/register"
+                className="w-full inline-flex items-center justify-center rounded-xl border border-border py-3 text-xs font-bold uppercase tracking-wider text-foreground hover:bg-accent transition-all"
+              >
+                Get Started Free
+              </Link>
+            </div>
+
+            {/* Premium Monthly */}
+            <div className="relative rounded-2xl border-2 border-primary bg-card/65 backdrop-blur-sm p-6 flex flex-col justify-between hover:scale-[1.02] hover:shadow-xl transition-all duration-300">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm">
+                Most Popular
+              </div>
+              <div>
+                <div className="mb-4 mt-1">
+                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary font-semibold">
+                    Monthly Saver
+                  </span>
+                </div>
+                <h3 className="font-serif text-xl font-bold mb-1">Premium Monthly</h3>
+                <p className="text-xs text-muted-foreground mb-6">Full unlimited study suite for dedicated secondary school students.</p>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="font-serif text-3xl font-black text-foreground">KES 300</span>
+                  <span className="text-xs text-muted-foreground">/ month</span>
+                </div>
+                <ul className="space-y-3 text-xs text-muted-foreground mb-8">
+                  {[
+                    "Unlimited Socratic AI tutor queries",
+                    "Unlimited quiz generations (MCQs/Short answers)",
+                    "Unlimited document summaries (PDF/images)",
+                    "Advanced analytics & mastery score alerts",
+                    "Priority Human Teacher escalation review",
+                    "Pay easily with M-Pesa Till/Paybill"
+                  ].map((feat) => (
+                    <li key={feat} className="flex gap-2.5 items-start">
+                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="text-foreground/90 font-medium">{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Link
+                to="/register"
+                className="w-full inline-flex items-center justify-center rounded-xl bg-primary py-3 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
+              >
+                Upgrade to Premium
+              </Link>
+            </div>
+
+            {/* Premium Termly */}
+            <div className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between hover:border-muted-foreground/30 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+              <div>
+                <div className="mb-4">
+                  <span className="rounded-full bg-violet-500/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-violet-500 font-semibold">
+                    Best Value (Save 11%)
+                  </span>
+                </div>
+                <h3 className="font-serif text-xl font-bold mb-1">Premium Termly</h3>
+                <p className="text-xs text-muted-foreground mb-6">Ensure academic success for the entire school term.</p>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="font-serif text-3xl font-black text-foreground">KES 800</span>
+                  <span className="text-xs text-muted-foreground">/ term (3 months)</span>
+                </div>
+                <ul className="space-y-3 text-xs text-muted-foreground mb-8">
+                  {[
+                    "All Premium Monthly features included",
+                    "Guaranteed term-long access (no interruptions)",
+                    "Priority human grading for mock papers",
+                    "Exclusive study streak reward tokens",
+                    "Dedicated parent dashboard progress reports",
+                    "Pay once per term via M-Pesa"
+                  ].map((feat) => (
+                    <li key={feat} className="flex gap-2.5 items-start">
+                      <Check className="h-4 w-4 text-violet-500 flex-shrink-0" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Link
+                to="/register"
+                className="w-full inline-flex items-center justify-center rounded-xl border border-violet-500/30 hover:border-violet-500 py-3 text-xs font-bold uppercase tracking-wider text-foreground hover:bg-accent transition-all"
+              >
+                Get Termly Pass
+              </Link>
+            </div>
           </div>
         </section>
 
