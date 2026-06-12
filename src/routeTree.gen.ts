@@ -31,6 +31,8 @@ import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as ApiTutorThreadsRouteImport } from './routes/api/tutor/threads'
+import { Route as ApiMpesaInitiateRouteImport } from './routes/api/mpesa/initiate'
+import { Route as ApiMpesaCallbackRouteImport } from './routes/api/mpesa/callback'
 import { Route as AuthenticatedTutorThreadIdRouteImport } from './routes/_authenticated/tutor.$threadId'
 import { Route as AuthenticatedTeacherEscalationsRouteImport } from './routes/_authenticated/teacher.escalations'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
@@ -144,6 +146,16 @@ const ApiTutorThreadsRoute = ApiTutorThreadsRouteImport.update({
   path: '/api/tutor/threads',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMpesaInitiateRoute = ApiMpesaInitiateRouteImport.update({
+  id: '/api/mpesa/initiate',
+  path: '/api/mpesa/initiate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMpesaCallbackRoute = ApiMpesaCallbackRouteImport.update({
+  id: '/api/mpesa/callback',
+  path: '/api/mpesa/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTutorThreadIdRoute =
   AuthenticatedTutorThreadIdRouteImport.update({
     id: '/$threadId',
@@ -186,6 +198,8 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
   '/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
+  '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
+  '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
 }
 export interface FileRoutesByTo {
@@ -212,6 +226,8 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
   '/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
+  '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
+  '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
 }
 export interface FileRoutesById {
@@ -240,6 +256,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
   '/_authenticated/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
+  '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
+  '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
 }
 export interface FileRouteTypes {
@@ -268,6 +286,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/teacher/escalations'
     | '/tutor/$threadId'
+    | '/api/mpesa/callback'
+    | '/api/mpesa/initiate'
     | '/api/tutor/threads'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -294,6 +314,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/teacher/escalations'
     | '/tutor/$threadId'
+    | '/api/mpesa/callback'
+    | '/api/mpesa/initiate'
     | '/api/tutor/threads'
   id:
     | '__root__'
@@ -321,6 +343,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/users'
     | '/_authenticated/teacher/escalations'
     | '/_authenticated/tutor/$threadId'
+    | '/api/mpesa/callback'
+    | '/api/mpesa/initiate'
     | '/api/tutor/threads'
   fileRoutesById: FileRoutesById
 }
@@ -339,6 +363,8 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiMpesaCallbackRoute: typeof ApiMpesaCallbackRoute
+  ApiMpesaInitiateRoute: typeof ApiMpesaInitiateRoute
   ApiTutorThreadsRoute: typeof ApiTutorThreadsRoute
 }
 
@@ -498,6 +524,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTutorThreadsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mpesa/initiate': {
+      id: '/api/mpesa/initiate'
+      path: '/api/mpesa/initiate'
+      fullPath: '/api/mpesa/initiate'
+      preLoaderRoute: typeof ApiMpesaInitiateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mpesa/callback': {
+      id: '/api/mpesa/callback'
+      path: '/api/mpesa/callback'
+      fullPath: '/api/mpesa/callback'
+      preLoaderRoute: typeof ApiMpesaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/tutor/$threadId': {
       id: '/_authenticated/tutor/$threadId'
       path: '/$threadId'
@@ -576,6 +616,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiMpesaCallbackRoute: ApiMpesaCallbackRoute,
+  ApiMpesaInitiateRoute: ApiMpesaInitiateRoute,
   ApiTutorThreadsRoute: ApiTutorThreadsRoute,
 }
 export const routeTree = rootRouteImport

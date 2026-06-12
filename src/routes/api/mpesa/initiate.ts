@@ -5,7 +5,7 @@ import { initiateSTKPush } from "@/lib/mpesa.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { PLANS } from "@/lib/plans";
 
-export const Route = createFileRoute("/api/mpesa/initiate" as any)({
+export const Route = createFileRoute("/api/mpesa/initiate")({
   server: {
     handlers: {
       POST: async () => {

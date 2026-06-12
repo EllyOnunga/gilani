@@ -3,7 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { upgradePlan } from "@/lib/mpesa.server";
 
-export const Route = createFileRoute("/api/mpesa/callback" as any)({
+export const Route = createFileRoute("/api/mpesa/callback")({
   server: {
     handlers: {
       POST: async () => {
