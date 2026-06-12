@@ -731,7 +731,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           </button>
         </div>
 
-        {/* Chat header — shown on all screens now */}
+        {/* Chat header — desktop only */}
         <ChatHeader
           title={threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
           curriculum={curriculum}
@@ -744,6 +744,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           onExportWord={handleExportWord}
           threadId={threadId}
           threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
+          className="hidden lg:flex"
         />
         {/* Messages area */}
         <MessageList
