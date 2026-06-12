@@ -131,7 +131,7 @@ export function MessageBubble({ message: m, idx, isLast, isPending, onReload, on
 
 
       <div
-        className={`${m.role === "user" ? "max-w-[85%] sm:max-w-[75%]" : "w-full"} rounded-2xl px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${
+        className={`${m.role === "user" ? "max-w-[88%] sm:max-w-[72%]" : "w-full max-w-[96%] sm:max-w-full"} rounded-2xl px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${
           isUser
             ? "bg-primary text-primary-foreground rounded-tr-sm shadow-sm"
             : "bg-card border border-border text-foreground rounded-tl-sm shadow-sm"

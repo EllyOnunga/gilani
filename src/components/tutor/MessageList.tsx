@@ -119,7 +119,7 @@ export function MessageList({
     isPending && messages[messages.length - 1]?.role === "user";
 
   return (
-    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-5">
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 py-4 sm:px-5 sm:py-5 space-y-4">
       {messagesLoading && (
         <div className="flex flex-col items-center justify-center h-full gap-3">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />

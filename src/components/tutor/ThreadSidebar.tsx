@@ -1,9 +1,10 @@
-import { MessageCircle, Plus, Search, Trash2, X } from "lucide-react";
+import { MessageCircle, Plus, Search, Trash2, X, Clock } from "lucide-react";
 import { SessionActions } from "./SessionActions";
 
 type Thread = {
   id: string;
   title?: string | null;
+  updated_at?: string | null;
 };
 
 type Props = {
@@ -60,81 +61,130 @@ export function ThreadSidebar({
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <span className="font-serif text-lg font-bold text-primary">Sessions</span>
-        {showClose && (
+        <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-primary">
+          Sessions
+        </span>
+        <div className="flex items-center gap-1">
           <button
-            onClick={onClose}
-            className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+            onClick={onNewThread}
+            className="flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-[10px] font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+            title="New session"
           >
-            <X className="h-5 w-5" />
+            <Plus className="h-3 w-3" /> New
           </button>
-        )}
+          {showClose && (
+            <button
+              onClick={onClose}
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
-
-      {/* New Thread Button */}
-      <button
-        onClick={onNewThread}
-        className="flex items-center gap-2 w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs font-bold text-primary hover:bg-primary/10 transition-colors mb-3"
-      >
-        <Plus className="h-4 w-4" />
-        New Chat
-      </button>
 
       {/* Search */}
       <div className="relative mb-3">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/60" />
         <input
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search sessions..."
-          className="w-full rounded-lg border border-border bg-background pl-8 pr-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+          placeholder="Search sessions…"
+          className="w-full rounded-lg border border-border bg-background pl-7 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
         />
       </div>
 
+      {/* Thread count */}
+      {!threadsLoading && filtered.length > 0 && (
+        <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 mb-2 px-1">
+          {filtered.length} session{filtered.length !== 1 ? "s" : ""}
+        </p>
+      )}
+
       {/* Thread List */}
-      <div className="flex-1 overflow-y-auto space-y-1">
+      <div className="flex-1 overflow-y-auto space-y-0.5 -mx-1 px-1">
         {threadsLoading && (
-          <p className="text-xs text-muted-foreground text-center py-4">Loading...</p>
+          <div className="flex flex-col gap-1.5 py-2">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />
+            ))}
+          </div>
         )}
         {threadsLoadError && (
-          <p className="text-xs text-destructive text-center py-4">{threadsLoadError}</p>
+          <p className="text-xs text-destructive text-center py-4 px-2">{threadsLoadError}</p>
         )}
         {!threadsLoading && filtered.length === 0 && (
-          <p className="text-xs text-muted-foreground text-center py-4">No sessions found</p>
-        )}
-        {filtered.map((t) => (
-          <div
-            key={t.id}
-            className={`group relative flex items-center justify-between rounded-lg transition-colors ${
-              t.id === threadId
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-accent"
-            }`}
-          >
-            <button
-              onClick={() => onSelectThread(t.id)}
-              className="flex-1 text-left px-3 py-2.5 min-w-0"
-            >
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                <span className="text-sm truncate">{t.title || "Untitled"}</span>
-              </div>
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteClick(t.id);
-              }}
-              className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 p-1.5 mr-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
-              title="Delete conversation"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+          <div className="text-center py-8">
+            <MessageCircle className="h-6 w-6 text-muted-foreground/30 mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground">
+              {searchQuery ? "No sessions match" : "No sessions yet"}
+            </p>
           </div>
-        ))}
+        )}
+        {filtered.map((t) => {
+          const isActive = t.id === threadId;
+          const timeStr = t.updated_at
+            ? (() => {
+                const d = new Date(t.updated_at);
+                const now = new Date();
+                const diffMs = now.getTime() - d.getTime();
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHrs = Math.floor(diffMins / 60);
+                const diffDays = Math.floor(diffHrs / 24);
+                if (diffMins < 1) return "just now";
+                if (diffMins < 60) return `${diffMins}m`;
+                if (diffHrs < 24) return `${diffHrs}h`;
+                if (diffDays < 7) return `${diffDays}d`;
+                return d.toLocaleDateString("en-KE", { day: "numeric", month: "short" });
+              })()
+            : null;
+          return (
+            <div
+              key={t.id}
+              className={`group relative flex items-center rounded-lg transition-all duration-150 ${
+                isActive
+                  ? "bg-primary/10 border border-primary/20 shadow-sm"
+                  : "hover:bg-accent border border-transparent"
+              }`}
+            >
+              <button
+                onClick={() => { onSelectThread(t.id); onClose(); }}
+                className="flex-1 text-left px-3 py-2.5 min-w-0"
+              >
+                <div className="flex items-start gap-2 min-w-0">
+                  <div className={`flex-shrink-0 mt-0.5 h-5 w-5 rounded-full flex items-center justify-center ${
+                    isActive ? "bg-primary/20" : "bg-muted/60"
+                  }`}>
+                    <MessageCircle className={`h-3 w-3 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-xs font-medium truncate leading-tight ${
+                      isActive ? "text-primary" : "text-foreground"
+                    }`}>
+                      {t.title || "Untitled session"}
+                    </p>
+                    {timeStr && (
+                      <p className="flex items-center gap-1 font-mono text-[9px] text-muted-foreground/60 mt-0.5">
+                        <Clock className="h-2.5 w-2.5" />{timeStr}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDeleteClick(t.id); }}
+                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 p-1.5 mr-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
+                title="Delete session"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          );
+        })}
       </div>
+
       {/* Session Actions - mobile only, desktop has ChatHeader */}
-      <div className="lg:hidden">
+      <div className="lg:hidden mt-3 border-t border-border pt-3">
         <SessionActions
           curriculum={curriculum}
           onCurriculumChange={onCurriculumChange}

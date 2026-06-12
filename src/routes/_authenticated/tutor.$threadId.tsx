@@ -675,7 +675,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] lg:h-screen flex-col lg:flex-row bg-background text-foreground">
+    <div className="flex h-[100dvh] flex-col lg:flex-row bg-background text-foreground overflow-hidden">
       <ThreadSidebar
         threads={threads}
         threadId={threadId}
@@ -699,26 +699,31 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
       />
       {/* Main chat area */}
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex flex-1 flex-col overflow-hidden min-w-0">
         {/* Mobile top bar */}
-        <div className="flex items-center justify-between border-b border-border bg-sidebar px-4 py-3 lg:hidden">
+        <div className="flex items-center gap-2 border-b border-border bg-sidebar px-3 py-2 lg:hidden">
           <button
             onClick={() => setThreadsOpen(true)}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground"
+            className="flex-shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             title="Open sessions"
           >
             <Menu className="h-5 w-5" />
           </button>
           <button
             onClick={() => setThreadsOpen(true)}
-            className="flex-1 mx-3 text-left text-sm font-semibold truncate hover:text-primary transition-colors"
-            title="Click to switch or create session"
+            className="flex-1 min-w-0 text-left"
+            title="Switch session"
           >
-            {threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
+            <p className="text-sm font-semibold truncate leading-tight">
+              {threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
+            </p>
+            <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+              {curriculum} · tap to switch
+            </p>
           </button>
           <button
             onClick={createNewThread}
-            className="flex items-center gap-1 rounded-lg bg-primary/10 border border-primary/20 px-2.5 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 transition-colors"
+            className="flex-shrink-0 flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
             title="New session"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -726,7 +731,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           </button>
         </div>
 
-        {/* Chat header */}
+        {/* Chat header — shown on all screens now */}
         <ChatHeader
           title={threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
           curriculum={curriculum}
