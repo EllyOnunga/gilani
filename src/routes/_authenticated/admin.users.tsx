@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { Settings, UserCheck, Loader2, Shield, GraduationCap, User, MessageSquare, Mail, Clock, CheckCircle, Inbox, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Settings, UserCheck, Loader2, Shield, GraduationCap, User, MessageSquare, Mail, Clock, CheckCircle, CheckCircle2, Inbox, ThumbsUp, ThumbsDown, Search, BarChart3, AlertTriangle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -39,74 +39,38 @@ type MessageFeedback = {
   profiles?: { display_name: string | null } | null;
 };
 
+type RateLimitRow = {
+  key: string; count: number; reset_at: string;
+};
+
 // ─── Server Functions ──────────────────────────────────────────────────────────
+async function verifyAdmin(request: Request): Promise<string> {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) throw new Error("Unauthorized");
+  const authResult = await authenticateRequest(request);
+  const { data: roleCheck } = await supabaseAdmin
+    .from("user_roles").select("role").eq("user_id", authResult.userId).eq("role", "admin").single();
+  if (!roleCheck) throw new Error("Forbidden");
+  return authResult.userId;
+}
 
 const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
-  // SECURITY: Use proper SSR auth via request header
   const request = getRequest();
-  let authResult;
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return [];
-  try {
-    authResult = await authenticateRequest(request);
-  } catch (err) {
-    return [];
-  }
-
-  const { userId } = authResult;
-
-  // SECURITY: Verify admin role before returning all profiles
-  const { data: roleCheck, error: roleError } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .single();
-
-  if (roleError || !roleCheck) {
-    throw new Error("Forbidden: Admin access required");
-  }
-
-  // Fetch profiles
-  const { data: profiles, error: pErr } = await supabaseAdmin
-    .from("profiles")
-    .select("id, display_name, curriculum, created_at")
-    .order("created_at", { ascending: false });
-  if (pErr) throw new Error(pErr.message);
-
-  // Fetch roles
+  try { await verifyAdmin(request); } catch { return []; }
+  const { data: profiles, error } = await supabaseAdmin
+    .from("profiles").select("id, display_name, curriculum, created_at").order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
   const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role");
   const roleMap: Record<string, string> = {};
   for (const r of roles ?? []) roleMap[r.user_id] = r.role;
-
-  return (profiles ?? []).map((p) => ({
-    ...p,
-    role: roleMap[p.id] ?? "student",
-  })) as Profile[];
+  return (profiles ?? []).map((p) => ({ ...p, role: roleMap[p.id] ?? "student" })) as Profile[];
 });
 
 const listContactMessages = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return [];
-  let authResult;
-  try {
-    authResult = await authenticateRequest(request);
-  } catch {
-    return [];
-  }
-  const { data: roleCheck } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", authResult.userId)
-    .eq("role", "admin")
-    .single();
-  if (!roleCheck) throw new Error("Forbidden");
-
+  try { await verifyAdmin(request); } catch { return []; }
   const { data, error } = await supabaseAdmin
-    .from("contact_messages")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .from("contact_messages").select("*").order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as ContactMessage[];
 });
@@ -115,56 +79,19 @@ const updateMessageStatus = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id: z.string().uuid(), status: z.enum(["unread", "read", "resolved"]) }))
   .handler(async ({ data }) => {
     const request = getRequest();
-    let authResult;
-    try {
-      authResult = await authenticateRequest(request);
-    } catch {
-      throw new Error("Unauthorized");
-    }
-    const { data: roleCheck } = await supabaseAdmin
-      .from("user_roles").select("role").eq("user_id", authResult.userId).eq("role", "admin").single();
-    if (!roleCheck) throw new Error("Forbidden");
-    const { error } = await supabaseAdmin
-      .from("contact_messages").update({ status: data.status }).eq("id", data.id);
+    await verifyAdmin(request);
+    const { error } = await supabaseAdmin.from("contact_messages").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
   });
 
 const updateRole = createServerFn({ method: "POST" })
   .inputValidator(z.object({ userId: z.string(), role: z.string() }))
   .handler(async ({ data }) => {
-    const { userId, role } = data;
-
-    // SECURITY: Use proper SSR auth via request header
     const request = getRequest();
-    let authResult;
-    try {
-      authResult = await authenticateRequest(request);
-    } catch (err) {
-      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
-    }
-
-    const { userId: adminUserId } = authResult;
-
-    const { data: roleCheck } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", adminUserId)
-      .eq("role", "admin")
-      .single();
-
-    if (!roleCheck) {
-      throw new Error("Forbidden: Admin access required");
-    }
-
-    // SECURITY: Prevent self-demotion from admin
-    if (adminUserId === userId && role !== "admin") {
-      throw new Error("Cannot remove your own admin role");
-    }
-
-    // Upsert into user_roles
+    const adminId = await verifyAdmin(request);
+    if (adminId === data.userId && data.role !== "admin") throw new Error("Cannot remove your own admin role");
     const { error } = await supabaseAdmin
-      .from("user_roles")
-      .upsert({ user_id: userId, role: role as any }, { onConflict: "user_id" });
+      .from("user_roles").upsert({ user_id: data.userId, role: data.role as any }, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
   });
 
@@ -199,6 +126,15 @@ const listFeedback = createServerFn({ method: "GET" }).handler(async () => {
   })) as unknown as MessageFeedback[];
 });
 
+const listRateLimits = createServerFn({ method: "GET" }).handler(async () => {
+  const request = getRequest();
+  try { await verifyAdmin(request); } catch { return []; }
+  const { data, error } = await supabaseAdmin
+    .from("rate_limits").select("key, count, reset_at").order("count", { ascending: false }).limit(100);
+  if (error) return [];
+  return (data ?? []) as RateLimitRow[];
+});
+
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
@@ -215,8 +151,10 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
     }
   },
   loader: async () => {
-    const [profiles, messages, feedback] = await Promise.all([listProfiles(), listContactMessages(), listFeedback()]);
-    return { profiles: profiles as Profile[], messages: messages as ContactMessage[], feedback: feedback as MessageFeedback[] };
+    const [profiles, messages, feedback, rateLimits] = await Promise.all([
+      listProfiles(), listContactMessages(), listFeedback(), listRateLimits(),
+    ]);
+    return { profiles: profiles as Profile[], messages: messages as ContactMessage[], feedback: feedback as MessageFeedback[], rateLimits: rateLimits as RateLimitRow[] };
   },
   component: AdminUsersPage,
 });
@@ -239,23 +177,37 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 };
 
 function AdminUsersPage() {
-  const loaderData = Route.useLoaderData() as { profiles: Profile[]; messages: ContactMessage[]; feedback: MessageFeedback[] };
-  const profiles = loaderData?.profiles || [];
-  const initialMessages = loaderData?.messages || [];
-  const feedback = loaderData?.feedback || [];
-  const [profileState, setProfileState] = useState<Profile[]>(profiles);
-  const [messages, setMessages] = useState<ContactMessage[]>(initialMessages);
+  const loaderData = Route.useLoaderData() as {
+    profiles: Profile[]; messages: ContactMessage[];
+    feedback: MessageFeedback[]; rateLimits: RateLimitRow[];
+  };
+  const [profileState, setProfileState] = useState<Profile[]>(loaderData?.profiles ?? []);
+  const [messages, setMessages] = useState<ContactMessage[]>(loaderData?.messages ?? []);
+  const feedback = loaderData?.feedback ?? [];
+  const rateLimits = loaderData?.rateLimits ?? [];
   const [updating, setUpdating] = useState<string | null>(null);
   const [updatingMsg, setUpdatingMsg] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<"users" | "messages">("users");
+  const [rlSearch, setRlSearch] = useState("");
+  const [tab, setTab] = useState<"users" | "feedback" | "messages" | "ratelimits">("users");
   const [expandedMsg, setExpandedMsg] = useState<string | null>(null);
-  const unreadCount = messages.filter((m) => m.status === "unread").length;
 
-  const filtered = profileState.filter((p) => {
+  const unreadCount = messages.filter((m) => m.status === "unread").length;
+  const positiveCount = feedback.filter((f) => f.vote === 1).length;
+  const negativeCount = feedback.filter((f) => f.vote === -1).length;
+  const satisfactionPct = feedback.length > 0 ? Math.round((positiveCount / feedback.length) * 100) : 0;
+
+  const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return !q || p.display_name?.toLowerCase().includes(q) || p.role.toLowerCase().includes(q);
-  });
+    return !q ? profileState : profileState.filter((p) =>
+      p.display_name?.toLowerCase().includes(q) || p.role.toLowerCase().includes(q)
+    );
+  }, [profileState, search]);
+
+  const filteredRateLimits = useMemo(() => {
+    const q = rlSearch.toLowerCase();
+    return !q ? rateLimits : rateLimits.filter((r) => r.key.toLowerCase().includes(q));
+  }, [rateLimits, rlSearch]);
 
   const handleRoleChange = async (userId: string, role: string) => {
     setUpdating(userId);
@@ -289,33 +241,71 @@ function AdminUsersPage() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8 lg:p-12">
+    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-10">
       {/* Header */}
-      <header>
-        <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Admin Panel</p>
-        <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Dashboard</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Manage users, roles, and contact messages.</p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Admin Panel</p>
+          <h1 className="mt-1 font-serif text-3xl sm:text-4xl text-foreground">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{profileState.length} users · {feedback.length} ratings · {messages.length} messages</p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-red-700 mt-1">
+          <Shield className="h-3 w-3" /> Admin
+        </span>
       </header>
 
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total Users</p>
+            <User className="h-4 w-4 text-primary" />
+          </div>
+          <p className="font-serif text-3xl font-bold text-primary">{profileState.length}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Satisfaction</p>
+            <ThumbsUp className="h-4 w-4 text-green-600" />
+          </div>
+          <p className="font-serif text-3xl font-bold text-green-600">{satisfactionPct}%</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Unread Messages</p>
+            <Inbox className="h-4 w-4 text-amber-600" />
+          </div>
+          <p className="font-serif text-3xl font-bold text-amber-600">{unreadCount}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Rate Limit Hits</p>
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+          </div>
+          <p className="font-serif text-3xl font-bold text-red-500">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
+        </div>
+      </div>
+
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-border">
-        <button
-          onClick={() => setTab("users")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-wider border-b-2 transition-colors ${tab === "users" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-        >
-          <User className="h-3.5 w-3.5" /> Users & Roles
-        </button>
-        <button
-          onClick={() => setTab("messages")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-wider border-b-2 transition-colors ${tab === "messages" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-        >
-          <MessageSquare className="h-3.5 w-3.5" /> Contact Messages
-          {unreadCount > 0 && (
-            <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
-              {unreadCount}
-            </span>
-          )}
-        </button>
+      <div className="flex gap-1 border-b border-border overflow-x-auto">
+        {([
+          { id: "users",      label: "Users",       icon: User },
+          { id: "feedback",   label: "Feedback",    icon: ThumbsUp },
+          { id: "messages",   label: "Messages",    icon: MessageSquare, badge: unreadCount },
+          { id: "ratelimits", label: "Rate Limits", icon: BarChart3 },
+        ] as const).map((t) => {
+          const Icon = t.icon;
+          return (
+            <button key={t.id} onClick={() => setTab(t.id as any)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${tab === t.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              <Icon className="h-3.5 w-3.5" />
+              {t.label}
+              {"badge" in t && t.badge > 0 && (
+                <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">{t.badge}</span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── Users tab ── */}
@@ -334,12 +324,12 @@ function AdminUsersPage() {
             })}
           </div>
 
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or role…"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or role…"
+              className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          </div>
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
@@ -400,7 +390,7 @@ function AdminUsersPage() {
       )}
 
       {/* ── Feedback tab ── */}
-      {(tab as any) === "feedback" && (
+      {tab === "feedback" && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
@@ -532,9 +522,86 @@ function AdminUsersPage() {
                     </div>
                   </div>
                 )}
+
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ── Rate Limits Tab ── */}
+      {tab === "ratelimits" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+              <BarChart3 className="mx-auto h-5 w-5 mb-2 text-primary" />
+              <p className="font-serif text-3xl font-bold">{rateLimits.length}</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Active Keys</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+              <AlertTriangle className="mx-auto h-5 w-5 mb-2 text-amber-500" />
+              <p className="font-serif text-3xl font-bold">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Total Hits</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+              <RefreshCw className="mx-auto h-5 w-5 mb-2 text-blue-500" />
+              <p className="font-serif text-3xl font-bold">
+                {rateLimits.filter((r) => new Date(r.reset_at) > new Date()).length}
+              </p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Active Now</p>
+            </div>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input value={rlSearch} onChange={(e) => setRlSearch(e.target.value)}
+              placeholder="Filter by key…"
+              className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          </div>
+          {rateLimits.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card py-16 text-center">
+              <CheckCircle2 className="mx-auto h-8 w-8 text-green-400/60 mb-3" />
+              <p className="text-sm text-muted-foreground">No rate limit hits recorded</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                      {["Key", "Hits", "Resets At", "Status"].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRateLimits.map((r) => {
+                      const isActive = new Date(r.reset_at) > new Date();
+                      return (
+                        <tr key={r.key} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                          <td className="px-4 py-3 font-mono text-xs max-w-[200px] truncate" title={r.key}>{r.key}</td>
+                          <td className="px-4 py-3">
+                            <span className={`font-bold text-sm ${r.count > 10 ? "text-destructive" : r.count > 5 ? "text-amber-600" : "text-foreground"}`}>{r.count}</span>
+                          </td>
+                          <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                            {new Date(r.reset_at).toLocaleString("en-KE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </td>
+                          <td className="px-4 py-3">
+                            {isActive
+                              ? <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 font-mono text-[9px] text-red-700">Active</span>
+                              : <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 font-mono text-[9px] text-green-700">Expired</span>
+                            }
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
+                <p className="font-mono text-[10px] text-muted-foreground">{filteredRateLimits.length} keys</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
