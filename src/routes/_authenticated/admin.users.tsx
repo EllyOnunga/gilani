@@ -5,7 +5,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { Settings, UserCheck, Loader2, Shield, GraduationCap, User, MessageSquare, Mail, Clock, CheckCircle, CheckCircle2, Inbox, ThumbsUp, ThumbsDown, Search, BarChart3, AlertTriangle, RefreshCw, CreditCard, DollarSign, TrendingUp, Calendar, Crown } from "lucide-react";
+import { Settings, UserCheck, Loader2, Shield, GraduationCap, User, MessageSquare, Mail, Clock, CheckCircle, CheckCircle2, Inbox, ThumbsUp, ThumbsDown, Search, BarChart3, AlertTriangle, RefreshCw, CreditCard, DollarSign, TrendingUp, Calendar, Crown, BookOpen, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { PLANS, type PlanId } from "@/lib/plans";
@@ -21,6 +21,27 @@ type Profile = {
   role: string;
   plan: string;
   plan_expiry: string | null;
+  conversation_count?: number;
+};
+
+type Escalation = {
+  id: string;
+  conversation_id: string;
+  user_id: string;
+  reason: string;
+  status: string;
+  detail: string | null;
+  reviewer_id: string | null;
+  created_at: string;
+  profiles?: { display_name: string | null; email: string | null } | null;
+};
+
+type PlatformStats = {
+  totalConversations: number;
+  totalMessages: number;
+  totalNotes: number;
+  totalEscalations: number;
+  openEscalations: number;
 };
 
 type ContactMessage = {
@@ -73,13 +94,59 @@ async function verifyAdmin(request: Request): Promise<string> {
 const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
   try { await verifyAdmin(request); } catch { return []; }
-  const { data: profiles, error } = await supabaseAdmin
-    .from("profiles").select("id, display_name, email, curriculum, created_at, plan, plan_expiry").order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role");
+  const [profilesRes, rolesRes, convoRes] = await Promise.all([
+    supabaseAdmin.from("profiles").select("id, display_name, email, curriculum, created_at, plan, plan_expiry").order("created_at", { ascending: false }),
+    supabaseAdmin.from("user_roles").select("user_id, role"),
+    supabaseAdmin.from("conversations").select("user_id"),
+  ]);
+  if (profilesRes.error) throw new Error(profilesRes.error.message);
   const roleMap: Record<string, string> = {};
-  for (const r of roles ?? []) roleMap[r.user_id] = r.role;
-  return (profiles ?? []).map((p) => ({ ...p, role: roleMap[p.id] ?? "student" })) as Profile[];
+  for (const r of rolesRes.data ?? []) roleMap[r.user_id] = r.role;
+  const convoCount: Record<string, number> = {};
+  for (const c of convoRes.data ?? []) convoCount[c.user_id] = (convoCount[c.user_id] ?? 0) + 1;
+  return (profilesRes.data ?? []).map((p) => ({
+    ...p,
+    role: roleMap[p.id] ?? "student",
+    conversation_count: convoCount[p.id] ?? 0,
+  })) as Profile[];
+});
+
+const listEscalations = createServerFn({ method: "GET" }).handler(async () => {
+  const request = getRequest();
+  try { await verifyAdmin(request); } catch { return []; }
+  const { data, error } = await supabaseAdmin
+    .from("escalations")
+    .select("id, conversation_id, user_id, reason, status, detail, reviewer_id, created_at")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) return [];
+  // Enrich with user profiles
+  const userIds = [...new Set((data ?? []).map((e: any) => e.user_id).filter(Boolean))];
+  let profileMap: Record<string, { display_name: string | null; email: string | null }> = {};
+  if (userIds.length > 0) {
+    const { data: pd } = await supabaseAdmin.from("profiles").select("id, display_name, email").in("id", userIds);
+    profileMap = Object.fromEntries((pd ?? []).map((p: any) => [p.id, { display_name: p.display_name, email: p.email }]));
+  }
+  return (data ?? []).map((e: any) => ({ ...e, profiles: profileMap[e.user_id] ?? null })) as Escalation[];
+});
+
+const listPlatformStats = createServerFn({ method: "GET" }).handler(async () => {
+  const request = getRequest();
+  try { await verifyAdmin(request); } catch { return { totalConversations: 0, totalMessages: 0, totalNotes: 0, totalEscalations: 0, openEscalations: 0 }; }
+  const [convos, msgs, notes, escs] = await Promise.all([
+    supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("messages").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("notes").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("escalations").select("id, status"),
+  ]);
+  const escalations = escs.data ?? [];
+  return {
+    totalConversations: convos.count ?? 0,
+    totalMessages: msgs.count ?? 0,
+    totalNotes: notes.count ?? 0,
+    totalEscalations: escalations.length,
+    openEscalations: escalations.filter((e: any) => e.status === "open" || e.status === "pending").length,
+  } as PlatformStats;
 });
 
 const listContactMessages = createServerFn({ method: "GET" }).handler(async () => {
@@ -199,10 +266,19 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
     }
   },
   loader: async () => {
-    const [profiles, messages, feedback, rateLimits, payments] = await Promise.all([
+    const [profiles, messages, feedback, rateLimits, payments, escalations, platformStats] = await Promise.all([
       listProfiles(), listContactMessages(), listFeedback(), listRateLimits(), listPayments(),
+      listEscalations(), listPlatformStats(),
     ]);
-    return { profiles: profiles as Profile[], messages: messages as ContactMessage[], feedback: feedback as MessageFeedback[], rateLimits: rateLimits as RateLimitRow[], payments: payments as Payment[] };
+    return {
+      profiles: profiles as Profile[],
+      messages: messages as ContactMessage[],
+      feedback: feedback as MessageFeedback[],
+      rateLimits: rateLimits as RateLimitRow[],
+      payments: payments as Payment[],
+      escalations: escalations as Escalation[],
+      platformStats: platformStats as PlatformStats,
+    };
   },
   component: AdminUsersPage,
 });
@@ -228,19 +304,23 @@ function AdminUsersPage() {
   const loaderData = Route.useLoaderData() as {
     profiles: Profile[]; messages: ContactMessage[];
     feedback: MessageFeedback[]; rateLimits: RateLimitRow[]; payments: Payment[];
+    escalations: Escalation[]; platformStats: PlatformStats;
   };
   const [profileState, setProfileState] = useState<Profile[]>(loaderData?.profiles ?? []);
   const [messages, setMessages] = useState<ContactMessage[]>(loaderData?.messages ?? []);
   const feedback = loaderData?.feedback ?? [];
   const rateLimits = loaderData?.rateLimits ?? [];
   const payments = loaderData?.payments ?? [];
+  const escalations = loaderData?.escalations ?? [];
+  const platformStats = loaderData?.platformStats ?? { totalConversations: 0, totalMessages: 0, totalNotes: 0, totalEscalations: 0, openEscalations: 0 };
   const [planSearch, setPlanSearch] = useState("");
   const [updatingPlan, setUpdatingPlan] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [updatingMsg, setUpdatingMsg] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rlSearch, setRlSearch] = useState("");
-  const [tab, setTab] = useState<"users" | "feedback" | "messages" | "ratelimits" | "subscriptions">("users");
+  const [escalationFilter, setEscalationFilter] = useState<"all" | "open" | "resolved" | "pending">("all");
+  const [tab, setTab] = useState<"users" | "feedback" | "messages" | "ratelimits" | "subscriptions" | "escalations">("users");
   const [expandedMsg, setExpandedMsg] = useState<string | null>(null);
 
   const unreadCount = messages.filter((m) => m.status === "unread").length;
@@ -251,9 +331,15 @@ function AdminUsersPage() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return !q ? profileState : profileState.filter((p) =>
-      p.display_name?.toLowerCase().includes(q) || p.role.toLowerCase().includes(q)
+      p.display_name?.toLowerCase().includes(q) ||
+      p.email?.toLowerCase().includes(q) ||
+      p.role.toLowerCase().includes(q)
     );
   }, [profileState, search]);
+
+  const filteredEscalations = useMemo(() => {
+    return escalationFilter === "all" ? escalations : escalations.filter((e) => e.status === escalationFilter);
+  }, [escalations, escalationFilter]);
 
   const filteredRateLimits = useMemo(() => {
     const q = rlSearch.toLowerCase();
@@ -338,7 +424,7 @@ function AdminUsersPage() {
         <div>
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Admin Panel</p>
           <h1 className="mt-1 font-serif text-3xl sm:text-4xl text-foreground">Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{profileState.length} users · {feedback.length} ratings · {messages.length} messages</p>
+          <p className="mt-1 text-sm text-muted-foreground">{profileState.length} users · {platformStats.totalConversations.toLocaleString()} conversations · {platformStats.totalMessages.toLocaleString()} messages · {platformStats.openEscalations} open escalations</p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-red-700 mt-1">
           <Shield className="h-3 w-3" /> Admin
@@ -356,6 +442,31 @@ function AdminUsersPage() {
         </div>
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Conversations</p>
+            <Activity className="h-4 w-4 text-blue-600" />
+          </div>
+          <p className="font-serif text-3xl font-bold text-blue-600">{platformStats.totalConversations.toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Notes Uploaded</p>
+            <BookOpen className="h-4 w-4 text-purple-600" />
+          </div>
+          <p className="font-serif text-3xl font-bold text-purple-600">{platformStats.totalNotes.toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Open Escalations</p>
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+          </div>
+          <p className="font-serif text-3xl font-bold text-red-500">{platformStats.openEscalations}</p>
+        </div>
+      </div>
+
+      {/* Secondary stats row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Satisfaction</p>
             <ThumbsUp className="h-4 w-4 text-green-600" />
           </div>
@@ -371,20 +482,28 @@ function AdminUsersPage() {
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Rate Limit Hits</p>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <RefreshCw className="h-4 w-4 text-orange-500" />
           </div>
-          <p className="font-serif text-3xl font-bold text-red-500">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
+          <p className="font-serif text-3xl font-bold text-orange-500">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total Messages</p>
+            <MessageSquare className="h-4 w-4 text-teal-600" />
+          </div>
+          <p className="font-serif text-3xl font-bold text-teal-600">{platformStats.totalMessages.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border overflow-x-auto">
         {([
-          { id: "users",      label: "Users",       icon: User },
-          { id: "feedback",   label: "Feedback",    icon: ThumbsUp },
-          { id: "messages",   label: "Messages",    icon: MessageSquare, badge: unreadCount },
-          { id: "ratelimits", label: "Rate Limits", icon: BarChart3 },
-          { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
+          { id: "users",         label: "Users",        icon: User },
+          { id: "escalations",   label: "Escalations",  icon: AlertTriangle, badge: platformStats.openEscalations },
+          { id: "feedback",      label: "Feedback",     icon: ThumbsUp },
+          { id: "messages",      label: "Messages",     icon: MessageSquare, badge: unreadCount },
+          { id: "ratelimits",    label: "Rate Limits",  icon: BarChart3 },
+          { id: "subscriptions", label: "Subscriptions",icon: CreditCard },
         ] as const).map((t) => {
           const Icon = t.icon;
           return (
@@ -419,7 +538,7 @@ function AdminUsersPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or role…"
+              placeholder="Search by name, email, or role…"
               className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
 
@@ -428,14 +547,14 @@ function AdminUsersPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
-                    {["User","Curriculum","Joined","Role"].map((h) => (
+                    {["User","Email","Conversations","Curriculum","Joined","Role"].map((h) => (
                       <th key={h} className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 && (
-                    <tr><td colSpan={4} className="py-12 text-center font-serif text-muted-foreground">No users found</td></tr>
+                    <tr><td colSpan={6} className="py-12 text-center font-serif text-muted-foreground">No users found</td></tr>
                   )}
                   {filtered.map((p) => {
                     const meta = ROLE_META[p.role as Role] ?? ROLE_META.student;
@@ -445,6 +564,12 @@ function AdminUsersPage() {
                         <td className="px-5 py-3">
                           <p className="font-semibold">{p.display_name ?? "—"}</p>
                           <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id.slice(0, 8)}…</p>
+                        </td>
+                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
+                        <td className="px-5 py-3 font-mono text-xs text-center">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-blue-700 text-[10px] font-mono">
+                            {p.conversation_count ?? 0}
+                          </span>
                         </td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.curriculum ?? "—"}</td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
@@ -691,6 +816,71 @@ function AdminUsersPage() {
               </div>
               <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{filteredRateLimits.length} keys</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Escalations tab ── */}
+      {tab === "escalations" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            {(["open", "pending", "resolved"] as const).map((s) => (
+              <button key={s} onClick={() => setEscalationFilter(s === escalationFilter ? "all" : s)}
+                className={`rounded-xl border p-4 text-center shadow-sm transition-colors ${
+                  escalationFilter === s ? "border-primary bg-primary/5" : "border-border bg-card"
+                }`}>
+                <p className="font-serif text-3xl font-bold">{escalations.filter((e) => e.status === s).length}</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">{s}</p>
+              </button>
+            ))}
+          </div>
+
+          {filteredEscalations.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card py-16 text-center">
+              <CheckCircle2 className="mx-auto h-8 w-8 text-green-400/60 mb-3" />
+              <p className="font-serif text-muted-foreground">No escalations{escalationFilter !== "all" ? ` with status "${escalationFilter}"` : ""}</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                      {["Student", "Reason", "Status", "Reviewer", "Date"].map((h) => (
+                        <th key={h} className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredEscalations.map((esc) => (
+                      <tr key={esc.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                        <td className="px-5 py-3">
+                          <p className="font-semibold">{esc.profiles?.display_name ?? "—"}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">{esc.profiles?.email ?? esc.user_id.slice(0, 8) + "…"}</p>
+                        </td>
+                        <td className="px-5 py-3 text-xs max-w-[200px]">
+                          <p className="truncate" title={esc.detail ?? esc.reason}>{esc.detail || esc.reason}</p>
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${
+                            esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
+                            esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
+                            "text-amber-600 bg-amber-50 border-amber-200"
+                          }`}>{esc.status}</span>
+                        </td>
+                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id.slice(0, 8) + "…" : "Unassigned"}</td>
+                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
+                          {new Date(esc.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
+                <p className="font-mono text-[10px] text-muted-foreground">{filteredEscalations.length} escalations shown</p>
               </div>
             </div>
           )}
