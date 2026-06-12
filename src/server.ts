@@ -38,7 +38,7 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
       "x-frame-options": "DENY",
       "x-content-type-options": "nosniff",
       "referrer-policy": "strict-origin-when-cross-origin",
-      "permissions-policy": "camera=(), microphone=(), geolocation=()",
+      "permissions-policy": "camera=(self), microphone=(), geolocation=()",
     },
   });
 }
@@ -58,7 +58,7 @@ export default {
       "x-frame-options": "DENY",
       "x-content-type-options": "nosniff",
       "referrer-policy": "strict-origin-when-cross-origin",
-      "permissions-policy": "camera=(), microphone=(), geolocation=()",
+      "permissions-policy": "camera=(self), microphone=(), geolocation=()",
     },
       });
     }

@@ -302,6 +302,21 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   resolved: { label: "Resolved", color: "text-green-600 bg-green-50 border-green-200" },
 };
 
+const formatDate = (dateStr: string | null | undefined) => {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
+};
+
+const formatDateTime = (dateStr: string | null | undefined) => {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-KE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+};
+
+
 function AdminUsersPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [profileState, setProfileState] = useState<Profile[]>([]);
@@ -448,11 +463,17 @@ function AdminUsersPage() {
 
   const totalRevenue = payments.filter((p) => p.status === "completed").reduce((sum, p) => sum + p.amount, 0);
 
-  const activeSubs = profileState.filter((u) => u.plan !== "free" && u.plan_expiry && new Date(u.plan_expiry) > new Date()).length;
+  const activeSubs = profileState.filter((u) => {
+    if (u.plan === "free" || !u.plan_expiry) return false;
+    const d = new Date(u.plan_expiry);
+    return !isNaN(d.getTime()) && d > new Date();
+  }).length;
 
   const expiringSoon = profileState.filter((u) => {
     if (!u.plan_expiry || u.plan === "free") return false;
-    const days = (new Date(u.plan_expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    const expiryDate = new Date(u.plan_expiry);
+    if (isNaN(expiryDate.getTime())) return false;
+    const days = (expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
     return days > 0 && days <= 7;
   }).length;
 
@@ -611,7 +632,7 @@ function AdminUsersPage() {
                       <tr key={p.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
                         <td className="px-5 py-3">
                           <p className="font-semibold">{p.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id.slice(0, 8)}…</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
                         </td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
                         <td className="px-5 py-3 font-mono text-xs text-center">
@@ -621,7 +642,7 @@ function AdminUsersPage() {
                         </td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.curriculum ?? "—"}</td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
-                          {p.created_at ? new Date(p.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                          {formatDate(p.created_at)}
                         </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
@@ -693,7 +714,7 @@ function AdminUsersPage() {
                       <tr key={f.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
                         <td className="px-5 py-3">
                           <p className="font-semibold">{f.profiles?.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">{f.user_id.slice(0, 8)}…</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">{f.user_id?.slice(0, 8)}…</p>
                         </td>
                         <td className="px-5 py-3">
                           {f.vote === 1
@@ -701,9 +722,9 @@ function AdminUsersPage() {
                             : <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 font-mono text-[9px] text-red-700"><ThumbsDown className="h-3 w-3" /> Bad</span>
                           }
                         </td>
-                        <td className="px-5 py-3 font-mono text-[10px] text-muted-foreground">{f.message_id.slice(0, 12)}…</td>
+                        <td className="px-5 py-3 font-mono text-[10px] text-muted-foreground">{f.message_id?.slice(0, 12)}…</td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
-                          {new Date(f.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                          {formatDate(f.created_at)}
                         </td>
                       </tr>
                     ))}
@@ -760,7 +781,7 @@ function AdminUsersPage() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      {new Date(m.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                      {formatDate(m.created_at)}
                     </div>
                     <span className="text-muted-foreground text-xs">{isExpanded ? "▲" : "▼"}</span>
                   </div>
@@ -811,7 +832,7 @@ function AdminUsersPage() {
             <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
               <RefreshCw className="mx-auto h-5 w-5 mb-2 text-blue-500" />
               <p className="font-serif text-3xl font-bold">
-                {rateLimits.filter((r) => new Date(r.reset_at) > new Date()).length}
+                {rateLimits.filter((r) => { const d = new Date(r.reset_at); return !isNaN(d.getTime()) && d > new Date(); }).length}
               </p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Active Now</p>
             </div>
@@ -840,7 +861,8 @@ function AdminUsersPage() {
                   </thead>
                   <tbody>
                     {filteredRateLimits.map((r) => {
-                      const isActive = new Date(r.reset_at) > new Date();
+                      const resetDate = new Date(r.reset_at);
+                      const isActive = !isNaN(resetDate.getTime()) && resetDate > new Date();
                       return (
                         <tr key={r.key} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
                           <td className="px-4 py-3 font-mono text-xs max-w-[200px] truncate" title={r.key}>{r.key}</td>
@@ -848,7 +870,7 @@ function AdminUsersPage() {
                             <span className={`font-bold text-sm ${r.count > 10 ? "text-destructive" : r.count > 5 ? "text-amber-600" : "text-foreground"}`}>{r.count}</span>
                           </td>
                           <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                            {new Date(r.reset_at).toLocaleString("en-KE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            {formatDateTime(r.reset_at)}
                           </td>
                           <td className="px-4 py-3">
                             {isActive
@@ -906,7 +928,7 @@ function AdminUsersPage() {
                       <tr key={esc.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
                         <td className="px-5 py-3">
                           <p className="font-semibold">{esc.profiles?.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">{esc.profiles?.email ?? esc.user_id.slice(0, 8) + "…"}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">{esc.profiles?.email ?? (esc.user_id ? esc.user_id.slice(0, 8) + "…" : "—")}</p>
                         </td>
                         <td className="px-5 py-3 text-xs max-w-[200px]">
                           <p className="truncate" title={esc.detail ?? esc.reason}>{esc.detail || esc.reason}</p>
@@ -918,9 +940,9 @@ function AdminUsersPage() {
                             "text-amber-600 bg-amber-50 border-amber-200"
                           }`}>{esc.status}</span>
                         </td>
-                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id.slice(0, 8) + "…" : "Unassigned"}</td>
+                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
-                          {new Date(esc.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                          {formatDate(esc.created_at)}
                         </td>
                       </tr>
                     ))}
@@ -1007,12 +1029,13 @@ function AdminUsersPage() {
                     const plan = (p.plan ?? "free") as PlanId;
                     const isUpdating = updatingPlan === p.id;
                     const expiry = p.plan_expiry ? new Date(p.plan_expiry) : null;
-                    const isExpired = expiry ? expiry < new Date() : false;
+                    const isValidExpiry = expiry && !isNaN(expiry.getTime());
+                    const isExpired = isValidExpiry ? expiry < new Date() : false;
                     return (
                       <tr key={p.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
                         <td className="px-5 py-3">
                           <p className="font-semibold">{p.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id.slice(0, 8)}…</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
                         </td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
                         <td className="px-5 py-3">
@@ -1021,7 +1044,7 @@ function AdminUsersPage() {
                           </span>
                         </td>
                         <td className="px-5 py-3 font-mono text-xs">
-                          {expiry ? (
+                          {isValidExpiry ? (
                             <span className={isExpired ? "text-destructive" : "text-muted-foreground"}>
                               {expiry.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
                               {isExpired ? " (expired)" : ""}
@@ -1072,21 +1095,21 @@ function AdminUsersPage() {
                       <tr key={pay.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
                         <td className="px-4 py-3">
                           <p className="font-semibold">{pay.profiles?.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">{pay.profiles?.email ?? `${pay.user_id.slice(0, 8)}…`}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">{pay.profiles?.email ?? (pay.user_id ? `${pay.user_id.slice(0, 8)}…` : "—")}</p>
                         </td>
                         <td className="px-4 py-3 font-mono text-xs capitalize">{pay.plan}</td>
                         <td className="px-4 py-3 font-semibold">KES {pay.amount.toLocaleString()}</td>
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{pay.phone_number}</td>
                         <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">{pay.mpesa_receipt ?? "—"}</td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${
+                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${
                             pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
                             pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
                             "text-amber-600 bg-amber-50 border-amber-200"
                           }`}>{pay.status}</span>
                         </td>
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                          {new Date(pay.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                          {formatDate(pay.created_at)}
                         </td>
                       </tr>
                     ))}

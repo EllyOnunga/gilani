@@ -350,12 +350,7 @@ export const Route = createFileRoute("/_authenticated/notes")({
   head: () => ({
     meta: [{ title: "Study Notes — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }],
   }),
-  loader: async () => {
-    const res = await supabase.auth.getSession();
-    const session = res?.data?.session;
-    if (!session?.user?.id) return [];
-    return listNotes();
-  },
+  loader: () => [] as Note[],
   component: NotesPage,
 });
 
@@ -403,21 +398,34 @@ function NotesPage() {
   const [attachedFile, setAttachedFile] = useState<{ name: string; text: string } | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  // Cache notes whenever they load fresh from the server
+  // Load notes client-side on mount (Stale-While-Revalidate)
   useEffect(() => {
-    if (initialNotes && initialNotes.length > 0) {
-      setCachedNotes(initialNotes);
-      setNotes(initialNotes);
-      setIsOffline(false);
-    } else if (initialNotes && initialNotes.length === 0 && !navigator.onLine) {
-      // Loader returned empty but we're offline — use cache
-      const cached = getCachedNotes();
-      if (cached.length > 0) {
-        setNotes(cached);
-        setIsOffline(true);
+    let active = true;
+    const loadNotesData = async () => {
+      try {
+        const fresh = await listNotes();
+        if (active && fresh) {
+          setCachedNotes(fresh as Note[]);
+          setNotes(fresh as Note[]);
+          setIsOffline(false);
+        }
+      } catch (err) {
+        console.error("Failed to load notes on mount:", err);
+        // Fallback to cache
+        if (active) {
+          const cached = getCachedNotes();
+          if (cached.length > 0) {
+            setNotes(cached);
+          }
+          setIsOffline(!navigator.onLine);
+        }
       }
-    }
-  }, [initialNotes]);
+    };
+    loadNotesData();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Listen for online/offline transitions
   useEffect(() => {

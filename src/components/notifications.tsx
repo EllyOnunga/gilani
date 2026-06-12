@@ -155,61 +155,64 @@ export function NotificationBell({ userId }: { userId: string }) {
             </div>
 
             {/* List */}
-            <div className="max-h-80 overflow-y-auto">
+            <div className="max-h-80 overflow-y-auto divide-y divide-border/50">
               {notifications.length === 0 ? (
-                <div className="py-10 text-center">
-                  <Bell className="mx-auto h-8 w-8 text-muted-foreground/30 mb-2" />
-                  <p className="text-xs text-muted-foreground">No notifications yet</p>
+                <div className="py-12 text-center">
+                  <Bell className="mx-auto h-8 w-8 text-muted-foreground/20 mb-3" />
+                  <p className="text-xs font-medium text-muted-foreground">You're all caught up!</p>
+                  <p className="text-[10px] text-muted-foreground/60 mt-1">No notifications yet</p>
                 </div>
               ) : (
                 notifications.map((n) => (
                   <div
                     key={n.id}
-                    className={`group relative flex items-start border-b border-border/50 transition-colors ${!n.read ? "bg-primary/5" : ""}`}
+                    className={`flex items-start gap-0 transition-colors ${!n.read ? "bg-primary/[0.04]" : "bg-card"}`}
                   >
                     {/* Clickable content area */}
                     <button
                       onClick={() => handleClick(n)}
-                      className="flex-1 text-left px-4 py-3 hover:bg-accent transition-colors"
+                      className="flex-1 text-left px-4 py-3.5 hover:bg-accent/50 transition-colors"
                     >
-                      <div className="flex items-start gap-2">
-                        <span
-                          className={`mt-0.5 rounded-full border px-2 py-0.5 font-mono text-[8px] uppercase tracking-wider flex-shrink-0 ${typeColors[n.type] ?? typeColors.info}`}
-                        >
-                          {n.type}
-                        </span>
-                        <div className="min-w-0">
-                          <p
-                            className={`text-xs font-semibold truncate ${!n.read ? "text-foreground" : "text-muted-foreground"}`}
+                      <div className="flex items-start gap-2.5">
+                        <div className="flex-shrink-0 flex flex-col items-center gap-1.5 pt-0.5">
+                          <span
+                            className={`rounded-full border px-1.5 py-0.5 font-mono text-[7px] uppercase tracking-wider ${typeColors[n.type] ?? typeColors.info}`}
                           >
+                            {n.type}
+                          </span>
+                          {!n.read && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-xs font-semibold leading-snug ${!n.read ? "text-foreground" : "text-muted-foreground"}`}>
                             {n.title}
                           </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">
                             {n.message}
                           </p>
-                          <p className="font-mono text-[9px] text-muted-foreground/60 mt-1">
-                            {new Date(n.created_at).toLocaleString("en-KE")}
+                          <p className="font-mono text-[9px] text-muted-foreground/50 mt-1.5">
+                            {new Date(n.created_at).toLocaleString("en-KE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                           </p>
                         </div>
-                        {!n.read && (
-                          <span className="ml-auto flex-shrink-0 h-2 w-2 rounded-full bg-primary mt-1" />
-                        )}
                       </div>
                     </button>
 
-                    {/* Delete button — visible on hover */}
-                    <button
-                      onClick={(e) => handleDelete(e, n.id)}
-                      disabled={deleting === n.id}
-                      title="Delete notification"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 flex-shrink-0 p-1.5 rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all disabled:opacity-50"
-                    >
-                      {deleting === n.id ? (
-                        <span className="h-3.5 w-3.5 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin block" />
-                      ) : (
-                        <X className="h-3.5 w-3.5" />
-                      )}
-                    </button>
+                    {/* Delete button — always visible */}
+                    <div className="flex-shrink-0 flex items-center pr-2 self-center">
+                      <button
+                        onClick={(e) => handleDelete(e, n.id)}
+                        disabled={deleting === n.id}
+                        title="Delete notification"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive transition-all duration-150 active:scale-90 disabled:opacity-50"
+                      >
+                        {deleting === n.id ? (
+                          <span className="h-3.5 w-3.5 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin block" />
+                        ) : (
+                          <X className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 ))
               )}

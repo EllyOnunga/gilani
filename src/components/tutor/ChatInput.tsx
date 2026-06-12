@@ -93,11 +93,11 @@ export function ChatInput({
     : 0;
 
   return (
-    <div className="px-2 pb-2 pt-1.5 sm:px-4 sm:pb-4 sm:pt-3 bg-background border-t border-border/60">
+    <div className="px-2 pb-2 pt-1.5 sm:px-4 sm:pb-4 sm:pt-3 bg-background/95 backdrop-blur-sm border-t border-border/40">
       {/* Rate limit banner with countdown */}
       {isRateLimited && (
-        <div className="mb-2 rounded-xl border border-amber-300/50 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-700/40 overflow-hidden">
-          <div className="flex items-start gap-2.5 px-3 py-2.5">
+        <div className="mb-3.5 rounded-2xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
+          <div className="flex items-start gap-2.5 px-3.5 py-3">
             <div className="flex-shrink-0 mt-0.5">
               {secondsLeft > 0
                 ? <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
@@ -122,7 +122,7 @@ export function ChatInput({
             {isDaily && onUpgrade && (
               <button
                 onClick={onUpgrade}
-                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200"
               >
                 <CreditCard className="h-3 w-3" /> Upgrade
               </button>
@@ -132,9 +132,9 @@ export function ChatInput({
                 <div className="relative h-8 w-8">
                   <svg className="h-8 w-8 -rotate-90" viewBox="0 0 32 32">
                     <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor"
-                      className="text-amber-200 dark:text-amber-800" strokeWidth="3" />
+                      className="text-amber-200 dark:text-amber-850" strokeWidth="3" />
                     <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor"
-                      className="text-amber-500 dark:text-amber-400"
+                      className="text-amber-550 dark:text-amber-400"
                       strokeWidth="3"
                       strokeDasharray={`${2 * Math.PI * 12}`}
                       strokeDashoffset={`${2 * Math.PI * 12 * (1 - (secondsLeft / 60))}`}
@@ -163,36 +163,36 @@ export function ChatInput({
 
       {/* Attached file pill */}
       {attachedFile && (
-        <div className="mb-2 flex items-center gap-2.5 rounded-xl border border-primary/25 bg-primary/5 px-3 py-2 shadow-sm">
-          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary/15">
-            <FileText className="h-3.5 w-3.5 text-primary" />
+        <div className="mb-3.5 flex items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5/30 backdrop-blur-sm px-4 py-3 shadow-sm">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <FileText className="h-4 w-4 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-foreground leading-tight">{attachedFile.name}</p>
-            <p className="font-mono text-[9px] text-muted-foreground mt-0.5 leading-tight">
+            <p className="font-mono text-[9px] text-muted-foreground mt-1 leading-tight">
               {(attachedFile.size / 1024).toFixed(1)} KB
               {attachedFile.text.length > 8000 && (
-                <span className="ml-1.5 text-amber-500">· will be truncated to 8 000 chars</span>
+                <span className="ml-1.5 text-amber-500 font-medium">· will be truncated to 8 000 chars</span>
               )}
             </p>
           </div>
           <button onClick={onRemoveFile}
-            className="flex-shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            className="flex-shrink-0 rounded-xl p-1.5 text-muted-foreground transition-all duration-200 hover:bg-destructive/10 hover:text-destructive active:scale-90"
             title="Remove attachment" type="button">
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       )}
 
       {/* Main input */}
-      <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border bg-card shadow-sm ring-0 transition-all duration-150 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10">
+      <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-muted/30 backdrop-blur-md shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:bg-card focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-4 focus-within:ring-primary/5">
         {/* Attach button */}
         <div className="pb-2 pl-2 pt-2">
           <input type="file" id="chat-file-attachment" className="hidden"
             accept=".pdf,.docx,.txt,.md,.csv,.jpg,.jpeg,.png,.webp"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-file-attachment"
-            className={`flex h-9 w-9 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-xl transition-colors ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+            className={`flex h-9 w-9 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
             title="Attach a file (PDF, DOCX, TXT, MD, CSV, JPG, PNG, WEBP — max 10 MB)">
             {parsingFile ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Paperclip className="h-4 w-4" />}
           </label>
@@ -204,7 +204,7 @@ export function ChatInput({
             accept="image/*" capture="environment"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-camera-capture"
-            className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-colors ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+            className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
             title="Take a photo (OCR will extract text)">
             <Camera className="h-4 w-4" />
           </label>
@@ -216,7 +216,7 @@ export function ChatInput({
             accept="image/*" capture="environment"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-camera-capture-desktop"
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl transition-colors ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
             title="Take a photo (OCR will extract text)">
             <Camera className="h-4 w-4" />
           </label>
@@ -236,7 +236,7 @@ export function ChatInput({
         <div className="pb-2 pr-2 pt-2">
           <button type="button" onClick={(e) => onSubmit(e as any)}
             disabled={isDisabled || (!input.trim() && !attachedFile)}
-            className={`flex h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center rounded-xl transition-all duration-150 ${isDisabled || (!input.trim() && !attachedFile) ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed" : "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95"}`}
+            className={`flex h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 ${isDisabled || (!input.trim() && !attachedFile) ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed" : "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-primary/20 hover:scale-105 active:scale-95 hover:-translate-y-0.5"}`}
             title="Send (Enter)">
             {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </button>
