@@ -377,14 +377,7 @@ function AdminUsersPage() {
     };
   }, []);
 
-  if (loadingData) {
-    return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-        <p className="text-sm text-muted-foreground font-medium">Loading admin dashboard...</p>
-      </div>
-    );
-  }
+  // ── All derived state & memos MUST be above any early returns (Rules of Hooks) ──
 
   const unreadCount = messages.filter((m) => m.status === "unread").length;
   const positiveCount = feedback.filter((f) => f.vote === 1).length;
@@ -408,6 +401,24 @@ function AdminUsersPage() {
     const q = rlSearch.toLowerCase();
     return !q ? rateLimits : rateLimits.filter((r) => r.key.toLowerCase().includes(q));
   }, [rateLimits, rlSearch]);
+
+  const filteredForPlans = useMemo(() => {
+    const q = planSearch.toLowerCase();
+    return !q ? profileState : profileState.filter((p) =>
+      p.display_name?.toLowerCase().includes(q) ||
+      p.email?.toLowerCase().includes(q) ||
+      (p.plan ?? "free").toLowerCase().includes(q)
+    );
+  }, [profileState, planSearch]);
+
+  if (loadingData) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground font-medium">Loading admin dashboard...</p>
+      </div>
+    );
+  }
 
   const handleRoleChange = async (userId: string, role: string) => {
     setUpdating(userId);
@@ -476,15 +487,6 @@ function AdminUsersPage() {
     const days = (expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
     return days > 0 && days <= 7;
   }).length;
-
-  const filteredForPlans = useMemo(() => {
-    const q = planSearch.toLowerCase();
-    return !q ? profileState : profileState.filter((p) =>
-      p.display_name?.toLowerCase().includes(q) ||
-      p.email?.toLowerCase().includes(q) ||
-      (p.plan ?? "free").toLowerCase().includes(q)
-    );
-  }, [profileState, planSearch]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-10">
