@@ -71,7 +71,7 @@ const STUDENT_NAV = [
   { to: "/dashboard" as any, label: "Dashboard", icon: GraduationCap },
   { to: "/tutor" as any, label: "Tutor Chat", icon: MessageCircle },
   { to: "/notes" as any, label: "Study Notes", icon: BookOpenText },
-  { to: "/quizzes" as any, label: "Practice Quizzes", icon: ListChecks },
+  { to: "/quizzes" as any, label: "Quizzes", icon: ListChecks },
   { to: "/planner" as any, label: "Planner", icon: CalendarDays },
   { to: "/analytics" as any, label: "Analytics", icon: BarChart3 },
 ] as const;
@@ -429,7 +429,7 @@ function AuthedShell() {
                 className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 border-transparent text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
               >
                 <ShieldAlert className="h-4 w-4" />
-                Escalate to Teacher
+                Escalate
               </button>
             </>
           )}
