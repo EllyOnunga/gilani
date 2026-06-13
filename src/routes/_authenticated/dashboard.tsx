@@ -254,8 +254,8 @@ function Dashboard() {
     <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-10">
 
       {/* ── Hero Header ── */}
-      <header className="animate-in-slide">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-primary mb-1">
+      <header className="animate-in-slide rounded-2xl bg-orange-400 dark:bg-orange-500/90 p-4 sm:p-6">
+        <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-white mb-1">
           Dashboard
         </p>
 
@@ -264,19 +264,19 @@ function Dashboard() {
           <div className="flex-1 min-w-0">
             {isLoading ? (
               <div className="space-y-2">
-                <div className="h-8 w-48 rounded-lg bg-muted/50 animate-pulse" />
-                <div className="h-4 w-32 rounded-lg bg-muted/50 animate-pulse" />
+                <div className="h-8 w-48 rounded-lg bg-white/20 animate-pulse" />
+                <div className="h-4 w-32 rounded-lg bg-white/20 animate-pulse" />
               </div>
             ) : (
               <>
-                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-balance leading-tight">
+                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-balance leading-tight text-white">
                   {getGreeting()},{" "}
-                  <span className="text-primary capitalize">{displayName}</span>. Ready to study?
+                  <span className="capitalize">{displayName}</span>. Ready to study?
                 </h2>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   {curriculum && (
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${curriculumColor}`}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-white/30 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white"
                     >
                       <GraduationCap className="h-3 w-3" />
                       {curriculum}
@@ -284,13 +284,13 @@ function Dashboard() {
                   )}
                   {plan && (
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${planColor}`}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-white/30 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white"
                     >
                       {plan === "Free" ? "Free Plan" : `⭐ ${plan}`}
                     </span>
                   )}
                   {memberSince && (
-                    <span className="font-mono text-[10px] text-muted-foreground">
+                    <span className="font-mono text-[10px] text-white/70">
                       Member since {memberSince}
                     </span>
                   )}
@@ -300,63 +300,55 @@ function Dashboard() {
           </div>
 
           {/* Stat pills */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0">
             {/* Streak */}
-            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 px-3 sm:px-4 py-2">
-              <Flame className="h-4 w-4 text-orange-500 fill-orange-400" />
-              <div>
-                <p className="font-serif text-lg leading-none font-bold text-orange-600 dark:text-orange-400">
-                  {isLoading ? "—" : streak}
-                </p>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-orange-500/80 mt-0.5">
-                  day streak
-                </p>
-              </div>
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-white/30 px-1 sm:px-4 py-2 min-w-0">
+              <Flame className="h-4 w-4 text-white" />
+              <p className="font-serif text-base sm:text-lg leading-none font-bold text-white">
+                {isLoading ? "—" : streak}
+              </p>
+              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-white/70 text-center truncate w-full">
+                day streak
+              </p>
             </div>
             {/* Quizzes */}
-            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 px-3 sm:px-4 py-2">
-              <Award className="h-4 w-4 text-yellow-500" />
-              <div>
-                <p className="font-serif text-lg leading-none font-bold text-yellow-600 dark:text-yellow-400">
-                  {isLoading ? "—" : quizzesCompleted}
-                </p>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-yellow-500/80 mt-0.5">
-                  quizzes
-                </p>
-              </div>
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-white/30 px-1 sm:px-4 py-2 min-w-0">
+              <Award className="h-4 w-4 text-white" />
+              <p className="font-serif text-base sm:text-lg leading-none font-bold text-white">
+                {isLoading ? "—" : quizzesCompleted}
+              </p>
+              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-white/70 text-center truncate w-full">
+                quizzes
+              </p>
             </div>
             {/* Messages */}
-            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 px-3 sm:px-4 py-2">
-              <MessageCircle className="h-4 w-4 text-blue-500" />
-              <div>
-                <p className="font-serif text-lg leading-none font-bold text-blue-600 dark:text-blue-400">
-                  {isLoading ? "—" : messagesCount}
-                </p>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-blue-500/80 mt-0.5">
-                  messages
-                </p>
-              </div>
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-white/30 px-1 sm:px-4 py-2 min-w-0">
+              <MessageCircle className="h-4 w-4 text-white" />
+              <p className="font-serif text-base sm:text-lg leading-none font-bold text-white">
+                {isLoading ? "—" : messagesCount}
+              </p>
+              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-white/70 text-center truncate w-full">
+                messages
+              </p>
             </div>
             {/* Notes */}
-            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 px-3 sm:px-4 py-2">
-              <FileText className="h-4 w-4 text-emerald-500" />
-              <div>
-                <p className="font-serif text-lg leading-none font-bold text-emerald-600 dark:text-emerald-400">
-                  {isLoading ? "—" : notesCount}
-                </p>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-emerald-500/80 mt-0.5">
-                  notes
-                </p>
-              </div>
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-white/30 px-1 sm:px-4 py-2 min-w-0">
+              <FileText className="h-4 w-4 text-white" />
+              <p className="font-serif text-base sm:text-lg leading-none font-bold text-white">
+                {isLoading ? "—" : notesCount}
+              </p>
+              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-white/70 text-center truncate w-full">
+                notes
+              </p>
             </div>
           </div>
         </div>
       </header>
 
       {/* ── Quick Actions ── */}
-      <section className="animate-in-slide [animation-delay:40ms]">
+      <section className="animate-in-slide [animation-delay:40ms] rounded-2xl bg-orange-400 dark:bg-orange-500/90 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-serif text-lg font-semibold">Quick Actions</h3>
+          <h3 className="font-serif text-lg font-semibold text-white">Quick Actions</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
@@ -368,12 +360,12 @@ function Dashboard() {
             <Link
               key={to}
               to={to as any}
-              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-primary/20 p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40"
+              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-white/30 p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-white/60"
             >
-              <div className="rounded-lg p-2.5 bg-background text-primary transition-transform duration-200 group-hover:scale-110">
+              <div className="rounded-lg p-2.5 bg-white/15 text-white transition-transform duration-200 group-hover:scale-110">
                 <Icon className="h-5 w-5" />
               </div>
-              <span className="text-xs font-semibold text-primary">{label}</span>
+              <span className="text-xs font-semibold text-white">{label}</span>
             </Link>
           ))}
         </div>
