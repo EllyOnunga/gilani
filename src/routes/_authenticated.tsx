@@ -371,7 +371,7 @@ function AuthedShell() {
 
       {/* Responsive Aside Navigation Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden rounded-r-2xl ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
