@@ -603,6 +603,7 @@ function AdminUsersPage() {
           { id: "messages",      label: "Messages",     icon: MessageSquare, badge: unreadCount },
           { id: "ratelimits",    label: "Rate Limits",  icon: BarChart3 },
           { id: "subscriptions", label: "Subscriptions",icon: CreditCard },
+          { id: "newsletter",    label: "Newsletter",   icon: Mail },
         ] as const).map((t) => {
           const Icon = t.icon;
           return (
