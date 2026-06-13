@@ -659,7 +659,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       {/* Main chat area */}
       <main className="flex flex-1 flex-col overflow-hidden min-w-0">
         {/* Mobile top bar */}
-        <div className="flex items-center gap-2 border-b border-border bg-sidebar px-3 py-2 lg:hidden">
+        <div className="flex items-center gap-2 border-b border-border bg-sidebar px-3 py-1.5 lg:hidden">
           <button
             onClick={() => setThreadsOpen(true)}
             className="flex-shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
