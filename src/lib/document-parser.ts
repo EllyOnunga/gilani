@@ -31,12 +31,23 @@ function loadExternalScript(src: string): Promise<void> {
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
-    script.onload = () => { script.setAttribute("data-loaded", "1"); resolve(); };
-    script.onerror = () => reject(new Error(
-      `Could not load required library from ${new URL(src).hostname}. ` +
-      `This is usually caused by a network error or a Content Security Policy restriction. ` +
-      `Please check your internet connection and try again.`
-    ));
+
+    const timeout = setTimeout(() => {
+      reject(new Error(
+        `Timed out loading required library from ${new URL(src).hostname}. ` +
+        `Your connection may be too slow or blocking this resource. Please check your internet connection and try again.`
+      ));
+    }, 20000);
+
+    script.onload = () => { clearTimeout(timeout); script.setAttribute("data-loaded", "1"); resolve(); };
+    script.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error(
+        `Could not load required library from ${new URL(src).hostname}. ` +
+        `This is usually caused by a network error or a Content Security Policy restriction. ` +
+        `Please check your internet connection and try again.`
+      ));
+    };
     document.head.appendChild(script);
   });
 }

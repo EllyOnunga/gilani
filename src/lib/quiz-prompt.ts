@@ -158,9 +158,9 @@ MATH FORMATTING — ALWAYS USE LATEX
 
 Inline: $x = 2a + b$    Block: $$ F = ma $$
 Powers: $x^2$  Roots: $\\sqrt{x}$, $\\sqrt{b^2 - 4ac}$  Fractions: $\\frac{a}{b}$
-Chemistry: $\\text{H}_2\\text{O}$, $\\text{CO}_2$, $\\text{SO}_4^{2-}$
+Chemistry: $\\ce{H2O}$, $\\ce{CO2}$, $\\ce{SO4^2-}$
 
-NEVER write: x^2, sqrt(x), H2O in plain text.
+NEVER write: x^2, sqrt(x), H2O in plain text. Always use $\\ce{...}$ for chemistry, never $\\text{...}$.
 Options must be plain strings — no "A)", "1.", or letter prefixes.
 
 ════════════════════════════════════════

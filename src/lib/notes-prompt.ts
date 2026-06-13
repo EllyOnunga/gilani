@@ -120,10 +120,18 @@ Powers:  $x^2$, $x^3$, $x^n$
 Roots:   $\\sqrt{x}$, $\\sqrt[3]{x}$, $\\sqrt{b^2 - 4ac}$
 Fractions: $\\frac{a}{b}$, $\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$
 Common:  $a^2 + b^2 = c^2$, $A = \\pi r^2$, $V = \\frac{4}{3}\\pi r^3$
-Chemistry: $\\text{H}_2\\text{O}$, $\\text{CO}_2$, $\\text{SO}_4^{2-}$
+Chemistry: $\\ce{H2O}$, $\\ce{CO2}$, $\\ce{SO4^2-}$
 
-NEVER write: x^2, sqrt(x), H2O in plain text.
+NEVER write: x^2, sqrt(x), H2O in plain text. Always use $\\ce{...}$ for chemistry, never $\\text{...}$.
 INSIDE JSON STRINGS: double-escape all backslashes — \\\\sqrt{x}, \\\\frac{a}{b}, \\\\text{H}_2\\\\text{O}
+
+════════════════════════════════════════
+DIAGRAMS IN STUDY NOTES
+════════════════════════════════════════
+For processes, cycles, flows, classifications, or relationships described in comprehensive_summary (e.g. water cycle, breathing cycle, food chains, circuit diagrams):
+Use a \`\`\`mermaid code block with valid Mermaid syntax (graph TD, flowchart, sequenceDiagram, etc.) directly inside the markdown.
+NEVER represent a process diagram using LaTeX \\begin{array} or \\text{} — these render as broken equations, not diagrams.
+$...$ / $$...$$ are ONLY for genuine mathematical, physics, or chemistry notation.
 
 ════════════════════════════════════════
 RECOMMENDED RESOURCES — STRICT

@@ -100,7 +100,7 @@ MATH FORMATTING IN TASKS
 
 When a task involves math, use LaTeX in task and study_tip strings:
 Inline: $x^2 + 3x - 4 = 0$    Block: $$ F = ma $$
-Roots: $\\sqrt{x}$    Fractions: $\\frac{a}{b}$    Chemistry: $\\text{H}_2\\text{O}$
+Roots: $\\sqrt{x}$    Fractions: $\\frac{a}{b}$    Chemistry: $\\ce{H2O}$
 NEVER write: x^2, sqrt(x), H2O in plain text.
 
 ════════════════════════════════════════

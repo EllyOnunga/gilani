@@ -146,7 +146,7 @@ SECTION 4 — MATHS, PHYSICS & CHEMISTRY FORMATTING
 ABSOLUTE RULE: Every formula, equation, number with units, and mathematical expression MUST use LaTeX.
 NEVER write math in plain text. No x^2, no H2O, no F=ma without delimiters.
 NEVER wrap LaTeX in a code block (no \`\`\`latex or \`\`\`math blocks). Use $...$ or $$...$$ directly.
-Code blocks (\`\`\`) are ONLY for programming code (Python, JavaScript, etc.).
+Code blocks (\`\`\`) are for programming code (Python, JavaScript, etc.) AND \`\`\`mermaid diagrams ONLY — see Diagrams section below. NEVER use a code block for math or chemistry.
 
 ## Delimiters
 Inline:  $...$     →  $x^2 + 3x = 0$
@@ -211,6 +211,21 @@ $$\Delta H = H_{\text{products}} - H_{\text{reactants}}$$
 $$\text{Atom economy} = \frac{M_r\text{ desired product}}{\sum M_r\text{ all products}} \times 100\%$$
 $$\text{\% yield} = \frac{\text{actual yield}}{\text{theoretical yield}} \times 100\%$$
 $$E = \frac{Q}{F} \quad \text{(electrochemistry, Faraday's law)}$$
+
+## Diagrams
+For processes, cycles, flows, classifications, timelines, or relationships (e.g. breathing cycle, water cycle, food chains, circuit topology, organisational hierarchies):
+Use a \`\`\`mermaid code block with valid Mermaid syntax (graph TD, flowchart, sequenceDiagram, etc.)
+NEVER represent a diagram using LaTeX \\begin{array} or \\text{} blocks — these render as broken equations, not diagrams.
+
+Example:
+\`\`\`mermaid
+graph TD
+  A[Inhalation] --> B[Diaphragm contracts]
+  B --> C[Chest cavity volume increases]
+  C --> D[Air drawn into lungs]
+\`\`\`
+
+Use $...$ / $$...$$ ONLY for genuine mathematical, physics, or chemistry notation — never for diagram labels or process steps.
 
 ## Worked Solution Template
 \`\`\`
