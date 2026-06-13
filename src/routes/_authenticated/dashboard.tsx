@@ -302,7 +302,7 @@ function Dashboard() {
           {/* Stat pills */}
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             {/* Streak */}
-            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 bg-orange-50 dark:bg-orange-950/30 px-3 sm:px-4 py-2">
+            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 px-3 sm:px-4 py-2">
               <Flame className="h-4 w-4 text-orange-500 fill-orange-400" />
               <div>
                 <p className="font-serif text-lg leading-none font-bold text-orange-600 dark:text-orange-400">
@@ -314,7 +314,7 @@ function Dashboard() {
               </div>
             </div>
             {/* Quizzes */}
-            <div className="flex items-center gap-2 rounded-full border border-yellow-300/60 bg-yellow-50 dark:bg-yellow-950/30 px-3 sm:px-4 py-2">
+            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 px-3 sm:px-4 py-2">
               <Award className="h-4 w-4 text-yellow-500" />
               <div>
                 <p className="font-serif text-lg leading-none font-bold text-yellow-600 dark:text-yellow-400">
@@ -326,7 +326,7 @@ function Dashboard() {
               </div>
             </div>
             {/* Messages */}
-            <div className="flex items-center gap-2 rounded-full border border-blue-300/60 bg-blue-50 dark:bg-blue-950/30 px-3 sm:px-4 py-2">
+            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 px-3 sm:px-4 py-2">
               <MessageCircle className="h-4 w-4 text-blue-500" />
               <div>
                 <p className="font-serif text-lg leading-none font-bold text-blue-600 dark:text-blue-400">
@@ -338,7 +338,7 @@ function Dashboard() {
               </div>
             </div>
             {/* Notes */}
-            <div className="flex items-center gap-2 rounded-full border border-emerald-300/60 bg-emerald-50 dark:bg-emerald-950/30 px-3 sm:px-4 py-2">
+            <div className="flex items-center gap-2 rounded-full border border-orange-300/60 px-3 sm:px-4 py-2">
               <FileText className="h-4 w-4 text-emerald-500" />
               <div>
                 <p className="font-serif text-lg leading-none font-bold text-emerald-600 dark:text-emerald-400">
@@ -368,7 +368,7 @@ function Dashboard() {
             <Link
               key={to}
               to={to as any}
-              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40"
+              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-primary/20 p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40"
             >
               <div className="rounded-lg p-2.5 bg-background text-primary transition-transform duration-200 group-hover:scale-110">
                 <Icon className="h-5 w-5" />

@@ -292,15 +292,15 @@ const ROLES = ["student", "teacher", "admin"] as const;
 type Role = (typeof ROLES)[number];
 
 const ROLE_META: Record<Role, { icon: typeof User; color: string }> = {
-  student: { icon: GraduationCap, color: "text-blue-600 bg-blue-50 border-blue-200" },
-  teacher: { icon: UserCheck,     color: "text-amber-600 bg-amber-50 border-amber-200" },
-  admin:   { icon: Shield,        color: "text-red-600 bg-red-50 border-red-200" },
+  student: { icon: GraduationCap, color: "text-blue-600 border-blue-200" },
+  teacher: { icon: UserCheck,     color: "text-amber-600 border-amber-200" },
+  admin:   { icon: Shield,        color: "text-red-600 border-red-200" },
 };
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  unread:   { label: "Unread",   color: "text-blue-600 bg-blue-50 border-blue-200" },
-  read:     { label: "Read",     color: "text-amber-600 bg-amber-50 border-amber-200" },
-  resolved: { label: "Resolved", color: "text-green-600 bg-green-50 border-green-200" },
+  unread:   { label: "Unread",   color: "text-blue-600 border-blue-200" },
+  read:     { label: "Read",     color: "text-amber-600 border-amber-200" },
+  resolved: { label: "Resolved", color: "text-green-600 border-green-200" },
 };
 
 const formatDate = (dateStr: string | null | undefined) => {
@@ -498,7 +498,7 @@ function AdminUsersPage() {
           <h1 className="mt-1 font-serif text-3xl sm:text-4xl text-foreground">Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">{profileState.length} users · {platformStats.totalConversations.toLocaleString()} conversations · {platformStats.totalMessages.toLocaleString()} messages · {platformStats.openEscalations} open escalations</p>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-red-700 mt-1">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-red-700 mt-1">
           <Shield className="h-3 w-3" /> Admin
         </span>
       </header>
@@ -639,7 +639,7 @@ function AdminUsersPage() {
                         </td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
                         <td className="px-5 py-3 font-mono text-xs text-center">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-blue-700 text-[10px] font-mono">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 px-2 py-0.5 text-blue-700 text-[10px] font-mono">
                             {p.conversation_count ?? 0}
                           </span>
                         </td>
@@ -721,8 +721,8 @@ function AdminUsersPage() {
                         </td>
                         <td className="px-5 py-3">
                           {f.vote === 1
-                            ? <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 font-mono text-[9px] text-green-700"><ThumbsUp className="h-3 w-3" /> Good</span>
-                            : <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 font-mono text-[9px] text-red-700"><ThumbsDown className="h-3 w-3" /> Bad</span>
+                            ? <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-2.5 py-0.5 font-mono text-[9px] text-green-700"><ThumbsUp className="h-3 w-3" /> Good</span>
+                            : <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2.5 py-0.5 font-mono text-[9px] text-red-700"><ThumbsDown className="h-3 w-3" /> Bad</span>
                           }
                         </td>
                         <td className="px-5 py-3 font-mono text-[10px] text-muted-foreground">{f.message_id?.slice(0, 12)}…</td>
@@ -877,8 +877,8 @@ function AdminUsersPage() {
                           </td>
                           <td className="px-4 py-3">
                             {isActive
-                              ? <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 font-mono text-[9px] text-red-700">Active</span>
-                              : <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 font-mono text-[9px] text-green-700">Expired</span>
+                              ? <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2.5 py-0.5 font-mono text-[9px] text-red-700">Active</span>
+                              : <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-2.5 py-0.5 font-mono text-[9px] text-green-700">Expired</span>
                             }
                           </td>
                         </tr>
@@ -1042,7 +1042,7 @@ function AdminUsersPage() {
                         </td>
                         <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
                         <td className="px-5 py-3">
-                          <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary bg-primary/5 border-primary/20">
+                          <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary border-primary/20">
                             {PLANS[plan]?.label ?? plan}
                           </span>
                         </td>

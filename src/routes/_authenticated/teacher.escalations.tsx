@@ -232,17 +232,17 @@ const REASON_LABELS: Record<string, { label: string; color: string }> = {
   distress_keyword: {
     label: "Distress keyword",
     color:
-      "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900",
+      "text-red-600 dark:text-red-400 border-red-200 dark:border-red-900",
   },
   student_request: {
     label: "Student request",
     color:
-      "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900",
+      "text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900",
   },
   low_confidence: {
     label: "Low confidence",
     color:
-      "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900",
+      "text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900",
   },
 };
 
@@ -266,7 +266,7 @@ function EscalationCard({
 }) {
   const reasonMeta = REASON_LABELS[esc.reason] ?? {
     label: esc.reason,
-    color: "text-muted-foreground bg-muted border-border",
+    color: "text-muted-foreground border-border",
   };
   return (
     <div className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-shadow ${
@@ -525,9 +525,9 @@ function EscalationsPage() {
       {/* ── Stats ── */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Total", value: escalations.length, icon: MessageSquare, color: "text-primary", bg: "bg-primary/5 border-primary/20" },
-          { label: "Pending", value: pending.length, icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/30 border-amber-200/60 dark:border-amber-800/60" },
-          { label: "Resolved", value: resolved.length, icon: CheckCircle2, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/30 border-green-200/60 dark:border-green-800/60" },
+          { label: "Total", value: escalations.length, icon: MessageSquare, color: "text-primary", bg: "border-primary/20" },
+          { label: "Pending", value: pending.length, icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "border-amber-200/60 dark:border-amber-800/60" },
+          { label: "Resolved", value: resolved.length, icon: CheckCircle2, color: "text-green-600 dark:text-green-400", bg: "border-green-200/60 dark:border-green-800/60" },
         ].map(({ label, value, icon: Icon, color, bg }) => (
           <div key={label} className={`rounded-xl border p-4 sm:p-5 ${bg}`}>
             <div className={`flex items-center gap-2 mb-2 ${color}`}>
@@ -626,7 +626,7 @@ function EscalationsPage() {
           </div>
           <div className="space-y-2">
             {resolved.map((esc) => {
-              const reasonMeta = REASON_LABELS[esc.reason] ?? { label: esc.reason, color: "text-muted-foreground bg-muted border-border" };
+              const reasonMeta = REASON_LABELS[esc.reason] ?? { label: esc.reason, color: "text-muted-foreground border-border" };
               return (
                 <div key={esc.id} className="rounded-xl border border-green-200/60 dark:border-green-900/60 bg-green-50/40 dark:bg-green-950/20 p-4">
                   <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
@@ -642,7 +642,7 @@ function EscalationsPage() {
                       <span className="text-[10px] text-muted-foreground">
                         {esc.created_at ? new Date(esc.created_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}
                       </span>
-                      <span className="rounded-full border border-green-300 dark:border-green-700 bg-green-100 dark:bg-green-900/40 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1">
+                      <span className="rounded-full border border-green-300 dark:border-green-700 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1">
                         <CheckCircle2 className="h-2.5 w-2.5" /> Resolved
                       </span>
                     </div>
