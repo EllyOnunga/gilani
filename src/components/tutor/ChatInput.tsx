@@ -237,7 +237,7 @@ export function ChatInput({
       <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-muted/30 backdrop-blur-md shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:bg-card focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-4 focus-within:ring-primary/5">
         {/* Attach button */}
         <div className="pb-2 pl-2 pt-2">
-          <input type="file" id="chat-file-attachment" className="hidden"
+          <input type="file" id="chat-file-attachment" className="sr-only"
             accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/markdown,text/x-markdown,text/csv,image/*,.pdf,.docx,.doc,.txt,.md,.csv,.jpg,.jpeg,.png,.webp"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-file-attachment"
@@ -249,7 +249,7 @@ export function ChatInput({
 
         {/* Camera — hidden on desktop, shown on mobile */}
         <div className="pb-2 pt-2 sm:hidden">
-          <input type="file" id="chat-camera-capture" className="hidden"
+          <input type="file" id="chat-camera-capture" className="sr-only"
             accept="image/*" capture="environment"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-camera-capture"
@@ -261,7 +261,7 @@ export function ChatInput({
 
         {/* Camera — desktop only */}
         <div className="pb-2 pt-2 hidden sm:block">
-          <input type="file" id="chat-camera-capture-desktop" className="hidden"
+          <input type="file" id="chat-camera-capture-desktop" className="sr-only"
             accept="image/*" capture="environment"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-camera-capture-desktop"

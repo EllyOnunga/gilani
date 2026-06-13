@@ -82,8 +82,12 @@ function useRateLimitCountdown(errorMsg: string | null) {
 // ─── JSON Repair Helper ───────────────────────────────────────────────────────
 
 function repairAndParseJson(raw: string): any {
+  // 0. Immediately strip ALL control characters (the #1 cause of "Bad control character" errors)
+  //    Preserve only \t (0x09), \n (0x0A), \r (0x0D)
+  let s = raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+
   // 1. Strip markdown fences
-  let s = raw.trim();
+  s = s.trim();
   s = s
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "")
@@ -139,21 +143,38 @@ function repairAndParseJson(raw: string): any {
   //    - part of an already-escaped backslash (\\)
   //    - part of an escaped double quote (\")
   //    - part of a valid newline escape (\n)
+  //    - part of a valid tab escape (\t)
+  //    - part of a valid return escape (\r)
   //    - part of a valid Unicode escape sequence (\uXXXX)
   //    This successfully repairs LaTeX sequences like \sqrt, \frac, \text, \pm etc.
   s = s.replace(/("(?:[^"\\]|\\.)*")/g, (match) => {
-    return match.replace(/\\(\\|"|n|u[0-9a-fA-F]{4})|\\/g, (m, g1) => {
+    return match.replace(/\\(\\|"|n|r|t|u[0-9a-fA-F]{4})|\\/g, (m, g1) => {
       if (g1) return m;
       return "\\\\";
     });
   });
 
-  // 7. Try direct parse first, fall back to eval-style as last resort
+  // 7. Replace literal newlines/tabs inside JSON string values with their escape sequences
+  //    This handles cases where the AI puts actual newlines inside a JSON string value
+  s = s.replace(/("(?:[^"\\]|\\.)*")/g, (match) => {
+    // Replace real newlines, carriage returns, and tabs inside JSON strings
+    return match
+      .replace(/\r\n/g, "\\n")
+      .replace(/\r/g, "\\n")
+      .replace(/\n/g, "\\n")
+      .replace(/\t/g, "\\t");
+  });
+
+  // 8. Try direct parse first, then escalating fallbacks
   try {
     return JSON.parse(s);
   } catch (err: any) {
-    // Last-resort: strip any remaining illegal control characters and retry
-    const cleaned = s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+    // Second pass: aggressively strip anything non-printable except basic whitespace
+    const cleaned = s.replace(/[^\x20-\x7E\n\r\t]/g, (ch) => {
+      // Keep common Unicode characters (accented letters, etc.) but strip control chars
+      const code = ch.charCodeAt(0);
+      return code > 127 ? ch : "";
+    });
     try {
       return JSON.parse(cleaned);
     } catch (finalErr: any) {
@@ -178,10 +199,25 @@ function repairAndParseJson(raw: string): any {
         );
       }
 
-      // Write bad JSON to a local debug file for inspection
-      // debug file write removed in production
-
-      throw finalErr;
+      // Return a minimal fallback object instead of crashing
+      console.warn("[JSON Repair] Returning fallback study material object.");
+      return {
+        title: "Document Summary",
+        type: "study_notes" as const,
+        subject: "",
+        topic: "",
+        form_level: "",
+        comprehensive_summary: "We encountered a formatting issue while processing your document. The AI generated a response that could not be parsed. Please try uploading again — this is usually a one-time glitch.",
+        key_concepts: [],
+        formulas_and_equations: [],
+        solutions: [],
+        study_tips: ["Try re-uploading the document if this summary appears incomplete."],
+        common_exam_questions: [],
+        related_topics: [],
+        recommended_resources: [],
+        quick_review_cards: [],
+        safety_warning: null,
+      };
     }
   }
 }
@@ -763,7 +799,7 @@ ${content}`.trim()
               <input
                 type="file"
                 id="notes-file-upload"
-                className="hidden"
+                className="sr-only"
                 accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/markdown,text/x-markdown,text/csv,image/*,.pdf,.docx,.doc,.txt,.md,.csv,.jpg,.jpeg,.png,.webp"
                 onChange={handleFileChange}
                 disabled={parsingFile}
@@ -794,7 +830,7 @@ ${content}`.trim()
               <input
                 type="file"
                 id="notes-camera-capture"
-                className="hidden"
+                className="sr-only"
                 accept="image/*"
                 capture="environment"
                 onChange={handleFileChange}

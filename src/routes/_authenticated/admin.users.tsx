@@ -568,7 +568,7 @@ function AdminUsersPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-border overflow-x-auto">
+      <div className="flex gap-2 pb-2 overflow-x-auto">
         {([
           { id: "users",         label: "Users",        icon: User },
           { id: "escalations",   label: "Escalations",  icon: AlertTriangle, badge: platformStats.openEscalations },
@@ -580,7 +580,7 @@ function AdminUsersPage() {
           const Icon = t.icon;
           return (
             <button key={t.id} onClick={() => setTab(t.id as any)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-wider border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${tab === t.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 ${tab === t.id ? "border-primary text-primary bg-transparent font-extrabold shadow-sm scale-102" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border"}`}>
               <Icon className="h-3.5 w-3.5" />
               {t.label}
               {"badge" in t && t.badge > 0 && (
@@ -901,11 +901,11 @@ function AdminUsersPage() {
           <div className="grid grid-cols-3 gap-3">
             {(["open", "pending", "resolved"] as const).map((s) => (
               <button key={s} onClick={() => setEscalationFilter(s === escalationFilter ? "all" : s)}
-                className={`rounded-xl border p-4 text-center shadow-sm transition-colors ${
-                  escalationFilter === s ? "border-primary bg-primary/5" : "border-border bg-card"
+                className={`rounded-xl border-2 p-4 text-center shadow-sm transition-all duration-200 ${
+                  escalationFilter === s ? "border-primary text-primary bg-transparent font-bold scale-102" : "border-border/60 bg-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}>
                 <p className="font-serif text-3xl font-bold">{escalations.filter((e) => e.status === s).length}</p>
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">{s}</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest mt-1 capitalize">{s}</p>
               </button>
             ))}
           </div>

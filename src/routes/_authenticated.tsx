@@ -377,16 +377,16 @@ function AuthedShell() {
         }`}
       >
         {/* Brand logo & Mobile Close Button */}
-        <div className="flex items-center justify-between mb-8 min-w-0">
-          <div className="block min-w-0 flex-1">
-            <Logo to="/dashboard" onClick={() => setSidebarOpen(false)} size="md" />
-            <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground pl-[38px]">
+        <div className="flex items-center justify-between mb-8 min-w-0 w-full relative">
+          <div className="flex flex-col items-center justify-center text-center min-w-0 flex-1">
+            <Logo to="/dashboard" onClick={() => setSidebarOpen(false)} size="md" className="mx-auto" />
+            <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Ethical Learning
             </p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 lg:hidden flex-shrink-0 ml-2"
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 lg:hidden flex-shrink-0 ml-2 absolute right-0 top-1/2 -translate-y-1/2"
             title="Close menu"
           >
             <X className="h-5 w-5" />
@@ -403,8 +403,8 @@ function AuthedShell() {
                   key={to}
                   to={to}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                    active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"
+                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${
+                    active ? "border-primary text-primary bg-transparent font-semibold shadow-sm" : "border-transparent text-muted-foreground hover:bg-black/5"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -421,10 +421,10 @@ function AuthedShell() {
               <Link
                 to={"/teacher/escalations" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${
                   path.startsWith("/teacher/escalations")
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-black/5"
+                    ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
+                    : "border-transparent text-muted-foreground hover:bg-black/5"
                 }`}
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
@@ -432,7 +432,7 @@ function AuthedShell() {
               <Link
                 to={"/settings" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path === "/settings" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"}`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path === "/settings" ? "border-primary text-primary bg-transparent font-semibold shadow-sm" : "border-transparent text-muted-foreground hover:bg-black/5"}`}
               >
                 <Settings className="h-4 w-4" /> Settings
               </Link>
@@ -446,10 +446,10 @@ function AuthedShell() {
               <Link
                 to={"/admin/users" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${
                   path.startsWith("/admin")
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-black/5"
+                    ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
+                    : "border-transparent text-muted-foreground hover:bg-black/5"
                 }`}
               >
                 <Users className="h-4 w-4" /> Users & Roles
@@ -457,7 +457,7 @@ function AuthedShell() {
               <Link
                 to={"/settings" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${path === "/settings" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-black/5"}`}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path === "/settings" ? "border-primary text-primary bg-transparent font-semibold shadow-sm" : "border-transparent text-muted-foreground hover:bg-black/5"}`}
               >
                 <Settings className="h-4 w-4" /> Settings
               </Link>

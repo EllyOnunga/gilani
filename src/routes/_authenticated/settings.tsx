@@ -382,7 +382,7 @@ function SettingsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
           {/* Navigation Sidebar */}
-          <div className="md:col-span-1 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible border border-border/40 bg-card/40 rounded-2xl p-2 gap-1 flex-shrink-0 scrollbar-none">
+          <div className="md:col-span-1 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible border border-border/40 bg-card/40 rounded-2xl p-2 gap-2 flex-shrink-0 scrollbar-none">
             {TABS.map((t) => {
               const TabIcon = t.icon;
               const isSelected = activeTab === t.id;
@@ -390,10 +390,10 @@ function SettingsPage() {
                 <button
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`flex items-center gap-2.5 rounded-xl px-3.5 py-3 text-xs font-semibold whitespace-nowrap md:w-full transition-all duration-200 ${
+                  className={`flex items-center gap-2.5 rounded-xl px-3.5 py-3 text-xs font-semibold whitespace-nowrap md:w-full transition-all duration-200 border-2 ${
                     isSelected
-                      ? "bg-primary text-primary-foreground shadow-sm scale-102"
-                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                      ? "border-primary text-primary bg-transparent font-bold shadow-sm scale-102"
+                      : "border-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                   }`}
                 >
                   <TabIcon className="h-4 w-4" />
@@ -431,7 +431,7 @@ function SettingsPage() {
                       {/* Photo Overlap overlay */}
                       <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity duration-200">
                         <Upload className="h-5 w-5 text-white" />
-                        <input type="file" onChange={handlePhotoUpload} accept="image/*" className="hidden" />
+                        <input type="file" onChange={handlePhotoUpload} accept="image/*" className="sr-only" />
                       </label>
                     </div>
 
