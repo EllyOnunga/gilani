@@ -134,7 +134,7 @@ export function ChatInput({
     : 0;
 
   return (
-    <div className="px-2 pb-2 pt-1.5 sm:px-4 sm:pb-4 sm:pt-3 bg-background/95 backdrop-blur-sm border-t border-border/40">
+    <div className="px-2 pb-2 pt-1 sm:px-4 sm:pb-4 sm:pt-3 bg-background/95 backdrop-blur-sm border-t border-border/40">
       {/* Rate limit banner with countdown */}
       {isRateLimited && (
         <div className="mb-3.5 rounded-2xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
