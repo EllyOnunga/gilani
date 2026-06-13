@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { PlansModal } from "@/components/PlansModal";
+import { PLANS } from "@/lib/plans";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -437,7 +438,7 @@ function SettingsPage() {
 
                     <div className="flex-1 min-w-0 space-y-2">
                       <p className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">Select Scholar Preset</p>
-                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                      <div className="grid grid-cols-6 gap-1.5">
                         {PRESETS.map((p) => {
                           const isSelected = avatarUrl === `preset:${p.id}`;
                           return (
@@ -445,7 +446,7 @@ function SettingsPage() {
                               key={p.id}
                               type="button"
                               onClick={() => setAvatarUrl(`preset:${p.id}`)}
-                              className={`relative aspect-square rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
+                              className={`relative w-8 h-8 rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
                                 isSelected ? "border-primary scale-102 ring-2 ring-primary/25" : "border-border/40 hover:border-primary/50"
                               }`}
                               title={`${p.label}: ${p.desc}`}
@@ -677,43 +678,72 @@ function SettingsPage() {
                   Upgrade your plan to unlock more daily questions, quizzes, study notes synthesis, and premium AI models.
                 </p>
 
-                {/* Plan card */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border border-border bg-background rounded-xl p-4 gap-4">
-                  <div className="space-y-1.5">
-                    <p className="text-sm font-bold capitalize flex items-center gap-1.5 text-foreground">
-                      <Zap className="h-4 w-4 text-primary" /> {currentPlan} Tier
-                    </p>
-                    <p className="font-mono text-[10px] text-muted-foreground">
-                      {currentPlan === "free" ? "10 messages/day" : currentPlan === "basic" ? "50 messages/day" : "Unlimited messages"}
-                    </p>
+                {/* Current plan + usage */}
+                <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" />
+                      <span className="font-bold capitalize text-sm text-foreground">{currentPlan} Plan</span>
+                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary">Active</span>
+                    </div>
+                    {currentPlan !== "school" && (
+                      <button type="button" onClick={() => setShowPlans(true)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer">
+                        <CreditCard className="h-3 w-3" /> Upgrade
+                      </button>
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowPlans(true)}
-                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/95 transition-colors cursor-pointer"
-                  >
-                    <CreditCard className="h-3.5 w-3.5" /> Upgrade Plan
-                  </button>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Daily messages</span>
+                      <span className="font-mono font-bold">{dailyMessageCount} / {(dailyLimit as number) >= 999999 ? "∞" : dailyLimit}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className={`h-full rounded-full transition-all duration-700 ${usagePercentage > 90 ? "bg-red-500" : usagePercentage > 60 ? "bg-amber-500" : "bg-primary"}`}
+                        style={{ width: `${usagePercentage}%` }} />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Resets daily at midnight EAT</p>
+                  </div>
                 </div>
 
-                {/* Daily usage meter */}
-                <div className="border border-border/30 bg-card/60 rounded-xl p-5 space-y-3 shadow-xs">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-bold text-foreground">Daily Message Usage</span>
-                    <span className="font-mono text-muted-foreground">{dailyMessageCount} / {dailyLimit} requests</span>
-                  </div>
-
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-1000 ${
-                        usagePercentage > 90 ? "bg-red-500" : usagePercentage > 60 ? "bg-amber-500" : "bg-primary"
-                      }`}
-                      style={{ width: `${usagePercentage}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground leading-normal">
-                    Usage count resets daily at midnight. Upgrading plan immediately expands daily message quotas.
-                  </p>
+                {/* Plan comparison */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(["free","basic","premium","school"] as const).map((pid) => {
+                    const p = PLANS[pid];
+                    const isActive = currentPlan === pid;
+                    return (
+                      <div key={pid} className={`rounded-xl border p-4 space-y-3 transition-all ${isActive ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"}`}>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-sm text-foreground">{p.label}</p>
+                            <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
+                              {p.price === 0 ? "Free" : `KSh ${p.price.toLocaleString()}/mo`}
+                            </p>
+                          </div>
+                          {isActive && <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-primary-foreground">Current</span>}
+                        </div>
+                        <ul className="space-y-1">
+                          {[
+                            `${p.dailyMessages >= 999999 ? "Unlimited" : p.dailyMessages} messages/day`,
+                            `${p.dailyQuizzes} quizzes/day`,
+                            `${p.dailyPlanners} planners/day`,
+                            `${p.dailyNotes} note uploads/day`,
+                          ].map((feat) => (
+                            <li key={feat} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                              <span className="w-1 h-1 rounded-full bg-primary/60 flex-shrink-0" />
+                              {feat}
+                            </li>
+                          ))}
+                        </ul>
+                        {!isActive && pid !== "free" && (
+                          <button type="button" onClick={() => setShowPlans(true)}
+                            className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary hover:bg-primary/10 transition-colors">
+                            Select Plan
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}
