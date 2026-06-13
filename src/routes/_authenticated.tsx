@@ -339,7 +339,7 @@ function AuthedShell() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col overflow-x-hidden lg:flex-row bg-background text-foreground">
+    <div className="flex h-screen w-full flex-col overflow-hidden lg:flex-row bg-background text-foreground">
       {/* Disclaimer Modal - shows once on first visit */}
       <DisclaimerModal />
 
