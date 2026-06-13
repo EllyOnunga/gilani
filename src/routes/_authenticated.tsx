@@ -74,7 +74,6 @@ const STUDENT_NAV = [
   { to: "/quizzes" as any, label: "Practice Quizzes", icon: ListChecks },
   { to: "/planner" as any, label: "Planner", icon: CalendarDays },
   { to: "/analytics" as any, label: "Analytics", icon: BarChart3 },
-  { to: "/settings" as any, label: "Settings", icon: Settings },
 ] as const;
 
 function PresetAvatarSVG({ preset }: { preset: string }) {
@@ -412,6 +411,28 @@ function AuthedShell() {
                 </Link>
               );
             })}
+          {!isTeacher && !isAdmin && (
+            <>
+              <div className="pt-1 pb-0.5 px-3">
+                <div className="border-t border-border/40" />
+              </div>
+              <button
+                onClick={(e) => {
+                  setSidebarOpen(false);
+                  const isTutorThread = path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
+                  if (isTutorThread) {
+                    window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
+                  } else {
+                    toast.info("Please select or create a study session first, then use the Escalate button in the chat.");
+                  }
+                }}
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 border-transparent text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+              >
+                <ShieldAlert className="h-4 w-4" />
+                Escalate to Teacher
+              </button>
+            </>
+          )}
 
           {isTeacher && (
             <>
@@ -487,33 +508,7 @@ function AuthedShell() {
             </button>
           )}
 
-          {!isAdmin && !isTeacher && (
-            <div className="rounded-lg border border-border/50 bg-card p-3">
-              <p className="font-mono text-[11px] text-muted-foreground">REACH A TEACHER</p>
-              <p className="mt-2 text-xs leading-relaxed text-pretty">
-                Stuck or uncomfortable? Request a human review.
-              </p>
-              <Link
-                to="/tutor"
-                onClick={(e) => {
-                  setSidebarOpen(false);
-                  const isTutorThread =
-                    path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
-                  if (isTutorThread) {
-                    e.preventDefault();
-                    window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
-                  } else {
-                    toast.info(
-                      "Please select or create a study session first, then click the Escalate button in the chat header.",
-                    );
-                  }
-                }}
-                className="mt-3 block w-full rounded bg-foreground py-2 text-center text-[11px] font-bold uppercase tracking-wider text-background hover:bg-foreground/90"
-              >
-                Escalate now
-              </Link>
-            </div>
-          )}
+
           <div className="flex items-center justify-between gap-2 border border-border/20 rounded-xl bg-card/50 p-2 shadow-xs min-w-0">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-primary/20 bg-background/50 shadow-inner">
@@ -550,6 +545,14 @@ function AuthedShell() {
               </button>
               {userMenuOpen && (
                 <div className="absolute bottom-full right-0 mb-1 w-44 rounded-lg border border-border bg-popover shadow-md z-50 py-1 text-xs">
+                  <Link
+                    to={"/settings" as any}
+                    onClick={() => { setUserMenuOpen(false); setSidebarOpen(false); }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                    Settings
+                  </Link>
                   <Link
                     to={"/contact" as any}
                     onClick={() => { setUserMenuOpen(false); setSidebarOpen(false); }}
