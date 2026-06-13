@@ -572,7 +572,7 @@ function AuthedShell() {
           </div>
         </div>
       </aside>
-      <main className="flex-1 min-w-0 overflow-y-auto">
+      <main className="flex-1 min-w-0 overflow-hidden flex flex-col">
         <Breadcrumb />
         <Outlet />
       </main>

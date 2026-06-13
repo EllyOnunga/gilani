@@ -635,7 +635,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   };
 
   return (
-    <div className="flex h-[100dvh] flex-col lg:flex-row bg-background text-foreground overflow-hidden">
+    <div className="flex h-full flex-col lg:flex-row bg-background text-foreground overflow-hidden">
       <ThreadSidebar
         threads={threads}
         threadId={threadId}
