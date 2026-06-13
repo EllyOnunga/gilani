@@ -240,6 +240,36 @@ export type Database = {
           },
         ];
       };
+      newsletter_subscribers: {
+        Row: {
+          id: string;
+          email: string;
+          name: string | null;
+          status: string;
+          user_id: string | null;
+          subscribed_at: string;
+          unsubscribed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          name?: string | null;
+          status?: string;
+          user_id?: string | null;
+          subscribed_at?: string;
+          unsubscribed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          name?: string | null;
+          status?: string;
+          user_id?: string | null;
+          subscribed_at?: string;
+          unsubscribed_at?: string | null;
+        };
+        Relationships: [];
+      };
       note_chunks: {
         Row: {
           content: string;

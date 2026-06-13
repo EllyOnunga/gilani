@@ -199,7 +199,7 @@ export function ThreadSidebar({
   return (
     <>
       {/* Desktop sidebar — no close button */}
-      <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-sidebar p-4 h-screen overflow-hidden sticky top-0">
+      <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-sidebar p-4 h-screen overflow-hidden sticky top-0 rounded-r-2xl">
         <SidebarInner showClose={false} />
       </aside>
 
@@ -213,7 +213,7 @@ export function ThreadSidebar({
 
       {/* Mobile sidebar — has close button */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(80%,18rem)] flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out overflow-y-auto lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(80%,18rem)] flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out overflow-y-auto lg:hidden rounded-r-2xl ${
           threadsOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

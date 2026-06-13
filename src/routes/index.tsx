@@ -223,12 +223,23 @@ function Landing() {
   const [subscribed, setSubscribed] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subEmail.trim()) return;
-    setSubscribed(true);
-    toast.success("Thank you for subscribing to GilaniAI newsletters!");
-    setSubEmail("");
+    try {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: subEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSubscribed(true);
+      toast.success(data.message || "Thank you for subscribing to GilaniAI newsletters!");
+      setSubEmail("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Subscription failed. Try again.");
+    }
   };
 
   return (

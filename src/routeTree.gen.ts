@@ -31,6 +31,8 @@ import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as ApiTutorThreadsRouteImport } from './routes/api/tutor/threads'
+import { Route as ApiNewsletterSubscribeRouteImport } from './routes/api/newsletter/subscribe'
+import { Route as ApiNewsletterSendRouteImport } from './routes/api/newsletter/send'
 import { Route as ApiMpesaInitiateRouteImport } from './routes/api/mpesa/initiate'
 import { Route as ApiMpesaCallbackRouteImport } from './routes/api/mpesa/callback'
 import { Route as AuthenticatedTutorThreadIdRouteImport } from './routes/_authenticated/tutor.$threadId'
@@ -146,6 +148,16 @@ const ApiTutorThreadsRoute = ApiTutorThreadsRouteImport.update({
   path: '/api/tutor/threads',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiNewsletterSubscribeRoute = ApiNewsletterSubscribeRouteImport.update({
+  id: '/api/newsletter/subscribe',
+  path: '/api/newsletter/subscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNewsletterSendRoute = ApiNewsletterSendRouteImport.update({
+  id: '/api/newsletter/send',
+  path: '/api/newsletter/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiMpesaInitiateRoute = ApiMpesaInitiateRouteImport.update({
   id: '/api/mpesa/initiate',
   path: '/api/mpesa/initiate',
@@ -200,6 +212,8 @@ export interface FileRoutesByFullPath {
   '/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
   '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
   '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
+  '/api/newsletter/send': typeof ApiNewsletterSendRoute
+  '/api/newsletter/subscribe': typeof ApiNewsletterSubscribeRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
 }
 export interface FileRoutesByTo {
@@ -228,6 +242,8 @@ export interface FileRoutesByTo {
   '/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
   '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
   '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
+  '/api/newsletter/send': typeof ApiNewsletterSendRoute
+  '/api/newsletter/subscribe': typeof ApiNewsletterSubscribeRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
 }
 export interface FileRoutesById {
@@ -258,6 +274,8 @@ export interface FileRoutesById {
   '/_authenticated/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
   '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
   '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
+  '/api/newsletter/send': typeof ApiNewsletterSendRoute
+  '/api/newsletter/subscribe': typeof ApiNewsletterSubscribeRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
 }
 export interface FileRouteTypes {
@@ -288,6 +306,8 @@ export interface FileRouteTypes {
     | '/tutor/$threadId'
     | '/api/mpesa/callback'
     | '/api/mpesa/initiate'
+    | '/api/newsletter/send'
+    | '/api/newsletter/subscribe'
     | '/api/tutor/threads'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -316,6 +336,8 @@ export interface FileRouteTypes {
     | '/tutor/$threadId'
     | '/api/mpesa/callback'
     | '/api/mpesa/initiate'
+    | '/api/newsletter/send'
+    | '/api/newsletter/subscribe'
     | '/api/tutor/threads'
   id:
     | '__root__'
@@ -345,6 +367,8 @@ export interface FileRouteTypes {
     | '/_authenticated/tutor/$threadId'
     | '/api/mpesa/callback'
     | '/api/mpesa/initiate'
+    | '/api/newsletter/send'
+    | '/api/newsletter/subscribe'
     | '/api/tutor/threads'
   fileRoutesById: FileRoutesById
 }
@@ -365,6 +389,8 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   ApiMpesaCallbackRoute: typeof ApiMpesaCallbackRoute
   ApiMpesaInitiateRoute: typeof ApiMpesaInitiateRoute
+  ApiNewsletterSendRoute: typeof ApiNewsletterSendRoute
+  ApiNewsletterSubscribeRoute: typeof ApiNewsletterSubscribeRoute
   ApiTutorThreadsRoute: typeof ApiTutorThreadsRoute
 }
 
@@ -524,6 +550,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTutorThreadsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/newsletter/subscribe': {
+      id: '/api/newsletter/subscribe'
+      path: '/api/newsletter/subscribe'
+      fullPath: '/api/newsletter/subscribe'
+      preLoaderRoute: typeof ApiNewsletterSubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/newsletter/send': {
+      id: '/api/newsletter/send'
+      path: '/api/newsletter/send'
+      fullPath: '/api/newsletter/send'
+      preLoaderRoute: typeof ApiNewsletterSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/mpesa/initiate': {
       id: '/api/mpesa/initiate'
       path: '/api/mpesa/initiate'
@@ -618,6 +658,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   ApiMpesaCallbackRoute: ApiMpesaCallbackRoute,
   ApiMpesaInitiateRoute: ApiMpesaInitiateRoute,
+  ApiNewsletterSendRoute: ApiNewsletterSendRoute,
+  ApiNewsletterSubscribeRoute: ApiNewsletterSubscribeRoute,
   ApiTutorThreadsRoute: ApiTutorThreadsRoute,
 }
 export const routeTree = rootRouteImport

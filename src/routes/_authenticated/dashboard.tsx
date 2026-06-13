@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+import { NewsletterSubscribe } from "@/components/NewsletterSubscribe";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
@@ -36,6 +37,8 @@ type RevisionTopic = {
 
 type DashboardData = {
   // Profile
+  userId: string;
+  email: string;
   displayName: string;
   curriculum: string;
   plan: string;
@@ -153,6 +156,8 @@ const loadDashboardData = createServerFn({ method: "GET" })
       : "";
 
     return {
+      userId: userId,
+      email: authResult.user?.email || "",
       displayName: profile?.display_name || authResult.user?.email?.split("@")[0] || "Student",
       curriculum: profile?.curriculum || "KCSE",
       plan: profile?.plan || "Free",
@@ -512,6 +517,14 @@ function Dashboard() {
         </div>
 
       </div>
+
+      {/* Newsletter Banner */}
+      <NewsletterSubscribe
+        variant="banner"
+        userId={data?.userId}
+        userEmail={data?.email}
+        userName={data?.displayName}
+      />
     </div>
   );
 }
