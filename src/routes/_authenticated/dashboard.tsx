@@ -254,8 +254,8 @@ function Dashboard() {
     <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-10">
 
       {/* ── Hero Header ── */}
-      <header className="animate-in-slide rounded-2xl bg-orange-400 dark:bg-orange-500/90 p-4 sm:p-6">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-white mb-1">
+      <header className="animate-in-slide rounded-2xl border border-border bg-card p-4 sm:p-6">
+        <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-primary mb-1">
           Dashboard
         </p>
 
@@ -269,14 +269,14 @@ function Dashboard() {
               </div>
             ) : (
               <>
-                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-balance leading-tight text-white">
+                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-balance leading-tight text-foreground">
                   {getGreeting()},{" "}
                   <span className="capitalize">{displayName}</span>. Ready to study?
                 </h2>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   {curriculum && (
                     <span
-                      className="inline-flex items-center gap-1.5 rounded-md border border-white/30 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-foreground"
                     >
                       <GraduationCap className="h-3 w-3" />
                       {curriculum}
@@ -284,13 +284,13 @@ function Dashboard() {
                   )}
                   {plan && (
                     <span
-                      className="inline-flex items-center gap-1.5 rounded-md border border-white/30 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-foreground"
                     >
                       {plan === "Free" ? "Free Plan" : `⭐ ${plan}`}
                     </span>
                   )}
                   {memberSince && (
-                    <span className="font-mono text-[10px] text-white/70">
+                    <span className="font-mono text-[10px] text-muted-foreground">
                       Member since {memberSince}
                     </span>
                   )}
@@ -302,42 +302,42 @@ function Dashboard() {
           {/* Stat pills */}
           <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0">
             {/* Streak */}
-            <div className="flex flex-col items-center gap-1 rounded-lg border border-white/30 px-1 sm:px-4 py-2 min-w-0">
-              <Flame className="h-4 w-4 text-white" />
-              <p className="font-serif text-base sm:text-lg leading-none font-bold text-white">
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-border px-1 sm:px-4 py-2 min-w-0">
+              <Flame className="h-4 w-4 text-primary" />
+              <p className="font-serif text-base sm:text-lg leading-none font-bold text-foreground">
                 {isLoading ? "—" : streak}
               </p>
-              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-white/70 text-center truncate w-full">
+              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground text-center truncate w-full">
                 day streak
               </p>
             </div>
             {/* Quizzes */}
-            <div className="flex flex-col items-center gap-1 rounded-lg border border-white/30 px-1 sm:px-4 py-2 min-w-0">
-              <Award className="h-4 w-4 text-white" />
-              <p className="font-serif text-base sm:text-lg leading-none font-bold text-white">
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-border px-1 sm:px-4 py-2 min-w-0">
+              <Award className="h-4 w-4 text-primary" />
+              <p className="font-serif text-base sm:text-lg leading-none font-bold text-foreground">
                 {isLoading ? "—" : quizzesCompleted}
               </p>
-              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-white/70 text-center truncate w-full">
+              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground text-center truncate w-full">
                 quizzes
               </p>
             </div>
             {/* Messages */}
-            <div className="flex flex-col items-center gap-1 rounded-lg border border-white/30 px-1 sm:px-4 py-2 min-w-0">
-              <MessageCircle className="h-4 w-4 text-white" />
-              <p className="font-serif text-base sm:text-lg leading-none font-bold text-white">
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-border px-1 sm:px-4 py-2 min-w-0">
+              <MessageCircle className="h-4 w-4 text-primary" />
+              <p className="font-serif text-base sm:text-lg leading-none font-bold text-foreground">
                 {isLoading ? "—" : messagesCount}
               </p>
-              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-white/70 text-center truncate w-full">
+              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground text-center truncate w-full">
                 messages
               </p>
             </div>
             {/* Notes */}
-            <div className="flex flex-col items-center gap-1 rounded-lg border border-white/30 px-1 sm:px-4 py-2 min-w-0">
-              <FileText className="h-4 w-4 text-white" />
-              <p className="font-serif text-base sm:text-lg leading-none font-bold text-white">
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-border px-1 sm:px-4 py-2 min-w-0">
+              <FileText className="h-4 w-4 text-primary" />
+              <p className="font-serif text-base sm:text-lg leading-none font-bold text-foreground">
                 {isLoading ? "—" : notesCount}
               </p>
-              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-white/70 text-center truncate w-full">
+              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground text-center truncate w-full">
                 notes
               </p>
             </div>
@@ -346,9 +346,9 @@ function Dashboard() {
       </header>
 
       {/* ── Quick Actions ── */}
-      <section className="animate-in-slide [animation-delay:40ms] rounded-2xl bg-orange-400 dark:bg-orange-500/90 p-4 sm:p-6">
+      <section className="animate-in-slide [animation-delay:40ms] rounded-2xl border border-border bg-card p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-serif text-lg font-semibold text-white">Quick Actions</h3>
+          <h3 className="font-serif text-lg font-semibold text-foreground">Quick Actions</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
@@ -360,12 +360,12 @@ function Dashboard() {
             <Link
               key={to}
               to={to as any}
-              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-white/30 p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-white/60"
+              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-background p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/50"
             >
-              <div className="rounded-lg p-2.5 bg-white/15 text-white transition-transform duration-200 group-hover:scale-110">
+              <div className="rounded-lg p-2.5 bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-110">
                 <Icon className="h-5 w-5" />
               </div>
-              <span className="text-xs font-semibold text-white">{label}</span>
+              <span className="text-xs font-semibold text-foreground">{label}</span>
             </Link>
           ))}
         </div>
