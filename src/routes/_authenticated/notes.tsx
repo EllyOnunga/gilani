@@ -784,24 +784,7 @@ ${content}`.trim()
           <h3 className="font-serif text-xl mb-4">Add Study Note</h3>
           <div className="space-y-4">
             {/* Document Upload Zone */}
-            <div
-              onDragEnter={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragActive(true);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragActive(true);
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setDragActive(false);
-              }}
-              className="relative rounded-xl border border-border bg-background p-3"
-            >
+            <div className="relative rounded-xl border border-border bg-background p-3">
               <input
                 type="file"
                 id="notes-file-upload"
