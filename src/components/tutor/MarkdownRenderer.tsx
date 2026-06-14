@@ -280,13 +280,25 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
     // Mermaid diagrams
     if (!inline && lang === "mermaid") {
       // Strip LaTeX math tokens that the AI sometimes injects into mermaid syntax
-      const cleanMermaid = text
+      let cleanMermaid = text
         .replace(/\$\\longrightarrow\$/g, "-->")
         .replace(/\$\\rightarrow\$/g, "-->")
         .replace(/\$\\to\$/g, "-->")
         .replace(/\$\\leftarrow\$/g, "<--")
         .replace(/\$\\leftrightarrow\$/g, "<-->")
         .replace(/\$([^$]+)\$/g, (_m, inner) => inner.trim()); // strip any remaining $...$
+      // Mermaid v11 flowchart parser breaks on labels containing parentheses,
+      // e.g. C[Water (H2O)] — wrap such labels in quotes: C["Water (H2O)"]
+      // Match square-bracket labels (most common) containing literal parentheses
+      cleanMermaid = cleanMermaid.replace(
+        /([A-Za-z0-9_]+)(\[)([^\[\]\n]*[()][^\[\]\n]*)(\])/g,
+        (_m, nodeId, open, label, close) => {
+          const trimmed = label.trim();
+          if (trimmed.startsWith('"') && trimmed.endsWith('"')) return `${nodeId}${open}${label}${close}`;
+          const escaped = trimmed.replace(/"/g, "&quot;");
+          return `${nodeId}${open}"${escaped}"${close}`;
+        }
+      );
       return <MermaidDiagram code={cleanMermaid} />;
     }
 
