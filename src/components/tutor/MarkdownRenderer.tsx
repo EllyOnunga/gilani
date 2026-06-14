@@ -250,7 +250,15 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
 
     // Mermaid diagrams
     if (!inline && lang === "mermaid") {
-      return <MermaidDiagram code={text} />;
+      // Strip LaTeX math tokens that the AI sometimes injects into mermaid syntax
+      const cleanMermaid = text
+        .replace(/\$\\longrightarrow\$/g, "-->")
+        .replace(/\$\\rightarrow\$/g, "-->")
+        .replace(/\$\\to\$/g, "-->")
+        .replace(/\$\\leftarrow\$/g, "<--")
+        .replace(/\$\\leftrightarrow\$/g, "<-->")
+        .replace(/\$([^$]+)\$/g, (_m, inner) => inner.trim()); // strip any remaining $...$
+      return <MermaidDiagram code={cleanMermaid} />;
     }
 
     // SMILES chemical structure diagrams
@@ -395,6 +403,9 @@ function preprocessLatex(raw: string): string {
 
   // 12. Restore protected blocks
   s = s.replace(new RegExp(TOKEN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), () => latexBlocks.shift()!);
+
+  // 13. Restore fenced code blocks
+  s = s.replace(new RegExp(FENCE_TOKEN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), () => fenceBlocks.shift()!);
 
   return s;
 }
