@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { streamText, embed } from "ai";
+import { streamText, embed, smoothStream } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -355,6 +355,7 @@ export const Route = createFileRoute("/api/chat")({
                 messages: aiMessages,
                 maxRetries: 0,
                 temperature: 0.7,
+                experimental_transform: smoothStream({ delayInMs: 25, chunking: "word" }),
                 onError: (errorObj) => {
                   const error = (errorObj as any)?.error || errorObj;
                   console.error(

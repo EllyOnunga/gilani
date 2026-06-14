@@ -6,7 +6,7 @@ interface ThinkingIndicatorProps {
   messageText: string;
 }
 
-const STALL_DELAY_MS = 1500;
+const STALL_DELAY_MS = 1000;
 
 export function ThinkingIndicator({ isPending, isLastMessage, messageText }: ThinkingIndicatorProps) {
   const [stalled, setStalled] = useState(messageText.trim() === "");
