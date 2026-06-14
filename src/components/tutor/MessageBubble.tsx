@@ -59,31 +59,9 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
       : rawText;
 
   const isStreamActive = isPending && isLast;
-  const [visibleText, setVisibleText] = useState(displayText);
-  const lastUpdateRef = useRef(0);
-
-  useEffect(() => {
-    if (!isStreamActive) {
-      setVisibleText(displayText);
-      lastUpdateRef.current = 0;
-      return;
-    }
-
-    const now = Date.now();
-    const timeSinceLastUpdate = now - lastUpdateRef.current;
-
-    if (timeSinceLastUpdate >= 100) {
-      setVisibleText(displayText);
-      lastUpdateRef.current = now;
-    } else {
-      const delay = 100 - timeSinceLastUpdate;
-      const timer = setTimeout(() => {
-        setVisibleText(displayText);
-        lastUpdateRef.current = Date.now();
-      }, delay);
-      return () => clearTimeout(timer);
-    }
-  }, [displayText, isStreamActive]);
+  // No throttling -- plain text renders instantly during streaming;
+  // markdown parsing only kicks in once streaming finishes.
+  const visibleText = displayText;
 
 
   // Load existing vote for this message
@@ -172,7 +150,7 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
               <div className={`prose-ai relative ${isStreamActive ? "streaming-content" : ""}`}>
                 {visibleText ? (
                   isStreamActive ? (
-                    <MarkdownRenderer content={visibleText} />
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed">{visibleText}</div>
                   ) : (
                     <MemoMarkdown content={displayText} />
                   )
