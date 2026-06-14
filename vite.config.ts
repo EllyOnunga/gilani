@@ -22,6 +22,29 @@ export default defineConfig({
     ssr: {
       external: ["nodemailer"],
     },
+    onwarn(warning, defaultHandler) {
+      // Suppress "use client" directive warnings from third-party packages
+      if (warning.code === "MODULE_LEVEL_DIRECTIVE") return;
+      // Suppress "Unknown input options: platform" from Nitro
+      if (warning.message?.includes("Unknown input options")) return;
+      defaultHandler(warning);
+    },
+    build: {
+      chunkSizeWarningLimit: 600,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("katex")) return "vendor-katex";
+            if (id.includes("mermaid") || id.includes("cytoscape") || id.includes("dagre")) return "vendor-mermaid";
+            if (id.includes("jspdf") || id.includes("html2canvas") || id.includes("canvg")) return "vendor-pdf";
+            if (id.includes("docx")) return "vendor-docx";
+            if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
+            if (id.includes("node_modules/@sentry")) return "vendor-sentry";
+            if (id.includes("node_modules/react-dom")) return "vendor-react-dom";
+          },
+        },
+      },
+    },
   },
   tanstackStart: {
     serverFns: {

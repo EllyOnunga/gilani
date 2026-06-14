@@ -7,9 +7,17 @@ import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import "katex/dist/katex.min.css";
 
-// mhchem must be loaded into katex's require system before any rendering
-import katex from "katex";
-import "katex/dist/contrib/mhchem.min.js";
+// KaTeX and mhchem loaded lazily to keep the initial bundle small
+let _katex: typeof import("katex").default | null = null;
+async function getKatex() {
+  if (_katex) return _katex;
+  const [katexMod] = await Promise.all([
+    import("katex"),
+    import("katex/dist/contrib/mhchem.min.js" as any),
+  ]);
+  _katex = katexMod.default;
+  return _katex;
+}
 
 
 // ─── Mermaid Component ────────────────────────────────────────────────────────
@@ -97,6 +105,36 @@ function Callout({ type, children }: { type: CalloutType; children: React.ReactN
 }
 
 // ─── Markdown Components ──────────────────────────────────────────────────────
+
+// Lazy-rendered KaTeX block — only loads KaTeX bundle when first math is encountered
+function LazyKatexBlock({ expression }: { expression: string }) {
+  const [html, setHtml] = React.useState<string | null>(null);
+  const [error, setError] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    getKatex().then((katex) => {
+      if (cancelled) return;
+      try {
+        const rendered = katex.renderToString(expression, {
+          displayMode: true,
+          throwOnError: false,
+          strict: false,
+          trust: true,
+          macros: KATEX_MACROS,
+        });
+        setHtml(rendered);
+      } catch {
+        setError(true);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [expression]);
+
+  if (error) return <code className="block bg-[#1e1e2e] text-green-300 font-mono text-[11px] leading-relaxed p-3 rounded-xl overflow-x-auto">{expression}</code>;
+  if (!html) return <div className="my-3 h-8 rounded-lg bg-muted/30 animate-pulse" />;
+  return <div className="my-3 overflow-x-auto py-2 px-1 rounded-lg bg-muted/30 border border-border/40" dangerouslySetInnerHTML={{ __html: html }} />;
+}
 
 const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components"] = {
   h1: ({ children }) => (
@@ -219,49 +257,13 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
     if (!inline && (lang === "smiles" || lang === "smi")) {
       return <SmilesDrawer smiles={text} />;
     }
-
     // Render fenced math/latex/tex blocks as KaTeX display math
     if (!inline && (lang === "latex" || lang === "math" || lang === "tex")) {
-      try {
-        // CS-KATEX-001: trust:false prevents \href javascript: URI injection
-        const html = katex.renderToString(text, {
-          displayMode: true,
-          throwOnError: false,
-          strict: false,
-          trust: false,
-          macros: KATEX_MACROS,
-        });
-        return (
-          <div
-            className="my-3 overflow-x-auto py-2 px-1 rounded-lg bg-muted/30 border border-border/40 text-center"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        );
-      } catch {
-        return <code className="block bg-[#1e1e2e] text-green-300 font-mono text-[11px] leading-relaxed p-3 rounded-xl overflow-x-auto">{text}</code>;
-      }
+      return <LazyKatexBlock expression={text} />;
     }
-
     // Render fenced chemistry blocks
     if (!inline && (lang === "chemistry" || lang === "chem")) {
-      try {
-        // CS-KATEX-001: trust:false prevents \href javascript: URI injection
-        const html = katex.renderToString(`\\ce{${text}}`, {
-          displayMode: true,
-          throwOnError: false,
-          strict: false,
-          trust: false,
-          macros: KATEX_MACROS,
-        });
-        return (
-          <div
-            className="my-3 overflow-x-auto py-2 px-1 rounded-lg bg-muted/30 border border-border/40 text-center"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        );
-      } catch {
-        return <code className="block bg-[#1e1e2e] text-green-300 font-mono text-[11px] leading-relaxed p-3 rounded-xl overflow-x-auto">{text}</code>;
-      }
+      return <LazyKatexBlock expression={`\\ce{${text}}`} />;
     }
 
     // Regular code blocks with language badge

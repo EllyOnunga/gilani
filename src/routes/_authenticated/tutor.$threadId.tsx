@@ -12,7 +12,15 @@ import {
 } from "@/lib/tutor.server-fns";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { exportAsPDF, exportAsWord } from "@/lib/export-utils";
+// Export utils loaded lazily — jspdf + html2canvas are ~700kB combined
+const exportAsPDF = async (...args: Parameters<typeof import("@/lib/export-utils").exportAsPDF>) => {
+  const { exportAsPDF: fn } = await import("@/lib/export-utils");
+  return fn(...args);
+};
+const exportAsWord = async (...args: Parameters<typeof import("@/lib/export-utils").exportAsWord>) => {
+  const { exportAsWord: fn } = await import("@/lib/export-utils");
+  return fn(...args);
+};
 import { withTimeout, friendlyError } from "@/lib/async";
 import { toast } from "sonner";
 import { ChatHeader } from "@/components/tutor/ChatHeader";
