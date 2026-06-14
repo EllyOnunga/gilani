@@ -482,7 +482,17 @@ function NotesPage() {
     return getCachedNotes();
   });
   const [isOffline, setIsOffline] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(() => {
+    try { return sessionStorage.getItem("notes_showForm") === "true"; } catch { return false; }
+  });
+
+  const setShowFormPersisted = (val: boolean | ((v: boolean) => boolean)) => {
+    setShowForm((prev) => {
+      const next = typeof val === "function" ? val(prev) : val;
+      try { sessionStorage.setItem("notes_showForm", String(next)); } catch {}
+      return next;
+    });
+  };
   const [title, setTitle] = useState("");
   const [heading, setHeading] = useState("");
   const [subheading, setSubheading] = useState("");
@@ -643,7 +653,8 @@ ${content}`.trim()
       setTitle("");
       setContent("");
       setAttachedFile(null);
-      setShowForm(false);
+      setShowFormPersisted(false);
+      try { sessionStorage.removeItem('notes_showForm'); } catch {}
       toast.success("Note ingested & summarised!");
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to save note");
@@ -758,7 +769,7 @@ ${content}`.trim()
           </p>
         </div>
         <button
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => setShowFormPersisted((v) => !v)}
           disabled={isOffline || isRateLimited}
           className="self-start sm:self-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
@@ -907,7 +918,7 @@ ${content}`.trim()
             </div>
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
               <button
-                onClick={() => setShowForm(false)}
+                onClick={() => setShowFormPersisted(false)}
                 className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
               >
                 Cancel
