@@ -209,7 +209,7 @@ function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    (async () => {
+    const fetchData = async () => {
       try {
         const d = new Date();
         const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
@@ -220,7 +220,13 @@ function Dashboard() {
       } catch (err) {
         console.error("[Dashboard] load error:", err);
       }
-    })();
+    };
+
+    fetchData();
+
+    // Refresh on window focus
+    window.addEventListener("focus", fetchData);
+    return () => window.removeEventListener("focus", fetchData);
   }, []);
 
   // Block admin/teacher from rendering student dashboard

@@ -49,7 +49,7 @@ function createChatModel(provider: string): { model: any; name: string } | null 
       });
       // Primary: llama-3.1-8b-instant (fast, high limits)
       // Fallback handled by provider order — llama-4-scout added as groq2
-      return { model: groq.chatModel("llama-3.1-8b-instant"), name: "groq" };
+      return { model: groq.chatModel("llama-3.3-70b-versatile"), name: "groq" };
     }
     case "groq2": {
       const key = getKey(process.env.GROQ_API_KEY);
@@ -103,7 +103,18 @@ function createChatModel(provider: string): { model: any; name: string } | null 
 }
 
 function createEmbeddingModel(): { model: any; name: string } | null {
-  // Try Groq first for blazing fast open-source embeddings (keeps it close to your primary chat)
+  // Try OpenAI first for embeddings (more reliable)
+  const openaiKey = getKey(process.env.OPENAI_API_KEY);
+  if (openaiKey) {
+    const openai = createOpenAICompatible({
+      name: "openai",
+      baseURL: "https://api.openai.com/v1",
+      apiKey: openaiKey,
+    });
+    return { model: openai.textEmbeddingModel("text-embedding-3-small"), name: "openai" };
+  }
+
+  // Groq fallback for embeddings
   const groqKey = getKey(process.env.GROQ_API_KEY);
   if (groqKey) {
     const groq = createOpenAICompatible({
@@ -114,16 +125,7 @@ function createEmbeddingModel(): { model: any; name: string } | null {
     return { model: groq.textEmbeddingModel("nomic-embed-text"), name: "groq" };
   }
 
-  // Try OpenAI as fallback
-  const openaiKey = getKey(process.env.OPENAI_API_KEY);
-  if (openaiKey) {
-    const openai = createOpenAICompatible({
-      name: "openai",
-      baseURL: "https://api.openai.com/v1",
-      apiKey: openaiKey,
-    });
-    return { model: openai.textEmbeddingModel("text-embedding-3-small"), name: "openai" };
-  }
+
 
   // Try Mistral as fallback
   const mistralKey = getKey(process.env.MISTRAL_API_KEY);

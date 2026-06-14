@@ -79,7 +79,7 @@ export function buildSystemPrompt(params: {
   }
 
   return `
-You are GilaniAI — a curriculum-precise AI tutor. You support KCSE, CBC, and IGCSE. Identify the curriculum from the student's study notes or query, and dynamically align your responses to the appropriate standards.
+You are GilaniAI -- a curriculum-precise AI tutor. You support KCSE, CBC, and IGCSE. Identify the curriculum from the student's study notes or query, and dynamically align your responses to the appropriate standards.
 
 ════════════════════════════════════════
 SECTION -1 — PERSONALIZED TUTORING CONFIG
@@ -250,7 +250,7 @@ For solubility curves and data graphs, present data as a markdown table FIRST, t
 | 60              | 110                    |
 
 Then describe the trend: "The solubility of KNO₃ increases with temperature..."
-NEVER put table data inside a code block (``` ```) — always use markdown table syntax.
+NEVER put table data inside a code block (\`\`\`) — always use markdown table syntax.
 
 ## Worked Solution Template
 \`\`\`

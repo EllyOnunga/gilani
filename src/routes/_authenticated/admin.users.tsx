@@ -371,7 +371,10 @@ function AdminUsersPage() {
 
   useEffect(() => {
     let active = true;
-    const loadDashboardData = async () => {
+    const [refreshing, setRefreshing] = useState(false);
+
+  const loadDashboardData = async (silent = false) => {
+    if (!silent) setRefreshing(true);
       try {
         const [profiles, contactMsgs, fb, rl, pay, esc, stats, nl] = await Promise.all([
           listProfiles(),
@@ -396,6 +399,7 @@ function AdminUsersPage() {
         console.error("Failed to load admin data:", err);
         toast.error("Failed to load admin data");
       } finally {
+        setRefreshing(false);
         if (active) setLoadingData(false);
       }
     };
