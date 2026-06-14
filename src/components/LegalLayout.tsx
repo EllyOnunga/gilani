@@ -23,7 +23,7 @@ export function LegalHeader({ backTo, backLabel }: { backTo?: any; backLabel?: s
       <div className="flex w-full items-center justify-between px-4 sm:px-6 py-3 max-w-5xl mx-auto">
         <Logo to="/" size="md" />
         <nav className="flex items-center gap-2">
-          
+          <a
             href="/"
             onClick={handleHome}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-accent cursor-pointer"
