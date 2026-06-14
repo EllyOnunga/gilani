@@ -1,11 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import DOMPurify from "dompurify";
+import { FunctionGraphBlock } from "./FunctionGraph";
 import { ExternalLink, AlertCircle, Lightbulb, AlertTriangle, Info } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import "katex/dist/katex.min.css";
+import "katex/dist/contrib/mhchem.min.js";
 
 // KaTeX and mhchem loaded lazily to keep the initial bundle small
 let _katex: typeof import("katex").default | null = null;
@@ -165,6 +167,21 @@ function LazyKatexBlock({ expression }: { expression: string }) {
   return <div className="my-3 overflow-x-auto py-2 px-1 rounded-lg bg-muted/30 border border-border/40" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
+// Generic SVG diagrams (anatomy, physics setups, lab apparatus, circuits, etc.)
+// AI-generated SVG, sanitized before injection.
+function DiagramSVG({ svg }: { svg: string }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!ref.current) return;
+    ref.current.innerHTML = DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } });
+  }, [svg]);
+  return (
+    <div className="my-3 rounded-xl border border-border bg-white p-3 overflow-x-auto flex justify-center">
+      <div ref={ref} className="max-w-full [&>svg]:max-w-full [&>svg]:h-auto" />
+    </div>
+  );
+}
+
 const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components"] = {
   h1: ({ children }) => (
     <h1 className="text-lg font-extrabold mt-4 mb-1.5 text-primary border-b border-primary/20 pb-1 leading-snug">
@@ -313,6 +330,16 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
     // Render fenced chemistry blocks
     if (!inline && (lang === "chemistry" || lang === "chem")) {
       return <LazyKatexBlock expression={`\\ce{${text}}`} />;
+    }
+
+    // Function / equation graphs — AI provides a JSON spec
+    if (!inline && (lang === "function-plot" || lang === "graph" || lang === "plot")) {
+      return <FunctionGraphBlock spec={text} />;
+    }
+
+    // Generic diagrams: anatomy, physics setups, lab apparatus, circuits
+    if (!inline && (lang === "svg" || lang === "diagram")) {
+      return <DiagramSVG svg={text} />;
     }
 
     // Regular code blocks with language badge

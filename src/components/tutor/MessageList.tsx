@@ -99,6 +99,19 @@ export function MessageList({
     }
   }, [messages]);
 
+  // Jump to bottom instantly once messages finish loading for this thread
+  useEffect(() => {
+    if (messagesLoading || messages.length === 0) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    // Double rAF ensures layout has painted the newly rendered messages
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight;
+      });
+    });
+  }, [messagesLoading]);
+
   // During streaming: pin to bottom every frame so slow reveal never falls behind
   useEffect(() => {
     const container = scrollContainerRef.current;
