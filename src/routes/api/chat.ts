@@ -451,7 +451,12 @@ export const Route = createFileRoute("/api/chat")({
           console.log(`[API Chat] Returning stream response from: ${activeProvider}`);
           // Pipe through with abort so hung provider connections are cleaned up
           const textStream = streamResult.toUIMessageStreamResponse({
-            headers: { "cache-control": "no-cache", "Content-Type": "text/event-stream", "X-Vercel-AI-Data-Stream": "v1" },
+            headers: {
+              "Cache-Control": "no-cache, no-transform",
+              "Content-Type": "text/event-stream",
+              "Connection": "keep-alive",
+              "X-Accel-Buffering": "no",
+            },
           });
           streamAbort.signal.addEventListener("abort", () => {
             clearTimeout(streamDeadline);
