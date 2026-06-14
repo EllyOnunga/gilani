@@ -778,7 +778,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         />
 
         {/* Input area */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 sticky bottom-0 z-10 bg-background">
         <ChatInput
           input={input}
           isPending={isPending}
