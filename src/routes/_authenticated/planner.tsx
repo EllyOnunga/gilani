@@ -752,21 +752,21 @@ function PlannerPage() {
                 <button
                   key={date}
                   onClick={() => setSelectedDate(date)}
-                  className={`flex flex-col items-center rounded-xl px-2 py-2 border transition-all w-full ${
+                  className={`flex flex-col items-center rounded-lg px-1 py-1.5 border transition-all w-full ${
                     isSelected
                       ? "border-primary bg-primary/10 text-primary shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:bg-accent"
                   }`}
                 >
-                  <span className="font-mono text-[9px] uppercase tracking-wider">
+                  <span className="font-mono text-[8px] uppercase tracking-wider">
                     {d.toLocaleDateString("en-KE", { weekday: "short" })}
                   </span>
-                  <span className="font-serif text-lg font-bold leading-none mt-0.5">
+                  <span className="font-serif text-sm font-bold leading-none mt-0.5">
                     {d.getDate()}
                   </span>
-                  {isToday && <span className="mt-1 h-1 w-1 rounded-full bg-primary" />}
+                  {isToday && <span className="mt-0.5 h-1 w-1 rounded-full bg-primary" />}
                   {dayTasks.length > 0 && (
-                    <span className="font-mono text-[8px] mt-1 opacity-60">
+                    <span className="font-mono text-[7px] mt-0.5 opacity-60">
                       {dayDone}/{dayTasks.length}
                     </span>
                   )}
