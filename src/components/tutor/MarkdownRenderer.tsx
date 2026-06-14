@@ -343,8 +343,13 @@ const JS_BLOCKLIST = new Set([
 // ─── preprocessLatex ─────────────────────────────────────────────────────────
 
 function preprocessLatex(raw: string): string {
+  // 0. Protect fenced code blocks from ALL substitutions
+  const FENCE_TOKEN = "\x00FENCE\x00";
+  const fenceBlocks: string[] = [];
+  let s = raw.replace(/```[\s\S]*?```/g, (match) => { fenceBlocks.push(match); return FENCE_TOKEN; });
+
   // 1. Block math \[ … \] → $$ … $$
-  let s = raw.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `$$\n${inner.trim()}\n$$`);
+  s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `$$\n${inner.trim()}\n$$`);
 
   // 2. Inline math \( … \) → $ … $
   s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_m, inner) => `$${inner.trim()}$`);

@@ -22,13 +22,6 @@ export default defineConfig({
     ssr: {
       external: ["nodemailer"],
     },
-    onwarn(warning, defaultHandler) {
-      // Suppress "use client" directive warnings from third-party packages
-      if (warning.code === "MODULE_LEVEL_DIRECTIVE") return;
-      // Suppress "Unknown input options: platform" from Nitro
-      if (warning.message?.includes("Unknown input options")) return;
-      defaultHandler(warning);
-    },
     build: {
       chunkSizeWarningLimit: 600,
       rollupOptions: {
