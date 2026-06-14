@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getPlanLimits } from "@/lib/plans";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
@@ -90,7 +91,6 @@ export async function checkDualRateLimit(
 
 // ─── Plan-aware daily limit ───────────────────────────────────────────────────
 
-import { getPlanLimits } from "@/lib/plans";
 
 export type RateLimitAction = "chat" | "quiz" | "planner" | "notes";
 
