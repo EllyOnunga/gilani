@@ -238,7 +238,7 @@ export function ChatInput({
         {/* Attach button */}
         <div className="pb-2 pl-2 pt-2">
           <input type="file" id="chat-file-attachment" className="sr-only"
-            accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/csv,.pdf,.docx,.doc,.txt,.md,.csv"
+            accept=".pdf,.docx,.doc,.txt,.md,.csv,.jpg,.jpeg,.png,.webp,image/*,application/pdf,text/plain,text/csv"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-file-attachment"
             className={`flex h-9 w-9 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
@@ -250,7 +250,7 @@ export function ChatInput({
         {/* Camera — hidden on desktop, shown on mobile */}
         <div className="pb-2 pt-2 sm:hidden">
           <input type="file" id="chat-camera-capture" className="sr-only"
-            accept="image/*" capture="environment"
+            accept="image/*"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-camera-capture"
             className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
@@ -262,7 +262,7 @@ export function ChatInput({
         {/* Camera — desktop only */}
         <div className="pb-2 pt-2 hidden sm:block">
           <input type="file" id="chat-camera-capture-desktop" className="sr-only"
-            accept="image/*" capture="environment"
+            accept="image/*"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-camera-capture-desktop"
             className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
