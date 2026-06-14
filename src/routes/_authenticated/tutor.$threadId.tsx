@@ -657,7 +657,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
       />
       {/* Main chat area */}
-      <main className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden">
+      <main className="flex flex-1 flex-col min-h-0 min-w-0">
         {/* Mobile top bar */}
         <div className="flex items-center gap-2 border-b border-border bg-sidebar px-3 py-1.5 lg:hidden">
           <button
@@ -778,7 +778,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         />
 
         {/* Input area */}
-        <div className="flex-shrink-0 sticky bottom-0 z-10 bg-background">
+        <div className="flex-shrink-0 z-10 bg-background border-t border-border/60">
         <ChatInput
           input={input}
           isPending={isPending}
