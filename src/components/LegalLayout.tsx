@@ -1,21 +1,35 @@
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Home, LayoutDashboard } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Home, LayoutDashboard } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function LegalHeader({ backTo, backLabel }: { backTo?: any; backLabel?: string }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleHome = async (e: React.MouseEvent) => {
+    if (user) {
+      e.preventDefault();
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+      navigate({ to: "/" });
+    }
+  };
+
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="flex w-full items-center justify-between px-4 sm:px-6 py-3 max-w-5xl mx-auto">
         <Logo to="/" size="md" />
         <nav className="flex items-center gap-2">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-accent"
+          
+            href="/"
+            onClick={handleHome}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-accent cursor-pointer"
           >
             <Home className="h-3.5 w-3.5" /> Home
-          </Link>
+          </a>
           {user && (
             <Link
               to={"/dashboard" as any}
