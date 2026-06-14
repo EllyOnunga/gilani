@@ -369,9 +369,7 @@ function AdminUsersPage() {
   const [tab, setTab] = useState<"users" | "feedback" | "messages" | "ratelimits" | "subscriptions" | "escalations" | "newsletter">("users");
   const [expandedMsg, setExpandedMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadDashboardData = async (silent = false) => {
     if (!silent) setRefreshing(true);
@@ -386,7 +384,6 @@ function AdminUsersPage() {
           listPlatformStats(),
           listNewsletterSubscribers(),
         ]);
-        if (!active) return;
         setProfileState(profiles as Profile[]);
         setMessages(contactMsgs as ContactMessage[]);
         setFeedback(fb as MessageFeedback[]);
@@ -400,9 +397,13 @@ function AdminUsersPage() {
         toast.error("Failed to load admin data");
       } finally {
         setRefreshing(false);
-        if (active) setLoadingData(false);
+        setLoadingData(false);
       }
     };
+    loadDashboardData();
+
+  useEffect(() => {
+    let active = true;
     loadDashboardData();
     return () => {
       active = false;
@@ -521,13 +522,13 @@ function AdminUsersPage() {
   }).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-10">
+    <div className="mx-auto max-w-6xl space-y-4 p-3 sm:p-6 lg:p-10">
       {/* Header */}
-      <header className="flex items-start justify-between gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
         <div>
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Admin Panel</p>
-          <h1 className="mt-1 font-serif text-3xl sm:text-4xl text-foreground">Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{profileState.length} users · {platformStats.totalConversations.toLocaleString()} conversations · {platformStats.totalMessages.toLocaleString()} messages · {platformStats.openEscalations} open escalations</p>
+          <h1 className="mt-1 font-serif text-2xl sm:text-4xl text-foreground">Dashboard</h1>
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{profileState.length} users · {platformStats.totalConversations.toLocaleString()} convos · {platformStats.openEscalations} escalations</p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-red-700 mt-1">
           <Shield className="h-3 w-3" /> Admin
@@ -612,7 +613,7 @@ function AdminUsersPage() {
           const Icon = t.icon;
           return (
             <button key={t.id} onClick={() => setTab(t.id as any)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 ${tab === t.id ? "border-primary text-primary bg-transparent font-extrabold shadow-sm scale-102" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border"}`}>
+              className={`flex items-center gap-1.5 px-2.5 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 ${tab === t.id ? "border-primary text-primary bg-transparent font-extrabold shadow-sm" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border"}`}>
               <Icon className="h-3.5 w-3.5" />
               {t.label}
               {"badge" in t && t.badge > 0 && (
@@ -626,7 +627,7 @@ function AdminUsersPage() {
       {/* ── Users tab ── */}
       {tab === "users" && (
         <>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
             {ROLES.map((r) => {
               const { icon: Icon, color } = ROLE_META[r];
               return (
@@ -648,7 +649,7 @@ function AdminUsersPage() {
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[500px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     {["User","Email","Conversations","Curriculum","Joined","Role"].map((h) => (
@@ -736,7 +737,7 @@ function AdminUsersPage() {
           {feedback.length > 0 && (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[500px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["User", "Vote", "Message ID", "Date"].map((h) => (
@@ -886,7 +887,7 @@ function AdminUsersPage() {
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[500px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["Key", "Hits", "Resets At", "Status"].map((h) => (
@@ -950,7 +951,7 @@ function AdminUsersPage() {
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[500px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["Student", "Reason", "Status", "Reviewer", "Date"].map((h) => (
@@ -1048,7 +1049,7 @@ function AdminUsersPage() {
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[500px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     {["User", "Email", "Plan", "Expires", "Action"].map((h) => (
@@ -1117,7 +1118,7 @@ function AdminUsersPage() {
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[500px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["User", "Plan", "Amount", "Phone", "Receipt", "Status", "Date"].map((h) => (
@@ -1163,7 +1164,7 @@ function AdminUsersPage() {
       {tab === "newsletter" && (
         <div className="space-y-6">
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
             <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
               <Users className="mx-auto h-5 w-5 mb-2 text-primary" />
               <p className="font-serif text-3xl font-bold">{newsletter.length}</p>
@@ -1264,7 +1265,7 @@ function AdminUsersPage() {
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[500px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["Email", "Name", "Status", "Subscribed"].map(h => (

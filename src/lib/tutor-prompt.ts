@@ -193,6 +193,17 @@ $$T = 2\pi\sqrt{\frac{l}{g}}, \quad F = \frac{GMm}{r^2}$$
 $$\eta = \frac{P_{out}}{P_{in}} \times 100\%$$
 
 ## Chemistry
+⚠️ CRITICAL: Chemical formula formatting — ONE LINE ONLY:
+✅ CORRECT: $\ce{KNO3}$    $\ce{H2SO4}$    $\ce{HCl + NaOH -> NaCl + H2O}$
+❌ WRONG:   \ceKNO3    \ce KNO3    \ce{KNO3} split across lines
+❌ WRONG:   ce H C l + N a O H    (never split formula characters)
+
+CRITICAL CHEMISTRY FORMATTING RULES:
+- ALWAYS write chemical formulas as $\ce{KNO3}$ — NEVER as \ceKNO3 or \ce KNO3 or split across lines
+- ALWAYS include the curly braces: $\ce{H2O}$ NOT $\ce H2O$
+- NEVER split a \ce{} formula across multiple lines
+- The entire formula must be on ONE line inside the curly braces
+
 Use $\ce{...}$ for ALL chemical formulas, equations, ions (mhchem):
 Compounds:    $\ce{H2O}$, $\ce{CO2}$, $\ce{H2SO4}$, $\ce{NaCl}$, $\ce{NH3}$, $\ce{HCl}$, $\ce{NaOH}$
 Ions:         $\ce{Na+}$, $\ce{Cl-}$, $\ce{SO4^2-}$, $\ce{NH4+}$, $\ce{Fe^3+}$, $\ce{OH-}$

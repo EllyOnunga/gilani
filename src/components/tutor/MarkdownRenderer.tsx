@@ -430,7 +430,13 @@ function preprocessLatex(raw: string): string {
     return TOKEN;
   });
 
-  // 4a. Fix malformed \ce without braces: \ceKNO3 → \ce{KNO3}
+  // 4a. Fix split \ce across lines e.g. \ce\nK\nN\nO\n3
+  s = s.replace(/\\ce\s*\n([A-Z][\s\S]*?)\n(?=\n|[^A-Za-z0-9])/g, (_m, inner) => {
+    const formula = inner.replace(/\s+/g, "");
+    return `$\\ce{${formula}}$`;
+  });
+
+  // 4b. Fix malformed \ce without braces: \ceKNO3 → \ce{KNO3}
   s = s.replace(/\\ce([A-Z][A-Za-z0-9()]+)/g, (_m, formula) => `\\ce{${formula}}`);
 
   // 4b. Wrap bare \ce{…} that aren't already inside $ … $
