@@ -657,7 +657,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
       />
       {/* Main chat area */}
-      <main className="flex flex-1 flex-col overflow-hidden min-w-0 min-h-0">
+      <main className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden">
         {/* Mobile top bar */}
         <div className="flex items-center gap-2 border-b border-border bg-sidebar px-3 py-1.5 lg:hidden">
           <button
@@ -778,6 +778,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         />
 
         {/* Input area */}
+        <div className="flex-shrink-0">
         <ChatInput
           input={input}
           isPending={isPending}
@@ -795,6 +796,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           }}
           onUpgrade={() => setShowPlans(true)}
         />
+        </div>
       </main>
       {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
       {/* Escalate Modal */}
