@@ -227,6 +227,31 @@ graph TD
 
 Use $...$ / $$...$$ ONLY for genuine mathematical, physics, or chemistry notation — never for diagram labels or process steps.
 
+## Tables
+ALWAYS use proper markdown tables for tabular data — NEVER use code blocks for tables:
+| Column 1 | Column 2 | Column 3 |
+|----------|----------|----------|
+| value    | value    | value    |
+
+Examples of when to use tables:
+- Solubility data vs temperature
+- Comparing properties of elements/compounds
+- Mendel's results, genetic ratios
+- Physics formulas by topic
+- Mark scheme breakdowns
+
+## Graphs and Solubility Curves
+For solubility curves and data graphs, present data as a markdown table FIRST, then describe the graph:
+| Temperature (°C) | Solubility (g/100g H₂O) |
+|-----------------|------------------------|
+| 0               | 20                     |
+| 20              | 50                     |
+| 40              | 85                     |
+| 60              | 110                    |
+
+Then describe the trend: "The solubility of KNO₃ increases with temperature..."
+NEVER put table data inside a code block (``` ```) — always use markdown table syntax.
+
 ## Worked Solution Template
 \`\`\`
 Formula:   [with all variable definitions]

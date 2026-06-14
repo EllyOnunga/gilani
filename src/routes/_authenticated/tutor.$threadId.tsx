@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Menu, Plus, Loader2 } from "lucide-react";
 import { parseDocument } from "@/lib/document-parser";
@@ -89,7 +90,35 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const { threadId } = Route.useParams();
   const navigate = useNavigate({ from: '/tutor/$threadId' });
 
-  const [threads, setThreads] = useState<Thread[]>([]);
+  const queryClient = useQueryClient();
+  const threadsQuery = useQuery({
+    queryKey: ["threads", userId],
+    queryFn: async () => {
+      const { data, error } = (await withTimeout(
+        Promise.resolve(
+          supabase
+            .from("conversations")
+            .select("id,title,updated_at")
+            .eq("user_id", userId as string)
+            .order("updated_at", { ascending: false }),
+        ),
+        8000,
+        "Database connection timed out",
+      )) as any;
+      if (error) throw new Error(`Failed to load sessions: ${error.message}`);
+      return (data ?? []) as Thread[];
+    },
+    enabled: !!userId,
+    staleTime: 30_000,
+  });
+  const threads = threadsQuery.data ?? [];
+  const threadsLoading = !!userId && threadsQuery.isPending;
+  const threadsLoadError = threadsQuery.error ? (threadsQuery.error as Error).message : null;
+  const setThreads = (updater: Thread[] | ((prev: Thread[]) => Thread[])) => {
+    queryClient.setQueryData(["threads", userId], (prev: Thread[] = []) =>
+      typeof updater === "function" ? (updater as (p: Thread[]) => Thread[])(prev) : updater
+    );
+  };
   const [chatError, setChatError] = useState<string | null>(null);
   const isRateLimited = !!(
     chatError?.includes("Rate limit") ||
@@ -102,8 +131,6 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const [currentPlan, setCurrentPlan] = useState("free");
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
-  const [threadsLoading, setThreadsLoading] = useState(true);
-  const [threadsLoadError, setThreadsLoadError] = useState<string | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [escalationStatus, setEscalationStatus] = useState<
@@ -193,10 +220,6 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     const safety = setTimeout(() => {
       setMessagesLoading((prev) => {
         if (prev) console.warn("[TutorThread] Safety timeout: forcing messagesLoading off");
-        return false;
-      });
-      setThreadsLoading((prev) => {
-        if (prev) console.warn("[TutorThread] Safety timeout: forcing threadsLoading off");
         return false;
       });
     }, 10000);
@@ -386,62 +409,6 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     return () => window.removeEventListener("custom:trigger-escalation", handleGlobalEscalate);
   }, [handleEscalate, escalationStatus, escalating, messagesLoading]);
 
-  // Load threads
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const sessionResult = (await withTimeout(
-          supabase.auth.getSession(),
-          5000,
-          "Session fetch timed out",
-        ).catch((e) => {
-          console.error("[TutorThread] session timeout:", e);
-          return { data: { session: null }, error: e };
-        })) as any;
-
-        const session = sessionResult?.data?.session;
-        const sessionError = sessionResult?.error;
-        if (sessionError) {
-          if (mounted)
-            setThreadsLoadError(`Authentication error: ${sessionError.message || sessionError}.`);
-          return;
-        }
-
-        const userId = session?.user?.id;
-        if (!userId) {
-          if (mounted) setThreadsLoadError("Not authenticated. Please sign in.");
-          return;
-        }
-
-        const { data, error } = (await withTimeout(
-          Promise.resolve(
-            supabase
-              .from("conversations")
-              .select("id,title,updated_at")
-              .eq("user_id", userId)
-              .order("updated_at", { ascending: false }),
-          ),
-          8000,
-          "Database connection timed out",
-        )) as any;
-
-        if (error) {
-          if (mounted) setThreadsLoadError(`Failed to load sessions: ${error.message}`);
-          return;
-        }
-        if (mounted && data) setThreads(data as Thread[]);
-      } catch (e) {
-        console.error("[TutorThread] thread load exception:", e);
-        if (mounted) setThreadsLoadError("Failed to connect to server. Check your network.");
-      } finally {
-        if (mounted) setThreadsLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   // Load messages
   useEffect(() => {

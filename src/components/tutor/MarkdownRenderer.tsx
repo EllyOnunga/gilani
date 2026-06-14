@@ -430,7 +430,10 @@ function preprocessLatex(raw: string): string {
     return TOKEN;
   });
 
-  // 4. Wrap bare \ce{…} that aren't already inside $ … $
+  // 4a. Fix malformed \ce without braces: \ceKNO3 → \ce{KNO3}
+  s = s.replace(/\\ce([A-Z][A-Za-z0-9()]+)/g, (_m, formula) => `\\ce{${formula}}`);
+
+  // 4b. Wrap bare \ce{…} that aren't already inside $ … $
   s = s.replace(/\\ce\{([^}]+)\}/g, (_m, inner) => `$\\ce{${inner}}$`);
 
   // 5. Auto-detect chemical formulas — skip JS/TS/React blocklisted words
