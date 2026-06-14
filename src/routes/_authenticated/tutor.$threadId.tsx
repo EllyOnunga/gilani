@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { Menu, Plus, Loader2, ArrowLeft } from "lucide-react";
+import { Menu, Plus, Loader2 } from "lucide-react";
 import { parseDocument } from "@/lib/document-parser";
 import {
   createEscalationNotification,
@@ -660,13 +660,6 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       <main className="flex flex-col min-w-0 overflow-hidden" style={{ flex: 1, minHeight: 0 }}>
         {/* Mobile top bar */}
         <div className="flex-shrink-0 flex items-center gap-2 border-b border-border bg-sidebar px-3 py-1.5 lg:hidden">
-          <button
-            onClick={() => navigate({ to: "/dashboard" })}
-            className="flex-shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-            title="Dashboard"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
           <button
             onClick={() => setThreadsOpen(true)}
             className="flex-shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
