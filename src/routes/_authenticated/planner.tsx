@@ -741,7 +741,7 @@ function PlannerPage() {
       {/* Day tab strip */}
       {plan && sortedDates.length > 0 && (
         <div className="w-full">
-          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1">
             {sortedDates.map((date) => {
               const d = new Date(date + "T00:00:00");
               const isToday = date === todayStr();
@@ -752,24 +752,19 @@ function PlannerPage() {
                 <button
                   key={date}
                   onClick={() => setSelectedDate(date)}
-                  className={`flex flex-col items-center rounded-lg px-1 py-1.5 border transition-all w-full ${
+                  className={`flex flex-col items-center rounded-md px-0.5 py-1 border transition-all w-full ${
                     isSelected
                       ? "border-primary bg-primary/10 text-primary shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:bg-accent"
                   }`}
                 >
-                  <span className="font-mono text-[8px] uppercase tracking-wider">
+                  <span className="font-mono text-[7px] uppercase">
                     {d.toLocaleDateString("en-KE", { weekday: "short" })}
                   </span>
-                  <span className="font-serif text-sm font-bold leading-none mt-0.5">
+                  <span className="font-bold text-xs leading-none mt-0.5">
                     {d.getDate()}
                   </span>
                   {isToday && <span className="mt-0.5 h-1 w-1 rounded-full bg-primary" />}
-                  {dayTasks.length > 0 && (
-                    <span className="font-mono text-[7px] mt-0.5 opacity-60">
-                      {dayDone}/{dayTasks.length}
-                    </span>
-                  )}
                 </button>
               );
             })}
