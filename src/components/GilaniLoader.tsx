@@ -53,24 +53,44 @@ export function GilaniLoader() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background select-none overflow-hidden relative">
       {/* Dynamic Background Glowing Blobs */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div 
+        <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-primary/10 blur-3xl transition-opacity duration-1000"
           style={{
             opacity: phase >= 1 ? 1 : 0,
             animation: "pulse 4s ease-in-out infinite",
           }}
         />
-        <div 
+        <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] rounded-full bg-violet-500/5 blur-2xl transition-opacity duration-1000"
           style={{
             opacity: phase >= 1 ? 1 : 0,
             animation: "pulse 3s ease-in-out infinite alternate",
           }}
         />
+        {/* Subtle champagne accent glow for premium feel */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-amber-400/[0.04] blur-3xl transition-opacity duration-1000"
+          style={{
+            opacity: phase >= 2 ? 1 : 0,
+          }}
+        />
+      </div>
+
+      {/* Kicker label */}
+      <div
+        className="mb-3 transition-all duration-700"
+        style={{
+          opacity: phase >= 1 ? 1 : 0,
+          transform: phase >= 1 ? "translateY(0)" : "translateY(8px)",
+        }}
+      >
+        <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.3em] text-muted-foreground/70 text-center">
+          AI-Powered Learning
+        </p>
       </div>
 
       {/* Floating Logo Container */}
-      <div 
+      <div
         className="relative mb-8 flex justify-center items-center"
         style={{
           transform: phase >= 1 ? "translateY(0)" : "translateY(20px)",
@@ -80,17 +100,19 @@ export function GilaniLoader() {
       >
         {/* Soft breathing pulse effect */}
         <div className="absolute inset-0 rounded-3xl bg-primary/25 blur-xl animate-pulse" />
-        
+
+        {/* Refined ring accent — replaces bouncing emoji badge */}
+        <div
+          className="absolute -inset-1.5 rounded-[1.75rem] border border-amber-400/30 transition-opacity duration-1000"
+          style={{ opacity: phase >= 2 ? 1 : 0 }}
+        />
+
         <div className="relative flex items-center justify-center bg-card/70 border border-border/80 p-4.5 rounded-3xl shadow-2xl backdrop-blur-md w-24 h-24 hover:scale-105 transition-transform duration-300">
           <img
             src="/gilanilogo.png"
             alt="GilaniAI Logo"
             className="h-16 w-auto object-contain"
           />
-          {/* Sparkles micro-badge */}
-          <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground shadow-lg animate-bounce">
-            ✨
-          </span>
         </div>
       </div>
 
@@ -100,7 +122,7 @@ export function GilaniLoader() {
           {WORD1.split("").map((letter, i) => (
             <span
               key={i}
-              className="font-serif font-black text-4xl sm:text-5xl text-foreground tracking-tight"
+              className={`font-serif font-black text-4xl sm:text-5xl tracking-tight ${phase >= 2 ? "text-shimmer" : "text-foreground"}`}
               style={{
                 opacity: i < letterCount ? 1 : 0,
                 transform: i < letterCount ? "translateY(0)" : "translateY(6px)",
@@ -162,19 +184,12 @@ export function GilaniLoader() {
         </p>
       </div>
 
-      {/* Study status progress dots */}
-      <div className="flex gap-2 mt-6">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="h-1.5 w-1.5 rounded-full bg-primary/70"
-            style={{
-              animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
-              opacity: phase >= 2 ? 1 : 0,
-              transition: "opacity 0.3s ease",
-            }}
-          />
-        ))}
+      {/* Premium progress line — replaces bouncing dots */}
+      <div
+        className="mt-6 w-32 h-px bg-border/60 rounded-full overflow-hidden relative transition-opacity duration-500"
+        style={{ opacity: phase >= 2 ? 1 : 0 }}
+      >
+        <div className="loader-progress-fill absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-transparent via-primary to-transparent" />
       </div>
     </div>
   );
