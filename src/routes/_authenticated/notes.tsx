@@ -794,7 +794,7 @@ ${content}`.trim()
               <input
                 type="file"
                 id="notes-file-upload"
-                className="fixed left-[-9999px] top-[-9999px] w-px h-px opacity-0"
+                className="sr-only"
                 accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/csv,.pdf,.docx,.doc,.txt,.md,.csv"
                 onChange={handleFileChange}
                 disabled={parsingFile}
