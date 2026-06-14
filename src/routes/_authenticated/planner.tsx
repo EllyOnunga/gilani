@@ -740,8 +740,8 @@ function PlannerPage() {
 
       {/* Day tab strip */}
       {plan && sortedDates.length > 0 && (
-        <div className="overflow-x-auto pb-1">
-          <div className="flex gap-2 min-w-max">
+        <div className="w-full">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
             {sortedDates.map((date) => {
               const d = new Date(date + "T00:00:00");
               const isToday = date === todayStr();
@@ -752,7 +752,7 @@ function PlannerPage() {
                 <button
                   key={date}
                   onClick={() => setSelectedDate(date)}
-                  className={`flex flex-col items-center rounded-xl px-3 py-2.5 min-w-[60px] border transition-all ${
+                  className={`flex flex-col items-center rounded-xl px-2 py-2 border transition-all w-full ${
                     isSelected
                       ? "border-primary bg-primary/10 text-primary shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:bg-accent"
