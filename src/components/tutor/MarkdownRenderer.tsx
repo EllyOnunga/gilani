@@ -9,14 +9,22 @@ import "katex/dist/katex.min.css";
 
 // KaTeX and mhchem loaded lazily to keep the initial bundle small
 let _katex: typeof import("katex").default | null = null;
+let _katexLoadPromise: Promise<typeof import("katex").default> | null = null;
 async function getKatex() {
   if (_katex) return _katex;
-  const [katexMod] = await Promise.all([
-    import("katex"),
-    import("katex/dist/contrib/mhchem.min.js" as any),
-  ]);
-  _katex = katexMod.default;
-  return _katex;
+  if (_katexLoadPromise) return _katexLoadPromise;
+  _katexLoadPromise = (async () => {
+    const katexMod = await import("katex");
+    const katexInstance = katexMod.default;
+    // mhchem patches the katex module it imports internally — ensure it sees
+    // the SAME instance by exposing it on globalThis before loading mhchem,
+    // since mhchem.min.js resolves "katex" via the module cache / global.
+    (globalThis as any).katex = katexInstance;
+    await import("katex/dist/contrib/mhchem.min.js" as any);
+    _katex = katexInstance;
+    return katexInstance;
+  })();
+  return _katexLoadPromise;
 }
 
 
