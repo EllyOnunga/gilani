@@ -31,7 +31,26 @@ function MermaidDiagram({ code }: { code: string }) {
     if (!ref.current) return;
     const id = `mermaid-${Math.random().toString(36).slice(2)}`;
     import("mermaid").then((m) => {
-      m.default.initialize({ startOnLoad: false, theme: "neutral" });
+      const isDark = document.documentElement.classList.contains("dark");
+      m.default.initialize({
+        startOnLoad: false,
+        theme: isDark ? "dark" : "default",
+        themeVariables: isDark ? {} : {
+          primaryColor: "#f97316",
+          primaryTextColor: "#111111",
+          primaryBorderColor: "#e5e7eb",
+          lineColor: "#6b7280",
+          secondaryColor: "#f3f4f6",
+          tertiaryColor: "#fff",
+          background: "#ffffff",
+          mainBkg: "#ffffff",
+          nodeBorder: "#d1d5db",
+          clusterBkg: "#f9fafb",
+          titleColor: "#111111",
+          edgeLabelBackground: "#ffffff",
+          textColor: "#111111",
+        },
+      });
       return m.default.render(id, code);
     }).then(({ svg }) => {
       // CS-XSS-001: Sanitize Mermaid SVG before DOM injection to prevent XSS
