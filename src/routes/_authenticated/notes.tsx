@@ -789,58 +789,24 @@ ${content}`.trim()
                 e.stopPropagation();
                 setDragActive(false);
               }}
-              onDrop={handleFileDrop}
-              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all ${
-                dragActive
-                  ? "border-primary bg-primary/5 scale-[0.99]"
-                  : "border-border bg-background hover:bg-accent/30 hover:border-muted-foreground/50"
-              }`}
+              className="relative rounded-xl border border-border bg-background p-3"
             >
               <input
                 type="file"
                 id="notes-file-upload"
-                className="sr-only"
+                className="fixed left-[-9999px] top-[-9999px] w-px h-px opacity-0"
                 accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/csv,.pdf,.docx,.doc,.txt,.md,.csv"
                 onChange={handleFileChange}
                 disabled={parsingFile}
               />
               <label
                 htmlFor="notes-file-upload"
-                className="flex cursor-pointer flex-col items-center gap-2 text-sm text-muted-foreground w-full h-full py-2"
+                className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors w-full ${parsingFile ? "opacity-50 pointer-events-none bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
               >
-                {parsingFile ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                ) : (
-                  <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-primary/70 animate-pulse" />
-                )}
-                <div>
-                  <span className="font-semibold text-primary underline underline-offset-2">
-                    Click to upload
-                  </span>{" "}
-                  or drag and drop a document
-                </div>
-                <div className="font-mono text-[10px] text-muted-foreground/80">
-                  Supports PDF, DOCX, TXT, MD, CSV, JPG, PNG, WEBP (Max 10MB)
-                </div>
-              </label>
-            </div>
-
-            {/* Camera capture */}
-            <div className="flex items-center justify-center mt-2">
-              <input
-                type="file"
-                id="notes-camera-capture"
-                className="sr-only"
-                accept="image/*"
-                capture="environment"
-                onChange={handleFileChange}
-                disabled={parsingFile}
-              />
-              <label
-                htmlFor="notes-camera-capture"
-                className="flex cursor-pointer items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-              >
-                <span>📷</span> Take a photo
+                {parsingFile
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Parsing document...</>
+                  : <><Upload className="h-4 w-4" /> Upload Document (PDF, DOCX, TXT, CSV)</>
+                }
               </label>
             </div>
 
