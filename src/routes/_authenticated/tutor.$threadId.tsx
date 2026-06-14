@@ -380,7 +380,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   // Global escalation event listener
   useEffect(() => {
     const handleGlobalEscalate = () => {
-      if (!escalationStatus && !escalating && !messagesLoading) handleEscalate();
+      if (!escalationStatus && !escalating && !messagesLoading) setEscalateModalOpen(true);
     };
     window.addEventListener("custom:trigger-escalation", handleGlobalEscalate);
     return () => window.removeEventListener("custom:trigger-escalation", handleGlobalEscalate);
