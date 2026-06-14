@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
-import { ThoughtAccordion } from "./ThoughtAccordion";
+import { ThinkingIndicator } from "./ThinkingIndicator";
 import { supabase } from "@/integrations/supabase/client";
 
 import { MarkdownRenderer } from "./MarkdownRenderer";
@@ -163,10 +163,9 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
       >
         {!isUser ? (
           <div className="flex flex-col w-full">
-            <ThoughtAccordion
-              messageId={m.id || String(idx)}
+            <ThinkingIndicator
+              isPending={isPending}
               isLastMessage={isLast}
-              isStreaming={isPending}
               messageText={visibleText}
             />
             {visibleText || isStreamActive ? (
