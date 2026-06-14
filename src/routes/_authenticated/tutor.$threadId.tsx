@@ -635,7 +635,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   };
 
   return (
-    <div className="flex h-full flex-col lg:flex-row bg-background text-foreground overflow-hidden min-h-0">
+    <div className="flex h-dvh flex-col lg:flex-row bg-background text-foreground overflow-hidden">
       <ThreadSidebar
         threads={threads}
         threadId={threadId}
@@ -657,7 +657,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
       />
       {/* Main chat area */}
-      <main className="flex flex-1 flex-col overflow-hidden min-w-0">
+      <main className="flex flex-1 flex-col overflow-hidden min-w-0 min-h-0">
         {/* Mobile top bar */}
         <div className="flex items-center gap-2 border-b border-border bg-sidebar px-3 py-1.5 lg:hidden">
           <button
