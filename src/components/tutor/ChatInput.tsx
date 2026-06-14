@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FileText, Loader2, Paperclip, Send, Trash2, AlertCircle, Camera, Clock, CreditCard, X } from "lucide-react";
+import { FileText, Loader2, Paperclip, Send, Trash2, AlertCircle, Clock, CreditCard, X } from "lucide-react";
 
 type AttachedFile = {
   name: string;
@@ -237,37 +237,13 @@ export function ChatInput({
       <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-muted/30 backdrop-blur-md shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:bg-card focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-4 focus-within:ring-primary/5">
         {/* Attach button */}
         <div className="pb-2 pl-2 pt-2">
-          <input type="file" id="chat-file-attachment" className="sr-only"
-            accept=".pdf,.docx,.doc,.txt,.md,.csv,.jpg,.jpeg,.png,.webp,image/*,application/pdf,text/plain,text/csv"
+          <input type="file" id="chat-file-attachment" className="absolute opacity-0 w-0 h-0 overflow-hidden"
+            accept=".pdf,.docx,.doc,.txt,.md,.csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/csv"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-file-attachment"
             className={`flex h-9 w-9 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
-            title="Attach a file (PDF, DOCX, TXT, MD, CSV, JPG, PNG, WEBP — max 10 MB)">
+            title="Attach a file (PDF, DOCX, TXT, MD, CSV — max 10 MB)">
             {parsingFile ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Paperclip className="h-4 w-4" />}
-          </label>
-        </div>
-
-        {/* Camera — hidden on desktop, shown on mobile */}
-        <div className="pb-2 pt-2 sm:hidden">
-          <input type="file" id="chat-camera-capture" className="sr-only"
-            accept="image/*"
-            onChange={onFileChange} disabled={isDisabled} />
-          <label htmlFor="chat-camera-capture"
-            className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
-            title="Take a photo (OCR will extract text)">
-            <Camera className="h-4 w-4" />
-          </label>
-        </div>
-
-        {/* Camera — desktop only */}
-        <div className="pb-2 pt-2 hidden sm:block">
-          <input type="file" id="chat-camera-capture-desktop" className="sr-only"
-            accept="image/*"
-            onChange={onFileChange} disabled={isDisabled} />
-          <label htmlFor="chat-camera-capture-desktop"
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "pointer-events-none opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
-            title="Take a photo (OCR will extract text)">
-            <Camera className="h-4 w-4" />
           </label>
         </div>
 
