@@ -346,7 +346,7 @@ function AuthedShell() {
       {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
 
       {/* Mobile Top Navigation Header */}
-      <header className="flex h-16 w-full items-center justify-between border-b border-border bg-sidebar px-4 lg:hidden sticky top-0 z-30">
+      <header className={`flex h-16 w-full items-center justify-between border-b border-border bg-sidebar px-4 lg:hidden sticky top-0 z-30 ${path.startsWith("/tutor") ? "hidden" : ""}`}>
         <button
           onClick={() => setSidebarOpen(true)}
           className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground"
