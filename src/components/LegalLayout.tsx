@@ -1,18 +1,38 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home, LayoutDashboard } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
+import { useAuth } from "@/hooks/use-auth";
 
-export function LegalHeader({ backTo = "/" as any, backLabel = "Back to home" }: { backTo?: any; backLabel?: string }) {
+export function LegalHeader({ backTo, backLabel }: { backTo?: any; backLabel?: string }) {
+  const { user } = useAuth();
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="flex w-full items-center justify-between px-4 sm:px-6 py-3 max-w-5xl mx-auto">
         <Logo to="/" size="md" />
-        <Link
-          to={backTo}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> {backLabel}
-        </Link>
+        <nav className="flex items-center gap-2">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-accent"
+          >
+            <Home className="h-3.5 w-3.5" /> Home
+          </Link>
+          {user && (
+            <Link
+              to={"/dashboard" as any}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 transition-colors px-2.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/15"
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+            </Link>
+          )}
+          {!user && (
+            <Link
+              to={"/login" as any}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 transition-colors px-2.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/15"
+            >
+              Sign in →
+            </Link>
+          )}
+        </nav>
       </div>
     </header>
   );
