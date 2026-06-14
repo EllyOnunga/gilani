@@ -657,7 +657,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
       />
       {/* Main chat area */}
-      <main className="flex flex-1 flex-col min-h-0 min-w-0">
+      <main className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden">
         {/* Mobile top bar */}
         <div className="flex items-center gap-2 border-b border-border bg-sidebar px-3 py-1.5 lg:hidden">
           <button
