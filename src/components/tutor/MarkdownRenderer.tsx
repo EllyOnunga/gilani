@@ -34,6 +34,8 @@ function MermaidDiagram({ code }: { code: string }) {
       const isDark = document.documentElement.classList.contains("dark");
       m.default.initialize({
         startOnLoad: false,
+        htmlLabels: false,
+        flowchart: { htmlLabels: false },
         theme: isDark ? "dark" : "default",
         themeVariables: isDark ? {} : {
           primaryColor: "#f97316",
