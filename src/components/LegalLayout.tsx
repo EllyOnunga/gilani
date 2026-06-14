@@ -43,7 +43,7 @@ export function LegalHeader({ backTo, backLabel }: { backTo?: any; backLabel?: s
               to={"/login" as any}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 transition-colors px-2.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/15"
             >
-              Sign in →
+              Sign in ›
             </Link>
           )}
         </nav>
