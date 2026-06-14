@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
@@ -371,7 +371,7 @@ function AdminUsersPage() {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadDashboardData = async (silent = false) => {
+  const loadDashboardData = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
       try {
         const [profiles, contactMsgs, fb, rl, pay, esc, stats, nl] = await Promise.all([
@@ -399,16 +399,11 @@ function AdminUsersPage() {
         setRefreshing(false);
         setLoadingData(false);
       }
-    };
-    loadDashboardData();
+  }, []);
 
   useEffect(() => {
-    let active = true;
     loadDashboardData();
-    return () => {
-      active = false;
-    };
-  }, []);
+  }, [loadDashboardData]);
 
   // ── All derived state & memos MUST be above any early returns (Rules of Hooks) ──
 
