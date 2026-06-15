@@ -265,11 +265,11 @@ function Dashboard() {
 
       {/* ── Hero Header ── */}
       <header className="animate-in-slide rounded-2xl border border-border bg-card p-4 sm:p-6">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-primary mb-1">
+        <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-primary mb-1 text-center sm:text-left">
           Dashboard
         </p>
 
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between items-center sm:items-start">
           {/* Greeting */}
           <div className="flex-1 min-w-0">
             {isLoading ? (
@@ -279,11 +279,11 @@ function Dashboard() {
               </div>
             ) : (
               <>
-                <h2 className="font-serif text-xl sm:text-3xl lg:text-4xl text-balance leading-tight text-foreground">
+                <h2 className="font-serif text-xl sm:text-3xl lg:text-4xl text-balance leading-tight text-foreground text-center sm:text-left">
                   {getGreeting()},{" "}
                   <span className="capitalize">{displayName}</span>. Ready to study?
                 </h2>
-                <div className="flex flex-wrap items-center gap-2 mt-3">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3">
                   {plan && (
                     <span
                       className="inline-flex items-center gap-1.5 rounded-md border border-border px-1.5 py-px font-mono text-[10px] font-bold uppercase tracking-wider text-foreground"
@@ -302,7 +302,7 @@ function Dashboard() {
           </div>
 
           {/* Stat pills */}
-          <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 mx-auto sm:mx-0">
             {/* Streak */}
             <div className="flex flex-col items-center gap-1 rounded-lg border border-border px-1 sm:px-4 py-2 min-w-0">
               <Flame className="h-4 w-4 text-primary" />
@@ -349,7 +349,7 @@ function Dashboard() {
 
       {/* ── Quick Actions ── */}
       <section className="animate-in-slide [animation-delay:40ms] rounded-2xl border border-border bg-card p-4 sm:p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h3 className="font-serif text-lg font-semibold text-foreground">Quick Actions</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -375,7 +375,7 @@ function Dashboard() {
 
       {/* ── Study Suite ── */}
       <section className="animate-in-slide [animation-delay:80ms]">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 className="font-serif text-lg font-semibold">Your Study Suite</h3>
             <p className="text-xs text-muted-foreground mt-0.5">All your study tools in one place</p>
