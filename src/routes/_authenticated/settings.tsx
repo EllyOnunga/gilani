@@ -369,7 +369,7 @@ function SettingsPage() {
     <>
       <div className="mx-auto max-w-5xl space-y-6 p-3 sm:p-6 lg:p-10 animate-in-slide">
         {/* Header */}
-        <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-border/60 pb-5">
+        <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-border/60 pb-5 text-center sm:text-left">
           <div>
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
               Preferences
@@ -409,10 +409,10 @@ function SettingsPage() {
             <form onSubmit={handleProfileSave} className="space-y-6">
               {/* Profile Details Tab */}
               {activeTab === "profile" && (
-                <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-xs space-y-6 animate-in-slide">
+                <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                   <div className="flex items-center gap-2.5">
                     <User className="h-5 w-5 text-primary" />
-                    <h3 className="font-serif text-xl font-bold text-foreground">Profile Details</h3>
+                    <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Profile Details</h3>
                   </div>
 
                   {/* Avatar Picker Section */}
@@ -498,10 +498,10 @@ function SettingsPage() {
 
               {/* Tutor Preferences Tab */}
               {activeTab === "tutor" && (
-                <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-xs space-y-6 animate-in-slide">
+                <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                   <div className="flex items-center gap-2.5">
                     <Brain className="h-5 w-5 text-primary" />
-                    <h3 className="font-serif text-xl font-bold text-foreground">Tutor Preferences</h3>
+                    <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Tutor Preferences</h3>
                   </div>
 
                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -609,10 +609,10 @@ function SettingsPage() {
 
             {/* Display Theme Tab */}
             {activeTab === "theme" && (
-              <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-xs space-y-6 animate-in-slide">
+              <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
                   {isDark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
-                  <h3 className="font-serif text-xl font-bold text-foreground">Display Theme</h3>
+                  <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Display Theme</h3>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Choose between Light mode (scholarly warm parchment layout) and Dark mode (charcoal deep theme).
@@ -668,10 +668,10 @@ function SettingsPage() {
 
             {/* Plan & Usage Tab */}
             {activeTab === "plan" && (
-              <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-xs space-y-6 animate-in-slide">
+              <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
                   <CreditCard className="h-5 w-5 text-primary" />
-                  <h3 className="font-serif text-xl font-bold text-foreground">Subscription Plan</h3>
+                  <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Subscription Plan</h3>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
@@ -750,10 +750,10 @@ function SettingsPage() {
 
             {/* Consent & Security Tab */}
             {activeTab === "consent" && (
-              <section className="rounded-2xl border border-border/40 bg-card p-6 shadow-xs space-y-6 animate-in-slide">
+              <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
                   <Shield className="h-5 w-5 text-primary" />
-                  <h3 className="font-serif text-xl font-bold text-foreground">Consent & Security</h3>
+                  <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Consent & Security</h3>
                 </div>
 
                 <div className="space-y-5">
