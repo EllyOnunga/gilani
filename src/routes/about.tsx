@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Logo } from "@/components/ui/logo";
+import { LegalFooter } from "@/components/LegalLayout";
 import {
   ArrowLeft,
   BookOpenText,
@@ -169,7 +170,7 @@ function About() {
 
       <main>
         {/* Hero */}
-        <section className="border-b border-border/50 px-4 sm:px-6 py-16 sm:py-24 text-center max-w-3xl mx-auto">
+        <section className="border-b border-border/50 px-4 sm:px-6 py-12 sm:py-24 text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-primary font-bold mb-6">
             About GilaniAI
           </div>
@@ -187,7 +188,7 @@ function About() {
 
         {/* Mission */}
         <section className="px-4 sm:px-6 py-16 max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold mb-3">
                 Our Mission
@@ -211,7 +212,7 @@ function About() {
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {TEAM_VALUES.map(({ icon: Icon, title, description }) => (
                 <div key={title} className="rounded-xl border border-border bg-card p-4 space-y-2">
                   <Icon className="h-5 w-5 text-primary" />
@@ -236,7 +237,7 @@ function About() {
                 effective tutoring.
               </p>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {AGENTS.map(({ name, icon: Icon, description, color, bg }) => (
                 <div key={name} className="rounded-xl border border-border bg-card p-6 space-y-4">
                   <div
@@ -267,7 +268,7 @@ function About() {
             </p>
             <h2 className="font-serif text-3xl font-bold">Everything a student needs</h2>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {FEATURES.map(({ icon: Icon, title, description, color, bg }) => (
               <div key={title} className="rounded-xl border border-border bg-card p-5 space-y-3">
                 <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${bg}`}>
@@ -287,7 +288,7 @@ function About() {
               Who It's For
             </p>
             <h2 className="font-serif text-3xl font-bold mb-6">Built for Kenyan learners</h2>
-            <div className="grid sm:grid-cols-3 gap-4 text-left">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
               {[
                 {
                   title: "KCSE Students",
@@ -333,30 +334,8 @@ function About() {
           </div>
         </section>
       </main>
+      <LegalFooter />
 
-      {/* Footer */}
-      <footer className="border-t border-border/50 px-4 sm:px-6 py-8 bg-card">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <Logo to="/" size="sm" />
-          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-            <Link to="/privacy" className="hover:text-primary transition-colors">
-              Privacy
-            </Link>
-            <Link to="/terms" className="hover:text-primary transition-colors">
-              Terms
-            </Link>
-            <Link to="/cookies" className="hover:text-primary transition-colors">
-              Cookies
-            </Link>
-            <Link to="/faq" className="hover:text-primary transition-colors">
-              FAQ
-            </Link>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} GilaniAI · Nairobi, Kenya
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }
