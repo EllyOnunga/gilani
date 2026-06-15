@@ -110,6 +110,7 @@ export type RateLimitAction = "chat" | "quiz" | "planner" | "notes";
 export async function checkPlanRateLimit(
   userId: string,
   action: RateLimitAction = "chat",
+  skipIncrement: boolean = false,
 ): Promise<{ allowed: boolean; retryAfterMs: number; isDaily: boolean; plan: string }> {
   // Get user plan from profiles
   const { data: profile } = await supabaseAdmin

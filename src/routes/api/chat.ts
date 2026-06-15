@@ -164,7 +164,12 @@ export const Route = createFileRoute("/api/chat")({
           const { userId } = authResult;
 
           // Server-side rate limit — Supabase-backed, survives cold starts
-          const rlResult = await checkPlanRateLimit(userId);
+          // Parse body early to detect retries
+          const body = await request.json().catch(() => ({}));
+          const { threadId, messages, isRetry } = body as { threadId?: string; messages?: any[]; isRetry?: boolean };
+
+          // Server-side rate limit — skip increment on retries
+          const rlResult = await checkPlanRateLimit(userId, "chat", !!isRetry);
           if (!rlResult.allowed) {
             const seconds = Math.ceil(rlResult.retryAfterMs / 1000);
             const msg = rlResult.isDaily
@@ -176,8 +181,6 @@ export const Route = createFileRoute("/api/chat")({
             );
           }
 
-          const body = await request.json().catch(() => ({}));
-          const { threadId, messages, isRetry } = body as { threadId?: string; messages?: any[]; isRetry?: boolean };
 
           // Validate threadId is a UUID
           const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
