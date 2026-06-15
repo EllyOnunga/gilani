@@ -18,7 +18,7 @@ export const Route = createFileRoute("/api/mpesa/callback")({
           const providedToken = url.searchParams.get("token");
           const expectedToken = process.env.MPESA_CALLBACK_SECRET;
           if (!expectedToken || providedToken !== expectedToken) {
-            console.warn("[M-Pesa Callback] Rejected request with invalid or missing token");
+            console.error("[M-Pesa Callback] Rejected request with invalid or missing token");
             return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
           }
 

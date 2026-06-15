@@ -23,6 +23,19 @@ export const assignUserRole = createServerFn({ method: "POST" })
     const userId = authResult.userId;
     const { role } = data;
 
+    // SECURITY: Prevent privilege escalation -- only existing admins may
+    // (re)assign themselves the "admin" role via this self-service endpoint.
+    if (role === "admin") {
+      const { data: existingRole } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (existingRole?.role !== "admin") {
+        throw new Error("Unauthorized: insufficient privileges to assign admin role");
+      }
+    }
+
     try {
 
       // Delete existing role to allow role changes (e.g. student -> teacher)

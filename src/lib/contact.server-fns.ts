@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import { z } from "zod";
 import { sendTransactionalEmail } from "./email.server";
 
@@ -17,6 +18,17 @@ export const submitContactFn = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data }) => {
+    // SECURITY: Rate limit contact form — max 3 submissions per hour per IP
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const request = getRequest();
+    const ip = request.headers.get("cf-connecting-ip") ||
+                request.headers.get("x-forwarded-for")?.split(",")[0] ||
+                "unknown";
+    const rlKey = `contact:${ip}`;
+    const { data: rlData } = await supabaseAdmin.rpc("upsert_rate_limit", {
+      p_key: rlKey, p_max: 3, p_reset_at: new Date(Date.now() + 3600000).toISOString()
+    }).single();
+    if (!rlData) throw new Error("Rate limit exceeded. Please wait before submitting again.");
     // CS-XSS-002: Escape all user-supplied values before inserting into HTML emails
     const esc = (s: string) =>
       s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
