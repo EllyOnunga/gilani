@@ -60,6 +60,17 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
       : rawText;
 
   const isStreamActive = isPending && isLast;
+  const [showMarkdown, setShowMarkdown] = useState(false);
+
+  useEffect(() => {
+    if (!isStreamActive && visibleText) {
+      // Small delay so StreamingText finishes its last word animation before swapping
+      const t = setTimeout(() => setShowMarkdown(true), 150);
+      return () => clearTimeout(t);
+    } else {
+      setShowMarkdown(false);
+    }
+  }, [isStreamActive, visibleText]);
   // No throttling -- plain text renders instantly during streaming;
   // markdown parsing only kicks in once streaming finishes.
   const visibleText = displayText;
@@ -149,10 +160,10 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
             />
             {visibleText || isStreamActive ? (
               <div className="prose-ai relative">
-                {isStreamActive ? (
+                {!showMarkdown ? (
                   <StreamingText text={visibleText} />
                 ) : (
-                  <div className="animate-in fade-in duration-300">
+                  <div className="animate-in fade-in duration-500 fill-mode-both">
                     <MemoMarkdown content={displayText} />
                   </div>
                 )}
