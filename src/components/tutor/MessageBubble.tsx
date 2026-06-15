@@ -150,7 +150,7 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
             {visibleText || isStreamActive ? (
               <div className="prose-ai relative">
                 {isStreamActive ? (
-                  <StreamingText text={visibleText} isStreaming={isStreamActive} />
+                  <StreamingText text={visibleText} />
                 ) : (
                   <div className="animate-in fade-in duration-300">
                     <MemoMarkdown content={displayText} />

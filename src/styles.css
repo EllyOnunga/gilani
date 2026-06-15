@@ -336,3 +336,20 @@
 .sd-fade-in {
   animation: sd-fadeIn 200ms ease-out both;
 }
+
+/* ── Word materialise streaming animation ────────────────────────── */
+@keyframes wordMaterialize {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translateY(1px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-word {
+  animation: wordMaterialize 150ms ease-out both;
+}
