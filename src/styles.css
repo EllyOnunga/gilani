@@ -319,3 +319,20 @@
 .streaming-text {
   animation: token-in 0.15s ease-out;
 }
+
+/* ── Word-by-word streaming fade-in ─────────────────────────────── */
+@keyframes sd-fadeIn {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+.sd-fade-in {
+  animation: sd-fadeIn 200ms ease-out both;
+}

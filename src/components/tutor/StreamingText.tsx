@@ -1,61 +1,56 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-
+import { useEffect, useRef, useState, useMemo } from "react";
 /**
- * StreamingText — renders streaming tokens smoothly.
- * - Batches DOM updates to every FLUSH_MS milliseconds
- * - Fades in each new chunk with a CSS animation
- * - Calls onComplete when streaming stops
+ * StreamingText — renders streaming tokens smoothly with a word-by-word fade-in.
+ * - Splits text into word spans so CSS can animate each independently.
+ * - Uses memoization to prevent re-rendering old words.
+ * - Throttles updates to prevent main-thread freezing.
  */
-
-const FLUSH_MS = 30; // flush buffer every 30ms
-
+const FLUSH_MS = 30;
 type Props = {
   text: string;
   isStreaming: boolean;
 };
-
 export function StreamingText({ text, isStreaming }: Props) {
   const [displayed, setDisplayed] = useState(text);
   const bufferRef = useRef(text);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Keep buffer in sync with incoming text
   useEffect(() => {
     bufferRef.current = text;
   }, [text]);
-
-  // Flush buffer to DOM on interval while streaming
   useEffect(() => {
     if (!isStreaming) {
-      // Final flush
       setDisplayed(bufferRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
-
     timerRef.current = setInterval(() => {
       setDisplayed((prev) => {
         const next = bufferRef.current;
-        if (next === prev) return prev;
-        return next;
+        return next === prev ? prev : next;
       });
     }, FLUSH_MS);
-
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isStreaming]);
-
+  const words = useMemo(() => {
+    if (!displayed) return [];
+    return displayed.match(/(\S+|\s)/g) || [];
+  }, [displayed]);
   if (!displayed) return null;
-
   return (
     <div
-      ref={containerRef}
-      className="whitespace-pre-wrap text-sm leading-relaxed streaming-text"
+      className="whitespace-pre-wrap text-sm leading-relaxed"
       style={{ wordBreak: "break-word" }}
     >
-      {displayed}
+      {words.map((word, index) => (
+        <span
+          key={index}
+          className="sd-fade-in inline-block"
+        >
+          {word}
+        </span>
+      ))}
     </div>
   );
 }
