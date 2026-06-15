@@ -46,6 +46,15 @@ export async function checkRateLimit(
   return { allowed: false, retryAfterMs };
 }
 
+
+/**
+ * Decrement rate limit counter — call when a request fails after being counted.
+ * Prevents retries from consuming quota unnecessarily.
+ */
+export async function decrementRateLimit(key: string): Promise<void> {
+  await (supabaseAdmin.rpc as any)("decrement_rate_limit", { p_key: key });
+}
+
 // ─── Per-action rate limits ──────────────────────────────────────────────────
 
 /** Chat: 20 messages per minute */
@@ -166,7 +175,7 @@ export async function checkPlanRateLimit(
 export async function getPlanRateLimitStatus(
   userId: string,
   action: RateLimitAction = "chat",
-): Promise<{ isRateLimited: boolean; retryAfterMs: number; isDaily: boolean }> {
+): Promise<{ isRateLimited: boolean; retryAfterMs: number; isDaily: boolean; messagesUsed: number; messagesMax: number; plan: string }> {
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("plan, plan_expiry")
@@ -218,6 +227,7 @@ export async function getPlanRateLimitStatus(
       isRateLimited: true,
       retryAfterMs: Math.max(0, resetTime - now.getTime()),
       isDaily: true,
+      messagesUsed: dailyRow?.count ?? 0, messagesMax: dailyMax, plan,
     };
   }
 
@@ -235,10 +245,11 @@ export async function getPlanRateLimitStatus(
       isRateLimited: true,
       retryAfterMs: Math.max(0, resetTime - now.getTime()),
       isDaily: false,
+      messagesUsed: minRow?.count ?? 0, messagesMax: minuteMax, plan,
     };
   }
 
-  return { isRateLimited: false, retryAfterMs: 0, isDaily: false };
+  return { isRateLimited: false as const, retryAfterMs: 0, isDaily: false as const, messagesUsed: 0, messagesMax: 10, plan: "free" };
 }
 
 export const getRateLimitStatus = createServerFn({ method: "POST" })
@@ -250,7 +261,7 @@ export const getRateLimitStatus = createServerFn({ method: "POST" })
     try {
       authResult = await authenticateRequest(request);
     } catch {
-      return { isRateLimited: false, retryAfterMs: 0, isDaily: false };
+      return { isRateLimited: false as const, retryAfterMs: 0 as const, isDaily: false as const, messagesUsed: 0, messagesMax: 10, plan: "free" };
     }
     return getPlanRateLimitStatus(authResult.userId, action);
   });

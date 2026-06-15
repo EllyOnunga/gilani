@@ -9,7 +9,7 @@ import { withTimeout } from "@/lib/async";
 import { buildSystemPrompt, sanitizeUntrustedInput, sanitizeCurriculum } from "@/lib/tutor-prompt";
 
 // ─── Server-side Rate Limiter (Supabase-backed, survives cold starts) ──────
-import { checkPlanRateLimit } from "@/lib/rate-limit.server";
+import { checkPlanRateLimit, decrementRateLimit } from "@/lib/rate-limit.server";
 
 // ─── Provider Helpers ─────────────────────────────────────────────────────────
 
@@ -447,6 +447,9 @@ export const Route = createFileRoute("/api/chat")({
 
           if (!streamResult) {
             clearTimeout(streamDeadline);
+            // Decrement counter since no AI response was produced
+            await decrementRateLimit(`${userId}:chat:day`);
+            await decrementRateLimit(`${userId}:chat:min`);
             throw lastError || new Error("Failed to stream chat response from all providers.");
           }
 

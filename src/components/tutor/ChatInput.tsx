@@ -20,6 +20,8 @@ type Props = {
   onRemoveFile: () => void;
   onClearDocError: () => void;
   onUpgrade?: () => void;
+  messagesUsed?: number;
+  messagesMax?: number;
 };
 
 function formatFileSize(bytes: number): string {
@@ -102,6 +104,8 @@ export function ChatInput({
   onRemoveFile,
   onClearDocError,
   onUpgrade,
+  messagesUsed = 0,
+  messagesMax = 10,
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const isRateLimited = !!(

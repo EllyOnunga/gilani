@@ -97,21 +97,26 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
     const isValidId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m.id || "");
     if (!resolvedUserId || !m.id || !isValidId || voting) return;
     const newVote = vote === v ? null : v;
+    // Optimistic update — update UI immediately
+    const previousVote = vote;
+    setVote(newVote);
+    if (newVote !== null) {
+      toast.success(newVote === 1 ? "Thanks for the feedback! 👍" : "Noted — we'll improve. 👎");
+    }
     setVoting(true);
     try {
       if (newVote === null) {
         await supabase.from("message_feedback").delete()
           .eq("message_id", m.id).eq("user_id", resolvedUserId);
-        setVote(null);
       } else {
         await supabase.from("message_feedback").upsert(
           { message_id: m.id, user_id: resolvedUserId, vote: newVote },
           { onConflict: "message_id,user_id" }
         );
-        setVote(newVote);
-        toast.success(newVote === 1 ? "Thanks for the feedback! 👍" : "Noted — we'll improve. 👎");
       }
     } catch {
+      // Revert on failure
+      setVote(previousVote);
       toast.error("Failed to save feedback");
     } finally {
       setVoting(false);

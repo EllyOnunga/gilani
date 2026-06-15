@@ -120,6 +120,8 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     );
   };
   const [chatError, setChatError] = useState<string | null>(null);
+  const [messagesUsed, setMessagesUsed] = useState<number>(0);
+  const [messagesMax, setMessagesMax] = useState<number>(10);
   const isRateLimited = !!(
     chatError?.includes("Rate limit") ||
     chatError?.includes("rate limit") ||
@@ -202,6 +204,10 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     (async () => {
       try {
         const status = await getRateLimitStatus({ data: "chat" });
+        if (mounted) {
+          setMessagesUsed((status as any).messagesUsed ?? 0);
+          setMessagesMax((status as any).messagesMax ?? 10);
+        }
         if (mounted && status.isRateLimited) {
           const secs = Math.ceil(status.retryAfterMs / 1000);
           setChatError(JSON.stringify({
@@ -773,6 +779,8 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
             setDocUploadError(null);
           }}
           onUpgrade={() => setShowPlans(true)}
+          messagesUsed={messagesUsed}
+          messagesMax={messagesMax}
         />
         </div>
       </main>
