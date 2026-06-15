@@ -437,12 +437,12 @@ function AnalyticsPage() {
       />
       {/* Header & Student Profile Card */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center border-b border-border/40 pb-6 animate-in-slide">
-        <div className="md:col-span-7 space-y-2">
-          <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
+        <div className="md:col-span-7 space-y-2 text-center md:text-left">
+          <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary flex items-center justify-center md:justify-start gap-1.5">
             <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" /> Analytics
           </p>
           <h2 className="font-serif text-xl sm:text-3xl lg:text-5xl font-black">Performance Insights</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed text-center md:text-left">
             Track your learning trajectory, practice quiz performance, and mastery levels across all subjects.
           </p>
         </div>
@@ -456,9 +456,6 @@ function AnalyticsPage() {
             <h3 className="font-serif font-bold text-base text-foreground truncate">{profile.full_name}</h3>
             <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold">
               <span className="rounded-full bg-primary/10 text-primary px-1.5 py-px border border-primary/20 uppercase tracking-wide">
-                {profile.plan} Plan
-              </span>
-              <span className="rounded-full bg-secondary text-muted-foreground px-1.5 py-px border border-border uppercase tracking-wide">
                 {profile.plan}
               </span>
             </div>

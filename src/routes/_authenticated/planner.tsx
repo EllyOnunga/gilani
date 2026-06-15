@@ -604,15 +604,15 @@ function PlannerPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-5 p-4 sm:p-6 lg:p-10">
       {/* Header */}
-      <header className="animate-in-slide flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <header className="animate-in-slide flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 text-center sm:text-left">
         <div>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
               Study Planner
             </p>
           </div>
           <h2 className="mt-1 font-serif text-xl sm:text-3xl">Your Study Planner</h2>
-          <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
+          <p className="mt-2 text-sm text-muted-foreground max-w-2xl text-center sm:text-left">
             {plan?.plan_metadata?.weekly_goal ||
               "AI-generated daily study tasks based on your quiz performance and weak topics."}
           </p>
@@ -620,7 +620,7 @@ function PlannerPage() {
         <button
           onClick={handleGenerate}
           disabled={loading || isRateLimited}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60 active:scale-[0.98] transition-all"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60 active:scale-[0.98] transition-all mx-auto sm:mx-0"
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
