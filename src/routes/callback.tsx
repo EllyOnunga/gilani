@@ -111,10 +111,15 @@ function AuthCallback() {
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((event, s) => {
-        if (event === "SIGNED_IN" && s) {
-          navigate({ to: safePath });
-        } else if (event === "PASSWORD_RECOVERY") {
+        if (event === "PASSWORD_RECOVERY") {
           navigate({ to: "/reset-password" });
+        } else if (event === "SIGNED_IN" && s) {
+          // Don't redirect on SIGNED_IN during a recovery flow
+          const urlParams = new URLSearchParams(window.location.search);
+          const type = urlParams.get("type");
+          if (type !== "recovery") {
+            navigate({ to: safePath });
+          }
         }
       });
 

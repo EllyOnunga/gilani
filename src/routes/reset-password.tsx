@@ -30,8 +30,8 @@ function ResetPasswordPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters long.");
       return;
     }
 
@@ -129,13 +129,13 @@ function ResetPasswordPage() {
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div className="space-y-1.5">
             <label className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground block">
-              New Password (min 6 chars):
+              New Password (min 8 chars):
             </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 required
-                minLength={6}
+                minLength={8}
                 placeholder="New Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
