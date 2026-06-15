@@ -357,7 +357,7 @@ export const Route = createFileRoute("/api/chat")({
                 messages: aiMessages,
                 maxRetries: 0,
                 temperature: 0.7,
-                experimental_transform: smoothStream({ delayInMs: 25, chunking: "word" }),
+                experimental_transform: smoothStream({ delayInMs: 15, chunking: "word" }),
                 onError: (errorObj) => {
                   const error = (errorObj as any)?.error || errorObj;
                   console.error(

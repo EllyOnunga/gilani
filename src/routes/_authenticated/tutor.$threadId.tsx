@@ -252,6 +252,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const chatHelpers: any = useChat({
     id: threadId,
     transport,
+    experimental_throttle: 30,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
     onFinish: (message: any) => {
       setChatError(null);
