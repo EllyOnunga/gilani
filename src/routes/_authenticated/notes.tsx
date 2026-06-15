@@ -757,7 +757,7 @@ ${content}`.trim()
       )}
 
       {/* Header */}
-      <header className="animate-in-slide flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="animate-in-slide flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between text-center sm:text-left">
         <div>
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
             Study Notes
@@ -771,7 +771,7 @@ ${content}`.trim()
         <button
           onClick={() => setShowFormPersisted((v) => !v)}
           disabled={isOffline || isRateLimited}
-          className="self-start sm:self-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          className="self-center sm:self-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
           {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {showForm ? "Cancel" : "New Note"}
