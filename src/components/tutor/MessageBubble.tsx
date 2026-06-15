@@ -60,20 +60,17 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
       : rawText;
 
   const isStreamActive = isPending && isLast;
+  const visibleText = displayText;
   const [showMarkdown, setShowMarkdown] = useState(false);
 
   useEffect(() => {
     if (!isStreamActive && visibleText) {
-      // Small delay so StreamingText finishes its last word animation before swapping
       const t = setTimeout(() => setShowMarkdown(true), 150);
       return () => clearTimeout(t);
     } else {
       setShowMarkdown(false);
     }
   }, [isStreamActive, visibleText]);
-  // No throttling -- plain text renders instantly during streaming;
-  // markdown parsing only kicks in once streaming finishes.
-  const visibleText = displayText;
 
 
   // Load existing vote for this message
