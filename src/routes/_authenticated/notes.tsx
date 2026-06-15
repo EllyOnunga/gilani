@@ -780,8 +780,8 @@ ${content}`.trim()
 
       {/* Upload Form */}
       {showForm && (
-        <div className="animate-in-slide rounded-xl border border-border bg-card p-6 shadow-sm">
-          <h3 className="font-serif text-xl mb-4">Add Study Note</h3>
+        <div className="animate-in-slide rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm">
+          <h3 className="font-serif text-xl mb-4 text-center sm:text-left">Add Study Note</h3>
           <div className="space-y-3">
             {/* Document Upload Zone */}
             <div className="relative rounded-xl border border-border bg-background p-3">
@@ -795,7 +795,7 @@ ${content}`.trim()
               />
               <label
                 htmlFor="notes-file-upload"
-                className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors w-full ${parsingFile ? "opacity-50 pointer-events-none bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
+                className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors w-full whitespace-nowrap ${parsingFile ? "opacity-50 pointer-events-none bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
               >
                 {parsingFile
                   ? <><Loader2 className="h-4 w-4 animate-spin" /> Parsing document...</>
