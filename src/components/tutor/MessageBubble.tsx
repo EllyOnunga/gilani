@@ -5,6 +5,7 @@ import { ThinkingIndicator } from "./ThinkingIndicator";
 import { supabase } from "@/integrations/supabase/client";
 
 import { MarkdownRenderer } from "./MarkdownRenderer";
+import { StreamingText } from "./StreamingText";
 
 type Props = {
   message: any;
@@ -147,14 +148,14 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
               messageText={visibleText}
             />
             {visibleText || isStreamActive ? (
-              <div className={`prose-ai relative ${isStreamActive ? "streaming-content" : ""}`}>
-                {visibleText ? (
-                  isStreamActive ? (
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">{visibleText}</div>
-                  ) : (
+              <div className="prose-ai relative">
+                {isStreamActive ? (
+                  <StreamingText text={visibleText} isStreaming={isStreamActive} />
+                ) : (
+                  <div className="animate-in fade-in duration-300">
                     <MemoMarkdown content={displayText} />
-                  )
-                ) : null}
+                  </div>
+                )}
                 {isStreamActive && !visibleText && (
                   <span className="inline-flex items-center gap-[3px] ml-1 align-middle">
                     <span className="text-xs text-muted-foreground font-medium">Thinking</span>
