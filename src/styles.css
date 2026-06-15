@@ -341,15 +341,13 @@
 @keyframes wordMaterialize {
   from {
     opacity: 0;
-    filter: blur(3px);
-    transform: translateY(1px);
+    filter: blur(2px);
   }
   to {
     opacity: 1;
     filter: blur(0);
-    transform: translateY(0);
   }
 }
 .animate-fade-in-word {
-  animation: wordMaterialize 150ms ease-out both;
+  animation: wordMaterialize 120ms ease-out both;
 }

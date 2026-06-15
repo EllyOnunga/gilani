@@ -1,14 +1,20 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 type Props = {
   text: string;
 };
 
 export function StreamingText({ text }: Props) {
+  const prevWordsRef = useRef<string[]>([]);
+
   const words = useMemo(() => {
     if (!text) return [];
     return text.match(/(\S+|\s)/g) || [];
   }, [text]);
+
+  // Track which indices are new vs already rendered
+  const prevLen = prevWordsRef.current.length;
+  prevWordsRef.current = words;
 
   if (!text) return null;
 
@@ -20,7 +26,7 @@ export function StreamingText({ text }: Props) {
       {words.map((word, index) => (
         <span
           key={index}
-          className="animate-fade-in-word inline-block"
+          className={index >= prevLen ? "animate-fade-in-word inline" : "inline"}
         >
           {word}
         </span>
