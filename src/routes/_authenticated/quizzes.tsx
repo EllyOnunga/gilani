@@ -574,14 +574,14 @@ function QuizzesPage() {
   if (phase === "setup") {
     return (
       <div className="mx-auto max-w-2xl space-y-5 p-4 sm:p-6 lg:p-10">
-        <header className="animate-in-slide">
-          <div className="flex items-center gap-2 mb-2">
+        <header className="animate-in-slide text-center sm:text-left">
+          <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
               Practice Quizzes
             </p>
           </div>
-          <h2 className="mt-1 font-serif text-xl sm:text-3xl">Test Your Knowledge</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <h2 className="mt-1 font-serif text-2xl sm:text-3xl">Test Your Knowledge</h2>
+          <p className="mt-2 text-sm text-muted-foreground text-center sm:text-left">
             GilaniAI generates tailored MCQ questions and tracks your weak topics.
           </p>
         </header>
@@ -810,7 +810,7 @@ function QuizzesPage() {
 
     return (
       <div className="mx-auto max-w-2xl space-y-5 p-4 sm:p-6 lg:p-10 text-center">
-        <div className="animate-in-slide">
+        <div className="animate-in-slide text-center sm:text-left">
           <Trophy className="mx-auto h-10 w-10 sm:h-14 sm:w-14 text-primary mb-3" />
           <h2 className="font-serif text-xl sm:text-3xl">{grade}</h2>
           <p className="mt-2 text-muted-foreground text-sm">
@@ -823,7 +823,7 @@ function QuizzesPage() {
             Your Score
           </p>
           <p className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold text-primary">{pct}%</p>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground text-center sm:text-left">
             {score} / {questions.length} correct
           </p>
           <div className="mt-6 h-3 rounded-full bg-muted overflow-hidden">
