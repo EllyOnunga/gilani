@@ -54,9 +54,9 @@ function ContactPage() {
       <LegalHeader />
 
       {/* Hero */}
-      <div className="border-b border-border bg-sidebar px-6 py-12 text-center">
+      <div className="border-b border-border bg-sidebar px-4 py-8 sm:py-12 text-center">
         <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-2">Support</p>
-        <h1 className="font-serif text-4xl font-bold text-foreground">Contact Us</h1>
+        <h1 className="font-serif text-2xl sm:text-4xl font-bold text-foreground">Contact Us</h1>
         <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
           Got a question, bug report, or partnership inquiry? We're a small team and we read every message.
         </p>
@@ -66,7 +66,7 @@ function ContactPage() {
         </div>
       </div>
 
-      <div className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-12 grid gap-10 lg:grid-cols-3">
+      <div className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 grid gap-8 lg:grid-cols-3">
         {/* Info sidebar */}
         <div className="space-y-4 lg:col-span-1">
           {[

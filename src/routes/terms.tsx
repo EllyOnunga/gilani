@@ -16,7 +16,7 @@ function TermsPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <LegalHeader />
       <LegalHero label="Legal" title="Terms of Service" subtitle="Last updated: June 2025" />
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 py-12">
+      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
         <div className="space-y-8 text-sm leading-relaxed">
           <Section title="1. Acceptance of Terms">
             <p>By accessing or using GilaniAI ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service. These Terms apply to all users, including students, teachers, and administrators.</p>

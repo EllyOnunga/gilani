@@ -605,7 +605,7 @@ function Landing() {
                     <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-2">
                       Step-by-Step Instructions:
                     </p>
-                    <ul className="space-y-1.5 text-xs text-muted-foreground">
+                    <ul className="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
                       {guide.instructions.map((step, sIdx) => (
                         <li key={sIdx} className="flex gap-2 items-start">
                           <span className="h-1.5 w-1.5 rounded-full bg-primary/80 mt-1.5 flex-shrink-0" />
@@ -805,14 +805,14 @@ function Landing() {
 
       {/* ── Footer ── */}
       <footer className="border-t border-border bg-card">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-14 grid grid-cols-2 md:grid-cols-12 gap-8 items-start">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-14 grid grid-cols-1 md:grid-cols-12 gap-8 items-start text-center md:text-left">
           {/* Brand column */}
-          <div className="col-span-2 md:col-span-4 space-y-4">
+          <div className="col-span-1 md:col-span-4 space-y-4 flex flex-col items-center md:items-start">
             <Logo to="/" size="md" />
             <p className="text-xs text-muted-foreground leading-relaxed max-w-[260px]">
               Your AI-powered study assistant. Smart tutoring, quizzes, notes and planning — all in one place.
             </p>
-            <div className="flex gap-4 text-muted-foreground">
+            <div className="flex gap-4 text-muted-foreground justify-center md:justify-start">
               {[Facebook, Twitter, Instagram, Github].map((Icon, i) => (
                 <a key={i} href="#" className="hover:text-primary transition-colors">
                   <Icon className="h-4 w-4" />
@@ -822,7 +822,7 @@ function Landing() {
           </div>
 
           {/* Quick links */}
-          <div className="col-span-1 md:col-span-2 space-y-3">
+          <div className="col-span-1 md:col-span-2 space-y-3 flex flex-col items-center md:items-start">
             <h4 className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold">
               Platform
             </h4>
@@ -856,7 +856,7 @@ function Landing() {
           </div>
 
           {/* Legal */}
-          <div className="col-span-1 md:col-span-2 space-y-3">
+          <div className="col-span-1 md:col-span-2 space-y-3 flex flex-col items-center md:items-start">
             <h4 className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold">
               Legal
             </h4>
@@ -880,7 +880,7 @@ function Landing() {
           </div>
 
           {/* Newsletter + contacts */}
-          <div className="col-span-2 md:col-span-4 space-y-4">
+          <div className="col-span-1 md:col-span-4 space-y-4 flex flex-col items-center md:items-start">
             <h4 className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold">
               Stay updated
             </h4>
@@ -906,7 +906,7 @@ function Landing() {
                 </button>
               </form>
             )}
-            <div className="space-y-1.5 text-xs text-muted-foreground">
+            <div className="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
               <p className="flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 text-primary flex-shrink-0" /> onungaelly@gmail.com
               </p>

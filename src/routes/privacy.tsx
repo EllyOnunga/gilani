@@ -16,7 +16,7 @@ function PrivacyPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <LegalHeader />
       <LegalHero label="Legal" title="Privacy Policy" subtitle="Last updated: June 2025" />
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 py-12">
+      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
         <div className="space-y-8 text-sm leading-relaxed">
           <Section title="1. Introduction">
             <p>GilaniAI ("we", "our", "us") is committed to protecting your privacy and complying with the Kenya Data Protection Act 2019. This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.</p>

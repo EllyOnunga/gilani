@@ -93,18 +93,18 @@ function FAQPage() {
       <LegalHeader backTo={"/register" as any} backLabel="Get started" />
 
       {/* Hero */}
-      <div className="border-b border-border bg-sidebar px-6 py-12 text-center">
+      <div className="border-b border-border bg-sidebar px-4 py-8 sm:py-12 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-primary font-bold mb-4">
           Support
         </div>
-        <h1 className="font-serif text-4xl font-bold">Frequently Asked Questions</h1>
+        <h1 className="font-serif text-2xl sm:text-4xl font-bold">Frequently Asked Questions</h1>
         <p className="mt-3 text-sm text-muted-foreground max-w-lg mx-auto">
           Everything you need to know about GilaniAI. Can't find your answer?{" "}
           <Link to={"/contact" as any} className="text-primary hover:underline">Contact us.</Link>
         </p>
       </div>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-12">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12">
         {/* Category filter */}
         <div className="flex flex-wrap gap-2 mb-8 justify-center">
           <button
