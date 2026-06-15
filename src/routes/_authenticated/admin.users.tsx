@@ -441,7 +441,7 @@ function AdminUsersPage() {
 
   if (loadingData) {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center">
+      <div className="flex min-h-[50vh] flex-col items-center justify-center p-5 sm:p-8 text-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
         <p className="text-sm text-muted-foreground font-medium">Loading admin dashboard...</p>
       </div>
@@ -517,7 +517,7 @@ function AdminUsersPage() {
   }).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-3 sm:p-6 lg:p-10">
+    <div className="mx-auto max-w-6xl space-y-3 p-3 sm:p-6 lg:p-10">
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
         <div>
@@ -531,61 +531,61 @@ function AdminUsersPage() {
       </header>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total Users</p>
             <User className="h-4 w-4 text-primary" />
           </div>
-          <p className="font-serif text-3xl font-bold text-primary">{profileState.length}</p>
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-primary">{profileState.length}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Conversations</p>
             <Activity className="h-4 w-4 text-blue-600" />
           </div>
-          <p className="font-serif text-3xl font-bold text-blue-600">{platformStats.totalConversations.toLocaleString()}</p>
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-blue-600">{platformStats.totalConversations.toLocaleString()}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Notes Uploaded</p>
             <BookOpen className="h-4 w-4 text-purple-600" />
           </div>
-          <p className="font-serif text-3xl font-bold text-purple-600">{platformStats.totalNotes.toLocaleString()}</p>
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-purple-600">{platformStats.totalNotes.toLocaleString()}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Open Escalations</p>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </div>
-          <p className="font-serif text-3xl font-bold text-red-500">{platformStats.openEscalations}</p>
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-red-500">{platformStats.openEscalations}</p>
         </div>
       </div>
 
       {/* Secondary stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Satisfaction</p>
             <ThumbsUp className="h-4 w-4 text-green-600" />
           </div>
-          <p className="font-serif text-3xl font-bold text-green-600">{satisfactionPct}%</p>
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-green-600">{satisfactionPct}%</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Unread Messages</p>
             <Inbox className="h-4 w-4 text-amber-600" />
           </div>
-          <p className="font-serif text-3xl font-bold text-amber-600">{unreadCount}</p>
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-amber-600">{unreadCount}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Rate Limit Hits</p>
             <RefreshCw className="h-4 w-4 text-orange-500" />
           </div>
           <p className="font-serif text-3xl font-bold text-orange-500">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total Messages</p>
             <MessageSquare className="h-4 w-4 text-teal-600" />
@@ -626,7 +626,7 @@ function AdminUsersPage() {
             {ROLES.map((r) => {
               const { icon: Icon, color } = ROLE_META[r];
               return (
-                <div key={r} className="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
+                <div key={r} className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm text-center">
                   <Icon className={`mx-auto h-5 w-5 mb-2 ${color.split(" ")[0]}`} />
                   <p className="font-serif text-3xl font-bold">{counts[r]}</p>
                   <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">{r}s</p>
@@ -644,11 +644,11 @@ function AdminUsersPage() {
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[500px]">
+              <table className="w-full text-sm min-w-[320px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     {["User","Email","Conversations","Curriculum","Joined","Role"].map((h) => (
-                      <th key={h} className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                      <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -665,19 +665,19 @@ function AdminUsersPage() {
                           <p className="font-semibold">{p.display_name ?? "—"}</p>
                           <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
                         </td>
-                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
                         <td className="px-5 py-3 font-mono text-xs text-center">
                           <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 px-2 py-0.5 text-blue-700 text-[10px] font-mono">
                             {p.conversation_count ?? 0}
                           </span>
                         </td>
-                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.curriculum ?? "—"}</td>
-                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{p.plan ?? "—"}</td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
                           {formatDate(p.created_at)}
                         </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${meta.color}`}>{p.role}</span>
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${meta.color}`}>{p.role}</span>
                             {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
                               <select value={p.role} onChange={(e) => handleRoleChange(p.id, e.target.value)}
                                 className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
@@ -708,14 +708,14 @@ function AdminUsersPage() {
 
       {/* ── Feedback tab ── */}
       {tab === "feedback" && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <ThumbsUp className="mx-auto h-5 w-5 mb-2 text-green-500" />
               <p className="font-serif text-3xl font-bold">{feedback.filter((f) => f.vote === 1).length}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Positive</p>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <ThumbsDown className="mx-auto h-5 w-5 mb-2 text-destructive" />
               <p className="font-serif text-3xl font-bold">{feedback.filter((f) => f.vote === -1).length}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Negative</p>
@@ -723,7 +723,7 @@ function AdminUsersPage() {
           </div>
 
           {feedback.length === 0 && (
-            <div className="rounded-xl border border-border bg-card py-16 text-center">
+            <div className="rounded-lg border border-border bg-card py-6 sm:py-14 text-center">
               <ThumbsUp className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
               <p className="font-serif text-muted-foreground">No feedback yet</p>
             </div>
@@ -732,11 +732,11 @@ function AdminUsersPage() {
           {feedback.length > 0 && (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[500px]">
+                <table className="w-full text-sm min-w-[320px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["User", "Vote", "Message ID", "Date"].map((h) => (
-                        <th key={h} className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                        <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -749,12 +749,12 @@ function AdminUsersPage() {
                         </td>
                         <td className="px-5 py-3">
                           {f.vote === 1
-                            ? <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-2.5 py-0.5 font-mono text-[9px] text-green-700"><ThumbsUp className="h-3 w-3" /> Good</span>
-                            : <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2.5 py-0.5 font-mono text-[9px] text-red-700"><ThumbsDown className="h-3 w-3" /> Bad</span>
+                            ? <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-1.5 py-px font-mono text-[9px] text-green-700"><ThumbsUp className="h-3 w-3" /> Good</span>
+                            : <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-1.5 py-px font-mono text-[9px] text-red-700"><ThumbsDown className="h-3 w-3" /> Bad</span>
                           }
                         </td>
                         <td className="px-5 py-3 font-mono text-[10px] text-muted-foreground">{f.message_id?.slice(0, 12)}…</td>
-                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
                           {formatDate(f.created_at)}
                         </td>
                       </tr>
@@ -772,10 +772,10 @@ function AdminUsersPage() {
 
       {/* ── Messages tab ── */}
       {tab === "messages" && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
             {(["unread","read","resolved"] as const).map((s) => (
-              <div key={s} className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+              <div key={s} className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
                 <p className="font-serif text-3xl font-bold">{messages.filter((m) => m.status === s).length}</p>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">{s}</p>
               </div>
@@ -783,7 +783,7 @@ function AdminUsersPage() {
           </div>
 
           {messages.length === 0 && (
-            <div className="rounded-xl border border-border bg-card py-16 text-center">
+            <div className="rounded-lg border border-border bg-card py-6 sm:py-14 text-center">
               <MessageSquare className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
               <p className="font-serif text-muted-foreground">No messages yet</p>
             </div>
@@ -796,7 +796,7 @@ function AdminUsersPage() {
             return (
               <div key={m.id} className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-colors ${m.status === "unread" ? "border-primary/30" : "border-border"}`}>
                 <div
-                  className="flex items-start gap-4 px-5 py-4 cursor-pointer hover:bg-accent/20 transition-colors"
+                  className="flex items-start gap-3 px-3 py-3 sm:px-5 sm:py-4 cursor-pointer hover:bg-accent/20 transition-colors"
                   onClick={() => setExpandedMsg(isExpanded ? null : m.id)}
                 >
                   <div className="flex-1 min-w-0">
@@ -819,7 +819,7 @@ function AdminUsersPage() {
                 </div>
 
                 {isExpanded && (
-                  <div className="px-5 pb-5 border-t border-border/50 space-y-4">
+                  <div className="px-4 pb-4 border-t border-border/50 space-y-3">
                     <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap pt-4">{m.message}</p>
                     <div className="flex items-center gap-2 flex-wrap pt-2">
                       <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mr-2">Mark as:</p>
@@ -848,19 +848,19 @@ function AdminUsersPage() {
 
       {/* ── Rate Limits Tab ── */}
       {tab === "ratelimits" && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <BarChart3 className="mx-auto h-5 w-5 mb-2 text-primary" />
               <p className="font-serif text-3xl font-bold">{rateLimits.length}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Active Keys</p>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <AlertTriangle className="mx-auto h-5 w-5 mb-2 text-amber-500" />
               <p className="font-serif text-3xl font-bold">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Total Hits</p>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <RefreshCw className="mx-auto h-5 w-5 mb-2 text-blue-500" />
               <p className="font-serif text-3xl font-bold">
                 {rateLimits.filter((r) => { const d = new Date(r.reset_at); return !isNaN(d.getTime()) && d > new Date(); }).length}
@@ -875,18 +875,18 @@ function AdminUsersPage() {
               className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
           {rateLimits.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card py-16 text-center">
+            <div className="rounded-lg border border-border bg-card py-6 sm:py-14 text-center">
               <CheckCircle2 className="mx-auto h-8 w-8 text-green-400/60 mb-3" />
               <p className="text-sm text-muted-foreground">No rate limit hits recorded</p>
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[500px]">
+                <table className="w-full text-sm min-w-[320px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["Key", "Hits", "Resets At", "Status"].map((h) => (
-                        <th key={h} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                        <th key={h} className="px-2 py-2 sm:px-4 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -900,13 +900,13 @@ function AdminUsersPage() {
                           <td className="px-4 py-3">
                             <span className={`font-bold text-sm ${r.count > 10 ? "text-destructive" : r.count > 5 ? "text-amber-600" : "text-foreground"}`}>{r.count}</span>
                           </td>
-                          <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">
                             {formatDateTime(r.reset_at)}
                           </td>
                           <td className="px-4 py-3">
                             {isActive
-                              ? <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2.5 py-0.5 font-mono text-[9px] text-red-700">Active</span>
-                              : <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-2.5 py-0.5 font-mono text-[9px] text-green-700">Expired</span>
+                              ? <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-1.5 py-px font-mono text-[9px] text-red-700">Active</span>
+                              : <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-1.5 py-px font-mono text-[9px] text-green-700">Expired</span>
                             }
                           </td>
                         </tr>
@@ -925,11 +925,11 @@ function AdminUsersPage() {
 
       {/* ── Escalations tab ── */}
       {tab === "escalations" && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
             {(["open", "pending", "resolved"] as const).map((s) => (
               <button key={s} onClick={() => setEscalationFilter(s === escalationFilter ? "all" : s)}
-                className={`rounded-xl border-2 p-4 text-center shadow-sm transition-all duration-200 ${
+                className={`rounded-lg border-2 p-2.5 sm:p-4 text-center shadow-sm transition-all duration-200 ${
                   escalationFilter === s ? "border-primary text-primary bg-transparent font-bold scale-102" : "border-border/60 bg-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}>
                 <p className="font-serif text-3xl font-bold">{escalations.filter((e) => e.status === s).length}</p>
@@ -939,18 +939,18 @@ function AdminUsersPage() {
           </div>
 
           {filteredEscalations.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card py-16 text-center">
+            <div className="rounded-lg border border-border bg-card py-6 sm:py-14 text-center">
               <CheckCircle2 className="mx-auto h-8 w-8 text-green-400/60 mb-3" />
               <p className="font-serif text-muted-foreground">No escalations{escalationFilter !== "all" ? ` with status "${escalationFilter}"` : ""}</p>
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[500px]">
+                <table className="w-full text-sm min-w-[320px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["Student", "Reason", "Status", "Reviewer", "Date"].map((h) => (
-                        <th key={h} className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                        <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -965,14 +965,14 @@ function AdminUsersPage() {
                           <p className="truncate" title={esc.detail ?? esc.reason}>{esc.detail || esc.reason}</p>
                         </td>
                         <td className="px-5 py-3">
-                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${
+                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${
                             esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
                             esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
                             "text-amber-600 bg-amber-50 border-amber-200"
                           }`}>{esc.status}</span>
                         </td>
-                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</td>
-                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
                           {formatDate(esc.created_at)}
                         </td>
                       </tr>
@@ -990,43 +990,43 @@ function AdminUsersPage() {
 
       {/* ── Subscriptions tab ── */}
       {tab === "subscriptions" && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Revenue summary */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">MRR Estimate</p>
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </div>
-              <p className="font-serif text-3xl font-bold text-green-600">KES {mrr.toLocaleString()}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-green-600">KES {mrr.toLocaleString()}</p>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total Revenue</p>
                 <DollarSign className="h-4 w-4 text-primary" />
               </div>
-              <p className="font-serif text-3xl font-bold text-primary">KES {totalRevenue.toLocaleString()}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-primary">KES {totalRevenue.toLocaleString()}</p>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Active Subscriptions</p>
                 <Crown className="h-4 w-4 text-amber-500" />
               </div>
-              <p className="font-serif text-3xl font-bold text-amber-500">{activeSubs}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-amber-500">{activeSubs}</p>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Expiring ≤7 Days</p>
                 <Calendar className="h-4 w-4 text-red-500" />
               </div>
-              <p className="font-serif text-3xl font-bold text-red-500">{expiringSoon}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-red-500">{expiringSoon}</p>
             </div>
           </div>
 
           {/* Plan distribution */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
             {(Object.keys(PLANS) as PlanId[]).map((pid) => (
-              <div key={pid} className="rounded-xl border border-border bg-card p-4 shadow-sm text-center">
+              <div key={pid} className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm text-center">
                 <p className="font-serif text-3xl font-bold">{planCounts[pid]}</p>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{PLANS[pid].label}</p>
                 <p className="font-mono text-[10px] text-muted-foreground mt-0.5">KES {PLANS[pid].price.toLocaleString()}/mo</p>
@@ -1044,11 +1044,11 @@ function AdminUsersPage() {
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[500px]">
+              <table className="w-full text-sm min-w-[320px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     {["User", "Email", "Plan", "Expires", "Action"].map((h) => (
-                      <th key={h} className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                      <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1068,9 +1068,9 @@ function AdminUsersPage() {
                           <p className="font-semibold">{p.display_name ?? "—"}</p>
                           <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
                         </td>
-                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
                         <td className="px-5 py-3">
-                          <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary border-primary/20">
+                          <span className="inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider text-primary border-primary/20">
                             {PLANS[plan]?.label ?? plan}
                           </span>
                         </td>
@@ -1106,18 +1106,18 @@ function AdminUsersPage() {
           {/* Payment history */}
           <h2 className="font-serif text-xl mt-6">Payment History</h2>
           {payments.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card py-16 text-center">
+            <div className="rounded-lg border border-border bg-card py-6 sm:py-14 text-center">
               <CreditCard className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
               <p className="font-serif text-muted-foreground">No payments yet</p>
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[500px]">
+                <table className="w-full text-sm min-w-[320px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["User", "Plan", "Amount", "Phone", "Receipt", "Status", "Date"].map((h) => (
-                        <th key={h} className="px-4 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                        <th key={h} className="px-2 py-2 sm:px-4 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -1130,16 +1130,16 @@ function AdminUsersPage() {
                         </td>
                         <td className="px-4 py-3 font-mono text-xs capitalize">{pay.plan}</td>
                         <td className="px-4 py-3 font-semibold">KES {pay.amount.toLocaleString()}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{pay.phone_number}</td>
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">{pay.phone_number}</td>
                         <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">{pay.mpesa_receipt ?? "—"}</td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${
+                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${
                             pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
                             pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
                             "text-amber-600 bg-amber-50 border-amber-200"
                           }`}>{pay.status}</span>
                         </td>
-                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">
                           {formatDate(pay.created_at)}
                         </td>
                       </tr>
@@ -1160,21 +1160,21 @@ function AdminUsersPage() {
         <div className="space-y-6">
           {/* Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <Users className="mx-auto h-5 w-5 mb-2 text-primary" />
               <p className="font-serif text-3xl font-bold">{newsletter.length}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Total</p>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <CheckCircle className="mx-auto h-5 w-5 mb-2 text-green-500" />
-              <p className="font-serif text-3xl font-bold text-green-600">
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-green-600">
                 {newsletter.filter(s => s.status === "active").length}
               </p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Active</p>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <TrendingUp className="mx-auto h-5 w-5 mb-2 text-blue-500" />
-              <p className="font-serif text-3xl font-bold text-blue-600">
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-blue-600">
                 {newsletter.filter(s => {
                   const d = new Date(s.subscribed_at);
                   const now = new Date();
@@ -1186,7 +1186,7 @@ function AdminUsersPage() {
           </div>
 
           {/* Send Newsletter */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+          <div className="rounded-lg border border-border bg-card p-3 sm:p-6 shadow-sm space-y-3">
             <h3 className="font-serif text-lg font-bold flex items-center gap-2">
               <Send className="h-4 w-4 text-primary" /> Send Newsletter
             </h3>
@@ -1206,7 +1206,7 @@ function AdminUsersPage() {
                   <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">Subject</label>
                   <input
                     type="text"
-                    placeholder="e.g. KCSE 2026 Revision Tips"
+                    placeholder="e.g. 2026 Exam Revision Tips"
                     value={nlSubject}
                     onChange={e => setNlSubject(e.target.value)}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -1253,18 +1253,18 @@ function AdminUsersPage() {
 
           {/* Subscribers list */}
           {newsletter.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card py-16 text-center">
+            <div className="rounded-lg border border-border bg-card py-6 sm:py-14 text-center">
               <Mail className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
               <p className="font-serif text-muted-foreground">No subscribers yet</p>
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[500px]">
+                <table className="w-full text-sm min-w-[320px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["Email", "Name", "Status", "Subscribed"].map(h => (
-                        <th key={h} className="px-5 py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                        <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -1274,11 +1274,11 @@ function AdminUsersPage() {
                         <td className="px-5 py-3 font-mono text-xs">{s.email}</td>
                         <td className="px-5 py-3 text-sm">{s.name ?? "—"}</td>
                         <td className="px-5 py-3">
-                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
                             {s.status}
                           </span>
                         </td>
-                        <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
                           {new Date(s.subscribed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
                         </td>
                       </tr>

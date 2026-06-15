@@ -611,7 +611,7 @@ function PlannerPage() {
               Study Planner
             </p>
           </div>
-          <h2 className="mt-1 font-serif text-2xl sm:text-4xl">Your Study Planner</h2>
+          <h2 className="mt-1 font-serif text-xl sm:text-3xl">Your Study Planner</h2>
           <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
             {plan?.plan_metadata?.weekly_goal ||
               "AI-generated daily study tasks based on your quiz performance and weak topics."}
@@ -656,12 +656,12 @@ function PlannerPage() {
 
       {/* Empty state */}
       {!plan && !loading && (
-        <div className="rounded-xl border border-dashed border-border p-8 sm:p-12 text-center">
+        <div className="rounded-xl border border-dashed border-border p-5 sm:p-10 text-center">
           <CalendarDays className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
           <p className="font-serif text-xl text-muted-foreground">No plan yet</p>
           <p className="text-sm text-muted-foreground mt-1">
             Click "Generate My Plan" and GilaniAI will build a personalised 7-day schedule tailored
-            to your curriculum.
+            tailored to your schedule.
           </p>
         </div>
       )}
@@ -730,7 +730,7 @@ function PlannerPage() {
       )}
 
       {loading && !plan && (
-        <div className="flex flex-col items-center py-16 gap-3">
+        <div className="flex flex-col items-center py-10 sm:py-16 gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="font-serif text-lg text-muted-foreground">
             Building your personalised plan…
@@ -752,7 +752,7 @@ function PlannerPage() {
                 <button
                   key={date}
                   onClick={() => setSelectedDate(date)}
-                  className={`flex flex-col items-center rounded-md px-0.5 py-1 border transition-all w-full ${
+                  className={`flex flex-col items-center rounded-md px-0.5 py-0.5 border transition-all w-full ${
                     isSelected
                       ? "border-primary bg-primary/10 text-primary shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:bg-accent"
@@ -793,7 +793,7 @@ function PlannerPage() {
           const dailyQuote = dayPlan?.daily_quote;
 
           return (
-            <div className="animate-in-slide space-y-4">
+            <div className="animate-in-slide space-y-3">
               {/* Day header */}
               <div className="flex items-center justify-between">
                 <div>
@@ -876,7 +876,7 @@ function PlannerPage() {
 
       {/* Fallback state inside valid data scopes */}
       {plan && totalTasks === 0 && (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center">
+        <div className="rounded-xl border border-dashed border-border p-5 sm:p-8 text-center">
           <p className="text-sm text-muted-foreground">
             Plan loaded but no tasks found. Try regenerating the plan.
           </p>

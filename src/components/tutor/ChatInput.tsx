@@ -141,7 +141,7 @@ export function ChatInput({
     <div className="px-2 pb-2 pt-1 sm:px-4 sm:pb-4 sm:pt-3 sm:bg-background/95 sm:backdrop-blur-sm sm:border-t sm:border-border/40">
       {/* Rate limit banner with countdown */}
       {isRateLimited && (
-        <div className="mb-3.5 rounded-2xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
+        <div className="mb-2.5 rounded-2xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
           <div className="flex items-start gap-2.5 px-3.5 py-3">
             <div className="flex-shrink-0 mt-0.5">
               {secondsLeft > 0
@@ -189,7 +189,7 @@ export function ChatInput({
 
       {/* Document Upload Error Banner */}
       {docUploadError && (
-        <div className="mb-3.5 rounded-2xl border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 dark:border-destructive/30 backdrop-blur-sm shadow-sm">
+        <div className="mb-2.5 rounded-2xl border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 dark:border-destructive/30 backdrop-blur-sm shadow-sm">
           <div className="flex items-start gap-2.5 px-3.5 py-3">
             <div className="flex-shrink-0 mt-0.5">
               <AlertCircle className="h-4 w-4 text-destructive dark:text-red-400" />
@@ -216,7 +216,7 @@ export function ChatInput({
 
       {/* Attached file pill */}
       {attachedFile && (
-        <div className="mb-3.5 flex items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5/30 backdrop-blur-sm px-4 py-3 shadow-sm">
+        <div className="mb-2.5 flex items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5/30 backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-3 shadow-sm">
           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
             <FileText className="h-4 w-4 text-primary" />
           </div>

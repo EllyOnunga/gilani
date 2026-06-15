@@ -46,7 +46,7 @@ export function EscalateModal({
         </div>
 
         {/* Body */}
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-4 py-3 space-y-3">
           <p className="text-xs text-muted-foreground leading-relaxed">
             Enter your teacher's email to send this conversation for review.
             They must be registered on GilaniAI.

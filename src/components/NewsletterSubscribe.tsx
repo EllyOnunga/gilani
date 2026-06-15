@@ -66,7 +66,7 @@ export function NewsletterSubscribe({
             <Mail className="h-4 w-4 text-primary flex-shrink-0" />
             <div>
               <p className="text-sm font-bold text-foreground">Stay updated with GilaniAI</p>
-              <p className="text-xs text-muted-foreground">KCSE tips, new features and study guides.</p>
+              <p className="text-xs text-muted-foreground">Study tips, new features and exam guides.</p>
             </div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
@@ -113,13 +113,13 @@ export function NewsletterSubscribe({
 
   // Default: card
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
       <div className="flex items-center gap-2">
         <Mail className="h-5 w-5 text-primary" />
         <h3 className="font-serif text-lg font-bold">Stay in the Loop</h3>
       </div>
       <p className="text-sm text-muted-foreground">
-        Get KCSE study tips, new features, and exam guides delivered to your inbox.
+        Get study tips, new features, and exam guides delivered to your inbox.
       </p>
       <div className="space-y-2">
         <input

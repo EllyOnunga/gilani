@@ -275,7 +275,7 @@ function Landing() {
             <div className="absolute bottom-0 left-1/3 h-[400px] w-[400px] rounded-full bg-orange-500/5 blur-3xl" />
           </div>
 
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-24 lg:py-32">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20 lg:py-28">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
               {/* Left column */}
               <div className="lg:col-span-7 animate-in-slide text-center lg:text-left">
@@ -284,7 +284,7 @@ function Landing() {
                   Your AI-Powered Study Assistant
                 </div>
 
-                <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight text-pretty">
+                <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight text-pretty">
                   Study smarter.{" "}
                   <span className="relative">
                     <span className="italic text-primary">Score higher.</span>
@@ -385,12 +385,12 @@ function Landing() {
 
         {/* ── Stats Bar ── */}
         <section className="border-y border-border/40 bg-muted/20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
             {STATS.map(({ value, label, icon: Icon }) => (
               <div key={label} className="flex flex-col items-center text-center gap-2">
                 <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4 text-primary" />
-                  <p className="font-serif text-2xl sm:text-3xl font-black text-foreground">
+                  <p className="font-serif text-xl sm:text-3xl font-black text-foreground">
                     {value}
                   </p>
                 </div>
@@ -401,12 +401,12 @@ function Landing() {
         </section>
 
         {/* ── Features Section ── */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
           <div className="text-center mb-12">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               Everything you need
             </p>
-            <h2 className="font-serif text-3xl sm:text-4xl font-black">
+            <h2 className="font-serif text-2xl sm:text-4xl font-black">
               One platform. Total revision coverage.
             </h2>
             <p className="mt-3 text-sm text-muted-foreground max-w-xl mx-auto">
@@ -442,12 +442,12 @@ function Landing() {
 
         {/* ── How It Works ── */}
         <section className="bg-muted/20 border-y border-border/40">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
             <div className="text-center mb-12">
               <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
                 Simple process
               </p>
-              <h2 className="font-serif text-3xl sm:text-4xl font-black">
+              <h2 className="font-serif text-2xl sm:text-4xl font-black">
                 Start improving in 3 steps
               </h2>
             </div>
@@ -485,12 +485,12 @@ function Landing() {
         </section>
 
         {/* ── Guidelines & Navigation Guide ── */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24 border-b border-border/40">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20 border-b border-border/40">
           <div className="text-center mb-12">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               Application Guide & Instructions
             </p>
-            <h2 className="font-serif text-3xl sm:text-4xl font-black">
+            <h2 className="font-serif text-2xl sm:text-4xl font-black">
               How to Navigate & Use GilaniAI
             </h2>
             <p className="mt-3 text-sm text-muted-foreground max-w-2xl mx-auto">
@@ -621,12 +621,12 @@ function Landing() {
         </section>
 
         {/* ── Testimonials ── */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
           <div className="text-center mb-12">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               Student stories
             </p>
-            <h2 className="font-serif text-3xl sm:text-4xl font-black">
+            <h2 className="font-serif text-2xl sm:text-4xl font-black">
               Students are scoring higher
             </h2>
           </div>
@@ -662,12 +662,12 @@ function Landing() {
         </section>
 
         {/* ── Pricing Plans Section ── */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24 border-b border-border/40 bg-muted/10">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20 border-b border-border/40 bg-muted/10">
           <div className="text-center mb-12">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               Fair & Transparent Pricing
             </p>
-            <h2 className="font-serif text-3xl sm:text-4xl font-black">
+            <h2 className="font-serif text-2xl sm:text-4xl font-black">
               Choose the Plan that Fits Your Study Goals
             </h2>
             <p className="mt-3 text-sm text-muted-foreground max-w-xl mx-auto">
@@ -746,12 +746,12 @@ function Landing() {
         </section>
 
         {/* ── FAQ Section ── */}
-        <section className="mx-auto max-w-3xl px-4 sm:px-6 py-16 sm:py-24">
+        <section className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-20">
           <div className="text-center mb-10">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               Got questions?
             </p>
-            <h2 className="font-serif text-3xl sm:text-4xl font-black">
+            <h2 className="font-serif text-2xl sm:text-4xl font-black">
               Frequently asked questions
             </h2>
           </div>
@@ -781,13 +781,13 @@ function Landing() {
 
         {/* ── CTA Banner ── */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-16 sm:pb-24">
-          <div className="relative overflow-hidden rounded-3xl bg-primary p-8 sm:p-14 text-center">
+          <div className="relative overflow-hidden rounded-3xl bg-primary p-6 sm:p-14 text-center">
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
               <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-white/5 blur-2xl" />
               <div className="absolute -bottom-20 right-0 h-60 w-60 rounded-full bg-white/5 blur-2xl" />
             </div>
             <Trophy className="mx-auto h-10 w-10 text-primary-foreground/80 mb-4" />
-            <h2 className="font-serif text-3xl sm:text-4xl font-black text-primary-foreground mb-3">
+            <h2 className="font-serif text-2xl sm:text-4xl font-black text-primary-foreground mb-3">
               Ready to ace your exams?
             </h2>
             <p className="text-primary-foreground/80 text-sm sm:text-base max-w-md mx-auto mb-8">
@@ -805,7 +805,7 @@ function Landing() {
 
       {/* ── Footer ── */}
       <footer className="border-t border-border bg-card">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16 grid grid-cols-2 md:grid-cols-12 gap-8 items-start">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-14 grid grid-cols-2 md:grid-cols-12 gap-8 items-start">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-4 space-y-4">
             <Logo to="/" size="md" />

@@ -371,7 +371,7 @@ function EscalationCard({
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               rows={5}
-              placeholder="Write a clear, curriculum-aligned response that will help the student understand the concept…"
+              placeholder="Write a clear, helpful response that will help the student understand the concept…"
               className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none leading-relaxed placeholder:text-muted-foreground/60"
             />
             <div className="flex items-center justify-between gap-3">
@@ -534,14 +534,14 @@ function EscalationsPage() {
               <Icon className="h-4 w-4" />
               <p className="font-mono text-[10px] uppercase tracking-widest">{label}</p>
             </div>
-            <p className={`font-serif text-3xl sm:text-4xl font-bold ${color}`}>{value}</p>
+            <p className={`font-serif text-2xl sm:text-4xl font-bold ${color}`}>{value}</p>
           </div>
         ))}
       </div>
 
       {/* ── Loading ── */}
       {loading && (
-        <div className="flex flex-col items-center py-16 gap-3">
+        <div className="flex flex-col items-center py-10 sm:py-16 gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">Loading escalations…</p>
         </div>
@@ -549,7 +549,7 @@ function EscalationsPage() {
 
       {/* ── Empty state ── */}
       {!loading && escalations.length === 0 && (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center">
+        <div className="rounded-xl border border-dashed border-border p-6 sm:p-12 text-center">
           <div className="mx-auto h-14 w-14 rounded-full bg-muted/50 flex items-center justify-center mb-4">
             <ShieldAlert className="h-7 w-7 text-muted-foreground/50" />
           </div>

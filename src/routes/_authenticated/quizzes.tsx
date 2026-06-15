@@ -580,7 +580,7 @@ function QuizzesPage() {
               Practice Quizzes
             </p>
           </div>
-          <h2 className="mt-1 font-serif text-2xl sm:text-4xl">Test Your Knowledge</h2>
+          <h2 className="mt-1 font-serif text-xl sm:text-3xl">Test Your Knowledge</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             GilaniAI generates tailored MCQ questions and tracks your weak topics.
           </p>
@@ -689,7 +689,7 @@ function QuizzesPage() {
                   key={n}
                   type="button"
                   onClick={() => setQuestionCount(n)}
-                  className={`rounded-lg border py-2.5 text-sm font-bold transition-colors ${
+                  className={`rounded-lg border py-2 sm:py-2.5 text-sm font-bold transition-colors ${
                     questionCount === n
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border hover:bg-accent text-muted-foreground"
@@ -704,7 +704,7 @@ function QuizzesPage() {
           <button
             onClick={startQuiz}
             disabled={isGenerating || isRateLimited}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3.5 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow hover:bg-primary/90 active:scale-[0.98] transition-all"
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 sm:py-3.5 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow hover:bg-primary/90 active:scale-[0.98] transition-all"
           >
             <ListChecks className="h-4 w-4" />
             {isGenerating ? "Generating…" : "Generate Quiz"}
@@ -726,7 +726,7 @@ function QuizzesPage() {
 
     return (
       <div className="flex items-center justify-center min-h-[70vh] p-4">
-        <div className="w-full max-w-md space-y-4">
+        <div className="w-full max-w-md space-y-3">
           {/* Main card */}
           <div className="rounded-2xl border border-border bg-card shadow-md overflow-hidden">
             {/* Animated shimmer bar */}
@@ -812,17 +812,17 @@ function QuizzesPage() {
       <div className="mx-auto max-w-2xl space-y-5 p-4 sm:p-6 lg:p-10 text-center">
         <div className="animate-in-slide">
           <Trophy className="mx-auto h-10 w-10 sm:h-14 sm:w-14 text-primary mb-3" />
-          <h2 className="font-serif text-2xl sm:text-4xl">{grade}</h2>
+          <h2 className="font-serif text-xl sm:text-3xl">{grade}</h2>
           <p className="mt-2 text-muted-foreground text-sm">
             Topic: <strong>{activeTopic}</strong>
           </p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-5 sm:p-8 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-8 shadow-sm">
           <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
             Your Score
           </p>
-          <p className="font-serif text-5xl sm:text-6xl font-bold text-primary">{pct}%</p>
+          <p className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold text-primary">{pct}%</p>
           <p className="mt-2 text-sm text-muted-foreground">
             {score} / {questions.length} correct
           </p>
@@ -835,7 +835,7 @@ function QuizzesPage() {
         </div>
 
         {/* Per-question breakdown */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm text-left space-y-3">
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-5 shadow-sm text-left space-y-3">
           <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
             Question Review
           </p>
@@ -851,9 +851,9 @@ function QuizzesPage() {
                 }`}
               >
                 {correct ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0 mt-0.5" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 flex-shrink-0 mt-0.5" />
                 )}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -914,7 +914,7 @@ function QuizzesPage() {
   const progress = ((current + (answered[current] ? 1 : 0)) / questions.length) * 100;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-4 sm:p-6 lg:p-10">
+    <div className="mx-auto max-w-2xl space-y-3 p-3 sm:p-6 lg:p-10">
       {/* Progress */}
       <div className="animate-in-slide space-y-2">
         <div className="flex items-center justify-between">
@@ -951,7 +951,7 @@ function QuizzesPage() {
 
       {/* Question card */}
       {q && (
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-5">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-6 shadow-sm space-y-3 sm:space-y-4">
           <div className="flex items-start gap-2 flex-wrap">
             <h3 className="font-serif text-lg sm:text-xl leading-snug flex-1">
               <MathText text={q.question} />

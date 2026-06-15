@@ -54,7 +54,7 @@ export function LegalHeader({ backTo, backLabel }: { backTo?: any; backLabel?: s
 
 export function LegalFooter() {
   return (
-    <footer className="border-t border-border bg-card px-4 sm:px-6 py-8">
+    <footer className="border-t border-border bg-card px-4 sm:px-6 py-6">
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <Logo to="/" size="sm" />
         <div className="flex flex-wrap justify-center gap-4 text-xs text-muted-foreground">
@@ -72,9 +72,9 @@ export function LegalFooter() {
 
 export function LegalHero({ label, title, subtitle }: { label: string; title: string; subtitle?: string }) {
   return (
-    <div className="border-b border-border bg-sidebar px-6 py-12 text-center">
+    <div className="border-b border-border bg-sidebar px-4 py-8 text-center">
       <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-2">{label}</p>
-      <h1 className="font-serif text-4xl font-bold text-foreground">{title}</h1>
+      <h1 className="font-serif text-3xl sm:text-4xl font-bold text-foreground">{title}</h1>
       {subtitle && <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">{subtitle}</p>}
     </div>
   );

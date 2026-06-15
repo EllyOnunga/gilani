@@ -377,7 +377,7 @@ function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full py-40 gap-4">
+      <div className="flex flex-col items-center justify-center h-full py-12 sm:py-32 gap-4">
         <TrendingUp className="h-10 w-10 animate-pulse text-primary" />
         <p className="font-serif text-xl text-muted-foreground">Loading analytics dashboard…</p>
       </div>
@@ -427,7 +427,7 @@ function AnalyticsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8 lg:p-12">
+    <div className="mx-auto max-w-6xl space-y-6 p-3 sm:p-6 lg:p-10">
       {/* Confetti canvas — fixed, full-screen, pointer-events-none */}
       <canvas
         ref={canvasRef}
@@ -441,9 +441,9 @@ function AnalyticsPage() {
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
             <BarChart3 className="h-3.5 w-3.5" aria-hidden="true" /> Analytics
           </p>
-          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-black">Performance Insights</h2>
+          <h2 className="font-serif text-xl sm:text-3xl lg:text-5xl font-black">Performance Insights</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Track your learning trajectory, practice quiz performance, and mastery levels across syllabus subjects.
+            Track your learning trajectory, practice quiz performance, and mastery levels across all subjects.
           </p>
         </div>
         
@@ -455,11 +455,11 @@ function AnalyticsPage() {
           <div className="min-w-0 flex-1 space-y-1">
             <h3 className="font-serif font-bold text-base text-foreground truncate">{profile.full_name}</h3>
             <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold">
-              <span className="rounded-full bg-primary/10 text-primary px-2.5 py-0.5 border border-primary/20 uppercase tracking-wide">
+              <span className="rounded-full bg-primary/10 text-primary px-1.5 py-px border border-primary/20 uppercase tracking-wide">
                 {profile.plan} Plan
               </span>
-              <span className="rounded-full bg-secondary text-muted-foreground px-2.5 py-0.5 border border-border uppercase tracking-wide">
-                {profile.curriculum}
+              <span className="rounded-full bg-secondary text-muted-foreground px-1.5 py-px border border-border uppercase tracking-wide">
+                {profile.plan}
               </span>
             </div>
             <p className="font-mono text-[9px] text-muted-foreground/85 leading-tight">
@@ -528,7 +528,7 @@ function AnalyticsPage() {
             desc: "Revision plans",
           },
         ].map((c) => (
-          <div key={c.label} className={`rounded-xl p-3.5 sm:p-5 flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:scale-[1.01] ${c.highlight ? "bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-850 shadow-sm shadow-amber-500/5" : "bg-secondary border border-border/40 bg-secondary/50"}`}>
+          <div key={c.label} className={`rounded-xl p-3.5 sm:p-5 flex flex-col justify-between min-h-[90px] sm:min-h-[120px] transition-all duration-300 hover:scale-[1.01] ${c.highlight ? "bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-850 shadow-sm shadow-amber-500/5" : "bg-secondary border border-border/40 bg-secondary/50"}`}>
             <div className="flex items-center justify-between gap-1 mb-2">
               <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground truncate">
                 {c.label}
@@ -546,7 +546,7 @@ function AnalyticsPage() {
       {/* Chart Visuals */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         {/* area progress chart */}
-        <div className="lg:col-span-8 rounded-xl border border-border bg-card p-5 lg:p-7 flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-8 rounded-xl border border-border bg-card p-3 sm:p-5 lg:p-7 flex flex-col justify-between relative overflow-hidden">
           {!hasData && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
               <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
@@ -591,7 +591,7 @@ function AnalyticsPage() {
         </div>
 
         {/* radar subject mastery */}
-        <div className="lg:col-span-4 rounded-xl border border-border bg-card p-5 lg:p-7 flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-4 rounded-xl border border-border bg-card p-3 sm:p-5 lg:p-7 flex flex-col justify-between relative overflow-hidden">
           {!hasData && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
               <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
@@ -606,7 +606,7 @@ function AnalyticsPage() {
           <div className="mb-4">
             <h3 className="font-serif text-xl">Subject Mastery</h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Strengths across different syllabus branches.
+              Strengths across different subject areas.
             </p>
           </div>
           <div className="h-[240px] sm:h-[280px] w-full flex items-center justify-center">
@@ -628,7 +628,7 @@ function AnalyticsPage() {
         </div>
 
         {/* weak topics bar chart */}
-        <div className="lg:col-span-6 rounded-xl border border-border bg-card p-5 lg:p-7 relative overflow-hidden">
+        <div className="lg:col-span-6 rounded-xl border border-border bg-card p-3 sm:p-5 lg:p-7 relative overflow-hidden">
           {!hasData && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
               <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
@@ -647,7 +647,7 @@ function AnalyticsPage() {
             </p>
           </div>
           {activeWeakTopics.length === 0 ? (
-            <div className="flex items-center justify-center py-8 font-serif text-muted-foreground text-sm">
+            <div className="flex items-center justify-center py-5 sm:py-8 font-serif text-muted-foreground text-sm">
               No weak topics found yet — perfect score record!
             </div>
           ) : (
@@ -676,7 +676,7 @@ function AnalyticsPage() {
         </div>
 
         {/* Practice Accuracy Breakdown */}
-        <div className="lg:col-span-6 rounded-xl border border-border bg-card p-5 lg:p-7 relative overflow-hidden flex flex-col justify-between">
+        <div className="lg:col-span-6 rounded-xl border border-border bg-card p-3 sm:p-5 lg:p-7 relative overflow-hidden flex flex-col justify-between">
           {!hasData && (
             <div className="absolute inset-0 bg-background/60 backdrop-blur-[1.5px] flex flex-col items-center justify-center z-10 p-4 text-center">
               <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
@@ -695,11 +695,11 @@ function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="my-6 space-y-4">
+          <div className="my-4 space-y-3">
             {/* Accuracy Summary */}
             <div className="flex items-center justify-between border-b border-border/40 pb-3">
               <div>
-                <p className="font-serif text-3xl font-black text-foreground">
+                <p className="font-serif text-2xl sm:text-3xl font-black text-foreground">
                   {totalQuestionsCount > 0 ? Math.round((totalCorrectAnswers / totalQuestionsCount) * 100) : 0}%
                 </p>
                 <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mt-0.5">Overall Accuracy Rate</p>

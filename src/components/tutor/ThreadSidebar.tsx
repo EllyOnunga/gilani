@@ -110,7 +110,7 @@ export function ThreadSidebar({
           <p className="text-xs text-destructive text-center py-4 px-2">{threadsLoadError}</p>
         )}
         {!threadsLoading && filtered.length === 0 && (
-          <div className="text-center py-8">
+          <div className="text-center py-5">
             <MessageCircle className="h-6 w-6 text-muted-foreground/30 mx-auto mb-2" />
             <p className="text-xs text-muted-foreground">
               {searchQuery ? "No sessions match" : "No sessions yet"}

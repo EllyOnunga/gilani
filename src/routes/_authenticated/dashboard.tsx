@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 import {
-  GraduationCap,
   MessageCircle,
   BookOpenText,
   ListChecks,
@@ -280,22 +279,14 @@ function Dashboard() {
               </div>
             ) : (
               <>
-                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-balance leading-tight text-foreground">
+                <h2 className="font-serif text-xl sm:text-3xl lg:text-4xl text-balance leading-tight text-foreground">
                   {getGreeting()},{" "}
                   <span className="capitalize">{displayName}</span>. Ready to study?
                 </h2>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
-                  {curriculum && (
-                    <span
-                      className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-foreground"
-                    >
-                      <GraduationCap className="h-3 w-3" />
-                      {curriculum}
-                    </span>
-                  )}
                   {plan && (
                     <span
-                      className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-foreground"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-border px-1.5 py-px font-mono text-[10px] font-bold uppercase tracking-wider text-foreground"
                     >
                       {plan === "Free" ? "Free Plan" : `⭐ ${plan}`}
                     </span>
@@ -371,7 +362,7 @@ function Dashboard() {
             <Link
               key={to}
               to={to as any}
-              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-background p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/50"
+              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-background p-2.5 sm:p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/50"
             >
               <div className="rounded-lg p-2.5 bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-110">
                 <Icon className="h-5 w-5" />
@@ -387,7 +378,7 @@ function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-serif text-lg font-semibold">Your Study Suite</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">All curriculum tools in one place</p>
+            <p className="text-xs text-muted-foreground mt-0.5">All your study tools in one place</p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
@@ -403,7 +394,7 @@ function Dashboard() {
               <Link
                 key={item.to}
                 to={item.to as any}
-                className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5"
+                className="group flex flex-col justify-between rounded-xl border border-border bg-card p-2.5 sm:p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5"
               >
                 <div>
                   <div className="p-2 rounded-lg w-fit bg-primary/10 text-primary mb-3 transition-transform duration-200 group-hover:scale-105">
@@ -442,7 +433,7 @@ function Dashboard() {
                 {[1, 2, 3].map(i => <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />)}
               </div>
             ) : plannerTasks.length === 0 ? (
-              <div className="py-8 text-center flex flex-col items-center gap-3">
+              <div className="py-5 sm:py-8 text-center flex flex-col items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
                   <CalendarDays className="h-5 w-5 text-muted-foreground/50" />
                 </div>
@@ -489,7 +480,7 @@ function Dashboard() {
                 {[1, 2, 3].map(i => <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />)}
               </div>
             ) : revisionTopics.length === 0 ? (
-              <div className="py-8 text-center flex flex-col items-center gap-3">
+              <div className="py-5 sm:py-8 text-center flex flex-col items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
                   <AlertCircle className="h-5 w-5 text-muted-foreground/50" />
                 </div>

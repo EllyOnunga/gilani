@@ -100,7 +100,7 @@ export function DisclaimerModal() {
 
   return (
     <div className="fixed inset-0 z-55 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="bg-card/90 border border-border/80 backdrop-blur-xl rounded-2xl shadow-2xl max-w-xl w-full p-6 sm:p-8 my-8 animate-in-slide flex flex-col max-h-[90vh]">
+      <div className="bg-card/90 border border-border/80 backdrop-blur-xl rounded-2xl shadow-2xl max-w-xl w-full p-5 sm:p-8 my-8 animate-in-slide flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/40">
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -119,14 +119,14 @@ export function DisclaimerModal() {
               GilaniAI is an AI-powered study companion. To ensure a safe, legal, and premium learning environment, please review our terms and configure your consent preferences below.
             </p>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* AI Limitations */}
               <div className="flex gap-3 bg-muted/30 border border-border/50 rounded-xl p-3">
                 <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-foreground">AI Limitations</p>
                   <p className="text-xs mt-0.5 leading-relaxed">
-                    AI responses can contain errors or outdated information. Always cross-verify critical educational material with official curriculum guides and textbook sources.
+                    AI responses can contain errors or outdated information. Always cross-verify critical educational material with official guides and textbook sources.
                   </p>
                 </div>
               </div>
@@ -156,7 +156,7 @@ export function DisclaimerModal() {
           </div>
 
           {/* Consents Section */}
-          <div className="space-y-4 pt-4 border-t border-border/40">
+          <div className="space-y-3 pt-4 border-t border-border/40">
             <h3 className="font-mono text-xs uppercase tracking-widest text-foreground font-bold">Consent Preferences</h3>
 
             {/* Cookie Toggle */}

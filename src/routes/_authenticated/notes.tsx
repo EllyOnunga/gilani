@@ -676,7 +676,7 @@ ${content}`.trim()
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8 lg:p-12">
+    <div className="mx-auto max-w-4xl space-y-6 p-3 sm:p-6 lg:p-10">
       {/* Offline Backup Badge */}
       {isOffline && (
         <div className="flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700/40 px-4 py-2.5 text-xs text-amber-700 dark:text-amber-400">
@@ -762,7 +762,7 @@ ${content}`.trim()
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
             Study Notes
           </p>
-          <h2 className="mt-1 font-serif text-3xl sm:text-4xl">Upload &amp; Summarise</h2>
+          <h2 className="mt-1 font-serif text-2xl sm:text-3xl">Upload &amp; Summarise</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Paste your class notes and GilaniAI will extract a summary and key concepts
             automatically.
@@ -782,7 +782,7 @@ ${content}`.trim()
       {showForm && (
         <div className="animate-in-slide rounded-xl border border-border bg-card p-6 shadow-sm">
           <h3 className="font-serif text-xl mb-4">Add Study Note</h3>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Document Upload Zone */}
             <div className="relative rounded-xl border border-border bg-background p-3">
               <input
@@ -921,13 +921,13 @@ ${content}`.trim()
 
       {/* Notes List */}
       {notes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-8 sm:p-12 text-center">
+        <div className="rounded-xl border border-dashed border-border p-5 sm:p-10 text-center">
           <BookOpenText className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
           <p className="font-serif text-xl text-muted-foreground">No notes yet</p>
           <p className="text-sm text-muted-foreground mt-1">Add your first note to get started.</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {notes.map((note) => {
             const open = expanded === note.id;
             return (
@@ -936,7 +936,7 @@ ${content}`.trim()
                 className="rounded-xl border border-border bg-card shadow-sm overflow-hidden transition-shadow hover:shadow-md group"
               >
                 <button
-                  className="w-full flex items-center justify-between px-4 py-4 sm:p-5 text-left gap-4"
+                  className="w-full flex items-center justify-between px-3 py-3 sm:p-5 text-left gap-4"
                   onClick={() => setExpanded(open ? null : note.id)}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -962,7 +962,7 @@ ${content}`.trim()
                 </button>
 
                 {open && (
-                  <div className="border-t border-border px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4 space-y-4 animate-in-slide">
+                  <div className="border-t border-border px-3 pb-3 pt-2 sm:px-5 sm:pb-5 sm:pt-4 space-y-3 animate-in-slide">
                     {note.summary && (
                       <div>
                         <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">

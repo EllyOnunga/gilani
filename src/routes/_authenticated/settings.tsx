@@ -367,14 +367,14 @@ function SettingsPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-8 lg:p-12 animate-in-slide">
+      <div className="mx-auto max-w-5xl space-y-6 p-3 sm:p-6 lg:p-10 animate-in-slide">
         {/* Header */}
         <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-border/60 pb-5">
           <div>
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
               Preferences
             </p>
-            <h2 className="mt-1 font-serif text-3xl sm:text-4xl font-bold">App Settings</h2>
+            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-bold">App Settings</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Customize your tutor's persona, change your profile appearance, and oversee subscription parameters.
             </p>
@@ -425,7 +425,7 @@ function SettingsPage() {
                           <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                         )
                       ) : (
-                        <span className="font-serif text-2xl font-bold text-primary">
+                        <span className="font-serif text-xl font-bold text-primary">
                           {(displayName || user?.email || "U").substring(0, 2).toUpperCase()}
                         </span>
                       )}
@@ -467,7 +467,7 @@ function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
                       <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
                         Display Name
@@ -508,7 +508,7 @@ function SettingsPage() {
                     Personalize how GilaniAI responds to your study questions. Choose styles that match your preferred learning pacing.
                   </p>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {/* Tutor Tone selector */}
                     <div>
                       <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
@@ -573,7 +573,7 @@ function SettingsPage() {
                       <div className="grid grid-cols-3 gap-2">
                         {[
                           { id: "guided", label: "Highly Scaffolded", desc: "Small incremental hints" },
-                          { id: "standard", label: "Standard Paced", desc: "Curriculum target level" },
+                          { id: "standard", label: "Standard Paced", desc: "Standard target level" },
                           { id: "rigorous", label: "Deep Challenges", desc: "Minimal hand-holding" },
                         ].map((t) => (
                           <button

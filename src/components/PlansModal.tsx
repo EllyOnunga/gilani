@@ -72,7 +72,7 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-5 space-y-3">
           {/* Current plan badge */}
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
             Current plan: <span className="text-primary">{currentPlan}</span>

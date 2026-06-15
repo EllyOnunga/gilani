@@ -157,7 +157,7 @@ export function NotificationBell({ userId }: { userId: string }) {
             {/* List */}
             <div className="max-h-80 overflow-y-auto divide-y divide-border/50">
               {notifications.length === 0 ? (
-                <div className="py-12 text-center">
+                <div className="py-8 sm:py-12 text-center">
                   <Bell className="mx-auto h-8 w-8 text-muted-foreground/20 mb-3" />
                   <p className="text-xs font-medium text-muted-foreground">You're all caught up!</p>
                   <p className="text-[10px] text-muted-foreground/60 mt-1">No notifications yet</p>

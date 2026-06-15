@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 const TAGLINES = [
-  "Grounding in KCSE, CBC & IGCSE syllabi…",
+  "Preparing your study environment…",
   "Preparing Socratic tutoring guidance…",
   "Analysing your subject focus areas…",
   "Summarising your study documents…",

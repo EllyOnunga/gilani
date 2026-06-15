@@ -187,7 +187,7 @@ function TutorIndex() {
       : "An unexpected error occurred. Please try again.";
 
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center animate-in-slide">
+      <div className="flex min-h-[50vh] flex-col items-center justify-center p-5 sm:p-8 text-center animate-in-slide">
         <div className="rounded-full bg-destructive/10 p-3 text-destructive mb-4">
           <AlertCircle className="h-6 w-6" />
         </div>
