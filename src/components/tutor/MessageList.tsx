@@ -39,10 +39,14 @@ function ThinkingBubble() {
 
   return (
     <div className="flex justify-start items-end gap-2 animate-in-slide">
-      <div className="flex-shrink-0 mb-1">
-        <div className="h-6 w-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-          <span className="font-mono text-[8px] font-bold text-primary">G</span>
-        </div>
+      <div className="flex-shrink-0 mb-1 flex gap-1 items-end pb-2">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="h-1.5 w-1.5 rounded-full bg-primary/60"
+            style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+          />
+        ))}
       </div>
       <div className="max-w-[75%] rounded-2xl rounded-tl-sm px-4 py-3 bg-card border border-border shadow-sm">
         <div className="flex items-center gap-2.5 mb-2">

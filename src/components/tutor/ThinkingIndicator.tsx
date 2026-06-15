@@ -41,17 +41,17 @@ export function ThinkingIndicator({ isPending, isLastMessage, messageText }: Thi
 
   return (
     <div className="flex items-center gap-2 mb-2 animate-in fade-in duration-300">
-      <div className="relative flex h-6 w-6 flex-shrink-0 items-center justify-center">
-        <span className="absolute inline-flex h-full w-full rounded-full bg-primary/30 animate-ping" />
-        <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground font-serif text-xs font-bold">
-          G
-        </span>
+      <div className="flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="h-1.5 w-1.5 rounded-full bg-primary/70"
+            style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+          />
+        ))}
       </div>
       <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-        Thinking
-        <span className="inline-flex w-4 justify-start">
-          <span className="animate-pulse">...</span>
-        </span>
+        {stalled && messageText ? "Still thinking…" : "Thinking…"}
       </span>
     </div>
   );
