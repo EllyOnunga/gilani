@@ -192,36 +192,36 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
               <div className="flex items-center gap-1 mt-2 pt-1.5 border-t border-border/40 transition-opacity duration-200">
                 {/* Copy */}
                 <button onClick={handleCopy}
-                  className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
+                  className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded hover:bg-muted"
                   title="Copy">
-                  {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                  {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
                 {/* Retry */}
                 {isLast && (
                   <button onClick={isRateLimited ? undefined : onReload}
                     disabled={isRateLimited}
-                    className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded ${
+                    className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2.5 py-1.5 rounded ${
                       isRateLimited
                         ? "opacity-40 cursor-not-allowed text-muted-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
                     title={isRateLimited ? "Rate limit reached" : "Retry"}>
-                    <RefreshCw className="h-3 w-3" />
+                    <RefreshCw className="h-3.5 w-3.5" />
                   </button>
                 )}
                 {/* Divider */}
                 <span className="w-px h-3 bg-border/60 mx-0.5" />
                 {/* Thumbs up */}
                 <button onClick={() => handleVote(1)} disabled={voting}
-                  className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-1.5 py-0.5 rounded hover:bg-muted ${vote === 1 ? "text-green-500" : "text-muted-foreground hover:text-green-500"}`}
+                  className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${vote === 1 ? "text-green-500" : "text-muted-foreground hover:text-green-500"}`}
                   title="Good response">
-                  <ThumbsUp className="h-3 w-3" />
+                  <ThumbsUp className="h-3.5 w-3.5" />
                 </button>
                 {/* Thumbs down */}
                 <button onClick={() => handleVote(-1)} disabled={voting}
-                  className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-1.5 py-0.5 rounded hover:bg-muted ${vote === -1 ? "text-destructive" : "text-muted-foreground hover:text-destructive"}`}
+                  className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${vote === -1 ? "text-destructive" : "text-muted-foreground hover:text-destructive"}`}
                   title="Bad response">
-                  <ThumbsDown className="h-3 w-3" />
+                  <ThumbsDown className="h-3.5 w-3.5" />
                 </button>
               </div>
             )}
@@ -271,9 +271,9 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
             {!editing && !isStreamActive && (
               <div className="flex items-center gap-1 mt-1 transition-opacity duration-200 justify-end">
                 <button onClick={handleCopy}
-                  className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-primary-foreground/60 hover:text-primary-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-primary-foreground/10"
+                  className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-primary-foreground/60 hover:text-primary-foreground transition-colors px-2 py-1 rounded hover:bg-primary-foreground/10"
                   title="Copy">
-                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
                 {onEdit && (
                   <button onClick={isRateLimited ? undefined : startEdit}
@@ -284,7 +284,7 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
                         : "text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10"
                     }`}
                     title={isRateLimited ? "Rate limit reached" : "Edit message"}>
-                    <Pencil className="h-3 w-3" />
+                    <Pencil className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
