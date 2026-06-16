@@ -142,7 +142,7 @@ export function ChatInput({
       {/* Rate limit banner with countdown */}
       {isRateLimited && (
         <div className="mb-2.5 rounded-2xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
-          <div className="flex items-start gap-2.5 px-3.5 py-3">
+          <div className="flex flex-col sm:flex-row items-start gap-2.5 px-3.5 py-3">
             <div className="flex-shrink-0 mt-0.5">
               {secondsLeft > 0
                 ? <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
@@ -159,7 +159,7 @@ export function ChatInput({
                   : `You're sending messages too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`}
               </p>
             </div>
-            <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2">
+            <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               {secondsLeft > 0 && (
                 <div className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/20 px-3 py-1.5 text-[11px] font-bold text-amber-900 dark:text-amber-300 tabular-nums border border-amber-500/30">
                   <Clock className="h-3 w-3" /> {formatTime(secondsLeft)}
