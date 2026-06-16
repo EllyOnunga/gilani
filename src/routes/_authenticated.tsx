@@ -226,7 +226,7 @@ function AuthedShell() {
     if (roles.length === 0) return; // wait for roles to load
 
     const isAdmin = roles.includes("admin");
-    const isTeacher = roles.includes("teacher");
+    const isTeacher = roles.includes("teacher") && !roles.includes("admin");
     const isStudent = !isAdmin && !isTeacher;
 
     const studentOnlyPaths = [

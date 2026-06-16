@@ -183,8 +183,9 @@ const updateRole = createServerFn({ method: "POST" })
     const request = getRequest();
     const adminId = await verifyAdmin(request);
     if (adminId === data.userId && data.role !== "admin") throw new Error("Cannot remove your own admin role");
-    const { error } = await supabaseAdmin
-      .from("user_roles").upsert({ user_id: data.userId, role: data.role as any }, { onConflict: "user_id" });
+
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
+    const { error } = await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: data.role as any });
     if (error) throw new Error(error.message);
   });
 
