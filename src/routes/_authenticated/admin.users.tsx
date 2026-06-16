@@ -662,7 +662,7 @@ function AdminUsersPage() {
                     const isUpdating = updating === p.id;
                     return (
                       <tr key={p.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                        <td className="px-5 py-3">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <p className="font-semibold">{p.display_name ?? "—"}</p>
                           <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
                         </td>
@@ -676,7 +676,7 @@ function AdminUsersPage() {
                         <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
                           {formatDate(p.created_at)}
                         </td>
-                        <td className="px-5 py-3">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <div className="flex items-center gap-2">
                             <span className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${meta.color}`}>{p.role}</span>
                             {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
@@ -744,11 +744,11 @@ function AdminUsersPage() {
                   <tbody>
                     {feedback.map((f) => (
                       <tr key={f.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                        <td className="px-5 py-3">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <p className="font-semibold">{f.profiles?.display_name ?? "—"}</p>
                           <p className="font-mono text-[10px] text-muted-foreground">{f.user_id?.slice(0, 8)}…</p>
                         </td>
-                        <td className="px-5 py-3">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
                           {f.vote === 1
                             ? <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-1.5 py-px font-mono text-[9px] text-green-700"><ThumbsUp className="h-3 w-3" /> Good</span>
                             : <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-1.5 py-px font-mono text-[9px] text-red-700"><ThumbsDown className="h-3 w-3" /> Bad</span>
@@ -958,14 +958,14 @@ function AdminUsersPage() {
                   <tbody>
                     {filteredEscalations.map((esc) => (
                       <tr key={esc.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                        <td className="px-5 py-3">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <p className="font-semibold">{esc.profiles?.display_name ?? "—"}</p>
                           <p className="font-mono text-[10px] text-muted-foreground">{esc.profiles?.email ?? (esc.user_id ? esc.user_id.slice(0, 8) + "…" : "—")}</p>
                         </td>
                         <td className="px-5 py-3 text-xs max-w-[200px]">
                           <p className="truncate" title={esc.detail ?? esc.reason}>{esc.detail || esc.reason}</p>
                         </td>
-                        <td className="px-5 py-3">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${
                             esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
                             esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
@@ -1065,12 +1065,12 @@ function AdminUsersPage() {
                     const isExpired = isValidExpiry ? expiry < new Date() : false;
                     return (
                       <tr key={p.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                        <td className="px-5 py-3">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <p className="font-semibold">{p.display_name ?? "—"}</p>
                           <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
                         </td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
-                        <td className="px-5 py-3">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <span className="inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider text-primary border-primary/20">
                             {PLANS[plan]?.label ?? plan}
                           </span>
@@ -1083,7 +1083,7 @@ function AdminUsersPage() {
                             </span>
                           ) : <span className="text-muted-foreground">—</span>}
                         </td>
-                        <td className="px-5 py-3">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
                           {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
                             <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
                               className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
@@ -1274,7 +1274,7 @@ function AdminUsersPage() {
                       <tr key={s.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
                         <td className="px-5 py-3 font-mono text-xs">{s.email}</td>
                         <td className="px-5 py-3 text-sm">{s.name ?? "—"}</td>
-                        <td className="px-5 py-3">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
                             {s.status}
                           </span>
