@@ -184,7 +184,7 @@ function LoginPage() {
           <FcGoogle className="h-5 w-5" />
           Continue with Google
         </button>
-        <p className="mt-6 text-sm text-muted-foreground">
+        <p className="mt-6 text-sm text-muted-foreground text-center">
           New here?{" "}
           <Link to="/register" className="font-medium text-primary hover:underline">
             Create an account

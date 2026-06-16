@@ -241,7 +241,7 @@ function RegisterPage() {
           Continue with Google
         </button>
 
-        <p className="mt-6 text-sm text-muted-foreground">
+        <p className="mt-6 text-sm text-muted-foreground text-center">
           Already have an account?{" "}
           <Link to="/login" className="font-medium text-primary hover:underline">
             Sign in
