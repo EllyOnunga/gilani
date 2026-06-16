@@ -15,12 +15,22 @@ import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 // Export utils loaded lazily — jspdf + html2canvas are ~700kB combined
 const exportAsPDF = async (...args: Parameters<typeof import("@/lib/export-utils").exportAsPDF>) => {
-  const { exportAsPDF: fn } = await import("@/lib/export-utils");
-  return fn(...args);
+  try {
+    const { exportAsPDF: fn } = await import("@/lib/export-utils");
+    return fn(...args);
+  } catch {
+    const { toast } = await import("sonner");
+    toast.error("Export failed — try again or use a different browser");
+  }
 };
 const exportAsWord = async (...args: Parameters<typeof import("@/lib/export-utils").exportAsWord>) => {
-  const { exportAsWord: fn } = await import("@/lib/export-utils");
-  return fn(...args);
+  try {
+    const { exportAsWord: fn } = await import("@/lib/export-utils");
+    return fn(...args);
+  } catch {
+    const { toast } = await import("sonner");
+    toast.error("Export failed — try again or use a different browser");
+  }
 };
 import { withTimeout, friendlyError } from "@/lib/async";
 import { toast } from "sonner";
