@@ -26,7 +26,7 @@ export async function processNoteEmbeddings(noteId: string, text: string) {
 
   // Use embedMany for efficient batch processing
   const { embeddings } = await embedMany({
-    model: googleProvider.textEmbeddingModel("text-embedding-004"),
+    model: googleProvider.textEmbeddingModel(),
     values: chunks,
     providerOptions: {
       google: {

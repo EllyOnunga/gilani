@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
 import { streamText, embed, smoothStream } from "ai";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { withTimeout } from "@/lib/async";
@@ -148,8 +147,7 @@ export const Route = createFileRoute("/api/chat")({
             try {
               const geminiKey = (process.env.GEMINI_API_KEY || "").trim();
               if (geminiKey) {
-                const googleInstance = createGoogleGenerativeAI({ apiKey: geminiKey });
-                const embModel = (googleInstance as any).textEmbeddingModel("gemini-embedding-2", { outputDimensionality: 768 });
+                const embModel = createGoogleAiProvider().textEmbeddingModel();
                 console.log(`[RAG] Using gemini for embeddings`);
                 const { embedding } = await withTimeout(
                   embed({ model: embModel, value: latestMessageContent, maxRetries: 0 }),

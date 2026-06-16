@@ -379,6 +379,7 @@ const ingestNote = createServerFn({ method: "POST" })
     // Process embeddings in batches of 5 to avoid upstream rate limits
     const chunkData: any[] = [];
     const concurrencyLimit = 5;
+    const INTER_BATCH_DELAY_MS = 65000;
     for (let i = 0; i < chunks.length; i += concurrencyLimit) {
       const batch = chunks.slice(i, i + concurrencyLimit);
       const batchPromises = batch.map(async (chunkText, batchIdx) => {
@@ -400,7 +401,6 @@ const ingestNote = createServerFn({ method: "POST" })
             break;
           } catch (err) {
             retries--;
-            console.warn(`[Embedding] Failed for chunk ${index}. Retries remaining: ${retries}. Error:`, err);
             if (retries === 0) {
               console.error(`[Embedding] Failed for chunk ${index} after all retries.`);
               break;
@@ -419,6 +419,7 @@ const ingestNote = createServerFn({ method: "POST" })
       });
       const batchResults = await Promise.all(batchPromises);
       chunkData.push(...batchResults);
+      if (i + concurrencyLimit < chunks.length) await new Promise((r) => setTimeout(r, INTER_BATCH_DELAY_MS));
     }
 
     // Bulk insert chunks
@@ -427,6 +428,93 @@ const ingestNote = createServerFn({ method: "POST" })
       console.error("Failed to bulk insert note chunks:", chunksErr);
       throw new Error(`Failed to save note chunks: ${chunksErr.message}`);
     }
+
+    return note as any;
+  });
+
+const saveNoteOnly = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      title: z.string(),
+      heading: z.string(),
+      subheading: z.string(),
+      content: z.string(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    }
+    const userId = authResult.userId;
+
+    const rlNotes = await checkPlanRateLimit(userId, "notes");
+    if (!rlNotes.allowed) {
+      const s = Math.ceil(rlNotes.retryAfterMs / 1000);
+      throw new Error(
+        rlNotes.isDaily
+          ? `Daily notes ingest limit reached for your ${rlNotes.plan} plan. Resets in ${s}s.`
+          : `Rate limit exceeded. Please try again in ${s}s.`
+      );
+    }
+
+    const title = sanitizeUntrustedInput(data.title || "");
+    const heading = data.heading ? sanitizeUntrustedInput(data.heading) : "";
+    const subheading = data.subheading ? sanitizeUntrustedInput(data.subheading) : "";
+    const content = sanitizeUntrustedInput(data.content || "");
+    if (!title.trim() || !content.trim()) throw new Error("Title and content are required");
+
+    const { data: note, error: noteErr } = await supabaseAdmin
+      .from("notes")
+      .insert({ title, raw_text: content, summary: null, key_concepts: [], user_id: userId })
+      .select()
+      .single();
+    if (noteErr) throw new Error(noteErr.message);
+
+    const chunkSize = 500;
+    const chunks: string[] = [];
+    for (let i = 0; i < content.length; i += chunkSize) {
+      const segment = content.slice(i, i + chunkSize);
+      const fullChunkText = `Note Title: ${title}${heading ? `\nHeading: ${heading}` : ""}${subheading ? `\nSubheading: ${subheading}` : ""}\n---\n${segment}`;
+      chunks.push(fullChunkText);
+    }
+
+    const chunkData: any[] = [];
+    const concurrencyLimit = 5;
+    const INTER_BATCH_DELAY_MS = 65000;
+    for (let i = 0; i < chunks.length; i += concurrencyLimit) {
+      const batch = chunks.slice(i, i + concurrencyLimit);
+      const batchPromises = batch.map(async (chunkText, batchIdx) => {
+        const index = i + batchIdx;
+        let embedding: number[] | null = null;
+        let retries = 3;
+        let delayMs = 1000;
+        while (retries > 0) {
+          try {
+            const { embed } = await import("ai");
+            const embeddingModel = createLovableAiGatewayProvider().textEmbeddingModel();
+            const res = await embed({ model: embeddingModel, value: chunkText, maxRetries: 0 });
+            embedding = res.embedding;
+            break;
+          } catch (err) {
+            retries--;
+            if (retries === 0) { console.error(`[Embedding] Failed for chunk ${index} after all retries.`); break; }
+            await new Promise((res) => setTimeout(res, delayMs + Math.random() * 200));
+            delayMs *= 2;
+          }
+        }
+        return { note_id: (note as any).id, content: chunkText, user_id: userId, embedding: embedding ? JSON.stringify(embedding) : null };
+      });
+      const batchResults = await Promise.all(batchPromises);
+      chunkData.push(...batchResults);
+      if (i + concurrencyLimit < chunks.length) await new Promise((r) => setTimeout(r, INTER_BATCH_DELAY_MS));
+    }
+
+    const { error: chunksErr } = await supabaseAdmin.from("note_chunks").insert(chunkData);
+    if (chunksErr) throw new Error(`Failed to save note chunks: ${chunksErr.message}`);
 
     return note as any;
   });
@@ -616,6 +704,41 @@ function NotesPage() {
       toast.error(errMsg, { id: toastId });
     } finally {
       setParsingFile(false);
+    }
+  };
+
+  const handleSaveOnly = async () => {
+    if (!title.trim() || (!content.trim() && !attachedFile)) {
+      toast.error("Please fill in both title and content.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await supabase.auth.getSession();
+      const session = res?.data?.session;
+      if (!session) { toast.error("Not signed in"); return; }
+      const note = await saveNoteOnly({
+        data: {
+          title,
+          heading,
+          subheading,
+          content: attachedFile
+            ? `[Document: ${attachedFile.name}]\n${attachedFile.text}\n${content}`.trim()
+            : content,
+        },
+      });
+      setNotes((prev) => [note as Note, ...prev]);
+      setTitle("");
+      setContent("");
+      setAttachedFile(null);
+      setShowFormPersisted(false);
+      try { sessionStorage.removeItem("notes_showForm"); } catch {}
+      toast.success("Note saved!");
+    } catch (err: unknown) {
+      const message = (err as any)?.message || "Failed to save note";
+      toast.error(message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -906,6 +1029,14 @@ ${content}`.trim()
                 className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleSaveOnly}
+                disabled={saving || isRateLimited}
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-5 py-2.5 text-sm font-bold text-foreground shadow-sm hover:bg-muted disabled:opacity-60 active:scale-[0.98] transition-all"
+              >
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {saving ? "Processing…" : "Save only"}
               </button>
               <button
                 onClick={handleSubmit}
