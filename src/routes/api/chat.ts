@@ -1,27 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
 import { streamText, embed, smoothStream } from "ai";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { withTimeout } from "@/lib/async";
 import { buildSystemPrompt, sanitizeUntrustedInput, sanitizeCurriculum } from "@/lib/tutor-prompt";
-
-// ─── Server-side Rate Limiter (Supabase-backed, survives cold starts) ──────
 import { checkPlanRateLimit, decrementRateLimit } from "@/lib/rate-limit.server";
-
-// ─── Provider Helpers ─────────────────────────────────────────────────────────
-
-function getKey(key: string | undefined): string {
-  return (key || "").trim();
-}
-
-// NOTE: Only AIza... keys work with @ai-sdk/google (Google AI Studio).
-// "AQ." prefix = Vertex AI Express Mode — requires OAuth2, not compatible with this SDK.
-function isValidGeminiKey(key: string): boolean {
-  return key !== "" && key.startsWith("AIza");
-}
+import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
 
 function isRateLimitError(error: unknown): boolean {
   if (!error) return false;
@@ -36,112 +22,6 @@ function isRateLimitError(error: unknown): boolean {
     msg.includes("RESOURCE_EXHAUSTED")
   );
 }
-
-function createChatModel(provider: string): { model: any; name: string } | null {
-  switch (provider) {
-    case "groq": {
-      const key = getKey(process.env.GROQ_API_KEY);
-      if (!key) return null;
-      const groq = createOpenAICompatible({
-        name: "groq",
-        baseURL: "https://api.groq.com/openai/v1",
-        apiKey: key,
-      });
-      // Primary: llama-3.1-8b-instant (fast, high limits)
-      // Fallback handled by provider order — llama-4-scout added as groq2
-      return { model: groq.chatModel("llama-3.3-70b-versatile"), name: "groq" };
-    }
-    case "groq2": {
-      const key = getKey(process.env.GROQ_API_KEY);
-      if (!key) return null;
-      const groq = createOpenAICompatible({
-        name: "groq",
-        baseURL: "https://api.groq.com/openai/v1",
-        apiKey: key,
-      });
-      return { model: groq.chatModel("meta-llama/llama-4-scout-17b-16e-instruct"), name: "groq2" };
-    }
-    case "openai": {
-      const key = getKey(process.env.OPENAI_API_KEY);
-      if (!key) return null;
-      const openai = createOpenAICompatible({
-        name: "openai",
-        baseURL: "https://api.openai.com/v1",
-        apiKey: key,
-      });
-      return { model: openai.chatModel("gpt-4o-mini"), name: "openai" };
-    }
-    case "gemini": {
-      const key = getKey(process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY);
-      if (!isValidGeminiKey(key)) return null;
-      const google = createGoogleGenerativeAI({ apiKey: key });
-      return { model: google("gemini-2.0-flash"), name: "gemini" };
-    }
-    case "deepseek": {
-      const key = getKey(process.env.DEEPSEEK_API_KEY);
-      if (!key) return null;
-      const deepseek = createOpenAICompatible({
-        name: "deepseek",
-        baseURL: "https://api.deepseek.com/v1",
-        apiKey: key,
-      });
-      return { model: deepseek.chatModel("deepseek-chat"), name: "deepseek" };
-    }
-    case "mistral": {
-      const key = getKey(process.env.MISTRAL_API_KEY);
-      if (!key) return null;
-      const mistral = createOpenAICompatible({
-        name: "mistral",
-        baseURL: "https://api.mistral.ai/v1",
-        apiKey: key,
-      });
-      return { model: mistral.chatModel("mistral-large-latest"), name: "mistral" };
-    }
-    default:
-      return null;
-  }
-}
-
-function createEmbeddingModel(): { model: any; name: string } | null {
-  // Try OpenAI first for embeddings (more reliable)
-  const openaiKey = getKey(process.env.OPENAI_API_KEY);
-  if (openaiKey) {
-    const openai = createOpenAICompatible({
-      name: "openai",
-      baseURL: "https://api.openai.com/v1",
-      apiKey: openaiKey,
-    });
-    return { model: openai.textEmbeddingModel("text-embedding-3-small"), name: "openai" };
-  }
-
-  // Groq fallback for embeddings
-  const groqKey = getKey(process.env.GROQ_API_KEY);
-  if (groqKey) {
-    const groq = createOpenAICompatible({
-      name: "groq",
-      baseURL: "https://api.groq.com/openai/v1",
-      apiKey: groqKey,
-    });
-    return { model: groq.textEmbeddingModel("nomic-embed-text"), name: "groq" };
-  }
-
-
-
-  // Try Mistral as fallback
-  const mistralKey = getKey(process.env.MISTRAL_API_KEY);
-  if (mistralKey) {
-    const mistral = createOpenAICompatible({
-      name: "mistral",
-      baseURL: "https://api.mistral.ai/v1",
-      apiKey: mistralKey,
-    });
-    return { model: mistral.textEmbeddingModel("mistral-embed"), name: "mistral" };
-  }
-
-  return null;
-}
-
-// ─── Route Handler ────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -163,12 +43,9 @@ export const Route = createFileRoute("/api/chat")({
 
           const { userId } = authResult;
 
-          // Server-side rate limit — Supabase-backed, survives cold starts
-          // Parse body early to detect retries
           const body = await request.json().catch(() => ({}));
           const { threadId, messages, isRetry } = body as { threadId?: string; messages?: any[]; isRetry?: boolean };
 
-          // Server-side rate limit — skip increment on retries
           const rlResult = await checkPlanRateLimit(userId, "chat", !!isRetry);
           if (!rlResult.allowed) {
             const seconds = Math.ceil(rlResult.retryAfterMs / 1000);
@@ -181,8 +58,6 @@ export const Route = createFileRoute("/api/chat")({
             );
           }
 
-
-          // Validate threadId is a UUID
           const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
           if (!threadId || !uuidRegex.test(threadId)) {
             return new Response(JSON.stringify({ error: "threadId required" }), {
@@ -191,28 +66,20 @@ export const Route = createFileRoute("/api/chat")({
             });
           }
 
-          // ─── Gather Configured Chat Models (UPDATED PRIORITY ORDER) ──────
-          // Priority: Groq → OpenAI → Gemini → Mistral → DeepSeek
-          const providerOrder = ["groq2", "groq", "openai", "gemini", "mistral", "deepseek"];
-          const configuredProviders = providerOrder
-            .map((p) => createChatModel(p))
-            .filter((p): p is { model: any; name: string } => p !== null);
+          // ─── Use ai-gateway for all providers ────────────────────────────
+          const gateway = createGoogleAiProvider();
+          const configuredProviders = gateway.getAllChatModels();
+
+          console.log(`[API Chat] Providers in order: ${configuredProviders.map(p => p.name).join(", ")}`);
 
           if (configuredProviders.length === 0) {
             return new Response(
-              JSON.stringify({
-                error:
-                  "No AI provider configured. Set GROQ_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, or DEEPSEEK_API_KEY.",
-              }),
+              JSON.stringify({ error: "No AI provider configured." }),
               { status: 500, headers: { "Content-Type": "application/json" } },
             );
           }
 
-          console.log(
-            `[API Chat] Configured providers in priority order: ${configuredProviders.map((p) => p.name).join(", ")}`,
-          );
-
-          // ─── Database Checks ────────────────────────────────────────────
+          // ─── Database Checks ─────────────────────────────────────────────
           const { data: thread } = await supabaseAdmin
             .from("conversations")
             .select("*")
@@ -241,7 +108,6 @@ export const Route = createFileRoute("/api/chat")({
             return (msg.content as string) || "";
           };
 
-          // Save user message (skip on retry)
           if (lastMessage?.role === "user" && !isRetry) {
             const userText = sanitizeUntrustedInput(extractText(lastMessage));
             await supabaseAdmin.from("messages").insert({
@@ -252,7 +118,6 @@ export const Route = createFileRoute("/api/chat")({
               user_id: userId,
             });
           } else if (isRetry) {
-            // Delete the last assistant message if it is the latest message in the DB
             const { data: lastMsg } = await supabaseAdmin
               .from("messages")
               .select("id, role")
@@ -260,16 +125,11 @@ export const Route = createFileRoute("/api/chat")({
               .order("created_at", { ascending: false })
               .limit(1)
               .maybeSingle();
-
             if (lastMsg?.role === "assistant") {
-              await supabaseAdmin
-                .from("messages")
-                .delete()
-                .eq("id", lastMsg.id);
+              await supabaseAdmin.from("messages").delete().eq("id", lastMsg.id);
             }
           }
 
-          // Fetch curriculum and tutor preferences
           const { data: profile } = await supabaseAdmin
             .from("profiles")
             .select("curriculum, tutor_tone, tutor_style, tutor_depth")
@@ -280,46 +140,44 @@ export const Route = createFileRoute("/api/chat")({
           const tutorStyle = profile?.tutor_style || "socratic";
           const tutorDepth = profile?.tutor_depth || "standard";
 
-          // ─── RAG: Vector Search ─────────────────────────────────────────
+          // ─── RAG: Vector Search ──────────────────────────────────────────
           const latestMessageContent = extractText(lastMessage);
           let notesContext = "";
 
           if (latestMessageContent) {
-            const embResult = createEmbeddingModel();
-
-            if (embResult) {
-              try {
-                console.log(`[RAG] Using ${embResult.name} for embeddings`);
-
+            try {
+              const geminiKey = (process.env.GEMINI_API_KEY || "").trim();
+              if (geminiKey) {
+                const googleInstance = createGoogleGenerativeAI({ apiKey: geminiKey });
+                const embModel = (googleInstance as any).textEmbeddingModel("gemini-embedding-2", { outputDimensionality: 768 });
+                console.log(`[RAG] Using gemini for embeddings`);
                 const { embedding } = await withTimeout(
-                  embed({ model: embResult.model, value: latestMessageContent, maxRetries: 0 }),
+                  embed({ model: embModel, value: latestMessageContent, maxRetries: 0 }),
                   15000,
                   "Embedding generation timed out",
                 );
-
                 const { data: chunks } = await supabaseAdmin.rpc("match_note_chunks", {
                   query_embedding: `[${(embedding as number[]).join(",")}]`,
                   match_user_id: userId,
                   match_count: 5,
                 });
-
                 if (chunks?.length) {
                   notesContext = sanitizeUntrustedInput(chunks.map((c: any) => c.content).join("\n---\n"));
                   console.log(`[RAG] Found ${chunks.length} relevant chunks`);
                 }
-              } catch (err: unknown) {
-                if (isRateLimitError(err)) {
-                  console.log(`[RAG] ${embResult.name} embeddings rate limited, skipping RAG`);
-                } else {
-                  console.error("[RAG] Failed:", err instanceof Error ? err.message : String(err));
-                }
+              } else {
+                console.log("[RAG] No embedding provider available, skipping RAG");
               }
-            } else {
-              console.log("[RAG] No embedding provider available, skipping RAG");
+            } catch (err: unknown) {
+              if (isRateLimitError(err)) {
+                console.log(`[RAG] Embeddings rate limited, skipping RAG`);
+              } else {
+                console.error("[RAG] Failed:", err instanceof Error ? err.message : String(err));
+              }
             }
           }
 
-          // ─── Build Prompt ───────────────────────────────────────────────
+          // ─── Build Prompt ────────────────────────────────────────────────
           const systemPrompt = buildSystemPrompt({
             curriculum,
             notesContext,
@@ -328,22 +186,17 @@ export const Route = createFileRoute("/api/chat")({
             tutorDepth,
           });
 
-          // ✅ FIXED: Clean user/assistant messages array ONLY. Use flat string content for maximum provider compatibility.
-          // Cap to last 50 messages to prevent unbounded token cost
           const cappedMessages = messages?.slice(-50) ?? [];
-          const aiMessages = [
-            ...cappedMessages.map((m: any) => {
-              const textContent = extractText(m);
-              const isUser = m.role !== "assistant";
-              return {
-                role: (isUser ? "user" : "assistant") as "user" | "assistant",
-                content: isUser ? sanitizeUntrustedInput(textContent) : textContent,
-              };
-            }),
-          ];
+          const aiMessages = cappedMessages.map((m: any) => {
+            const textContent = extractText(m);
+            const isUser = m.role !== "assistant";
+            return {
+              role: (isUser ? "user" : "assistant") as "user" | "assistant",
+              content: isUser ? sanitizeUntrustedInput(textContent) : textContent,
+            };
+          });
 
-          // ─── Stream Response (WITH PROVIDER RETRY FALLBACK) ───────────────
-          // Hard wall-clock deadline: abort the entire stream if it doesn't finish in 60 s
+          // ─── Stream with provider fallback ───────────────────────────────
           const streamAbort = new AbortController();
           const streamDeadline = setTimeout(() => streamAbort.abort(), 60000);
 
@@ -351,8 +204,13 @@ export const Route = createFileRoute("/api/chat")({
           let activeProvider = "";
           let lastError: unknown;
 
-          for (const prov of configuredProviders) {
+          for (let i = 0; i < configuredProviders.length; i++) {
+            const prov = configuredProviders[i];
             try {
+              if (i > 0) {
+                const { backoffDelay } = await import("@/lib/provider-backoff");
+                await backoffDelay(i);
+              }
               console.log(`[API Chat] Attempting stream with provider: ${prov.name}`);
               streamResult = await streamText({
                 model: prov.model,
@@ -370,16 +228,10 @@ export const Route = createFileRoute("/api/chat")({
                 },
                 onFinish: async ({ text: assistantText, providerMetadata }) => {
                   console.log(`[API Chat] ${prov.name} finished. Length: ${assistantText.length}`);
-
-                  const safeText =
-                    assistantText.trim() ||
-                    "Sorry, I could not generate a response right now. Please try again.";
-
+                  const safeText = assistantText.trim() || "Sorry, I could not generate a response right now. Please try again.";
                   try {
                     const assistantParts = [{ type: "text" as const, text: safeText }];
-                    const thoughtSignature =
-                      (providerMetadata as any)?.google?.thoughtSignature || null;
-
+                    const thoughtSignature = (providerMetadata as any)?.google?.thoughtSignature || null;
                     const { data: insertedMsg } = await supabaseAdmin.from("messages").insert({
                       conversation_id: threadId,
                       role: "assistant",
@@ -392,46 +244,20 @@ export const Route = createFileRoute("/api/chat")({
                     if (insertedMsg?.id) {
                       streamResult.experimental_sendMessageAnnotations?.([{ messageId: insertedMsg.id }]);
                     }
-
                     await supabaseAdmin.from("audit_logs").insert({
                       action: "tutor.message",
                       payload: { threadId, confidence: 0.9, provider: prov.name },
                     });
-
-                    // Safety checks
                     const safety = (providerMetadata as any)?.google?.safetyRatings;
-                    if (
-                      Array.isArray(safety) &&
-                      safety.some(
-                        (s: any) => s.probability === "HIGH" || s.probability === "MEDIUM",
-                      )
-                    ) {
+                    if (Array.isArray(safety) && safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")) {
                       const { data: escData, error: escErr } = await supabaseAdmin
                         .from("escalations")
-                        .insert({
-                          conversation_id: threadId,
-                          reason: "Safety probability threshold exceeded",
-                          status: "pending",
-                          user_id: userId,
-                        })
-                        .select("id")
-                        .single();
-
+                        .insert({ conversation_id: threadId, reason: "Safety probability threshold exceeded", status: "pending", user_id: userId })
+                        .select("id").single();
                       if (!escErr && escData) {
-                        import("@/lib/zapier.server")
-                          .then(({ triggerZapierEscalation }) => {
-                            triggerZapierEscalation({
-                              escalationId: escData.id,
-                              userId,
-                              threadId,
-                              reason: "Safety probability threshold exceeded",
-                              detail:
-                                "Automatically escalated due to model safety ratings threshold breach.",
-                            });
-                          })
-                          .catch((err) => {
-                            console.error("[Zapier] Failed to load safety trigger:", err);
-                          });
+                        import("@/lib/zapier.server").then(({ triggerZapierEscalation }) => {
+                          triggerZapierEscalation({ escalationId: escData.id, userId, threadId, reason: "Safety probability threshold exceeded", detail: "Automatically escalated due to model safety ratings threshold breach." });
+                        }).catch((err) => console.error("[Zapier] Failed to load safety trigger:", err));
                       }
                     }
                   } catch (persistError) {
@@ -439,7 +265,6 @@ export const Route = createFileRoute("/api/chat")({
                   }
                 },
               });
-
               activeProvider = prov.name;
               break;
             } catch (err) {
@@ -450,14 +275,12 @@ export const Route = createFileRoute("/api/chat")({
 
           if (!streamResult) {
             clearTimeout(streamDeadline);
-            // Decrement counter since no AI response was produced
             await decrementRateLimit(`${userId}:chat:day`);
             await decrementRateLimit(`${userId}:chat:min`);
             throw lastError || new Error("Failed to stream chat response from all providers.");
           }
 
           console.log(`[API Chat] Returning stream response from: ${activeProvider}`);
-          // Pipe through with abort so hung provider connections are cleaned up
           const textStream = streamResult.toUIMessageStreamResponse({
             headers: {
               "Cache-Control": "no-cache, no-transform",
@@ -466,30 +289,17 @@ export const Route = createFileRoute("/api/chat")({
               "X-Accel-Buffering": "no",
             },
           });
-          streamAbort.signal.addEventListener("abort", () => {
-            clearTimeout(streamDeadline);
-          }, { once: true });
-          // Clear deadline once the response object is returned (stream lifecycle continues)
-          // The AbortController above will fire at 60 s if the stream stalls mid-flight
+          streamAbort.signal.addEventListener("abort", () => { clearTimeout(streamDeadline); }, { once: true });
           return textStream;
         } catch (error: unknown) {
-          console.error(
-            "[API Chat] Error:",
-            error instanceof Error ? error.message : String(error),
-          );
-
+          console.error("[API Chat] Error:", error instanceof Error ? error.message : String(error));
           return new Response(
             JSON.stringify({
               error: isRateLimitError(error)
                 ? "AI quota exceeded. Please try again later."
-                : error instanceof Error
-                  ? error.message
-                  : "Failed to process chat request",
+                : error instanceof Error ? error.message : "Failed to process chat request",
             }),
-            {
-              status: isRateLimitError(error) ? 429 : 500,
-              headers: { "Content-Type": "application/json" },
-            },
+            { status: isRateLimitError(error) ? 429 : 500, headers: { "Content-Type": "application/json" } },
           );
         }
       },

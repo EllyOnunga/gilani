@@ -81,15 +81,16 @@ export const generateThreadTitleFn = createServerFn({ method: "POST" })
     let title = "";
     let lastError: unknown;
 
-    for (const model of models) {
+    for (let i = 0; i < models.length; i++) {
+      const { model, name } = models[i];
       try {
-        if (models.indexOf(model) > 0) {
+        if (i > 0) {
           const { backoffDelay } = await import("@/lib/provider-backoff");
-          await backoffDelay(models.indexOf(model));
+          await backoffDelay(i);
         }
-        console.log(`[Title Gen] Attempting title generation...`);
+        console.log(`[Title Gen] Attempting with provider: ${name}`);
         const result = await generateText({
-          model: model as any,
+          model: model as any, // from gateway
           maxTokens: 20,
           prompt: `Generate a short 3-5 word title for a study session that starts with this question: "${firstMessage.slice(0, 200)}". Reply with only the title itself. Do not wrap in quotes. Do not include prefixes like "Title:". No punctuation.`,
         } as any);

@@ -319,13 +319,14 @@ const ingestNote = createServerFn({ method: "POST" })
     let parsed: StudyMaterialResponse | null = null;
     let lastError: unknown;
 
-    for (const model of models) {
+    for (let i = 0; i < models.length; i++) {
+      const { model, name } = models[i];
       try {
-        if (models.indexOf(model) > 0) {
+        if (i > 0) {
         const { backoffDelay } = await import("@/lib/provider-backoff");
-        await backoffDelay(models.indexOf(model));
+        await backoffDelay(i);
       }
-      console.log(`[Notes] Trying model: ${model.provider}/${model.modelId}`);
+      console.log(`[Notes] Trying model: ${name}`);
         const result = await generateText({
           model: model as any,
           maxTokens: 4000,
@@ -335,11 +336,11 @@ const ingestNote = createServerFn({ method: "POST" })
         const textResult = result.text.trim();
         if (textResult) {
           parsed = repairAndParseJson(textResult) as StudyMaterialResponse;
-          console.log(`[Notes] Success with model: ${model.provider}/${model.modelId}`);
+          console.log(`[Notes] Success with model: ${name}`);
           break;
         }
       } catch (err) {
-        console.warn(`[Notes] Model ${model.provider}/${model.modelId} failed:`, err);
+        console.warn(`[Notes] Model ${name} failed:`, err);
         lastError = err;
       }
     }

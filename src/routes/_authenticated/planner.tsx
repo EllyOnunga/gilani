@@ -362,13 +362,14 @@ const generatePlan = createServerFn({ method: "POST" }).handler(async () => {
   let lastError: unknown;
 
   console.log("Generating plan with providers...");
-  for (const model of models) {
+  for (let i = 0; i < models.length; i++) {
+      const { model, name } = models[i];
     try {
-      if (models.indexOf(model) > 0) {
+      if (i > 0) {
         const { backoffDelay } = await import("@/lib/provider-backoff");
-        await backoffDelay(models.indexOf(model));
+        await backoffDelay(i);
       }
-      console.log(`[Planner] Trying model: ${model.provider}/${model.modelId}`);
+      console.log(`[Planner] Trying model: ${name}`);
       const result = await generateText({
         model: model as any,
         prompt: prompt,
@@ -416,11 +417,11 @@ const generatePlan = createServerFn({ method: "POST" }).handler(async () => {
           throw new Error("Response schema does not align with valid structural patterns.");
         }
 
-        console.log(`[Planner] Success with model: ${model.provider}/${model.modelId}`);
+        console.log(`[Planner] Success with model: ${name}`);
         break;
       }
     } catch (err) {
-      console.warn(`[Planner] Model ${model.provider}/${model.modelId} failed:`, err);
+      console.warn(`[Planner] Model ${name} failed:`, err);
       lastError = err;
     }
   }

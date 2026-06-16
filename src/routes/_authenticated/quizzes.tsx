@@ -123,17 +123,18 @@ const generateQuiz = createServerFn({ method: "POST" })
     if (count < 1 || count > 50) throw new Error("Question count must be between 1 and 50");
 
     const gateway = createLovableAiGatewayProvider();
-    const models = (gateway as any).getAllChatModels();
+    const models = gateway.getAllChatModels();
     const { generateObject } = await import("ai");
 
     let object: any = null;
     let lastError: any = null;
 
-    for (const model of models) {
+    for (let i = 0; i < models.length; i++) {
+      const { model, name } = models[i];
       try {
-        if (models.indexOf(model) > 0) {
+        if (i > 0) {
           const { backoffDelay } = await import("@/lib/provider-backoff");
-          await backoffDelay(models.indexOf(model));
+          await backoffDelay(i);
         }
         console.log(`[Quiz Generation] Attempting with model: ${model.provider}/${model.modelId}`);
         const result = await generateObject({
