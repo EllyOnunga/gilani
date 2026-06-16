@@ -501,7 +501,7 @@ const saveNoteOnly = createServerFn({ method: "POST" })
             break;
           } catch (err) {
             retries--;
-            if (retries === 0) { console.error(`[Embedding] Failed for chunk ${index} after all retries.`); break; }
+            if (retries === 0) { console.error(`[Embedding] Failed for chunk ${index} after all retries.`, err); break; }
             await new Promise((res) => setTimeout(res, delayMs + Math.random() * 200));
             delayMs *= 2;
           }
