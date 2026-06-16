@@ -1,5 +1,5 @@
 // app/routes/_authenticated/quizzes.tsx
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 import { MathText } from "@/components/math-text";
+const LazyMarkdownRenderer = lazy(() => import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer })));
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { checkPlanRateLimit, getRateLimitStatus } from "@/lib/rate-limit.server";
@@ -888,7 +889,7 @@ function QuizzesPage() {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1 italic">
-                    <MathText text={q.explanation} />
+                    <Suspense fallback={<span>{q.explanation}</span>}><LazyMarkdownRenderer content={q.explanation} /></Suspense>
                   </p>
                 </div>
               </div>
@@ -1009,7 +1010,7 @@ function QuizzesPage() {
 
           {showExplain && (
             <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground animate-in-slide">
-              💡 <MathText text={q.explanation} />
+              💡 <Suspense fallback={<span>{q.explanation}</span>}><LazyMarkdownRenderer content={q.explanation} /></Suspense>
             </div>
           )}
 
