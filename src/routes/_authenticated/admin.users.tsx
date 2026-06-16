@@ -583,14 +583,14 @@ function AdminUsersPage() {
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Rate Limit Hits</p>
             <RefreshCw className="h-4 w-4 text-orange-500" />
           </div>
-          <p className="font-serif text-3xl font-bold text-orange-500">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-orange-500">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total Messages</p>
             <MessageSquare className="h-4 w-4 text-teal-600" />
           </div>
-          <p className="font-serif text-3xl font-bold text-teal-600">{platformStats.totalMessages.toLocaleString()}</p>
+          <p className="font-serif text-2xl sm:text-3xl font-bold text-teal-600">{platformStats.totalMessages.toLocaleString()}</p>
         </div>
       </div>
 
@@ -608,9 +608,9 @@ function AdminUsersPage() {
           const Icon = t.icon;
           return (
             <button key={t.id} onClick={() => setTab(t.id as any)}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 ${tab === t.id ? "border-primary text-primary bg-transparent font-extrabold shadow-sm" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border"}`}>
+              className={`flex items-center gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2.5 text-[10px] sm:text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 ${tab === t.id ? "border-primary text-primary bg-transparent font-extrabold shadow-sm" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border"}`}>
               <Icon className="h-3.5 w-3.5" />
-              {t.label}
+              <span className="hidden sm:inline">{t.label}</span>
               {"badge" in t && t.badge > 0 && (
                 <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">{t.badge}</span>
               )}
@@ -628,7 +628,7 @@ function AdminUsersPage() {
               return (
                 <div key={r} className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm text-center">
                   <Icon className={`mx-auto h-5 w-5 mb-2 ${color.split(" ")[0]}`} />
-                  <p className="font-serif text-3xl font-bold">{counts[r]}</p>
+                  <p className="font-serif text-2xl sm:text-3xl font-bold">{counts[r]}</p>
                   <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">{r}s</p>
                 </div>
               );
@@ -712,12 +712,12 @@ function AdminUsersPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <ThumbsUp className="mx-auto h-5 w-5 mb-2 text-green-500" />
-              <p className="font-serif text-3xl font-bold">{feedback.filter((f) => f.vote === 1).length}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold">{feedback.filter((f) => f.vote === 1).length}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Positive</p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <ThumbsDown className="mx-auto h-5 w-5 mb-2 text-destructive" />
-              <p className="font-serif text-3xl font-bold">{feedback.filter((f) => f.vote === -1).length}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold">{feedback.filter((f) => f.vote === -1).length}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Negative</p>
             </div>
           </div>
@@ -776,7 +776,7 @@ function AdminUsersPage() {
           <div className="grid grid-cols-3 gap-3">
             {(["unread","read","resolved"] as const).map((s) => (
               <div key={s} className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
-                <p className="font-serif text-3xl font-bold">{messages.filter((m) => m.status === s).length}</p>
+                <p className="font-serif text-2xl sm:text-3xl font-bold">{messages.filter((m) => m.status === s).length}</p>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">{s}</p>
               </div>
             ))}
@@ -852,17 +852,17 @@ function AdminUsersPage() {
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <BarChart3 className="mx-auto h-5 w-5 mb-2 text-primary" />
-              <p className="font-serif text-3xl font-bold">{rateLimits.length}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold">{rateLimits.length}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Active Keys</p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <AlertTriangle className="mx-auto h-5 w-5 mb-2 text-amber-500" />
-              <p className="font-serif text-3xl font-bold">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Total Hits</p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <RefreshCw className="mx-auto h-5 w-5 mb-2 text-blue-500" />
-              <p className="font-serif text-3xl font-bold">
+              <p className="font-serif text-2xl sm:text-3xl font-bold">
                 {rateLimits.filter((r) => { const d = new Date(r.reset_at); return !isNaN(d.getTime()) && d > new Date(); }).length}
               </p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Active Now</p>
@@ -932,7 +932,7 @@ function AdminUsersPage() {
                 className={`rounded-lg border-2 p-2.5 sm:p-4 text-center shadow-sm transition-all duration-200 ${
                   escalationFilter === s ? "border-primary text-primary bg-transparent font-bold scale-102" : "border-border/60 bg-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}>
-                <p className="font-serif text-3xl font-bold">{escalations.filter((e) => e.status === s).length}</p>
+                <p className="font-serif text-2xl sm:text-3xl font-bold">{escalations.filter((e) => e.status === s).length}</p>
                 <p className="font-mono text-[10px] uppercase tracking-widest mt-1 capitalize">{s}</p>
               </button>
             ))}
@@ -1027,7 +1027,7 @@ function AdminUsersPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
             {(Object.keys(PLANS) as PlanId[]).map((pid) => (
               <div key={pid} className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm text-center">
-                <p className="font-serif text-3xl font-bold">{planCounts[pid]}</p>
+                <p className="font-serif text-2xl sm:text-3xl font-bold">{planCounts[pid]}</p>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{PLANS[pid].label}</p>
                 <p className="font-mono text-[10px] text-muted-foreground mt-0.5">KES {PLANS[pid].price.toLocaleString()}/mo</p>
               </div>
@@ -1162,7 +1162,7 @@ function AdminUsersPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <Users className="mx-auto h-5 w-5 mb-2 text-primary" />
-              <p className="font-serif text-3xl font-bold">{newsletter.length}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold">{newsletter.length}</p>
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Total</p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
