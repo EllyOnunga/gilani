@@ -517,7 +517,7 @@ function AdminUsersPage() {
   }).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-3 p-3 sm:p-6 lg:p-10">
+    <div className="mx-auto max-w-6xl space-y-3 p-3 sm:p-6 lg:p-10 overflow-x-hidden">
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
         <div>
