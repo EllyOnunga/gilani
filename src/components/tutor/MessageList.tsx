@@ -76,7 +76,7 @@ function ThinkingBubble() {
   );
 }
 
-export function MessageList({
+export const MessageList = React.memo(function MessageList({
   messages,
   messagesLoading,
   messagesLoadError,
@@ -116,21 +116,16 @@ export function MessageList({
     });
   }, [messagesLoading]);
 
-  // During streaming: pin to bottom every frame so slow reveal never falls behind
+  // During streaming: scroll to bottom only when new content arrives, not every frame
   useEffect(() => {
+    if (!isPending) return;
     const container = scrollContainerRef.current;
-    if (!container || !isPending) return;
-    let active = true;
-    const loop = () => {
-      if (!active) return;
+    if (!container) return;
+    const observer = new ResizeObserver(() => {
       container.scrollTop = container.scrollHeight;
-      scrollRafRef.current = requestAnimationFrame(loop);
-    };
-    scrollRafRef.current = requestAnimationFrame(loop);
-    return () => {
-      active = false;
-      if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
-    };
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
   }, [isPending]);
 
   // Show ThinkingBubble when submitted but no assistant message yet streaming
@@ -164,7 +159,7 @@ export function MessageList({
             message={m}
             idx={idx}
             isLast={idx === messages.length - 1}
-            isPending={isPending}
+            isPending={isPending && idx === messages.length - 1}
             isRateLimited={isRateLimited}
             onReload={onReload}
             onEdit={onEdit}
@@ -178,3 +173,4 @@ export function MessageList({
     </div>
   );
 }
+);

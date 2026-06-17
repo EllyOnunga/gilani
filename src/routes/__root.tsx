@@ -214,7 +214,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         {/* JSON-LD Structured Data */}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON_LD }} />
       </head>
-      <body suppressHydrationWarning style={{ background: "hsl(var(--background, 0 0% 100%))" }}>
+      <body suppressHydrationWarning style={{ background: "hsl(var(--background, 24 15% 8%))" }}>
         <script dangerouslySetInnerHTML={{ __html: `(function(){var d=document.documentElement;var t=localStorage.getItem("theme")||"system";var dark=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme:dark)").matches);d.classList.toggle("dark",dark);document.body.style.background=dark?"#0f1117":"#ffffff"})()` }} />
         {children}
         <Scripts />
