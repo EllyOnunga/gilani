@@ -48,6 +48,7 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
+      if (response.headers.get("content-type")?.includes("text/event-stream")) return response;
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error(error);
