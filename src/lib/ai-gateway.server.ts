@@ -103,17 +103,17 @@ export const createGoogleAiProvider = (apiKey?: string) => {
     chatModel: (modelId?: string) => {
       const models = instantiatedProviders.map((p) => p.chatModel(modelId));
 
-      // If only one provider is configured, return it directly — no need to wrap.
       if (models.length === 1) return models[0];
 
-      // Wrap all active providers in a fallback chain. If the first model
-      // (e.g. Gemini) hits a 429/5xx/etc, it automatically advances to the
-      // next one (e.g. Groq) using ai-fallback's default retry detection.
+      // Falls back on retryable errors (429, 5xx, 401, 403, timeouts, etc.)
+      // using ai-fallback's default detection. Non-retryable errors (e.g.
+      // a malformed request) throw immediately instead of burning through
+      // every provider.
       return createFallback({
         models,
         onError: (error: any, failedModelId: string) => {
           console.warn(
-            `[AI Gateway] Model ${failedModelId} failed, falling back:`,
+            `[AI Gateway] Chat Model ${failedModelId} failed. Falling back... Reason:`,
             error?.message ?? error
           );
         },
@@ -170,8 +170,10 @@ export const createGoogleAiProvider = (apiKey?: string) => {
         );
       }
 
-      // Return a wrapper whose doEmbed tries each provider's embedding model
-      // in order, falling through to the next on rate-limit/server errors.
+      // Tries each provider's embedding model in order, falling through to
+      // the next on rate-limit/auth/server errors. Non-retryable errors
+      // (e.g. malformed input) throw immediately instead of looping through
+      // every provider and masking the real cause.
       return {
         ...embedAttempts[0].getModel(),
         doEmbed: async (options: any) => {
@@ -184,10 +186,16 @@ export const createGoogleAiProvider = (apiKey?: string) => {
               lastError = err;
               const status = err?.status ?? err?.statusCode;
               const isRetryable =
-                status === 429 || status === 503 || /rate.?limit/i.test(err?.message ?? "");
+                status === 429 ||
+                status === 401 ||
+                status === 403 ||
+                status === 503 ||
+                /rate.?limit/i.test(err?.message ?? "") ||
+                /invalid authentication/i.test(err?.message ?? "") ||
+                /permission.?denied/i.test(err?.message ?? "");
               console.warn(
-                `[AI Gateway] Embedding via ${attempt.name} failed${isRetryable ? " (retryable)" : ""
-                }:`,
+                `[AI Gateway] Embedding via ${attempt.name} failed${isRetryable ? ", trying next provider..." : " (not retryable):"
+                }`,
                 err?.message ?? err
               );
               if (!isRetryable) throw err;
