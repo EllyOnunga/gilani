@@ -122,7 +122,7 @@ export function GilaniLoader() {
           {WORD1.split("").map((letter, i) => (
             <span
               key={i}
-              className={`font-serif font-black text-4xl sm:text-5xl tracking-tight ${phase >= 2 ? "text-shimmer" : "text-foreground"}`}
+              className={`font-serif font-black text-4xl sm:text-5xl tracking-tight ${phase >= 2 ? "text-shimmer" : "text-foreground dark:text-[hsl(38,30%,96%)]"}`}
               style={{
                 opacity: i < letterCount ? 1 : 0,
                 transform: i < letterCount ? "translateY(0)" : "translateY(6px)",
