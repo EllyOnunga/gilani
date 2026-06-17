@@ -1,5 +1,6 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { createFallback } from "ai-fallback";
 
 /**
  * Creates an AI provider dynamically selecting available providers from env keys.
@@ -99,30 +100,102 @@ export const createGoogleAiProvider = (apiKey?: string) => {
   });
 
   return {
-    chatModel: (modelId?: string) => instantiatedProviders[0].chatModel(modelId),
-    getAllChatModels: (modelId?: string) => instantiatedProviders.map((p) => ({ model: p.chatModel(modelId), name: p.name })),
+    chatModel: (modelId?: string) => {
+      const models = instantiatedProviders.map((p) => p.chatModel(modelId));
+
+      // If only one provider is configured, return it directly — no need to wrap.
+      if (models.length === 1) return models[0];
+
+      // Wrap all active providers in a fallback chain. If the first model
+      // (e.g. Gemini) hits a 429/5xx/etc, it automatically advances to the
+      // next one (e.g. Groq) using ai-fallback's default retry detection.
+      return createFallback({
+        models,
+        onError: (error: any, failedModelId: string) => {
+          console.warn(
+            `[AI Gateway] Model ${failedModelId} failed, falling back:`,
+            error?.message ?? error
+          );
+        },
+      });
+    },
+    getAllChatModels: (modelId?: string) =>
+      instantiatedProviders.map((p) => ({ model: p.chatModel(modelId), name: p.name })),
     textEmbeddingModel: (_modelId?: string) => {
+      type EmbedAttempt = { name: string; getModel: () => any };
+
+      const embedAttempts: EmbedAttempt[] = [];
+
       if (isValidGeminiKey) {
-        const googleInstance = createGoogleGenerativeAI({ apiKey: geminiKey });
-        return (googleInstance as any).textEmbeddingModel("gemini-embedding-2", { outputDimensionality: 768 });
+        embedAttempts.push({
+          name: "google",
+          getModel: () => {
+            const googleInstance = createGoogleGenerativeAI({ apiKey: geminiKey });
+            return (googleInstance as any).textEmbeddingModel("gemini-embedding-2", {
+              outputDimensionality: 768,
+            });
+          },
+        });
       }
       if (openaiKey) {
-        const openai = createOpenAICompatible({
+        embedAttempts.push({
           name: "openai",
-          baseURL: "https://api.openai.com/v1",
-          apiKey: openaiKey,
+          getModel: () => {
+            const openai = createOpenAICompatible({
+              name: "openai",
+              baseURL: "https://api.openai.com/v1",
+              apiKey: openaiKey,
+            });
+            return openai.textEmbeddingModel("text-embedding-3-small");
+          },
         });
-        return openai.textEmbeddingModel("text-embedding-3-small");
       }
       if (mistralKey) {
-        const mistral = createOpenAICompatible({
+        embedAttempts.push({
           name: "mistral",
-          baseURL: "https://api.mistral.ai/v1",
-          apiKey: mistralKey,
+          getModel: () => {
+            const mistral = createOpenAICompatible({
+              name: "mistral",
+              baseURL: "https://api.mistral.ai/v1",
+              apiKey: mistralKey,
+            });
+            return mistral.textEmbeddingModel("mistral-embed");
+          },
         });
-        return mistral.textEmbeddingModel("mistral-embed");
       }
-      throw new Error("[AI Gateway] No embedding-capable provider configured. Set GEMINI_API_KEY, OPENAI_API_KEY, or MISTRAL_API_KEY.");
+
+      if (embedAttempts.length === 0) {
+        throw new Error(
+          "[AI Gateway] No embedding-capable provider configured. Set GEMINI_API_KEY, OPENAI_API_KEY, or MISTRAL_API_KEY."
+        );
+      }
+
+      // Return a wrapper whose doEmbed tries each provider's embedding model
+      // in order, falling through to the next on rate-limit/server errors.
+      return {
+        ...embedAttempts[0].getModel(),
+        doEmbed: async (options: any) => {
+          let lastError: unknown;
+          for (const attempt of embedAttempts) {
+            try {
+              const model = attempt.getModel();
+              return await model.doEmbed(options);
+            } catch (err: any) {
+              lastError = err;
+              const status = err?.status ?? err?.statusCode;
+              const isRetryable =
+                status === 429 || status === 503 || /rate.?limit/i.test(err?.message ?? "");
+              console.warn(
+                `[AI Gateway] Embedding via ${attempt.name} failed${isRetryable ? " (retryable)" : ""
+                }:`,
+                err?.message ?? err
+              );
+              if (!isRetryable) throw err;
+            }
+          }
+          throw lastError;
+        },
+      };
     },
   };
 };
