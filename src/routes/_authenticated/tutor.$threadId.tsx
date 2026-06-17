@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -298,7 +298,45 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   });
 
   const { messages: messagesRaw, setMessages, sendMessage, status, regenerate } = chatHelpers;
+  const handleReload = useCallback(() => regenerate({ body: { isRetry: true } }), [regenerate]);
+  const handlePromptClick = useCallback((prompt: string) => setInput(prompt), [setInput]);
   const messages = messagesRaw as UIMessage[];
+  const handleEdit = useCallback(async (messageId: string, newText: string) => {
+    const { data: editedMsg } = await supabase
+      .from("messages")
+      .select("created_at")
+      .eq("id", messageId)
+      .maybeSingle();
+    if (!editedMsg) { toast.error("Message not found"); return; }
+    setMessages((prev: UIMessage[]) =>
+      prev.map((m: UIMessage) =>
+        m.id === messageId
+          ? { ...m, content: newText, parts: [{ type: "text" as const, text: newText }] }
+          : m
+      )
+    );
+    const { error: updateError } = await supabase
+      .from("messages")
+      .update({ content: newText, parts: JSON.stringify([{ type: "text", text: newText }]) })
+      .eq("id", messageId);
+    if (updateError) { toast.error("Failed to save edit"); return; }
+    const { error: deleteError } = await supabase
+      .from("messages")
+      .delete()
+      .eq("conversation_id", threadId)
+      .gt("created_at", editedMsg.created_at);
+    if (deleteError) { console.error("Failed to clean up subsequent messages:", deleteError); }
+    const msgs = (messagesRaw as any[]);
+    const editedIdx = msgs.findIndex((m: any) => m.id === messageId);
+    if (editedIdx === -1) return;
+    const baseMessages = msgs.slice(0, editedIdx + 1).map((m: any) =>
+      m.id === messageId
+        ? { ...m, content: newText, parts: [{ type: "text", text: newText }] }
+        : m
+    );
+    setMessages(baseMessages);
+    regenerate({ body: { isRetry: true } });
+  }, [threadId, messagesRaw, setMessages, regenerate]);
   const isPending = status === "submitted" || status === "streaming";
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -702,72 +740,9 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           messagesLoadError={messagesLoadError}
           isPending={isPending}
           isRateLimited={isRateLimited}
-          onReload={() => regenerate({ body: { isRetry: true } })}
-          onEdit={async (messageId, newText) => {
-            // Find the message we are editing to get its created_at
-            const { data: editedMsg } = await supabase
-              .from("messages")
-              .select("created_at")
-              .eq("id", messageId)
-              .maybeSingle();
-
-            if (!editedMsg) {
-              toast.error("Message not found");
-              return;
-            }
-
-            // Update UI and DB
-            setMessages((prev: UIMessage[]) =>
-              prev.map((m: UIMessage) =>
-                m.id === messageId
-                  ? { ...m, content: newText, parts: [{ type: "text" as const, text: newText }] }
-                  : m
-              )
-            );
-
-            const { error: updateError } = await supabase
-              .from("messages")
-              .update({ content: newText, parts: JSON.stringify([{ type: "text", text: newText }]) })
-              .eq("id", messageId);
-
-            if (updateError) {
-              toast.error("Failed to save edit");
-              return;
-            }
-
-            // Delete all subsequent messages in this conversation in the DB
-            const { error: deleteError } = await supabase
-              .from("messages")
-              .delete()
-              .eq("conversation_id", threadId)
-              .gt("created_at", editedMsg.created_at);
-
-            if (deleteError) {
-              console.error("Failed to clean up subsequent messages:", deleteError);
-            }
-
-            // Update local state: keep messages up to and including the edited user message
-            const msgs = (messagesRaw as any[]);
-            const editedIdx = msgs.findIndex((m: any) => m.id === messageId);
-            if (editedIdx === -1) return;
-
-            const baseMessages = msgs.slice(0, editedIdx + 1).map((m: any) =>
-              m.id === messageId
-                ? { ...m, content: newText, parts: [{ type: "text", text: newText }] }
-                : m
-            );
-
-            setMessages(baseMessages);
-
-            // Trigger reload to generate the new assistant response
-            regenerate({
-              body: { isRetry: true }
-            });
-          }}
-          userId={userId ?? undefined}
-          onPromptClick={(prompt) => {
-            setInput(prompt);
-          }}
+          onReload={handleReload}
+          onEdit={handleEdit}
+          onPromptClick={handlePromptClick}
         />
 
         </div>

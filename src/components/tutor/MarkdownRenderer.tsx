@@ -496,8 +496,8 @@ function preprocessLatex(raw: string): string {
 
 type Props = { content: string };
 
-export function MarkdownRenderer({ content }: Props) {
-  const processed = preprocessLatex(content);
+export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content }: Props) {
+  const processed = React.useMemo(() => preprocessLatex(content), [content]);
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm, remarkMath]}
@@ -516,4 +516,4 @@ export function MarkdownRenderer({ content }: Props) {
       {processed}
     </ReactMarkdown>
   );
-}
+});

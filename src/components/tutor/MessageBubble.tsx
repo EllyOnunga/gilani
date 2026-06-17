@@ -25,7 +25,7 @@ const MemoMarkdown = React.memo(
   (prev, next) => prev.content === next.content
 );
 
-export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEdit, userId}: Props) {
+export const MessageBubble = React.memo(function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEdit, userId}: Props) {
   const [copied, setCopied] = useState(false);
   const [vote, setVote] = useState<1 | -1 | null>(null);
   const [voting, setVoting] = useState(false);
@@ -47,17 +47,18 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
   const COLLAPSE_THRESHOLD = 300;
   const editRef = useRef<HTMLTextAreaElement>(null);
 
-  const partsText =
-    m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || "";
-  const rawText = partsText || (m as any).content || "";
-  const displayText =
-    m.role === "user"
+  const displayText = React.useMemo(() => {
+    const partsText =
+      m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || "";
+    const rawText = partsText || (m as any).content || "";
+    return m.role === "user"
       ? rawText
           .replace(/<DocumentContent[^>]*>[\s\S]*?<\/DocumentContent>\n\n/g, "")
           .replace(/\[Document Attached: [^\]]+\]\n\n/g, "")
           .replace(/Student Query: (\(See attached document\))?/g, "")
           .trim()
       : rawText;
+  }, [m.parts, m.content, m.role]);
 
   const isStreamActive = isPending && isLast;
   const visibleText = displayText;
@@ -70,7 +71,10 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
     } else {
       setShowMarkdown(false);
     }
-  }, [isStreamActive, visibleText]);
+  }, [isStreamActive]);
+
+  // Show thinking only while waiting for first token
+  const showThinking = isStreamActive && !visibleText;
 
 
   // Load existing vote for this message
@@ -155,11 +159,7 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
       >
         {!isUser ? (
           <div className="flex flex-col w-full">
-            <ThinkingIndicator
-              isPending={isPending}
-              isLastMessage={isLast}
-              messageText={visibleText}
-            />
+            <ThinkingIndicator show={showThinking} />
             {visibleText || isStreamActive ? (
               <div className="prose-ai relative">
                 {!showMarkdown ? (
@@ -301,4 +301,13 @@ export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimite
       </div>
     </div>
   );
+}, (prev, next) => {
+  // Only re-render if this bubble's content or streaming-relevant props changed
+  if (prev.isPending !== next.isPending) return false;
+  if (prev.isLast !== next.isLast) return false;
+  if (prev.isRateLimited !== next.isRateLimited) return false;
+  const getText = (m: any) =>
+    m?.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || m?.content || "";
+  return getText(prev.message) === getText(next.message) && prev.message?.id === next.message?.id;
 }
+);

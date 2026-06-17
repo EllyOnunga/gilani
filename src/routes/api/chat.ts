@@ -8,6 +8,17 @@ import { buildSystemPrompt, sanitizeUntrustedInput, sanitizeCurriculum } from "@
 import { checkPlanRateLimit, decrementRateLimit } from "@/lib/rate-limit.server";
 import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
 
+// ─── Profile cache (per-user, 60s TTL) ──────────────────────────────────────
+const _profileCache = new Map<string, { data: { curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string }; expiresAt: number }>();
+function getCachedProfile(userId: string) {
+  const entry = _profileCache.get(userId);
+  if (entry && Date.now() < entry.expiresAt) return entry.data;
+  return null;
+}
+function setCachedProfile(userId: string, data: { curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string }) {
+  _profileCache.set(userId, { data, expiresAt: Date.now() + 60_000 });
+}
+
 function isRateLimitError(error: unknown): boolean {
   if (!error) return false;
   const err = error as any;
@@ -128,16 +139,22 @@ export const Route = createFileRoute("/api/chat")({
               await supabaseAdmin.from("messages").delete().eq("id", lastMsg.id);
             }
           }
-
-          const { data: profile } = await supabaseAdmin
-            .from("profiles")
-            .select("curriculum, tutor_tone, tutor_style, tutor_depth")
-            .eq("id", userId)
-            .maybeSingle();
-          const curriculum = sanitizeCurriculum(profile?.curriculum || "KCSE");
-          const tutorTone = profile?.tutor_tone || "encouraging";
-          const tutorStyle = profile?.tutor_style || "socratic";
-          const tutorDepth = profile?.tutor_depth || "standard";
+          let cachedProfile = getCachedProfile(userId);
+          if (!cachedProfile) {
+            const { data: profile } = await supabaseAdmin
+              .from("profiles")
+              .select("curriculum, tutor_tone, tutor_style, tutor_depth")
+              .eq("id", userId)
+              .maybeSingle();
+            cachedProfile = {
+              curriculum: sanitizeCurriculum(profile?.curriculum || "KCSE"),
+              tutorTone: profile?.tutor_tone || "encouraging",
+              tutorStyle: profile?.tutor_style || "socratic",
+              tutorDepth: profile?.tutor_depth || "standard",
+            };
+            setCachedProfile(userId, cachedProfile);
+          }
+          const { curriculum, tutorTone, tutorStyle, tutorDepth } = cachedProfile;
 
           // ─── RAG: Vector Search ──────────────────────────────────────────
           const latestMessageContent = extractText(lastMessage);
@@ -219,7 +236,7 @@ export const Route = createFileRoute("/api/chat")({
                 messages: aiMessages,
                 maxRetries: 0,
                 temperature: 0.7,
-                experimental_transform: smoothStream({ delayInMs: 0, chunking: "word" }),
+                experimental_transform: smoothStream({ delayInMs: 25, chunking: "word" }),
                 onError: (errorObj) => {
                   const error = (errorObj as any)?.error || errorObj;
                   console.error(
