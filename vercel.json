@@ -1,11 +1,6 @@
 {
-  "functions": {
-    "src/routes/api/chat.ts": {
-      "maxDuration": 60
-    }
-  },
   "installCommand": "npm install",
-  "buildCommand": "npm run build",
+  "buildCommand": "NITRO_PRESET=vercel npm run build",
   "framework": null,
   "headers": [
     {
