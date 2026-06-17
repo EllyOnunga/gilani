@@ -194,6 +194,7 @@ export const Route = createFileRoute("/api/chat")({
             };
           });
 
+
           // ─── Stream with provider fallback ───────────────────────────────
           const streamAbort = new AbortController();
           const streamDeadline = setTimeout(() => streamAbort.abort(), 60000);
@@ -201,6 +202,7 @@ export const Route = createFileRoute("/api/chat")({
           let streamResult: any = null;
           let activeProvider = "";
           let lastError: unknown;
+          let firstPart: any = null;
 
           for (let i = 0; i < configuredProviders.length; i++) {
             const prov = configuredProviders[i];
@@ -210,7 +212,8 @@ export const Route = createFileRoute("/api/chat")({
                 await backoffDelay(i);
               }
               console.log(`[API Chat] Attempting stream with provider: ${prov.name}`);
-              streamResult = await streamText({
+
+              const attempt = streamText({
                 model: prov.model,
                 system: systemPrompt,
                 messages: aiMessages,
@@ -263,6 +266,20 @@ export const Route = createFileRoute("/api/chat")({
                   }
                 },
               });
+
+              // Validate the provider actually works by peeking the first
+              // part of fullStream before committing to it. streamText()
+              // resolves immediately regardless of whether the underlying
+              // API call will succeed — only fullStream/onError reveal that.
+              const reader = attempt.fullStream[Symbol.asyncIterator]();
+              const firstResult = await reader.next();
+
+              if (!firstResult.done && firstResult.value?.type === "error") {
+                throw firstResult.value.error;
+              }
+
+              streamResult = attempt;
+              firstPart = firstResult.done ? null : firstResult.value;
               activeProvider = prov.name;
               break;
             } catch (err) {
