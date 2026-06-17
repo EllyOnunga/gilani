@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "src/routes/api/chat.ts": {
+      "maxDuration": 60
+    }
+  },
   "installCommand": "npm install",
   "buildCommand": "npm run build",
   "framework": null,
