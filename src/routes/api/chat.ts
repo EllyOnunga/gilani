@@ -323,10 +323,13 @@ export const Route = createFileRoute("/api/chat")({
               // Reconstruct fullStream with buffered chunks prepended.
               // fullStream is getter-only so we wrap the result object instead.
               const origFullStream = attempt.fullStream;
-              const peekedStream = ReadableStream.from((async function* () {
-                for (const c of buffered) yield c;
-                yield* origFullStream;
-              })()) as any;
+              const peekedStream = new ReadableStream({
+                async start(controller) {
+                  for (const c of buffered) controller.enqueue(c);
+                  for await (const c of origFullStream) controller.enqueue(c);
+                  controller.close();
+                },
+              }) as any;
               const wrappedAttempt = new Proxy(attempt, {
                 get(target, prop) {
                   if (prop === "fullStream") return peekedStream;

@@ -587,6 +587,7 @@ function NotesPage() {
   const [subheading, setSubheading] = useState("");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [summarising, setSummarising] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const [parsingFile, setParsingFile] = useState(false);
@@ -747,6 +748,7 @@ function NotesPage() {
       toast.error("Please fill in both title and content.");
       return;
     }
+    setSummarising(true);
     setSaving(true);
     try {
       const res = await supabase.auth.getSession();
@@ -796,6 +798,7 @@ ${content}`.trim()
       }
     } finally {
       setSaving(false);
+      setSummarising(false);
     }
   };
 
@@ -1035,16 +1038,16 @@ ${content}`.trim()
                 disabled={saving || isRateLimited}
                 className="flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-5 py-2.5 text-sm font-bold text-foreground shadow-sm hover:bg-muted disabled:opacity-60 active:scale-[0.98] transition-all"
               >
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {saving ? "Processing…" : "Save only"}
+                {saving && !summarising && <Loader2 className="h-4 w-4 animate-spin" />}
+                {saving && !summarising ? "Saving…" : "Save only"}
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={saving || isRateLimited}
                 className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60 active:scale-[0.98] transition-all"
               >
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {saving ? "Processing…" : "Save & Summarise"}
+                {summarising && <Loader2 className="h-4 w-4 animate-spin" />}
+                {summarising ? "Summarising…" : "Save & Summarise"}
               </button>
             </div>
           </div>
