@@ -927,11 +927,12 @@ ${content}`.trim()
               />
               <label
                 htmlFor="notes-file-upload"
-                className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors w-full whitespace-nowrap ${parsingFile ? "opacity-50 pointer-events-none bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
+                onClick={() => { if (!parsingFile) document.getElementById("notes-file-upload")?.click(); }}
+                className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors w-full text-center ${parsingFile ? "opacity-50 pointer-events-none bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
               >
                 {parsingFile
-                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Parsing document...</>
-                  : <><Upload className="h-4 w-4" /> Upload Document (PDF, DOCX, TXT, CSV — max 2MB)</>
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /><span>Parsing document...</span></>
+                  : <><Upload className="h-4 w-4" /><span className="hidden sm:inline">Upload Document (PDF, DOCX, TXT, CSV — max 2MB)</span><span className="sm:hidden">Upload Document (max 2MB)</span></>
                 }
               </label>
             </div>
