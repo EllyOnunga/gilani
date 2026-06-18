@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { streamText, embed, smoothStream, createAsyncIterableStream } from "ai";
+import { streamText, embed, smoothStream } from "ai";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { withTimeout } from "@/lib/async";
@@ -323,12 +323,10 @@ export const Route = createFileRoute("/api/chat")({
               // Reconstruct fullStream with buffered chunks prepended.
               // fullStream is getter-only so we wrap the result object instead.
               const origFullStream = attempt.fullStream;
-              const peekedStream = createAsyncIterableStream(
-                ReadableStream.from((async function* () {
-                  for (const c of buffered) yield c;
-                  yield* origFullStream;
-                })())
-              );
+              const peekedStream = ReadableStream.from((async function* () {
+                for (const c of buffered) yield c;
+                yield* origFullStream;
+              })()) as any;
               const wrappedAttempt = new Proxy(attempt, {
                 get(target, prop) {
                   if (prop === "fullStream") return peekedStream;
