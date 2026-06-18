@@ -245,8 +245,9 @@ export function ChatInput({
             accept=".pdf,.docx,.doc,.txt,.md,.csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/csv"
             onChange={onFileChange} disabled={isDisabled} />
           <label htmlFor="chat-file-attachment"
+            onClick={() => { if (!isDisabled) document.getElementById("chat-file-attachment")?.click(); }}
             className={`flex h-9 w-9 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 ${isDisabled ? "opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
-            title="Attach a file (PDF, DOCX, TXT, MD, CSV — max 10 MB)">
+            title="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)">
             {parsingFile ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Paperclip className="h-4 w-4" />}
           </label>
         </div>

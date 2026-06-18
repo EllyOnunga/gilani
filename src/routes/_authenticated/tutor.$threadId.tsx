@@ -165,9 +165,15 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+      if (file.size > MAX_FILE_SIZE) {
+        setDocUploadError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 2MB. Please split large documents into smaller sections.`);
+        e.target.value = "";
+        return;
+      }
       setParsingFile(true);
       setDocUploadError(null);
-      const file = e.target.files[0];
       const toastId = toast.loading(`Extracting text from ${file.name}...`);
       try {
         const parsed = await parseDocument(file);
