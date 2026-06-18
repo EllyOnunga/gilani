@@ -368,7 +368,7 @@ const ingestNote = createServerFn({ method: "POST" })
     if (noteErr) throw new Error(noteErr.message);
 
     // Split text into chunks and prepend Title, Heading, and Subheading context
-    const chunkSize = 500;
+    const chunkSize = 2000;
     const chunks: string[] = [];
     for (let i = 0; i < content.length; i += chunkSize) {
       const segment = content.slice(i, i + chunkSize);
@@ -378,8 +378,8 @@ const ingestNote = createServerFn({ method: "POST" })
 
     // Process embeddings in batches of 5 to avoid upstream rate limits
     const chunkData: any[] = [];
-    const concurrencyLimit = 5;
-    const INTER_BATCH_DELAY_MS = 65000;
+    const concurrencyLimit = 3;
+    const INTER_BATCH_DELAY_MS = 500;
     for (let i = 0; i < chunks.length; i += concurrencyLimit) {
       const batch = chunks.slice(i, i + concurrencyLimit);
       const batchPromises = batch.map(async (chunkText, batchIdx) => {
@@ -474,7 +474,7 @@ const saveNoteOnly = createServerFn({ method: "POST" })
       .single();
     if (noteErr) throw new Error(noteErr.message);
 
-    const chunkSize = 500;
+    const chunkSize = 2000;
     const chunks: string[] = [];
     for (let i = 0; i < content.length; i += chunkSize) {
       const segment = content.slice(i, i + chunkSize);
@@ -483,8 +483,8 @@ const saveNoteOnly = createServerFn({ method: "POST" })
     }
 
     const chunkData: any[] = [];
-    const concurrencyLimit = 5;
-    const INTER_BATCH_DELAY_MS = 65000;
+    const concurrencyLimit = 3;
+    const INTER_BATCH_DELAY_MS = 500;
     for (let i = 0; i < chunks.length; i += concurrencyLimit) {
       const batch = chunks.slice(i, i + concurrencyLimit);
       const batchPromises = batch.map(async (chunkText, batchIdx) => {
