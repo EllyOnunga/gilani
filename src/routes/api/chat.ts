@@ -320,15 +320,22 @@ export const Route = createFileRoute("/api/chat")({
                 throw new Error(`${prov.name} peek timeout — no content`);
               }
 
-              // Reconstruct fullStream with buffered chunks prepended so the
-              // client receives a complete stream including what we peeked.
+              // Reconstruct fullStream with buffered chunks prepended.
+              // fullStream is getter-only so we wrap the result object instead.
               const origFullStream = attempt.fullStream;
-              (attempt as any).fullStream = (async function* () {
+              const peekedStream = (async function* () {
                 for (const c of buffered) yield c;
                 yield* origFullStream;
               })();
+              const wrappedAttempt = new Proxy(attempt, {
+                get(target, prop) {
+                  if (prop === "fullStream") return peekedStream;
+                  const val = (target as any)[prop];
+                  return typeof val === "function" ? val.bind(target) : val;
+                },
+              });
 
-              streamResult = attempt;
+              streamResult = wrappedAttempt as typeof attempt;
               firstPart = null;
               activeProvider = prov.name;
               break;

@@ -76,7 +76,7 @@ export const createGoogleAiProvider = (apiKey?: string) => {
           const cleanModelId =
             modelId && !modelId.includes("gemini") && !modelId.includes("google")
               ? modelId.replace(/^openai\//, "")
-              : "gpt-4o-mini";
+              : "gpt-4.1-mini";
           return openai.chatModel(cleanModelId);
         },
       };
