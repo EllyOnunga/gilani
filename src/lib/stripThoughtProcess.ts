@@ -2,7 +2,7 @@ export function stripThoughtProcessTransform() {
   let buffer = "";
   let stripping = false;
 
-  return new TransformStream<string, string>({
+  return ((_opts: unknown) => new TransformStream<any, any>({
     transform(chunk, controller) {
       buffer += chunk;
 
@@ -44,5 +44,5 @@ export function stripThoughtProcessTransform() {
       }
       buffer = "";
     },
-  });
+  }));
 }
