@@ -230,6 +230,12 @@ export const Route = createFileRoute("/api/chat")({
               }
               console.log(`[API Chat] Attempting stream with provider: ${prov.name}`);
 
+              let providerError: unknown = null;
+              let providerErrorResolve: (() => void) | null = null;
+              const providerErrorPromise = new Promise<void>((resolve) => {
+                providerErrorResolve = resolve;
+              });
+
               const attempt = streamText({
                 model: prov.model,
                 system: systemPrompt,
@@ -243,6 +249,8 @@ export const Route = createFileRoute("/api/chat")({
                     `[API Chat] ${prov.name} onError:`,
                     typeof error === "object" ? JSON.stringify(error).slice(0, 300) : String(error),
                   );
+                  providerError = error;
+                  providerErrorResolve?.();
                 },
                 onFinish: async ({ text: assistantText, providerMetadata }) => {
                   console.log(`[API Chat] ${prov.name} finished. Length: ${assistantText.length}`);
@@ -284,8 +292,18 @@ export const Route = createFileRoute("/api/chat")({
                 },
               });
 
-              // Commit to this provider — errors surface via onError callback
-              // and are logged. The client will show an error if stream fails.
+              // Race a short window against onError — if the provider
+              // fires onError within 3s (e.g. Google 429), fall back to next.
+              await Promise.race([
+                providerErrorPromise,
+                new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+              ]);
+
+              if (providerError) {
+                console.warn(`[API Chat] ${prov.name} errored before stream committed, falling back...`);
+                throw providerError;
+              }
+
               streamResult = attempt;
               firstPart = null;
               activeProvider = prov.name;
