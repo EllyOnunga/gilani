@@ -284,19 +284,10 @@ export const Route = createFileRoute("/api/chat")({
                 },
               });
 
-              // Validate the provider actually works by peeking the first
-              // part of fullStream before committing to it. streamText()
-              // resolves immediately regardless of whether the underlying
-              // API call will succeed — only fullStream/onError reveal that.
-              const reader = attempt.fullStream[Symbol.asyncIterator]();
-              const firstResult = await reader.next();
-
-              if (!firstResult.done && firstResult.value?.type === "error") {
-                throw firstResult.value.error;
-              }
-
+              // Commit to this provider — errors surface via onError callback
+              // and are logged. The client will show an error if stream fails.
               streamResult = attempt;
-              firstPart = firstResult.done ? null : firstResult.value;
+              firstPart = null;
               activeProvider = prov.name;
               break;
             } catch (err) {
