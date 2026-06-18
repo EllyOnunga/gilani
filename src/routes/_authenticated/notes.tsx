@@ -688,6 +688,11 @@ function NotesPage() {
   };
 
   const handleFileParsing = async (file: File) => {
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB hard limit
+    if (file.size > MAX_FILE_SIZE) {
+      setDocUploadError(`File too large (${formatFileSize(file.size)}). Maximum allowed size is 2MB. Please split large documents into smaller sections.`);
+      return;
+    }
     setParsingFile(true);
     setDocUploadError(null);
     const toastId = toast.loading(`Extracting text from ${file.name}...`);
@@ -926,7 +931,7 @@ ${content}`.trim()
               >
                 {parsingFile
                   ? <><Loader2 className="h-4 w-4 animate-spin" /> Parsing document...</>
-                  : <><Upload className="h-4 w-4" /> Upload Document (PDF, DOCX, TXT, CSV)</>
+                  : <><Upload className="h-4 w-4" /> Upload Document (PDF, DOCX, TXT, CSV — max 2MB)</>
                 }
               </label>
             </div>
