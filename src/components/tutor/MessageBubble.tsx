@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
-import { ThinkingIndicator } from "./ThinkingIndicator";
 import { supabase } from "@/integrations/supabase/client";
 
 import { MarkdownRenderer } from "./MarkdownRenderer";
@@ -63,6 +62,15 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
   const isStreamActive = isPending && isLast;
   const visibleText = displayText;
   const [showMarkdown, setShowMarkdown] = useState(false);
+  const [streamReady, setStreamReady] = useState(false);
+
+  useEffect(() => {
+    if (!isStreamActive) setStreamReady(false);
+  }, [isStreamActive]);
+
+  useEffect(() => {
+    if (isStreamActive && visibleText.length >= 20 && !streamReady) setStreamReady(true);
+  }, [visibleText, isStreamActive, streamReady]);
 
   useEffect(() => {
     if (!isStreamActive && visibleText) {
@@ -73,8 +81,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
     }
   }, [isStreamActive]);
 
-  // Show thinking only while waiting for first token
-  const showThinking = isStreamActive && !visibleText;
+  // Show thinking until we have enough text to stream smoothly
 
 
   // Load existing vote for this message
@@ -154,13 +161,12 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
         className={`${m.role === "user" ? "max-w-[88%] sm:max-w-[72%]" : "w-full max-w-[96%] sm:max-w-full"} rounded-2xl px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${
           isUser
             ? "bg-primary text-primary-foreground rounded-tr-sm shadow-sm"
-            : "bg-card border border-border text-foreground rounded-tl-sm shadow-sm"
+            : isStreamActive && !streamReady ? "text-foreground" : "bg-card border border-border text-foreground rounded-tl-sm shadow-sm"
         }`}
       >
         {!isUser ? (
           <div className="flex flex-col w-full">
-            <ThinkingIndicator show={showThinking} />
-            {visibleText || isStreamActive ? (
+            {streamReady || (!isStreamActive && visibleText) ? (
               <div className="prose-ai relative">
                 {!showMarkdown ? (
                   <StreamingText text={visibleText} />
@@ -169,23 +175,13 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
                     <MemoMarkdown content={displayText} />
                   </div>
                 )}
-                {isStreamActive && !visibleText && (
-                  <span className="inline-flex items-center gap-[3px] ml-1 align-middle">
-                    <span className="text-xs text-muted-foreground font-medium">Thinking</span>
-                    {[0, 1, 2].map((i) => (
-                      <span
-                        key={i}
-                        className="inline-block w-1 h-1 rounded-full bg-primary"
-                        style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
-                      />
-                    ))}
-                  </span>
-                )}
               </div>
             ) : (
-              <span className="text-xs text-muted-foreground italic mt-1">
-                No response generated. Please resend your question.
-              </span>
+              !isStreamActive ? (
+                <span className="text-xs text-muted-foreground italic mt-1">
+                  No response generated. Please resend your question.
+                </span>
+              ) : null
             )}
 
             {visibleText && !isStreamActive && (
@@ -308,6 +304,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
   if (prev.isRateLimited !== next.isRateLimited) return false;
   const getText = (m: any) =>
     m?.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || m?.content || "";
+  if (prev.isPending || next.isPending) return false;
   return getText(prev.message) === getText(next.message) && prev.message?.id === next.message?.id;
 }
 );

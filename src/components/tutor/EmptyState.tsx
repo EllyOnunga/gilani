@@ -4,6 +4,11 @@ const STARTER_PROMPTS = [
   "Explain Newton's laws of motion with examples",
   "Solve a quadratic equation with me",
   "What are the causes of World War I?",
+  "Translate this sentence to Swahili and explain the grammar",
+  "Help me understand photosynthesis for Biology",
+  "What are the major landforms of East Africa for Geography?",
+  "Explain the periodic table trends for Chemistry",
+  "What are the Five Pillars of Islam for IRE?",
 ];
 
 type Props = {
@@ -14,9 +19,6 @@ export function EmptyState({ onPromptClick }: Props) {
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 gap-3 text-center">
       <div>
-        <div className="mx-auto h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-          <span className="text-lg">🎓</span>
-        </div>
         <h3 className="font-serif text-sm font-bold text-foreground mb-0.5">
           GilaniAI Tutor
         </h3>

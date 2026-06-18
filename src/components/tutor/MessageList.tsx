@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { EmptyState } from "./EmptyState";
 import { Loader2 } from "lucide-react";
@@ -15,67 +15,6 @@ type Props = {
   userId?: string;
 };
 
-const THINKING_STEPS = [
-  "Reading your question…",
-  "Reviewing note context…",
-  "Retrieving your notes…",
-  "Composing a response…",
-];
-
-function ThinkingBubble() {
-  const [stepIdx, setStepIdx] = useState(0);
-  const [fade, setFade] = useState(true);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setFade(false);
-      setTimeout(() => {
-        setStepIdx((i) => (i + 1) % THINKING_STEPS.length);
-        setFade(true);
-      }, 250);
-    }, 1800);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="flex justify-start items-end gap-2 animate-in-slide">
-      <div className="flex-shrink-0 mb-1 flex gap-1 items-end pb-2">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="h-1.5 w-1.5 rounded-full bg-primary/60"
-            style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
-          />
-        ))}
-      </div>
-      <div className="max-w-[75%] rounded-2xl rounded-tl-sm px-4 py-3 bg-card border border-border shadow-sm">
-        <div className="flex items-center gap-2.5 mb-2">
-          <div className="flex gap-1">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce"
-                style={{ animationDelay: `${i * 150}ms` }}
-              />
-            ))}
-          </div>
-          <span
-            className="font-mono text-[10px] text-muted-foreground transition-opacity duration-250"
-            style={{ opacity: fade ? 1 : 0 }}
-          >
-            {THINKING_STEPS[stepIdx]}
-          </span>
-        </div>
-        <div className="space-y-1.5">
-          <div className="h-2 bg-muted/60 rounded-full animate-pulse" style={{ width: "85%" }} />
-          <div className="h-2 bg-muted/40 rounded-full animate-pulse" style={{ width: "65%", animationDelay: "200ms" }} />
-          <div className="h-2 bg-muted/30 rounded-full animate-pulse" style={{ width: "45%", animationDelay: "400ms" }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export const MessageList = React.memo(function MessageList({
   messages,
   messagesLoading,
@@ -89,7 +28,6 @@ export const MessageList = React.memo(function MessageList({
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const scrollRafRef = useRef<number | null>(null);
 
   // Scroll on new messages (not during streaming)
   useEffect(() => {
@@ -116,21 +54,17 @@ export const MessageList = React.memo(function MessageList({
     });
   }, [messagesLoading]);
 
-  // During streaming: scroll to bottom only when new content arrives, not every frame
+  // During streaming: continuously scroll to bottom
   useEffect(() => {
     if (!isPending) return;
     const container = scrollContainerRef.current;
     if (!container) return;
-    const observer = new ResizeObserver(() => {
+    const id = setInterval(() => {
       container.scrollTop = container.scrollHeight;
-    });
-    observer.observe(container);
-    return () => observer.disconnect();
+    }, 50);
+    return () => clearInterval(id);
   }, [isPending]);
 
-  // Show ThinkingBubble when submitted but no assistant message yet streaming
-  const showThinking =
-    isPending && messages[messages.length - 1]?.role === "user";
 
   return (
     <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto px-2 py-2 pb-56 sm:pb-5 sm:px-5 sm:py-5 space-y-3">
@@ -167,8 +101,19 @@ export const MessageList = React.memo(function MessageList({
           />
         ))}
 
-      {showThinking && <ThinkingBubble />}
 
+      {isPending && messages[messages.length - 1]?.role === "user" && (
+        <div className="flex items-center gap-1.5 py-2 px-1 animate-in fade-in duration-300">
+          <span className="text-sm text-primary font-medium">Thinking</span>
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
+              style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+            />
+          ))}
+        </div>
+      )}
       <div ref={messagesEndRef} />
     </div>
   );

@@ -8,13 +8,13 @@ export const ThinkingIndicator = React.memo(function ThinkingIndicator({ show }:
   if (!show) return null;
 
   return (
-    <div className="flex items-center gap-2 mb-2 animate-in fade-in duration-300">
-      <span className="font-mono text-[11px] text-muted-foreground">Gilani Thinking</span>
-      {[0, 1, 2, 3, 4, 5].map((i) => (
+    <div className="flex items-center gap-1.5 py-1 animate-in fade-in duration-300">
+      <span className="text-sm text-primary font-medium">Thinking</span>
+      {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="inline-block w-2 h-2 rounded-full bg-primary"
-          style={{ animation: `bounce 1.2s ease-in-out ${i * 0.15}s infinite` }}
+          className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
+          style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
         />
       ))}
     </div>
