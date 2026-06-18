@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
 import { streamText, embed, smoothStream } from "ai";
+import { stripThoughtProcessTransform } from "@/lib/stripThoughtProcess";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { withTimeout } from "@/lib/async";
@@ -288,7 +289,7 @@ ${finalContent}`;
                 messages: aiMessages,
                 maxRetries: 0,
                 temperature: 0.7,
-                experimental_transform: smoothStream({ delayInMs: 60, chunking: "word" }),
+                experimental_transform: [stripThoughtProcessTransform(), smoothStream({ delayInMs: 60, chunking: "word" })],
                 onError: (errorObj) => {
                   const error = (errorObj as any)?.error || errorObj;
                   console.error(
