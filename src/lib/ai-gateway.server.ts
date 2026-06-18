@@ -131,7 +131,7 @@ export const createGoogleAiProvider = (apiKey?: string) => {
           name: "google",
           getModel: () => {
             const googleInstance = createGoogleGenerativeAI({ apiKey: geminiKey });
-            return (googleInstance as any).textEmbeddingModel("gemini-embedding-2", {
+            return (googleInstance as any).textEmbeddingModel("gemini-embedding-2-preview", {
               outputDimensionality: 768,
             });
           },
