@@ -230,12 +230,6 @@ export const Route = createFileRoute("/api/chat")({
               }
               console.log(`[API Chat] Attempting stream with provider: ${prov.name}`);
 
-              let providerError: unknown = null;
-              let providerErrorResolve: (() => void) | null = null;
-              const providerErrorPromise = new Promise<void>((resolve) => {
-                providerErrorResolve = resolve;
-              });
-
               const attempt = streamText({
                 model: prov.model,
                 system: systemPrompt,
@@ -249,8 +243,6 @@ export const Route = createFileRoute("/api/chat")({
                     `[API Chat] ${prov.name} onError:`,
                     typeof error === "object" ? JSON.stringify(error).slice(0, 300) : String(error),
                   );
-                  providerError = error;
-                  providerErrorResolve?.();
                 },
                 onFinish: async ({ text: assistantText, providerMetadata }) => {
                   console.log(`[API Chat] ${prov.name} finished. Length: ${assistantText.length}`);
@@ -292,17 +284,49 @@ export const Route = createFileRoute("/api/chat")({
                 },
               });
 
-              // Race a short window against onError — if the provider
-              // fires onError within 3s (e.g. Google 429), fall back to next.
-              await Promise.race([
-                providerErrorPromise,
-                new Promise<void>((resolve) => setTimeout(resolve, 3000)),
-              ]);
+              // Peek fullStream until we see a text-delta/text-start (healthy)
+              // or an error chunk (fall back). Buffer everything consumed so the
+              // client still receives a complete stream.
+              const reader = attempt.fullStream[Symbol.asyncIterator]();
+              const buffered: any[] = [];
+              let streamHealthy = false;
+              const peekDeadline = Date.now() + 8000;
 
-              if (providerError) {
-                console.warn(`[API Chat] ${prov.name} errored before stream committed, falling back...`);
-                throw providerError;
+              while (Date.now() < peekDeadline) {
+                const timeLeft = peekDeadline - Date.now();
+                const timeoutPromise = new Promise<IteratorResult<any>>(
+                  (resolve) => setTimeout(() => resolve({ done: true, value: undefined }), timeLeft)
+                );
+                const result: IteratorResult<any> = await Promise.race([reader.next(), timeoutPromise]);
+
+                if (result.done) { streamHealthy = true; break; }
+
+                const chunk = result.value;
+                buffered.push(chunk);
+
+                if (chunk?.type === "error") {
+                  const err = chunk.error ?? new Error(`${prov.name} stream error`);
+                  console.warn(`[API Chat] ${prov.name} error chunk:`, err?.message ?? err);
+                  throw err;
+                }
+                if (chunk?.type === "text-delta" || chunk?.type === "text-start") {
+                  streamHealthy = true;
+                  break;
+                }
               }
+
+              if (!streamHealthy) {
+                console.warn(`[API Chat] ${prov.name} produced no content within peek window, falling back...`);
+                throw new Error(`${prov.name} peek timeout — no content`);
+              }
+
+              // Reconstruct fullStream with buffered chunks prepended so the
+              // client receives a complete stream including what we peeked.
+              const origFullStream = attempt.fullStream;
+              (attempt as any).fullStream = (async function* () {
+                for (const c of buffered) yield c;
+                yield* origFullStream;
+              })();
 
               streamResult = attempt;
               firstPart = null;
