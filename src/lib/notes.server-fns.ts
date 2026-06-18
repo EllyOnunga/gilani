@@ -56,3 +56,41 @@ export async function processNoteEmbeddings(noteId: string, text: string) {
 
   return { success: true, chunkCount: chunks.length };
 }
+
+/**
+ * Processes a global (admin-uploaded) note into global_note_chunks.
+ * Reuses the same chunking + embedding pipeline as processNoteEmbeddings.
+ */
+export async function processGlobalNoteEmbeddings(noteId: string, text: string) {
+  const chunks = text.match(/[\s\S]{1,1000}/g) || [];
+
+  const googleProvider = createGoogleAiProvider();
+
+  const { embeddings } = await embedMany({
+    model: googleProvider.textEmbeddingModel(),
+    values: chunks,
+    providerOptions: {
+      google: {
+        taskType: "RETRIEVAL_DOCUMENT",
+      },
+    },
+  });
+
+  const { error } = await supabaseAdmin.from("global_note_chunks").insert(
+    chunks.map((content, i) => ({
+      note_id: noteId,
+      content,
+      embedding: JSON.stringify(embeddings[i]),
+    })),
+  );
+
+  if (error) throw error;
+
+  await supabaseAdmin.from("audit_logs").insert({
+    action: "global_note_processed",
+    user_id: null,
+    payload: { noteId, chunkCount: chunks.length },
+  });
+
+  return { success: true, chunkCount: chunks.length };
+}

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/async";
 import { z } from "zod";
 import { PLANS, type PlanId } from "@/lib/plans";
+import { AdminGlobalNotes } from "@/components/admin/AdminGlobalNotes";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -314,13 +315,13 @@ type Role = (typeof ROLES)[number];
 
 const ROLE_META: Record<Role, { icon: typeof User; color: string }> = {
   student: { icon: GraduationCap, color: "text-blue-600 border-blue-200" },
-  teacher: { icon: UserCheck,     color: "text-amber-600 border-amber-200" },
-  admin:   { icon: Shield,        color: "text-red-600 border-red-200" },
+  teacher: { icon: UserCheck, color: "text-amber-600 border-amber-200" },
+  admin: { icon: Shield, color: "text-red-600 border-red-200" },
 };
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  unread:   { label: "Unread",   color: "text-blue-600 border-blue-200" },
-  read:     { label: "Read",     color: "text-amber-600 border-amber-200" },
+  unread: { label: "Unread", color: "text-blue-600 border-blue-200" },
+  read: { label: "Read", color: "text-amber-600 border-amber-200" },
   resolved: { label: "Resolved", color: "text-green-600 border-green-200" },
 };
 
@@ -351,7 +352,7 @@ function AdminUsersPage() {
   const [nlSubject, setNlSubject] = useState("");
   const [nlBody, setNlBody] = useState("");
   const [nlSending, setNlSending] = useState(false);
-  const [nlSent, setNlSent] = useState<{sent: number; total: number} | null>(null);
+  const [nlSent, setNlSent] = useState<{ sent: number; total: number } | null>(null);
   const [platformStats, setPlatformStats] = useState<PlatformStats>({
     totalConversations: 0,
     totalMessages: 0,
@@ -366,40 +367,40 @@ function AdminUsersPage() {
   const [updatingMsg, setUpdatingMsg] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rlSearch, setRlSearch] = useState("");
+  const [tab, setTab] = useState<"users" | "feedback" | "messages" | "ratelimits" | "subscriptions" | "escalations" | "newsletter" | "globalnotes">("users");
   const [escalationFilter, setEscalationFilter] = useState<"all" | "open" | "resolved" | "pending">("all");
-  const [tab, setTab] = useState<"users" | "feedback" | "messages" | "ratelimits" | "subscriptions" | "escalations" | "newsletter">("users");
   const [expandedMsg, setExpandedMsg] = useState<string | null>(null);
 
   const [refreshing, setRefreshing] = useState(false);
 
   const loadDashboardData = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
-      try {
-        const [profiles, contactMsgs, fb, rl, pay, esc, stats, nl] = await Promise.all([
-          listProfiles(),
-          listContactMessages(),
-          listFeedback(),
-          listRateLimits(),
-          listPayments(),
-          listEscalations(),
-          listPlatformStats(),
-          listNewsletterSubscribers(),
-        ]);
-        setProfileState(profiles as Profile[]);
-        setMessages(contactMsgs as ContactMessage[]);
-        setFeedback(fb as MessageFeedback[]);
-        setRateLimits(rl as RateLimitRow[]);
-        setPayments(pay as Payment[]);
-        setEscalations(esc as Escalation[]);
-        setPlatformStats(stats as PlatformStats);
-        setNewsletter(nl as NewsletterSubscriber[]);
-      } catch (err) {
-        console.error("Failed to load admin data:", err);
-        toast.error("Failed to load admin data");
-      } finally {
-        setRefreshing(false);
-        setLoadingData(false);
-      }
+    try {
+      const [profiles, contactMsgs, fb, rl, pay, esc, stats, nl] = await Promise.all([
+        listProfiles(),
+        listContactMessages(),
+        listFeedback(),
+        listRateLimits(),
+        listPayments(),
+        listEscalations(),
+        listPlatformStats(),
+        listNewsletterSubscribers(),
+      ]);
+      setProfileState(profiles as Profile[]);
+      setMessages(contactMsgs as ContactMessage[]);
+      setFeedback(fb as MessageFeedback[]);
+      setRateLimits(rl as RateLimitRow[]);
+      setPayments(pay as Payment[]);
+      setEscalations(esc as Escalation[]);
+      setPlatformStats(stats as PlatformStats);
+      setNewsletter(nl as NewsletterSubscriber[]);
+    } catch (err) {
+      console.error("Failed to load admin data:", err);
+      toast.error("Failed to load admin data");
+    } finally {
+      setRefreshing(false);
+      setLoadingData(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -598,13 +599,14 @@ function AdminUsersPage() {
       {/* Tabs */}
       <div className="flex gap-2 pb-2 overflow-x-auto">
         {([
-          { id: "users",         label: "Users",        icon: User },
-          { id: "escalations",   label: "Escalations",  icon: AlertTriangle, badge: platformStats.openEscalations },
-          { id: "feedback",      label: "Feedback",     icon: ThumbsUp },
-          { id: "messages",      label: "Messages",     icon: MessageSquare, badge: unreadCount },
-          { id: "ratelimits",    label: "Rate Limits",  icon: BarChart3 },
-          { id: "subscriptions", label: "Subscriptions",icon: CreditCard },
-          { id: "newsletter",    label: "Newsletter",   icon: Mail },
+          { id: "users", label: "Users", icon: User },
+          { id: "escalations", label: "Escalations", icon: AlertTriangle, badge: platformStats.openEscalations },
+          { id: "feedback", label: "Feedback", icon: ThumbsUp },
+          { id: "messages", label: "Messages", icon: MessageSquare, badge: unreadCount },
+          { id: "ratelimits", label: "Rate Limits", icon: BarChart3 },
+          { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
+          { id: "newsletter", label: "Newsletter", icon: Mail },
+          { id: "globalnotes", label: "Global Notes", icon: BookOpen },
         ] as const).map((t) => {
           const Icon = t.icon;
           return (
@@ -648,7 +650,7 @@ function AdminUsersPage() {
               <table className="w-full text-sm min-w-[320px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
-                    {["User","Email","Conversations","Curriculum","Joined","Role"].map((h) => (
+                    {["User", "Email", "Conversations", "Curriculum", "Joined", "Role"].map((h) => (
                       <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                     ))}
                   </tr>
@@ -775,7 +777,7 @@ function AdminUsersPage() {
       {tab === "messages" && (
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
-            {(["unread","read","resolved"] as const).map((s) => (
+            {(["unread", "read", "resolved"] as const).map((s) => (
               <div key={s} className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
                 <p className="font-serif text-2xl sm:text-3xl font-bold">{messages.filter((m) => m.status === s).length}</p>
                 <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">{s}</p>
@@ -824,7 +826,7 @@ function AdminUsersPage() {
                     <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap pt-4">{m.message}</p>
                     <div className="flex items-center gap-2 flex-wrap pt-2">
                       <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mr-2">Mark as:</p>
-                      {(["unread","read","resolved"] as const).map((s) => (
+                      {(["unread", "read", "resolved"] as const).map((s) => (
                         <button
                           key={s}
                           disabled={m.status === s || isUpdating}
@@ -930,9 +932,8 @@ function AdminUsersPage() {
           <div className="grid grid-cols-3 gap-3">
             {(["open", "pending", "resolved"] as const).map((s) => (
               <button key={s} onClick={() => setEscalationFilter(s === escalationFilter ? "all" : s)}
-                className={`rounded-lg border-2 p-2.5 sm:p-4 text-center shadow-sm transition-all duration-200 ${
-                  escalationFilter === s ? "border-primary text-primary bg-transparent font-bold scale-102" : "border-border/60 bg-transparent text-muted-foreground hover:text-foreground hover:border-border"
-                }`}>
+                className={`rounded-lg border-2 p-2.5 sm:p-4 text-center shadow-sm transition-all duration-200 ${escalationFilter === s ? "border-primary text-primary bg-transparent font-bold scale-102" : "border-border/60 bg-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                  }`}>
                 <p className="font-serif text-2xl sm:text-3xl font-bold">{escalations.filter((e) => e.status === s).length}</p>
                 <p className="font-mono text-[10px] uppercase tracking-widest mt-1 capitalize">{s}</p>
               </button>
@@ -966,11 +967,10 @@ function AdminUsersPage() {
                           <p className="truncate" title={esc.detail ?? esc.reason}>{esc.detail || esc.reason}</p>
                         </td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3">
-                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${
-                            esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
-                            esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
-                            "text-amber-600 bg-amber-50 border-amber-200"
-                          }`}>{esc.status}</span>
+                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
+                              esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
+                                "text-amber-600 bg-amber-50 border-amber-200"
+                            }`}>{esc.status}</span>
                         </td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
@@ -1134,11 +1134,10 @@ function AdminUsersPage() {
                         <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">{pay.phone_number}</td>
                         <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">{pay.mpesa_receipt ?? "—"}</td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${
-                            pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
-                            pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
-                            "text-amber-600 bg-amber-50 border-amber-200"
-                          }`}>{pay.status}</span>
+                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
+                              pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
+                                "text-amber-600 bg-amber-50 border-amber-200"
+                            }`}>{pay.status}</span>
                         </td>
                         <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">
                           {formatDate(pay.created_at)}
@@ -1292,8 +1291,11 @@ function AdminUsersPage() {
               </div>
             </div>
           )}
+
         </div>
       )}
+      {/* ── Global Notes tab ── */}
+      {tab === "globalnotes" && <AdminGlobalNotes />}
 
     </div>
   );

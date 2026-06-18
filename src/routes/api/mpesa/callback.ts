@@ -61,6 +61,10 @@ export const Route = createFileRoute("/api/mpesa/callback")({
             .from("payments")
             .update({ status: "completed", mpesa_receipt: receipt })
             .eq("checkout_request_id", checkoutRequestId);
+          if (!payment.user_id) {
+            console.error(`[M-Pesa Callback] Missing user_id for payment ${payment.id}`);
+            return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
+          }
 
           // Upgrade user plan
           await upgradePlan(payment.user_id, payment.plan, receipt);
