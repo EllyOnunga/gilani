@@ -395,6 +395,7 @@ const ingestNote = createServerFn({ method: "POST" })
             const res = await embed({
               model: embeddingModel,
               value: chunkText,
+              providerOptions: { google: { outputDimensionality: 768 } },
               maxRetries: 0,
             });
             embedding = res.embedding;
@@ -496,7 +497,7 @@ const saveNoteOnly = createServerFn({ method: "POST" })
           try {
             const { embed } = await import("ai");
             const embeddingModel = createLovableAiGatewayProvider().textEmbeddingModel();
-            const res = await embed({ model: embeddingModel, value: chunkText, maxRetries: 0 });
+            const res = await embed({ model: embeddingModel, value: chunkText, maxRetries: 0, providerOptions: { google: { outputDimensionality: 768 } } });
             embedding = res.embedding;
             break;
           } catch (err) {

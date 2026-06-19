@@ -31,6 +31,7 @@ export async function processNoteEmbeddings(noteId: string, text: string) {
     providerOptions: {
       google: {
         taskType: "RETRIEVAL_DOCUMENT",
+        outputDimensionality: 768,
       },
     },
   });
@@ -72,6 +73,7 @@ export async function processGlobalNoteEmbeddings(noteId: string, text: string) 
     providerOptions: {
       google: {
         taskType: "RETRIEVAL_DOCUMENT",
+        outputDimensionality: 768,
       },
     },
   });

@@ -168,7 +168,7 @@ export const Route = createFileRoute("/api/chat")({
                 const embModel = createGoogleAiProvider().textEmbeddingModel();
                 console.log(`[RAG] Using gemini for embeddings`);
                 const { embedding } = await withTimeout(
-                  embed({ model: embModel, value: latestMessageContent, maxRetries: 0 }),
+                  embed({ model: embModel, value: latestMessageContent, maxRetries: 0, providerOptions: { google: { outputDimensionality: 768 } } }),
                   15000,
                   "Embedding generation timed out",
                 );

@@ -83,7 +83,7 @@ export const ingestGlobalNote = createServerFn({ method: "POST" })
                         try {
                             const { embed } = await import("ai");
                             const embModel = createLovableAiGatewayProvider().textEmbeddingModel();
-                            const res = await embed({ model: embModel, value: text, maxRetries: 0 });
+                            const res = await embed({ model: embModel, value: text, maxRetries: 0, providerOptions: { google: { outputDimensionality: 768 } } });
                             embedding = res.embedding;
                             break;
                         } catch {
