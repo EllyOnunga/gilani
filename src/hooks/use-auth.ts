@@ -67,7 +67,9 @@ export function useAuth(): AuthState {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        setLoading(true);
+        if (event === "SIGNED_IN") {
+          setLoading(true);
+        }
         // Only treat SIGNED_IN as a fresh sign in (OAuth callback lands here)
         const isNewSignIn = event === "SIGNED_IN";
         checkAndAssignRole(s.user.id, isNewSignIn).then((userRoles) => {
