@@ -519,7 +519,7 @@ function AdminUsersPage() {
   }).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-3 p-3 sm:p-6 lg:p-10 overflow-x-hidden">
+    <div className="mx-auto max-w-6xl space-y-3 p-2 xs:p-3 sm:p-6 lg:p-10 overflow-x-hidden">
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
         <div>
@@ -535,91 +535,93 @@ function AdminUsersPage() {
       {/* Summary stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total Users</p>
-            <User className="h-4 w-4 text-primary" />
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Total Users</p>
+            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
           </div>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-primary">{profileState.length}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-primary">{profileState.length}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Conversations</p>
-            <Activity className="h-4 w-4 text-blue-600" />
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Conversations</p>
+            <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0" />
           </div>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-blue-600">{platformStats.totalConversations.toLocaleString()}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-blue-600">{platformStats.totalConversations.toLocaleString()}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Notes Uploaded</p>
-            <BookOpen className="h-4 w-4 text-purple-600" />
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Notes</p>
+            <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600 flex-shrink-0" />
           </div>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-purple-600">{platformStats.totalNotes.toLocaleString()}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-purple-600">{platformStats.totalNotes.toLocaleString()}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Open Escalations</p>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Escalations</p>
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
           </div>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-red-500">{platformStats.openEscalations}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-red-500">{platformStats.openEscalations}</p>
         </div>
       </div>
 
       {/* Secondary stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Satisfaction</p>
-            <ThumbsUp className="h-4 w-4 text-green-600" />
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Satisfaction</p>
+            <ThumbsUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600 flex-shrink-0" />
           </div>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-green-600">{satisfactionPct}%</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-green-600">{satisfactionPct}%</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Unread Messages</p>
-            <Inbox className="h-4 w-4 text-amber-600" />
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Unread</p>
+            <Inbox className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 flex-shrink-0" />
           </div>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-amber-600">{unreadCount}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-amber-600">{unreadCount}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Rate Limit Hits</p>
-            <RefreshCw className="h-4 w-4 text-orange-500" />
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Rate Limits</p>
+            <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-500 flex-shrink-0" />
           </div>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-orange-500">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-orange-500">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total Messages</p>
-            <MessageSquare className="h-4 w-4 text-teal-600" />
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Messages</p>
+            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-teal-600 flex-shrink-0" />
           </div>
-          <p className="font-serif text-2xl sm:text-3xl font-bold text-teal-600">{platformStats.totalMessages.toLocaleString()}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-teal-600">{platformStats.totalMessages.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 pb-2 overflow-x-auto">
-        {([
-          { id: "users", label: "Users", icon: User },
-          { id: "escalations", label: "Escalations", icon: AlertTriangle, badge: platformStats.openEscalations },
-          { id: "feedback", label: "Feedback", icon: ThumbsUp },
-          { id: "messages", label: "Messages", icon: MessageSquare, badge: unreadCount },
-          { id: "ratelimits", label: "Rate Limits", icon: BarChart3 },
-          { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
-          { id: "newsletter", label: "Newsletter", icon: Mail },
-          { id: "globalnotes", label: "Global Notes", icon: BookOpen },
-        ] as const).map((t) => {
-          const Icon = t.icon;
-          return (
-            <button key={t.id} onClick={() => setTab(t.id as any)}
-              className={`flex items-center gap-1.5 px-2 sm:px-4 py-1.5 sm:py-2.5 text-[10px] sm:text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 ${tab === t.id ? "border-primary text-primary bg-transparent font-extrabold shadow-sm" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border"}`}>
-              <Icon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t.label}</span>
-              {"badge" in t && t.badge > 0 && (
-                <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">{t.badge}</span>
-              )}
-            </button>
-          );
-        })}
+      <div className="-mx-2 xs:-mx-3 sm:mx-0">
+        <div className="flex gap-1.5 sm:gap-2 pb-2 overflow-x-auto scrollbar-none px-2 xs:px-3 sm:px-0 snap-x snap-mandatory">
+          {([
+            { id: "users", label: "Users", icon: User },
+            { id: "escalations", label: "Escalations", icon: AlertTriangle, badge: platformStats.openEscalations },
+            { id: "feedback", label: "Feedback", icon: ThumbsUp },
+            { id: "messages", label: "Messages", icon: MessageSquare, badge: unreadCount },
+            { id: "ratelimits", label: "Limits", icon: BarChart3 },
+            { id: "subscriptions", label: "Subs", icon: CreditCard },
+            { id: "newsletter", label: "Newsletter", icon: Mail },
+            { id: "globalnotes", label: "Notes", icon: BookOpen },
+          ] as const).map((t) => {
+            const Icon = t.icon;
+            return (
+              <button key={t.id} onClick={() => setTab(t.id as any)}
+                className={`snap-start flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 text-[10px] sm:text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 min-h-[36px] sm:min-h-[40px] ${tab === t.id ? "border-primary text-primary bg-primary/5 font-extrabold shadow-sm" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border hover:bg-accent/30"}`}>
+                <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="inline">{t.label}</span>
+                {"badge" in t && t.badge > 0 && (
+                  <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground leading-none">{t.badge}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Users tab ── */}
@@ -646,7 +648,7 @@ function AdminUsersPage() {
           </div>
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm min-w-[320px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
@@ -695,6 +697,56 @@ function AdminUsersPage() {
                 </tbody>
               </table>
             </div>
+
+            <div className="block md:hidden divide-y divide-border/50">
+              {filtered.length === 0 && (
+                <div className="py-8 text-center font-serif text-muted-foreground">No users found</div>
+              )}
+              {filtered.map((p) => {
+                const meta = ROLE_META[p.role as Role] ?? ROLE_META.student;
+                const isUpdating = updating === p.id;
+                return (
+                  <div key={p.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-semibold text-sm">{p.display_name ?? "—"}</p>
+                        <p className="font-mono text-[9px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wider ${meta.color}`}>{p.role}</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border/40 font-mono text-muted-foreground">
+                      <div className="col-span-2">
+                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">Email</span>
+                        <span className="break-all">{p.email ?? "—"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">Curriculum</span>
+                        <span className="capitalize">{p.plan ?? "—"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">Convos</span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 px-1 py-0.5 text-blue-700 text-[9px] font-mono mt-0.5">
+                          {p.conversation_count ?? 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                      <span className="text-xs font-semibold text-muted-foreground font-mono text-[9px] uppercase">Change Role</span>
+                      <div className="flex items-center gap-2">
+                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
+                          <select value={p.role} onChange={(e) => handleRoleChange(p.id, e.target.value)}
+                            className="rounded border border-border bg-background px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
+                            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                          </select>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
             <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
               <p className="font-mono text-[10px] text-muted-foreground">{filtered.length} of {profileState.length} users</p>
             </div>
@@ -734,7 +786,7 @@ function AdminUsersPage() {
 
           {feedback.length > 0 && (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm min-w-[320px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
@@ -764,6 +816,35 @@ function AdminUsersPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              <div className="block md:hidden divide-y divide-border/50">
+                {feedback.map((f) => (
+                  <div key={f.id} className="p-4 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold text-sm">{f.profiles?.display_name ?? "—"}</p>
+                        <p className="font-mono text-[9px] text-muted-foreground">{f.user_id?.slice(0, 8)}…</p>
+                      </div>
+                      <div>
+                        {f.vote === 1
+                          ? <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-2 py-0.5 font-mono text-[8px] text-green-700"><ThumbsUp className="h-2.5 w-2.5" /> Good</span>
+                          : <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2 py-0.5 font-mono text-[8px] text-red-700"><ThumbsDown className="h-2.5 w-2.5" /> Bad</span>
+                        }
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-[11px] pt-1 border-t border-border/40 font-mono text-muted-foreground">
+                      <div>
+                        <span className="text-[9px] block uppercase text-muted-foreground">Message ID</span>
+                        <span>{f.message_id?.slice(0, 12)}…</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[9px] block uppercase text-muted-foreground">Date</span>
+                        <span>{formatDate(f.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{feedback.length} total responses</p>
@@ -884,7 +965,7 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm min-w-[320px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
@@ -918,6 +999,40 @@ function AdminUsersPage() {
                   </tbody>
                 </table>
               </div>
+
+              <div className="block md:hidden divide-y divide-border/50">
+                {filteredRateLimits.map((r) => {
+                  const resetDate = new Date(r.reset_at);
+                  const isActive = !isNaN(resetDate.getTime()) && resetDate > new Date();
+                  return (
+                    <div key={r.key} className="p-4 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="min-w-0 flex-1 mr-2 font-mono">
+                          <span className="text-[9px] block uppercase text-muted-foreground">Key</span>
+                          <p className="text-xs truncate break-all" title={r.key}>{r.key}</p>
+                        </div>
+                        <div className="flex-shrink-0 text-right font-mono">
+                          <span className="text-[9px] block uppercase text-muted-foreground">Hits</span>
+                          <span className={`font-bold text-sm ${r.count > 10 ? "text-destructive" : r.count > 5 ? "text-amber-600" : "text-foreground"}`}>{r.count}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xs pt-1 border-t border-border/50 font-mono text-muted-foreground">
+                        <div>
+                          <span className="text-[9px] block uppercase text-muted-foreground">Resets At</span>
+                          <span>{formatDateTime(r.reset_at)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[9px] block uppercase text-muted-foreground">Status</span>
+                          {isActive
+                            ? <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-1.5 py-px font-mono text-[9px] text-red-700">Active</span>
+                            : <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-1.5 py-px font-mono text-[9px] text-green-700">Expired</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
               <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{filteredRateLimits.length} keys</p>
               </div>
@@ -947,40 +1062,71 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[320px]">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/40">
-                      {["Student", "Reason", "Status", "Reviewer", "Date"].map((h) => (
-                        <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredEscalations.map((esc) => (
-                      <tr key={esc.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                        <td className="px-2 py-2 sm:px-5 sm:py-3">
-                          <p className="font-semibold">{esc.profiles?.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">{esc.profiles?.email ?? (esc.user_id ? esc.user_id.slice(0, 8) + "…" : "—")}</p>
-                        </td>
-                        <td className="px-5 py-3 text-xs max-w-[200px]">
-                          <p className="truncate" title={esc.detail ?? esc.reason}>{esc.detail || esc.reason}</p>
-                        </td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3">
-                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
-                              esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
-                                "text-amber-600 bg-amber-50 border-amber-200"
-                            }`}>{esc.status}</span>
-                        </td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
-                          {formatDate(esc.created_at)}
-                        </td>
-                      </tr>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm min-w-[320px]">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    {["Student", "Reason", "Status", "Reviewer", "Date"].map((h) => (
+                      <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEscalations.map((esc) => (
+                    <tr key={esc.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                      <td className="px-2 py-2 sm:px-5 sm:py-3">
+                        <p className="font-semibold">{esc.profiles?.display_name ?? "—"}</p>
+                        <p className="font-mono text-[10px] text-muted-foreground">{esc.profiles?.email ?? (esc.user_id ? esc.user_id.slice(0, 8) + "…" : "—")}</p>
+                      </td>
+                      <td className="px-5 py-3 text-xs max-w-[200px]">
+                        <p className="truncate" title={esc.detail ?? esc.reason}>{esc.detail || esc.reason}</p>
+                      </td>
+                      <td className="px-2 py-2 sm:px-5 sm:py-3">
+                        <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
+                            esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
+                              "text-amber-600 bg-amber-50 border-amber-200"
+                          }`}>{esc.status}</span>
+                      </td>
+                      <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</td>
+                      <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
+                        {formatDate(esc.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="block md:hidden divide-y divide-border/50">
+              {filteredEscalations.map((esc) => (
+                <div key={esc.id} className="p-4 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold text-sm">{esc.profiles?.display_name ?? "—"}</p>
+                      <p className="font-mono text-[9px] text-muted-foreground">{esc.profiles?.email ?? (esc.user_id ? esc.user_id.slice(0, 8) + "…" : "—")}</p>
+                    </div>
+                    <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
+                        esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
+                          "text-amber-600 bg-amber-50 border-amber-200"
+                      }`}>{esc.status}</span>
+                  </div>
+                  <div className="pt-1 border-t border-border/50 text-xs">
+                    <span className="text-[9px] font-mono block uppercase text-muted-foreground">Reason / Detail</span>
+                    <p className="text-foreground leading-relaxed mt-0.5">{esc.detail || esc.reason}</p>
+                  </div>
+                  <div className="flex justify-between text-xs pt-1 border-t border-border/50 font-mono text-muted-foreground">
+                    <div>
+                      <span className="text-[9px] block uppercase text-muted-foreground">Reviewer</span>
+                      <span>{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[9px] block uppercase text-muted-foreground">Date</span>
+                      <span>{formatDate(esc.created_at)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{filteredEscalations.length} escalations shown</p>
               </div>
@@ -1043,7 +1189,7 @@ function AdminUsersPage() {
               className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
 
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="hidden md:block overflow-x-auto">
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[320px]">
                 <thead>
@@ -1099,7 +1245,67 @@ function AdminUsersPage() {
                 </tbody>
               </table>
             </div>
-            <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
+          </div>
+
+          <div className="block md:hidden rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            {filteredForPlans.length === 0 && (
+              <div className="py-12 text-center font-serif text-muted-foreground">No users found</div>
+            )}
+            <div className="divide-y divide-border/50">
+            {filteredForPlans.map((p) => {
+              const plan = (p.plan ?? "free") as PlanId;
+              const isUpdating = updatingPlan === p.id;
+              const expiry = p.plan_expiry ? new Date(p.plan_expiry) : null;
+              const isValidExpiry = expiry && !isNaN(expiry.getTime());
+              const isExpired = isValidExpiry ? expiry < new Date() : false;
+              return (
+                <div key={p.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-sm">{p.display_name ?? "—"}</p>
+                      <p className="font-mono text-[9px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
+                    </div>
+                    <span className="inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[8px] uppercase tracking-wider text-primary border-primary/20">
+                      {PLANS[plan]?.label ?? plan}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border/40 font-mono text-muted-foreground">
+                    <div className="col-span-2">
+                      <span className="text-[9px] font-mono block uppercase text-muted-foreground">Email</span>
+                      <span className="break-all">{p.email ?? "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-mono block uppercase text-muted-foreground">Expires</span>
+                      <span>
+                        {isValidExpiry ? (
+                          <span className={isExpired ? "text-destructive font-bold" : ""}>
+                            {expiry.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                            {isExpired ? " (expired)" : ""}
+                          </span>
+                        ) : "—"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                    <span className="font-mono text-[9px] uppercase text-muted-foreground">Change Plan</span>
+                    <div className="flex items-center gap-2">
+                      {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
+                        <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
+                          className="rounded border border-border bg-background px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
+                          {(Object.keys(PLANS) as PlanId[]).map((pid) => (
+                            <option key={pid} value={pid}>{PLANS[pid].label}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            </div>
+            <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
               <p className="font-mono text-[10px] text-muted-foreground">{filteredForPlans.length} of {profileState.length} users</p>
             </div>
           </div>
@@ -1113,40 +1319,80 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[320px]">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/40">
-                      {["User", "Plan", "Amount", "Phone", "Receipt", "Status", "Date"].map((h) => (
-                        <th key={h} className="px-2 py-2 sm:px-4 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payments.map((pay) => (
-                      <tr key={pay.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                        <td className="px-4 py-3">
-                          <p className="font-semibold">{pay.profiles?.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">{pay.profiles?.email ?? (pay.user_id ? `${pay.user_id.slice(0, 8)}…` : "—")}</p>
-                        </td>
-                        <td className="px-4 py-3 font-mono text-xs capitalize">{pay.plan}</td>
-                        <td className="px-4 py-3 font-semibold">KES {pay.amount.toLocaleString()}</td>
-                        <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">{pay.phone_number}</td>
-                        <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">{pay.mpesa_receipt ?? "—"}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
-                              pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
-                                "text-amber-600 bg-amber-50 border-amber-200"
-                            }`}>{pay.status}</span>
-                        </td>
-                        <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">
-                          {formatDate(pay.created_at)}
-                        </td>
-                      </tr>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm min-w-[320px]">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    {["User", "Plan", "Amount", "Phone", "Receipt", "Status", "Date"].map((h) => (
+                      <th key={h} className="px-2 py-2 sm:px-4 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((pay) => (
+                    <tr key={pay.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                      <td className="px-4 py-3">
+                        <p className="font-semibold">{pay.profiles?.display_name ?? "—"}</p>
+                        <p className="font-mono text-[10px] text-muted-foreground">{pay.profiles?.email ?? (pay.user_id ? `${pay.user_id.slice(0, 8)}…` : "—")}</p>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs capitalize">{pay.plan}</td>
+                      <td className="px-4 py-3 font-semibold">KES {pay.amount.toLocaleString()}</td>
+                      <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">{pay.phone_number}</td>
+                      <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">{pay.mpesa_receipt ?? "—"}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
+                            pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
+                              "text-amber-600 bg-amber-50 border-amber-200"
+                          }`}>{pay.status}</span>
+                      </td>
+                      <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">
+                        {formatDate(pay.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="block md:hidden divide-y divide-border/50">
+              {payments.map((pay) => (
+                <div key={pay.id} className="p-4 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold text-sm">{pay.profiles?.display_name ?? "—"}</p>
+                      <p className="font-mono text-[9px] text-muted-foreground">{pay.profiles?.email ?? (pay.user_id ? `${pay.user_id.slice(0, 8)}…` : "—")}</p>
+                    </div>
+                    <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[8px] uppercase tracking-wider ${pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
+                        pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
+                          "text-amber-600 bg-amber-50 border-amber-200"
+                      }`}>{pay.status}</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border/50 font-mono text-muted-foreground">
+                    <div>
+                      <span className="text-[9px] block uppercase text-muted-foreground">Plan</span>
+                      <span className="capitalize">{pay.plan}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] block uppercase text-muted-foreground">Amount</span>
+                      <span className="font-semibold text-foreground">KES {pay.amount.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] block uppercase text-muted-foreground">Phone</span>
+                      <span>{pay.phone_number}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] block uppercase text-muted-foreground">Receipt</span>
+                      <span>{pay.mpesa_receipt ?? "—"}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 border-t border-border/50 text-right font-mono text-[9px] text-muted-foreground">
+                    <span>Date: {formatDate(pay.created_at)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
               <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{payments.length} payments · KES {totalRevenue.toLocaleString()} completed</p>
               </div>
@@ -1259,33 +1505,53 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[320px]">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/40">
-                      {["Email", "Name", "Status", "Subscribed"].map(h => (
-                        <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {newsletter.map(s => (
-                      <tr key={s.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                        <td className="px-5 py-3 font-mono text-xs">{s.email}</td>
-                        <td className="px-5 py-3 text-sm">{s.name ?? "—"}</td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3">
-                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
-                            {s.status}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
-                          {new Date(s.subscribed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
-                        </td>
-                      </tr>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm min-w-[320px]">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    {["Email", "Name", "Status", "Subscribed"].map(h => (
+                      <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </tr>
+                </thead>
+                <tbody>
+                  {newsletter.map(s => (
+                    <tr key={s.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                      <td className="px-5 py-3 font-mono text-xs">{s.email}</td>
+                      <td className="px-5 py-3 text-sm">{s.name ?? "—"}</td>
+                      <td className="px-2 py-2 sm:px-5 sm:py-3">
+                        <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+                          {s.status}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
+                        {new Date(s.subscribed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="block md:hidden divide-y divide-border/50">
+              {newsletter.map((s) => (
+                <div key={s.id} className="p-4 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div className="min-w-0 flex-1 mr-2">
+                      <p className="font-mono text-xs font-semibold truncate break-all" title={s.email}>{s.email}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{s.name ?? "—"}</p>
+                    </div>
+                    <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+                      {s.status}
+                    </span>
+                  </div>
+                  <div className="pt-1 border-t border-border/50 flex justify-between font-mono text-[9px] text-muted-foreground">
+                    <span>Subscribed</span>
+                    <span>{new Date(s.subscribed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{newsletter.length} total subscribers</p>
               </div>
