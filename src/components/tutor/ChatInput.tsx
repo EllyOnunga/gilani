@@ -139,6 +139,7 @@ export function ChatInput({
 
   return (
     <div className="px-2 pb-2 pt-1 sm:px-4 sm:pb-4 sm:pt-3 sm:bg-background/95 sm:backdrop-blur-sm sm:border-t sm:border-border/40">
+      <div className="lg:max-w-3xl lg:mx-auto">
       {/* Rate limit banner with countdown */}
       {isRateLimited && (
         <div className="mb-2.5 rounded-2xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
@@ -297,6 +298,7 @@ export function ChatInput({
           </span>
         </div>
       )}
+      </div>{/* end lg:max-w-3xl wrapper */}
     </div>
   );
 }
