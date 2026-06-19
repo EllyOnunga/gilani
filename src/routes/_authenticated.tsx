@@ -577,7 +577,9 @@ function AuthedShell() {
       </aside>
       <main className={`flex-1 min-w-0 flex flex-col overflow-x-hidden ${path.startsWith("/tutor") ? "overflow-hidden h-full" : "overflow-y-auto scroll-smooth"}`}>
         {!path.startsWith("/tutor") && <Breadcrumb />}
-        <Outlet />
+        <div className="w-full flex-1 flex flex-col min-h-0">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
