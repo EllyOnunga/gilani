@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, X } from "lucide-react";
+import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, X, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,18 +46,33 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
   const COLLAPSE_THRESHOLD = 300;
   const editRef = useRef<HTMLTextAreaElement>(null);
 
+  const attachmentName = React.useMemo(() => {
+    if (m.role !== "user") return null;
+    // Check parts text first, then fall back to content field
+    const partsText =
+      m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || "";
+    const rawText = partsText || (m as any).content || "";
+    const match = rawText.match(/\[Document Attached:\s*([^\]\n]+)\]/);
+    return match ? match[1].trim() : null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [m.id, m.role, (m.parts as any)?.[0]?.text, (m as any).content]);
+
   const displayText = React.useMemo(() => {
     const partsText =
       m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || "";
     const rawText = partsText || (m as any).content || "";
     return m.role === "user"
       ? rawText
-          .replace(/<DocumentContent[^>]*>[\s\S]*?<\/DocumentContent>\n\n/g, "")
-          .replace(/\[Document Attached: [^\]]+\]\n\n/g, "")
-          .replace(/Student Query: (\(See attached document\))?/g, "")
+          // Strip document content block (with or without trailing newlines)
+          .replace(/<DocumentContent[^>]*>[\s\S]*?<\/DocumentContent>\n*/g, "")
+          // Strip attachment marker line (relax the \n\n requirement)
+          .replace(/\[Document Attached:[^\]]+\]\n*/g, "")
+          // Strip the "Student Query:" prefix wrapper
+          .replace(/^Student Query:\s*(\(See attached document\))?\s*/m, "")
           .trim()
       : rawText;
-  }, [m.parts, m.content, m.role]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [m.id, m.role, (m.parts as any)?.[0]?.text, (m as any).content]);
 
   const isStreamActive = isPending && isLast;
   const visibleText = displayText;
@@ -160,7 +175,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
       <div
         className={`${m.role === "user" ? "max-w-[88%] sm:max-w-[72%]" : "w-full max-w-[96%] sm:max-w-full"} rounded-2xl px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${
           isUser
-            ? "bg-primary text-primary-foreground rounded-tr-sm shadow-sm"
+            ? "bg-card border border-border text-foreground rounded-tr-sm shadow-sm"
             : isStreamActive && !streamReady ? "text-foreground" : "bg-card border border-border text-foreground rounded-tl-sm shadow-sm"
         }`}
       >
@@ -225,6 +240,12 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
         ) : (
           /* User message */
           <div className="flex flex-col gap-1.5">
+            {attachmentName && (
+              <div className="flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary w-fit max-w-full select-none">
+                <FileText className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="truncate max-w-[200px]">{attachmentName}</span>
+              </div>
+            )}
             {editing ? (
               <div className="flex flex-col gap-2">
                 <textarea
@@ -232,16 +253,16 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
                   value={editText}
                   onChange={(e) => setEditText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitEdit(); } if (e.key === "Escape") setEditing(false); }}
-                  className="w-full rounded-lg bg-primary-foreground/10 border border-primary-foreground/20 text-primary-foreground text-sm px-2.5 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-primary-foreground/40 min-h-[60px]"
+                  className="w-full rounded-xl bg-background border border-border text-foreground text-sm px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 min-h-[72px] shadow-inner"
                   rows={3}
                 />
                 <div className="flex gap-1.5 justify-end">
                   <button onClick={() => setEditing(false)}
-                    className="rounded px-2 py-0.5 text-[10px] font-bold text-primary-foreground/70 hover:text-primary-foreground border border-primary-foreground/20 hover:bg-primary-foreground/10 transition-colors">
+                    className="rounded-lg px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors">
                     Cancel
                   </button>
                   <button onClick={submitEdit}
-                    className="rounded px-2 py-0.5 text-[10px] font-bold bg-primary-foreground text-primary hover:bg-primary-foreground/90 transition-colors">
+                    className="rounded-lg px-3 py-1.5 text-[11px] font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm">
                     Send
                   </button>
                 </div>
@@ -256,7 +277,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
                 {displayText.length > COLLAPSE_THRESHOLD && (
                   <button
                     onClick={() => setCollapsed((p) => !p)}
-                    className="self-start text-[10px] font-bold text-primary-foreground/60 hover:text-primary-foreground underline underline-offset-2 transition-colors"
+                    className="self-start text-[10px] font-bold text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
                   >
                     {collapsed ? "Show more" : "Show less"}
                   </button>
@@ -265,19 +286,19 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
             )}
 
             {!editing && !isStreamActive && (
-              <div className="flex items-center gap-1 mt-1 transition-opacity duration-200 justify-end">
+              <div className="flex items-center gap-1 mt-1.5 transition-opacity duration-200 justify-end border-t border-border/40 pt-1">
                 <button onClick={handleCopy}
-                  className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-primary-foreground/60 hover:text-primary-foreground transition-colors px-2 py-1 rounded hover:bg-primary-foreground/10"
+                  className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
                   title="Copy">
-                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
                 {onEdit && (
                   <button onClick={isRateLimited ? undefined : startEdit}
                     disabled={isRateLimited}
-                    className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-1.5 py-0.5 rounded ${
+                    className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded ${
                       isRateLimited
-                        ? "opacity-40 cursor-not-allowed text-primary-foreground/40"
-                        : "text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                        ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
                     title={isRateLimited ? "Rate limit reached" : "Edit message"}>
                     <Pencil className="h-3.5 w-3.5" />
