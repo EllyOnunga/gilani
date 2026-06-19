@@ -810,7 +810,7 @@ ${content}`.trim()
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-3 sm:p-6 lg:p-10">
+    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-10">
       {/* Offline Backup Badge */}
       {isOffline && (
         <div className="flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700/40 px-4 py-2.5 text-xs text-amber-700 dark:text-amber-400">
@@ -1108,7 +1108,7 @@ ${content}`.trim()
                         <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
                           AI Summary
                         </p>
-                        <div className="text-sm leading-relaxed text-foreground/90 markdown-note-summary">
+                        <div className="text-sm leading-relaxed text-foreground/90 markdown-note-summary break-words overflow-hidden">
                           <Suspense
                             fallback={
                               <div className="h-10 w-full animate-pulse bg-muted/50 rounded" />
