@@ -163,31 +163,35 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const [parsingFile, setParsingFile] = useState(false);
   const [docUploadError, setDocUploadError] = useState<string | null>(null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-      if (file.size > MAX_FILE_SIZE) {
-        setDocUploadError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 2MB. Please split large documents into smaller sections.`);
-        e.target.value = "";
-        return;
-      }
-      setParsingFile(true);
-      setDocUploadError(null);
-      const toastId = toast.loading(`Extracting text from ${file.name}...`);
-      try {
-        const parsed = await parseDocument(file);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Extract file and reset input synchronously BEFORE any state updates / await
+    // to prevent React re-render losing the mobile input DOM reference.
+    const file = e.target.files?.[0] ?? null;
+    e.target.value = ""; // reset now so the same file can be re-selected
+    if (!file) return;
+
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+    if (file.size > MAX_FILE_SIZE) {
+      setDocUploadError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 2MB. Please split large documents into smaller sections.`);
+      return;
+    }
+
+    setParsingFile(true);
+    setDocUploadError(null);
+    const toastId = toast.loading(`Extracting text from ${file.name}...`);
+    parseDocument(file)
+      .then((parsed) => {
         setAttachedFile(parsed);
         toast.success("Document attached successfully!", { id: toastId });
-      } catch (err: any) {
+      })
+      .catch((err: any) => {
         const errMsg = friendlyError(err, "Failed to attach document.");
         setDocUploadError(errMsg);
         toast.error(errMsg, { id: toastId });
-      } finally {
+      })
+      .finally(() => {
         setParsingFile(false);
-        e.target.value = "";
-      }
-    }
+      });
   };
 
   // Load user plan profile for billing plan checks
