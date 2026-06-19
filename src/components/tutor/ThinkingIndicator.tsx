@@ -13,8 +13,8 @@ export const ThinkingIndicator = React.memo(function ThinkingIndicator({ show }:
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
-          style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+          className="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-bounce"
+          style={{ animationDelay: `${i * 0.15}s` }}
         />
       ))}
     </div>

@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { withTimeout } from "@/lib/async";
 import { buildSystemPrompt, sanitizeUntrustedInput, sanitizeCurriculum } from "@/lib/tutor-prompt";
-import { checkPlanRateLimit, decrementRateLimit } from "@/lib/rate-limit.server";
+import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
 
 // ─── Profile cache (per-user, 60s TTL) ──────────────────────────────────────
@@ -79,11 +79,11 @@ export const Route = createFileRoute("/api/chat")({
 
           // ─── Use ai-gateway for all providers ────────────────────────────
           const gateway = createGoogleAiProvider();
-          const configuredProviders = gateway.getAllChatModels();
+          const chatModel = gateway.chatModel();
 
-          console.log(`[API Chat] Providers in order: ${configuredProviders.map(p => p.name).join(", ")}`);
+          console.log(`[API Chat] Using provider: google (gemini)`);
 
-          if (configuredProviders.length === 0) {
+          if (!chatModel) {
             return new Response(
               JSON.stringify({ error: "No AI provider configured." }),
               { status: 500, headers: { "Content-Type": "application/json" } },
@@ -265,151 +265,67 @@ ${finalContent}`;
           });
 
 
-          // ─── Stream with provider fallback ───────────────────────────────
-          const streamAbort = new AbortController();
-          const streamDeadline = setTimeout(() => streamAbort.abort(), 60000);
+          // ─── Stream with Gemini ────────────────────────────────────────────
+          console.log(`[API Chat] Streaming with provider: google (gemini)`);
 
-          let streamResult: any = null;
-          let activeProvider = "";
-          let lastError: unknown;
-          let firstPart: any = null;
+          let insertedMessageId: string | null = null;
 
-          for (let i = 0; i < configuredProviders.length; i++) {
-            const prov = configuredProviders[i];
-            try {
-              if (i > 0) {
-                const { backoffDelay } = await import("@/lib/provider-backoff");
-                await backoffDelay(i);
-              }
-              console.log(`[API Chat] Attempting stream with provider: ${prov.name}`);
-
-              const attempt = streamText({
-                model: prov.model,
-                system: systemPrompt,
-                messages: aiMessages,
-                maxRetries: 0,
-                temperature: 0.7,
-                experimental_transform: [stripThoughtProcessTransform(), smoothStream({ delayInMs: 60, chunking: "word" })],
-                onError: (errorObj) => {
-                  const error = (errorObj as any)?.error || errorObj;
-                  console.error(
-                    `[API Chat] ${prov.name} onError:`,
-                    typeof error === "object" ? JSON.stringify(error).slice(0, 300) : String(error),
-                  );
-                },
-                onFinish: async ({ text: assistantText, providerMetadata }) => {
-                  console.log(`[API Chat] ${prov.name} finished. Length: ${assistantText.length}`);
-                  const safeText = assistantText.trim() || "Sorry, I could not generate a response right now. Please try again.";
-                  try {
-                    const assistantParts = [{ type: "text" as const, text: safeText }];
-                    const thoughtSignature = (providerMetadata as any)?.google?.thoughtSignature || null;
-                    const { data: insertedMsg } = await supabaseAdmin.from("messages").insert({
-                      conversation_id: threadId,
-                      role: "assistant",
-                      content: safeText,
-                      parts: JSON.stringify(assistantParts),
-                      confidence: 0.9,
-                      user_id: userId,
-                      thought_signature: thoughtSignature,
-                    } as any).select("id").single();
-                    if (insertedMsg?.id) {
-                      streamResult.experimental_sendMessageAnnotations?.([{ messageId: insertedMsg.id }]);
-                    }
-                    await supabaseAdmin.from("audit_logs").insert({
-                      action: "tutor.message",
-                      payload: { threadId, confidence: 0.9, provider: prov.name },
-                    });
-                    const safety = (providerMetadata as any)?.google?.safetyRatings;
-                    if (Array.isArray(safety) && safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")) {
-                      const { data: escData, error: escErr } = await supabaseAdmin
-                        .from("escalations")
-                        .insert({ conversation_id: threadId, reason: "Safety probability threshold exceeded", status: "pending", user_id: userId })
-                        .select("id").single();
-                      if (!escErr && escData) {
-                        import("@/lib/zapier.server").then(({ triggerZapierEscalation }) => {
-                          triggerZapierEscalation({ escalationId: escData.id, userId, threadId, reason: "Safety probability threshold exceeded", detail: "Automatically escalated due to model safety ratings threshold breach." });
-                        }).catch((err) => console.error("[Zapier] Failed to load safety trigger:", err));
-                      }
-                    }
-                  } catch (persistError) {
-                    console.error("Failed to persist assistant message:", persistError);
+          const result = streamText({
+            model: chatModel,
+            system: systemPrompt,
+            messages: aiMessages,
+            maxRetries: 2,
+            temperature: 0.7,
+            experimental_transform: [stripThoughtProcessTransform(), smoothStream({ delayInMs: 60, chunking: "word" })],
+            onError: (errorObj) => {
+              const error = (errorObj as any)?.error || errorObj;
+              console.error(
+                `[API Chat] google onError:`,
+                typeof error === "object" ? JSON.stringify(error).slice(0, 300) : String(error),
+              );
+            },
+            onFinish: async ({ text: assistantText, providerMetadata, finishReason }) => {
+              console.log(`[API Chat] google finished. Length: ${assistantText.length}. FinishReason: ${finishReason}`);
+              const safeText = assistantText.trim() || "Sorry, I could not generate a response right now. Please try again.";
+              try {
+                const assistantParts = [{ type: "text" as const, text: safeText }];
+                const thoughtSignature = (providerMetadata as any)?.google?.thoughtSignature || null;
+                const { data: insertedMsg } = await supabaseAdmin.from("messages").insert({
+                  conversation_id: threadId,
+                  role: "assistant",
+                  content: safeText,
+                  parts: JSON.stringify(assistantParts),
+                  confidence: 0.9,
+                  user_id: userId,
+                  thought_signature: thoughtSignature,
+                } as any).select("id").single();
+                if (insertedMsg?.id) {
+                  insertedMessageId = insertedMsg.id;
+                  (result as any).experimental_sendMessageAnnotations?.([{ messageId: insertedMsg.id }]);
+                }
+                await supabaseAdmin.from("audit_logs").insert({
+                  action: "tutor.message",
+                  payload: { threadId, confidence: 0.9, provider: "google" },
+                });
+                const safety = (providerMetadata as any)?.google?.safetyRatings;
+                if (Array.isArray(safety) && safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")) {
+                  const { data: escData, error: escErr } = await supabaseAdmin
+                    .from("escalations")
+                    .insert({ conversation_id: threadId, reason: "Safety probability threshold exceeded", status: "pending", user_id: userId })
+                    .select("id").single();
+                  if (!escErr && escData) {
+                    import("@/lib/zapier.server").then(({ triggerZapierEscalation }) => {
+                      triggerZapierEscalation({ escalationId: escData.id, userId, threadId, reason: "Safety probability threshold exceeded", detail: "Automatically escalated due to model safety ratings threshold breach." });
+                    }).catch((err) => console.error("[Zapier] Failed to load safety trigger:", err));
                   }
-                },
-              });
-
-              // Peek fullStream until we see a text-delta/text-start (healthy)
-              // or an error chunk (fall back). Buffer everything consumed so the
-              // client still receives a complete stream.
-              const reader = attempt.fullStream[Symbol.asyncIterator]();
-              const buffered: any[] = [];
-              let streamHealthy = false;
-              const peekDeadline = Date.now() + 8000;
-
-              while (Date.now() < peekDeadline) {
-                const timeLeft = peekDeadline - Date.now();
-                const timeoutPromise = new Promise<IteratorResult<any>>(
-                  (resolve) => setTimeout(() => resolve({ done: true, value: undefined }), timeLeft)
-                );
-                const result: IteratorResult<any> = await Promise.race([reader.next(), timeoutPromise]);
-
-                if (result.done) { streamHealthy = true; break; }
-
-                const chunk = result.value;
-                buffered.push(chunk);
-
-                if (chunk?.type === "error") {
-                  const err = chunk.error ?? new Error(`${prov.name} stream error`);
-                  console.warn(`[API Chat] ${prov.name} error chunk:`, err?.message ?? err);
-                  throw err;
                 }
-                if (chunk?.type === "text-delta" || chunk?.type === "text-start") {
-                  streamHealthy = true;
-                  break;
-                }
+              } catch (persistError) {
+                console.error("Failed to persist assistant message:", persistError);
               }
+            },
+          });
 
-              if (!streamHealthy) {
-                console.warn(`[API Chat] ${prov.name} produced no content within peek window, falling back...`);
-                throw new Error(`${prov.name} peek timeout — no content`);
-              }
-
-              // Reconstruct fullStream with buffered chunks prepended.
-              // fullStream is getter-only so we wrap the result object instead.
-              const origFullStream = attempt.fullStream;
-              const peekedStream = new ReadableStream({
-                async start(controller) {
-                  for (const c of buffered) controller.enqueue(c);
-                  for await (const c of origFullStream) controller.enqueue(c);
-                  controller.close();
-                },
-              }) as any;
-              const wrappedAttempt = new Proxy(attempt, {
-                get(target, prop) {
-                  if (prop === "fullStream") return peekedStream;
-                  const val = (target as any)[prop];
-                  return typeof val === "function" ? val.bind(target) : val;
-                },
-              });
-
-              streamResult = wrappedAttempt as typeof attempt;
-              firstPart = null;
-              activeProvider = prov.name;
-              break;
-            } catch (err) {
-              console.warn(`[API Chat] Provider ${prov.name} stream start failed:`, err);
-              lastError = err;
-            }
-          }
-
-          if (!streamResult) {
-            clearTimeout(streamDeadline);
-            await decrementRateLimit(`${userId}:chat:day`);
-            await decrementRateLimit(`${userId}:chat:min`);
-            throw lastError || new Error("Failed to stream chat response from all providers.");
-          }
-
-          console.log(`[API Chat] Returning stream response from: ${activeProvider}`);
-          const textStream = streamResult.toUIMessageStreamResponse({
+          return result.toUIMessageStreamResponse({
             headers: {
               "Cache-Control": "no-cache, no-transform",
               "Content-Type": "text/event-stream",
@@ -417,8 +333,6 @@ ${finalContent}`;
               "X-Accel-Buffering": "no",
             },
           });
-          streamAbort.signal.addEventListener("abort", () => { clearTimeout(streamDeadline); }, { once: true });
-          return textStream;
         } catch (error: unknown) {
           console.error("[API Chat] Error:", error instanceof Error ? error.message : String(error));
           return new Response(
