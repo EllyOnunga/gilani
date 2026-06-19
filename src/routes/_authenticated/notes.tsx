@@ -928,7 +928,6 @@ ${content}`.trim()
               />
               <label
                 htmlFor="notes-file-upload"
-                onClick={() => { if (!parsingFile) document.getElementById("notes-file-upload")?.click(); }}
                 className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors w-full text-center ${parsingFile ? "opacity-50 pointer-events-none bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
               >
                 {parsingFile
