@@ -596,6 +596,7 @@ function NotesPage() {
   const [dragActive, setDragActive] = useState(false);
   const [notesRateError, setNotesRateError] = useState<string | null>(null);
   const [docUploadError, setDocUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isRateLimited = !!(
     notesRateError?.toLowerCase().includes("limit") ||
@@ -920,21 +921,22 @@ ${content}`.trim()
             <div className="relative rounded-xl border border-border bg-background p-3">
               <input
                 type="file"
-                id="notes-file-upload"
+                ref={fileInputRef}
                 className="sr-only"
                 accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/csv,.pdf,.docx,.doc,.txt,.md,.csv"
                 onChange={handleFileChange}
                 disabled={parsingFile}
               />
-              <label
-                htmlFor="notes-file-upload"
+              <button
+                type="button"
+                onClick={() => { if (!parsingFile) fileInputRef.current?.click(); }}
                 className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors w-full text-center ${parsingFile ? "opacity-50 pointer-events-none bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
               >
                 {parsingFile
                   ? <><Loader2 className="h-4 w-4 animate-spin" /><span>Parsing document...</span></>
                   : <><Upload className="h-4 w-4" /><span className="hidden sm:inline">Upload Document (PDF, DOCX, TXT, CSV — max 2MB)</span><span className="sm:hidden">Upload Document (max 2MB)</span></>
                 }
-              </label>
+              </button>
             </div>
 
             {/* Inline upload error banner */}
