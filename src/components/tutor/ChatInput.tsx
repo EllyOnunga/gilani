@@ -243,25 +243,31 @@ export function ChatInput({
 
       {/* Main input */}
       <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-4 focus-within:ring-primary/5">
-        {/* Hidden file input triggered via ref — avoids opacity-0 overlay issues on mobile */}
+        {/* File input — sr-only NOT display:none so iOS PWA doesn't suspend the WebView */}
         <input
           ref={fileInputRef}
+          id="chat-file-input"
           type="file"
-          className="hidden"
+          className="sr-only"
           accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.doc,application/msword,.txt,text/plain,.md,text/markdown,.csv,text/csv"
           onChange={onFileChange}
           disabled={isDisabled}
         />
-        {/* Attach button */}
+        {/* Paperclip — label+htmlFor is treated as a native user gesture on iOS (ref.click() is not) */}
         <div className="pb-2 pl-2 pt-2 flex items-center justify-center">
-          <button
-            type="button"
-            disabled={isDisabled}
-            onClick={() => fileInputRef.current?.click()}
-            className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 ${isDisabled ? "opacity-40 cursor-not-allowed" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground active:scale-90"}`}
+          <label
+            htmlFor={isDisabled ? undefined : "chat-file-input"}
+            role="button"
+            aria-label="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)"
+            aria-disabled={isDisabled}
+            className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 ${
+              isDisabled
+                ? "opacity-40 cursor-not-allowed pointer-events-none"
+                : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground active:scale-90"
+            }`}
             title="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)">
             {parsingFile ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Paperclip className="h-4 w-4" />}
-          </button>
+          </label>
         </div>
 
         <textarea ref={textareaRef}

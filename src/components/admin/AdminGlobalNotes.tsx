@@ -313,7 +313,7 @@ export function AdminGlobalNotes() {
                         ref={fileInputRef}
                         type="file"
                         accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.doc,application/msword,.txt,text/plain,.md,text/markdown,.csv,text/csv"
-                        className="hidden"
+                        className="sr-only"
                         onChange={(e) => {
                             // Extract file and reset synchronously before any await/setState
                             // to prevent React re-render losing the DOM reference on mobile.

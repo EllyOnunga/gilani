@@ -919,22 +919,24 @@ ${content}`.trim()
           <h3 className="font-serif text-xl mb-4 text-center sm:text-left">Add Study Note</h3>
           <div className="space-y-3">
             {/* Document Upload Zone */}
-            {/* Hidden file input triggered via ref — avoids opacity-0 overlay issues on mobile */}
+            {/* sr-only keeps input in the paint tree (no display:none) — prevents iOS PWA WebView suspension */}
             <input
               ref={fileInputRef}
+              id="notes-file-input"
               type="file"
-              className="hidden"
+              className="sr-only"
               accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.doc,application/msword,.txt,text/plain,.md,text/markdown,.csv,text/csv"
               onChange={handleFileChange}
               disabled={parsingFile}
             />
-            <button
-              type="button"
-              disabled={parsingFile}
-              onClick={() => fileInputRef.current?.click()}
-              className={`flex w-full items-center justify-center gap-2 rounded-xl border border-border px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${
+            {/* label+htmlFor = native user gesture on iOS; ref.current.click() is not treated the same way */}
+            <label
+              htmlFor={parsingFile ? undefined : "notes-file-input"}
+              role="button"
+              aria-disabled={parsingFile}
+              className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-border px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${
                 parsingFile
-                  ? "opacity-50 bg-muted text-muted-foreground cursor-not-allowed"
+                  ? "opacity-50 bg-muted text-muted-foreground cursor-not-allowed pointer-events-none"
                   : "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]"
               }`}
             >
@@ -942,7 +944,7 @@ ${content}`.trim()
                 ? <><Loader2 className="h-4 w-4 animate-spin" /><span>Parsing document...</span></>
                 : <><Upload className="h-4 w-4" /><span className="hidden sm:inline">Upload Document (PDF, DOCX, TXT, CSV — max 2MB)</span><span className="sm:hidden">Upload Document (max 2MB)</span></>
               }
-            </button>
+            </label>
 
             {/* Inline upload error banner */}
             {docUploadError && (
