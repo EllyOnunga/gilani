@@ -276,6 +276,14 @@ ${finalContent}`;
             messages: aiMessages,
             maxRetries: 2,
             temperature: 0.7,
+            // Enable Gemini Google Search Grounding: the model searches the web in
+            // real-time and grounds its answer in live results, automatically citing sources.
+            // Silently ignored by non-Google fallback providers.
+            providerOptions: {
+              google: {
+                useSearchGrounding: true,
+              },
+            },
             experimental_transform: [stripThoughtProcessTransform(), smoothStream({ delayInMs: 60, chunking: "word" })],
             onError: (errorObj) => {
               const error = (errorObj as any)?.error || errorObj;
