@@ -596,7 +596,6 @@ function NotesPage() {
   const [dragActive, setDragActive] = useState(false);
   const [notesRateError, setNotesRateError] = useState<string | null>(null);
   const [docUploadError, setDocUploadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isRateLimited = !!(
     notesRateError?.toLowerCase().includes("limit") ||
@@ -687,6 +686,7 @@ function NotesPage() {
     if (e.target.files && e.target.files[0]) {
       await handleFileParsing(e.target.files[0]);
     }
+    e.target.value = "";
   };
 
   const handleFileParsing = async (file: File) => {
@@ -918,25 +918,22 @@ ${content}`.trim()
           <h3 className="font-serif text-xl mb-4 text-center sm:text-left">Add Study Note</h3>
           <div className="space-y-3">
             {/* Document Upload Zone */}
-            <div className="relative rounded-xl border border-border bg-background p-3">
+            <div className="relative rounded-xl border border-border bg-background p-3 overflow-hidden">
               <input
                 type="file"
-                ref={fileInputRef}
-                className="sr-only"
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 disabled:cursor-not-allowed"
                 accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/csv,.pdf,.docx,.doc,.txt,.md,.csv"
                 onChange={handleFileChange}
                 disabled={parsingFile}
               />
-              <button
-                type="button"
-                onClick={() => { if (!parsingFile) fileInputRef.current?.click(); }}
-                className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors w-full text-center ${parsingFile ? "opacity-50 pointer-events-none bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
+              <div
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors w-full text-center ${parsingFile ? "opacity-50 bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
               >
                 {parsingFile
                   ? <><Loader2 className="h-4 w-4 animate-spin" /><span>Parsing document...</span></>
                   : <><Upload className="h-4 w-4" /><span className="hidden sm:inline">Upload Document (PDF, DOCX, TXT, CSV — max 2MB)</span><span className="sm:hidden">Upload Document (max 2MB)</span></>
                 }
-              </button>
+              </div>
             </div>
 
             {/* Inline upload error banner */}
