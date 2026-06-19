@@ -323,10 +323,10 @@ const ingestNote = createServerFn({ method: "POST" })
       const { model, name } = models[i];
       try {
         if (i > 0) {
-        const { backoffDelay } = await import("@/lib/provider-backoff");
-        await backoffDelay(i);
-      }
-      console.log(`[Notes] Trying model: ${name}`);
+          const { backoffDelay } = await import("@/lib/provider-backoff");
+          await backoffDelay(i);
+        }
+        console.log(`[Notes] Trying model: ${name}`);
         const result = await generateText({
           model: model as any,
           maxTokens: 4000,
@@ -354,8 +354,8 @@ const ingestNote = createServerFn({ method: "POST" })
     const summary = parsed.comprehensive_summary || parsed.summary || "";
     const keyConcepts = Array.isArray(parsed.key_concepts)
       ? parsed.key_concepts.map((kc) =>
-          typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
-        )
+        typeof kc === "string" ? kc : `${kc.concept}: ${kc.definition}`,
+      )
       : [];
 
     // Insert note
@@ -387,7 +387,7 @@ const ingestNote = createServerFn({ method: "POST" })
         let embedding: number[] | null = null;
         let retries = 3;
         let delayMs = 1000;
-        
+
         while (retries > 0) {
           try {
             const { embed } = await import("ai");
@@ -579,7 +579,7 @@ function NotesPage() {
   const setShowFormPersisted = (val: boolean | ((v: boolean) => boolean)) => {
     setShowForm((prev) => {
       const next = typeof val === "function" ? val(prev) : val;
-      try { sessionStorage.setItem("notes_showForm", String(next)); } catch {}
+      try { sessionStorage.setItem("notes_showForm", String(next)); } catch { }
       return next;
     });
   };
@@ -620,7 +620,7 @@ function NotesPage() {
       } catch { /* ignore */ }
     })();
     return () => { mounted = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load notes client-side on mount (Stale-While-Revalidate)
@@ -740,7 +740,7 @@ function NotesPage() {
       setContent("");
       setAttachedFile(null);
       setShowFormPersisted(false);
-      try { sessionStorage.removeItem("notes_showForm"); } catch {}
+      try { sessionStorage.removeItem("notes_showForm"); } catch { }
       toast.success("Note saved!");
     } catch (err: unknown) {
       const message = (err as any)?.message || "Failed to save note";
@@ -787,7 +787,7 @@ ${content}`.trim()
       setContent("");
       setAttachedFile(null);
       setShowFormPersisted(false);
-      try { sessionStorage.removeItem('notes_showForm'); } catch {}
+      try { sessionStorage.removeItem('notes_showForm'); } catch { }
       toast.success("Note ingested & summarised!");
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Failed to save note");
@@ -810,7 +810,7 @@ ${content}`.trim()
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-10">
+    <div className="w-full mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-10">
       {/* Offline Backup Badge */}
       {isOffline && (
         <div className="flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700/40 px-4 py-2.5 text-xs text-amber-700 dark:text-amber-400">
@@ -824,35 +824,32 @@ ${content}`.trim()
 
       {/* Rate Limit Banner */}
       {notesRateError && (
-        <div className={`rounded-xl border overflow-hidden animate-in-slide ${
-          isRateLimited
+        <div className={`rounded-xl border overflow-hidden animate-in-slide ${isRateLimited
             ? "border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30"
             : "border-destructive/30 bg-destructive/10"
-        }`}>
+          }`}>
           <div className="flex items-start gap-2.5 px-4 py-3">
             <div className="flex-shrink-0 mt-0.5">
               {isRateLimited
                 ? (secondsLeft > 0
-                    ? <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    : <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />)
+                  ? <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  : <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />)
                 : <AlertCircle className="h-4 w-4 text-destructive" />
               }
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-xs font-semibold ${
-                isRateLimited ? "text-amber-800 dark:text-amber-300" : "text-destructive"
-              }`}>
+              <p className={`text-xs font-semibold ${isRateLimited ? "text-amber-800 dark:text-amber-300" : "text-destructive"
+                }`}>
                 {isRateLimited
                   ? (isDaily ? "Daily notes limit reached" : "Slow down a little…")
                   : "Note saving failed"}
               </p>
-              <p className={`text-[11px] mt-0.5 ${
-                isRateLimited ? "text-amber-700/80 dark:text-amber-400/80" : "text-destructive/80"
-              }`}>
+              <p className={`text-[11px] mt-0.5 ${isRateLimited ? "text-amber-700/80 dark:text-amber-400/80" : "text-destructive/80"
+                }`}>
                 {isRateLimited
                   ? (isDaily
-                      ? `You've used your daily notes allowance.${secondsLeft > 0 ? ` Resets in ${formatTime(secondsLeft)}.` : " Resets at midnight (EAT)."}` 
-                      : `You're saving notes too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`)
+                    ? `You've used your daily notes allowance.${secondsLeft > 0 ? ` Resets in ${formatTime(secondsLeft)}.` : " Resets at midnight (EAT)."}`
+                    : `You're saving notes too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`)
                   : notesRateError}
               </p>
             </div>
@@ -1086,10 +1083,10 @@ ${content}`.trim()
                       <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
                         {note.created_at
                           ? new Date(note.created_at).toLocaleDateString("en-KE", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
                           : "—"}
                       </p>
                     </div>
