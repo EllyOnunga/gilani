@@ -519,7 +519,7 @@ function AdminUsersPage() {
   }).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-3 p-2 xs:p-3 sm:p-6 lg:p-10 overflow-x-hidden">
+    <div className="mx-auto max-w-6xl space-y-3 p-3 sm:p-6 lg:p-10">
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
         <div>
@@ -597,8 +597,7 @@ function AdminUsersPage() {
       </div>
 
       {/* Tabs */}
-      <div className="-mx-2 xs:-mx-3 sm:mx-0">
-        <div className="flex gap-1.5 sm:gap-2 pb-2 overflow-x-auto scrollbar-none px-2 xs:px-3 sm:px-0 snap-x snap-mandatory">
+      <div className="flex gap-1.5 sm:gap-2 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory">
           {([
             { id: "users", label: "Users", icon: User },
             { id: "escalations", label: "Escalations", icon: AlertTriangle, badge: platformStats.openEscalations },
@@ -622,7 +621,6 @@ function AdminUsersPage() {
             );
           })}
         </div>
-      </div>
 
       {/* ── Users tab ── */}
       {tab === "users" && (
