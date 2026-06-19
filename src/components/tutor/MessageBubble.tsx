@@ -18,6 +18,7 @@ type Props = {
   userId?: string | null;
   /** Pre-loaded vote value from parent's bulk fetch — avoids N+1 queries */
   initialVote?: 1 | -1 | null;
+  onVote?: (messageId: string, vote: 1 | -1 | null) => void;
 };
 
 
@@ -27,7 +28,7 @@ const MemoMarkdown = React.memo(
   (prev, next) => prev.content === next.content
 );
 
-export const MessageBubble = React.memo(function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEdit, userId, initialVote}: Props) {
+export const MessageBubble = React.memo(function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEdit, userId, initialVote, onVote}: Props) {
   const [copied, setCopied] = useState(false);
   // Initialise from the parent's pre-loaded bulk fetch; fall back to null
   const [vote, setVote] = useState<1 | -1 | null>(initialVote ?? null);
@@ -118,6 +119,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
     // Optimistic update — update UI immediately
     const previousVote = vote;
     setVote(newVote);
+    onVote?.(m.id, newVote);
     if (newVote !== null) {
       toast.success(newVote === 1 ? "Thanks for the feedback! 👍" : "Noted — we'll improve. 👎");
     }
@@ -135,6 +137,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
     } catch {
       // Revert on failure
       setVote(previousVote);
+      onVote?.(m.id, previousVote);
       toast.error("Failed to save feedback");
     } finally {
       setVoting(false);

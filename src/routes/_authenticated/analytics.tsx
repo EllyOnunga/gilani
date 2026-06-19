@@ -1,27 +1,22 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, TrendingUp, Flame, Trophy, BookOpen, AlertTriangle, MessageCircle, CalendarDays } from "lucide-react";
 import { z } from "zod";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from "recharts";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
+
+const LazyRevisionProgressChart = lazy(() =>
+  import("@/components/AnalyticsCharts").then((m) => ({ default: m.RevisionProgressChart }))
+);
+
+const LazySubjectMasteryChart = lazy(() =>
+  import("@/components/AnalyticsCharts").then((m) => ({ default: m.SubjectMasteryChart }))
+);
+
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -58,31 +53,42 @@ const fetchAnalytics = createServerFn({ method: "GET" }).handler(async () => {
   }
   const userId = authResult.userId;
 
-  // Fetch attempts
-  const { data: attempts } = await supabaseAdmin
-    .from("quiz_attempts")
-    .select("score, created_at, weak_topics, quiz_id")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true });
+  // Fetch attempts, profile, messages, plans, and streak/stats in parallel
+  const [
+    attemptsRes,
+    profileRes,
+    messagesRes,
+    plansRes,
+    streakAndStats,
+  ] = await Promise.all([
+    supabaseAdmin
+      .from("quiz_attempts")
+      .select("score, created_at, weak_topics, quiz_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true }),
+    supabaseAdmin
+      .from("profiles")
+      .select("display_name, plan, curriculum, created_at")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("messages")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId),
+    supabaseAdmin
+      .from("study_plans")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId),
+    import("@/lib/analytics-utils.server").then(({ calculateUserStreakAndStats }) =>
+      calculateUserStreakAndStats(userId)
+    ),
+  ]);
 
-  // Fetch profile details
-  const { data: profile } = await supabaseAdmin
-    .from("profiles")
-    .select("display_name, plan, curriculum, created_at")
-    .eq("id", userId)
-    .maybeSingle();
-
-  // Fetch total messages sent
-  const { count: messagesCount } = await supabaseAdmin
-    .from("messages")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  // Fetch total study plans
-  const { count: plansCount } = await supabaseAdmin
-    .from("study_plans")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId);
+  const attempts = attemptsRes.data;
+  const profile = profileRes.data;
+  const messagesCount = messagesRes.count;
+  const plansCount = plansRes.count;
+  const { streak, notesCount } = streakAndStats;
 
   const profileData = {
     full_name: profile?.display_name || "Student",
@@ -92,8 +98,6 @@ const fetchAnalytics = createServerFn({ method: "GET" }).handler(async () => {
   };
 
   if (!attempts || attempts.length === 0) {
-    const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils.server");
-    const { streak, notesCount } = await calculateUserStreakAndStats(userId);
     return {
       attemptsCount: 0,
       averageScore: 0,
@@ -186,9 +190,6 @@ const fetchAnalytics = createServerFn({ method: "GET" }).handler(async () => {
     subject,
     score: Math.round(data.totalScore / data.count),
   }));
-
-  const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils.server");
-  const { streak, notesCount } = await calculateUserStreakAndStats(userId);
 
   return {
     attemptsCount,
@@ -562,28 +563,9 @@ function AnalyticsPage() {
             </p>
           </div>
           <div className="h-[220px] sm:h-[280px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={activeHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="scoreColor" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(22, 75%, 48%)" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="hsl(22, 75%, 48%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.06)" />
-                <XAxis dataKey="date" fontStyle="italic" style={{ fontSize: 10 }} />
-                <YAxis domain={[0, 100]} style={{ fontSize: 10 }} />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="score"
-                  stroke="hsl(22, 75%, 48%)"
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#scoreColor)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div className="h-full w-full rounded-xl bg-muted/20 animate-pulse flex items-center justify-center text-xs text-muted-foreground font-mono">Loading chart…</div>}>
+              <LazyRevisionProgressChart data={activeHistory} />
+            </Suspense>
           </div>
         </div>
 
@@ -607,20 +589,9 @@ function AnalyticsPage() {
             </p>
           </div>
           <div className="h-[240px] sm:h-[280px] w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={activeSubjectMastery}>
-                <PolarGrid stroke="rgba(0,0,0,0.08)" />
-                <PolarAngleAxis dataKey="subject" style={{ fontSize: 10 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} style={{ fontSize: 8 }} />
-                <Radar
-                  name="Mastery"
-                  dataKey="score"
-                  stroke="hsl(22, 75%, 48%)"
-                  fill="hsl(22, 75%, 48%)"
-                  fillOpacity={0.25}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div className="h-full w-full rounded-xl bg-muted/20 animate-pulse flex items-center justify-center text-xs text-muted-foreground font-mono">Loading chart…</div>}>
+              <LazySubjectMasteryChart data={activeSubjectMastery} />
+            </Suspense>
           </div>
         </div>
 

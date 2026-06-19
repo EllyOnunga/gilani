@@ -119,7 +119,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       return (data ?? []) as Thread[];
     },
     enabled: !!userId,
-    staleTime: 30_000,
+    staleTime: 0,
   });
   const threads = threadsQuery.data ?? [];
   const threadsLoading = !!userId && threadsQuery.isPending;
@@ -472,120 +472,122 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   }, [handleEscalate, escalationStatus, escalating, messagesLoading]);
 
 
-  // Load messages
-  useEffect(() => {
-    let mounted = true;
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    const loadingThreadId = threadId;
-
+  const loadMessages = useCallback(async (silent = false) => {
     if (!threadId) {
       setMessagesLoading(false);
       return;
     }
 
-    setMessagesLoading(true);
-    setMessagesLoadError(null);
-    // ✅ REMOVED: setMessages([]); - Don't clear messages, keep existing state while loading
+    if (!silent) {
+      setMessagesLoading(true);
+      setMessagesLoadError(null);
+    }
 
-    timeoutId = setTimeout(() => {
-      if (mounted) {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    if (!silent) {
+      timeoutId = setTimeout(() => {
         setMessagesLoading(false);
         setMessagesLoadError("Loading timed out.");
-      }
-    }, 5000);
+      }, 5000);
+    }
 
-    (async () => {
-      try {
-        const [messagesRes, escalationRes, feedbackRes] = await Promise.all([
-          supabase
-            .from("messages")
-            .select("*")
-            .eq("conversation_id", threadId)
-            .order("created_at", { ascending: true }),
-          (async () => {
-            try {
-              const { data: { user } } = await supabase.auth.getUser();
-              return await supabase
-                .from("escalations")
-                .select("status")
-                .eq("conversation_id", threadId)
-                .eq("user_id", user?.id ?? "")
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
-            } catch {
-              return { data: null, error: null };
-            }
-          })(),
-          // Bulk-load all votes for this thread in one query
-          userId
-            ? supabase
-                .from("message_feedback")
-                .select("message_id, vote")
-                .eq("user_id", userId)
-            : Promise.resolve({ data: null, error: null }),
-        ]);
-
-        clearTimeout(timeoutId);
-
-        // ✅ CRITICAL FIX: Check if this is still the current thread
-        // This prevents stale data from overwriting the new thread's messages
-        if (!mounted || loadingThreadId !== threadId) return;
-
-        if (messagesRes.error) {
-          setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
-          setMessagesLoading(false);
-          return;
-        }
-
-        if (messagesRes.data && messagesRes.data.length > 0) {
-          setMessages(
-            messagesRes.data.map((m) => ({
-              id: m.id ?? crypto.randomUUID(),
-              role: m.role as "user" | "assistant",
-              content: m.content || "",
-              parts: [{ type: "text" as const, text: m.content || "" }],
-              createdAt: m.created_at ? new Date(m.created_at) : new Date(),
-            })),
-          );
-        } else {
-          // ✅ Only clear if there are genuinely no messages
-          setMessages([]);
-        }
-
-        if (escalationRes.error) {
-          console.error("[Escalation] Failed to fetch status:", escalationRes.error.message);
-        }
-        setEscalationStatus((escalationRes.data?.status as any) || null);
-
-        // Build votes map from bulk feedback fetch
-        if (feedbackRes.data && feedbackRes.data.length > 0) {
-          const votesMap: Record<string, 1 | -1> = {};
-          for (const row of feedbackRes.data as any[]) {
-            if (row.message_id && row.vote != null) {
-              votesMap[row.message_id] = row.vote as 1 | -1;
-            }
+    try {
+      const [messagesRes, escalationRes, feedbackRes] = await Promise.all([
+        supabase
+          .from("messages")
+          .select("*")
+          .eq("conversation_id", threadId)
+          .order("created_at", { ascending: true }),
+        (async () => {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            return await supabase
+              .from("escalations")
+              .select("status")
+              .eq("conversation_id", threadId)
+              .eq("user_id", user?.id ?? "")
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+          } catch {
+            return { data: null, error: null };
           }
-          setUserVotes(votesMap);
-        } else {
-          setUserVotes({});
-        }
+        })(),
+        userId
+          ? supabase
+              .from("message_feedback")
+              .select("message_id, vote")
+              .eq("user_id", userId)
+          : Promise.resolve({ data: null, error: null }),
+      ]);
 
-        setMessagesLoading(false);
-      } catch (e) {
-        clearTimeout(timeoutId);
-        if (mounted) {
-          setMessagesLoadError("Connection failed. Try refreshing.");
-          setMessagesLoading(false);
-        }
-      }
-    })();
-
-    return () => {
-      mounted = false;
       if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [threadId, setMessages]);
+
+      // Verify that the thread hasn't changed since starting the load
+      if (Route.useParams().threadId !== threadId) return;
+
+      if (messagesRes.error) {
+        if (!silent) setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
+        setMessagesLoading(false);
+        return;
+      }
+
+      if (messagesRes.data && messagesRes.data.length > 0) {
+        setMessages(
+          messagesRes.data.map((m) => ({
+            id: m.id ?? crypto.randomUUID(),
+            role: m.role as "user" | "assistant",
+            content: m.content || "",
+            parts: [{ type: "text" as const, text: m.content || "" }],
+            createdAt: m.created_at ? new Date(m.created_at) : new Date(),
+          })),
+        );
+      } else {
+        setMessages([]);
+      }
+
+      if (escalationRes.error) {
+        console.error("[Escalation] Failed to fetch status:", escalationRes.error.message);
+      }
+      setEscalationStatus((escalationRes.data?.status as any) || null);
+
+      if (feedbackRes.data && feedbackRes.data.length > 0) {
+        const votesMap: Record<string, 1 | -1> = {};
+        for (const row of feedbackRes.data as any[]) {
+          if (row.message_id && row.vote != null) {
+            votesMap[row.message_id] = row.vote as 1 | -1;
+          }
+        }
+        setUserVotes(votesMap);
+      } else {
+        setUserVotes({});
+      }
+    } catch (e) {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (!silent) {
+        setMessagesLoadError("Connection failed. Try refreshing.");
+      }
+    } finally {
+      setMessagesLoading(false);
+    }
+  }, [threadId, userId, setMessages]);
+
+  // Load messages on mount/thread switch
+  useEffect(() => {
+    loadMessages(false);
+  }, [loadMessages]);
+
+  // When isPending transitions from true to false, reload messages to fetch actual database UUIDs
+  const prevPendingRef = useRef(isPending);
+  useEffect(() => {
+    if (prevPendingRef.current && !isPending) {
+      const timer = setTimeout(() => {
+        loadMessages(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+    prevPendingRef.current = isPending;
+  }, [isPending, loadMessages]);
 
   // Real-time escalation status
   useEffect(() => {
@@ -773,6 +775,16 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           onPromptClick={handlePromptClick}
           userId={userId}
           userVotes={userVotes}
+          onVote={(msgId: string, vote: 1 | -1 | null) => {
+            setUserVotes((prev) => {
+              if (vote === null) {
+                const next = { ...prev };
+                delete next[msgId];
+                return next;
+              }
+              return { ...prev, [msgId]: vote };
+            });
+          }}
         />
 
         </div>

@@ -16,6 +16,7 @@ type Props = {
   userId?: string | null;
   /** Map of messageId → vote, bulk-loaded at page level to eliminate N+1 queries */
   userVotes?: Record<string, 1 | -1>;
+  onVote?: (messageId: string, vote: 1 | -1 | null) => void;
 };
 
 export const MessageList = React.memo(function MessageList({
@@ -29,6 +30,7 @@ export const MessageList = React.memo(function MessageList({
   onEdit,
   userId,
   userVotes,
+  onVote,
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -102,6 +104,7 @@ export const MessageList = React.memo(function MessageList({
             onEdit={onEdit}
             userId={userId}
             initialVote={userVotes?.[m.id] ?? null}
+            onVote={onVote}
           />
         ))}
 

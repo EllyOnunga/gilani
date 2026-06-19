@@ -1,7 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+
+const LazyMarkdownRenderer = lazy(() =>
+  import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer }))
+);
+
 import { NewsletterSubscribe } from "@/components/NewsletterSubscribe";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -67,41 +72,51 @@ const loadDashboardData = createServerFn({ method: "GET" })
     const userId = authResult.userId;
     const { localDate } = data;
 
-    // 1. Fetch user profile (display name, curriculum, plan, created_at)
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("display_name, plan, curriculum, created_at")
-      .eq("id", userId)
-      .maybeSingle();
+    // 1. Fetch dashboard data in parallel (profile, quiz attempts, messages, notes, study plans, and streak)
+    const [
+      profileRes,
+      attemptsRes,
+      messagesRes,
+      notesRes,
+      planRes,
+      streakAndStats,
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("display_name, plan, curriculum, created_at")
+        .eq("id", userId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("quiz_attempts")
+        .select("id")
+        .eq("user_id", userId),
+      supabaseAdmin
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId),
+      supabaseAdmin
+        .from("notes")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId),
+      supabaseAdmin
+        .from("study_plans")
+        .select("items")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      import("@/lib/analytics-utils.server").then(({ calculateUserStreakAndStats }) =>
+        calculateUserStreakAndStats(userId)
+      ),
+    ]);
 
-    // 2. Fetch quiz attempts count
-    const { data: attempts } = await supabaseAdmin
-      .from("quiz_attempts")
-      .select("id")
-      .eq("user_id", userId);
-
+    const profile = profileRes.data;
+    const attempts = attemptsRes.data;
     const quizCount = attempts?.length ?? 0;
-
-    // 3. Fetch total messages count
-    const { count: messagesCount } = await supabaseAdmin
-      .from("messages")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId);
-
-    // 4. Fetch total notes / documents uploaded
-    const { count: notesCount } = await supabaseAdmin
-      .from("notes")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId);
-
-    // 5. Fetch the latest study plan
-    const { data: plan } = await supabaseAdmin
-      .from("study_plans")
-      .select("items")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const messagesCount = messagesRes.count;
+    const notesCount = notesRes.count;
+    const plan = planRes.data;
+    const { streak } = streakAndStats;
 
     let plannerTasks: { subject: string; task: string; duration: string }[] = [];
     let revisionTopics: { subject: string; topic: string }[] = [];
@@ -146,8 +161,6 @@ const loadDashboardData = createServerFn({ method: "GET" })
       revisionTopics = revisionTopics.slice(0, 5);
     }
 
-    const { calculateUserStreakAndStats } = await import("@/lib/analytics-utils.server");
-    const { streak } = await calculateUserStreakAndStats(userId);
 
     // Format member since date
     const memberSince = profile?.created_at
@@ -451,7 +464,11 @@ function Dashboard() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold leading-tight">{t.subject}</p>
-                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{t.task}</p>
+                      <div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-full">
+                        <Suspense fallback={<span>{t.task}</span>}>
+                          <LazyMarkdownRenderer content={t.task} />
+                        </Suspense>
+                      </div>
                     </div>
                     <span className="flex-shrink-0 font-mono text-[10px] text-muted-foreground bg-background border border-border/50 rounded-md px-1.5 py-0.5">
                       {t.duration}
@@ -498,7 +515,11 @@ function Dashboard() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold leading-tight">{rt.subject}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{rt.topic}</p>
+                      <div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-full">
+                        <Suspense fallback={<span>{rt.topic}</span>}>
+                          <LazyMarkdownRenderer content={rt.topic} />
+                        </Suspense>
+                      </div>
                     </div>
                     <Link
                       to="/quizzes" search={{ topic: rt.topic } as any}

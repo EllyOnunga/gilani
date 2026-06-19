@@ -56,6 +56,7 @@ function formatFileSize(bytes: number): string {
 function useRateLimitCountdown(errorMsg: string | null) {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [isDaily, setIsDaily] = useState(false);
+  const [maxSeconds, setMaxSeconds] = useState(60);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -66,6 +67,7 @@ function useRateLimitCountdown(errorMsg: string | null) {
     const secs = match ? parseInt(match[1], 10) : 0;
     if (secs > 0) {
       setSecondsLeft(secs);
+      setMaxSeconds(secs);
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         setSecondsLeft((prev) => {
@@ -77,7 +79,7 @@ function useRateLimitCountdown(errorMsg: string | null) {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [errorMsg]);
 
-  return { secondsLeft, isDaily };
+  return { secondsLeft, isDaily, maxSeconds };
 }
 
 // ─── JSON Repair Helper ───────────────────────────────────────────────────────
@@ -604,7 +606,7 @@ function NotesPage() {
     notesRateError?.toLowerCase().includes("limit") ||
     notesRateError?.toLowerCase().includes("rate")
   );
-  const { secondsLeft, isDaily } = useRateLimitCountdown(isRateLimited ? notesRateError : null);
+  const { secondsLeft, isDaily, maxSeconds } = useRateLimitCountdown(isRateLimited ? notesRateError : null);
 
   // Restore rate limit warning after page refresh
   useEffect(() => {
@@ -737,7 +739,11 @@ function NotesPage() {
             : content,
         },
       });
-      setNotes((prev) => [note as Note, ...prev]);
+      setNotes((prev) => {
+        const next = [note as Note, ...prev];
+        setCachedNotes(next);
+        return next;
+      });
       setTitle("");
       setContent("");
       setAttachedFile(null);
@@ -782,7 +788,11 @@ ${content}`.trim()
         120000,
         "Saving note timed out. Please try again.",
       );
-      setNotes((prev) => [note as Note, ...prev]);
+      setNotes((prev) => {
+        const next = [note as Note, ...prev];
+        setCachedNotes(next);
+        return next;
+      });
       setTitle("");
       setContent("");
       setAttachedFile(null);
@@ -880,7 +890,7 @@ ${content}`.trim()
             <div className="h-0.5 bg-amber-200/50 dark:bg-amber-800/50">
               <div
                 className="h-full bg-amber-400 dark:bg-amber-500 transition-all duration-1000 ease-linear"
-                style={{ width: `${Math.min(100, (secondsLeft / (isDaily ? 86400 : 60)) * 100)}%` }}
+                style={{ width: `${secondsLeft > 0 && maxSeconds > 0 ? Math.min(100, (secondsLeft / maxSeconds) * 100) : 0}%` }}
               />
             </div>
           )}

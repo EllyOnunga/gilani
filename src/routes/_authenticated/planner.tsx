@@ -848,9 +848,12 @@ function PlannerPage() {
                           {task.task}
                         </p>
                         {task.study_tip && (
-                          <p className="text-xs text-primary/80 mt-2 bg-primary/5 border border-primary/15 rounded-lg px-3 py-2 leading-relaxed">
-                            💡 <Suspense fallback={<span>{task.study_tip}</span>}><LazyMarkdownRenderer content={task.study_tip} /></Suspense>
-                          </p>
+                          <div className="text-xs text-primary/80 mt-2 bg-primary/5 border border-primary/15 rounded-lg px-3 py-2 leading-relaxed flex items-start gap-1">
+                            <span>💡</span>
+                            <Suspense fallback={<span>{task.study_tip}</span>}>
+                              <LazyMarkdownRenderer content={task.study_tip} />
+                            </Suspense>
+                          </div>
                         )}
                       </div>
                       <span className="font-mono text-[10px] text-muted-foreground flex-shrink-0 whitespace-nowrap bg-muted/60 rounded-full px-2 py-0.5">
@@ -862,9 +865,11 @@ function PlannerPage() {
               </div>
 
               {dailyQuote && (
-                <p className="mt-2 text-[11px] text-muted-foreground italic text-center border-t border-border/40 pt-3 px-4">
-                  <Suspense fallback={<span>&ldquo;{dailyQuote}&rdquo;</span>}><LazyMarkdownRenderer content={dailyQuote} /></Suspense>
-                </p>
+                <div className="mt-2 text-[11px] text-muted-foreground italic text-center border-t border-border/40 pt-3 px-4 flex items-center justify-center gap-0.5">
+                  <Suspense fallback={<span>&ldquo;{dailyQuote}&rdquo;</span>}>
+                    <LazyMarkdownRenderer content={dailyQuote} />
+                  </Suspense>
+                </div>
               )}
             </div>
           );

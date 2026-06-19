@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { FileText, Loader2, Paperclip, Send, Square, Trash2, AlertCircle, Clock, CreditCard, X } from "lucide-react";
 
 type AttachedFile = {
@@ -49,13 +49,16 @@ function formatTime(seconds: number): string {
 function useRateLimitCountdown(chatError: string | null) {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [isDaily, setIsDaily] = useState(false);
+  const [maxSeconds, setMaxSeconds] = useState(60);
+  const [customMessage, setCustomMessage] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!chatError) { setSecondsLeft(0); return; }
+    if (!chatError) { setSecondsLeft(0); setCustomMessage(null); return; }
 
     let secs = 0;
     let daily = chatError.toLowerCase().includes("daily");
+    let msg: string | null = null;
 
     // Try to parse JSON from Supabase/API response
     try {
@@ -66,6 +69,7 @@ function useRateLimitCountdown(chatError: string | null) {
       if (parsed.isDaily !== undefined) {
         daily = !!parsed.isDaily;
       }
+      msg = parsed.error || parsed.message || null;
     } catch {
       // Fallback: Parse "Try again in Xs" or "Resets in Xs"
       const match = chatError.match(/(?:Try again|Resets) in (\d+)s/);
@@ -75,9 +79,11 @@ function useRateLimitCountdown(chatError: string | null) {
     }
 
     setIsDaily(daily);
+    setCustomMessage(msg);
 
     if (secs > 0) {
       setSecondsLeft(secs);
+      setMaxSeconds(secs);
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         setSecondsLeft((s) => {
@@ -89,7 +95,7 @@ function useRateLimitCountdown(chatError: string | null) {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [chatError]);
 
-  return { secondsLeft, isDaily };
+  return { secondsLeft, isDaily, maxSeconds, customMessage };
 }
 
 export function ChatInput({
@@ -111,13 +117,33 @@ export function ChatInput({
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const isRateLimited = !!(
-    chatError?.includes("Rate limit") ||
-    chatError?.includes("rate limit") ||
-    chatError?.includes("Daily") ||
-    chatError?.includes("quota")
-  );
-  const { secondsLeft, isDaily } = useRateLimitCountdown(isRateLimited ? chatError : null);
+  const isRateLimited = useMemo(() => {
+    if (!chatError) return false;
+    try {
+      const parsed = JSON.parse(chatError);
+      if (parsed.retryAfterMs || parsed.isDaily || (parsed.error && (
+        parsed.error.toLowerCase().includes("limit") ||
+        parsed.error.toLowerCase().includes("daily") ||
+        parsed.error.toLowerCase().includes("quota") ||
+        parsed.error.toLowerCase().includes("slow down")
+      ))) {
+        return true;
+      }
+    } catch {
+      // ignore
+    }
+    const errLower = chatError.toLowerCase();
+    return (
+      errLower.includes("rate limit") ||
+      errLower.includes("daily") ||
+      errLower.includes("quota") ||
+      errLower.includes("slow down") ||
+      errLower.includes("too many requests") ||
+      errLower.includes("exceeded")
+    );
+  }, [chatError]);
+
+  const { secondsLeft, isDaily, maxSeconds, customMessage } = useRateLimitCountdown(isRateLimited ? chatError : null);
   const isDisabled = isPending || parsingFile || isRateLimited;
 
   useEffect(() => {
@@ -136,8 +162,8 @@ export function ChatInput({
     }
   };
 
-  const progressPct = secondsLeft > 0
-    ? Math.min(100, (secondsLeft / (isDaily ? 86400 : 60)) * 100)
+  const progressPct = secondsLeft > 0 && maxSeconds > 0
+    ? Math.min(100, (secondsLeft / maxSeconds) * 100)
     : 0;
 
   return (
@@ -157,10 +183,10 @@ export function ChatInput({
               <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
                 {isDaily ? "Daily limit reached" : "Slow down a little…"}
               </p>
-              <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
-                {isDaily
+              <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-0.5 font-medium leading-relaxed">
+                {customMessage || (isDaily
                   ? `You've hit your daily AI message cap.${secondsLeft > 0 ? ` Resets in ${formatTime(secondsLeft)}.` : " Resets at midnight (EAT)."}`
-                  : `You're sending messages too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`}
+                  : `You're sending messages too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`)}
               </p>
             </div>
             <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -188,6 +214,32 @@ export function ChatInput({
               />
             </div>
           )}
+        </div>
+      )}
+
+      {/* General AI/Server Error Banner */}
+      {chatError && !isRateLimited && (
+        <div className="mb-2.5 rounded-2xl border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 dark:border-destructive/30 backdrop-blur-sm shadow-sm animate-in-slide">
+          <div className="flex items-start gap-2.5 px-3.5 py-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <AlertCircle className="h-4 w-4 text-destructive dark:text-red-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-destructive dark:text-red-300">
+                Chat Session Issue
+              </p>
+              <p className="text-[11px] text-destructive/80 dark:text-red-400/85 mt-0.5 font-medium leading-relaxed">
+                {(() => {
+                  try {
+                    const parsed = JSON.parse(chatError);
+                    return parsed.error || parsed.message || chatError;
+                  } catch {
+                    return chatError;
+                  }
+                })()}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 

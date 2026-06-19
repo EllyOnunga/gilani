@@ -456,6 +456,7 @@ function AdminUsersPage() {
       await updateRole({ data: { userId, role } });
       setProfileState((prev) => prev.map((p) => (p.id === userId ? { ...p, role } : p)));
       toast.success(`Role updated to ${role}`);
+      loadDashboardData(true);
     } catch (err: any) {
       toast.error(friendlyError(err, "Failed to update role."));
     } finally {
@@ -469,6 +470,7 @@ function AdminUsersPage() {
       await updateMessageStatus({ data: { id, status } });
       setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)));
       toast.success(`Marked as ${status}`);
+      loadDashboardData(true);
     } catch (err: any) {
       toast.error(friendlyError(err, "Failed to update status."));
     } finally {
@@ -483,6 +485,7 @@ function AdminUsersPage() {
       await updateUserPlan({ data: { userId, plan: plan as any, planExpiry: expiry } });
       setProfileState((prev) => prev.map((p) => (p.id === userId ? { ...p, plan, plan_expiry: expiry } : p)));
       toast.success(`Plan updated to ${PLANS[plan as PlanId]?.label ?? plan}`);
+      loadDashboardData(true);
     } catch (err: any) {
       toast.error(friendlyError(err, "Failed to update plan."));
     } finally {
@@ -521,15 +524,25 @@ function AdminUsersPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-3 p-3 sm:p-6 lg:p-10">
       {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-5 border-b border-border/60 gap-4 text-center sm:text-left">
         <div>
           <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Admin Panel</p>
           <h1 className="mt-1 font-serif text-2xl sm:text-4xl text-foreground">Dashboard</h1>
           <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{profileState.length} users · {platformStats.totalConversations.toLocaleString()} convos · {platformStats.openEscalations} escalations</p>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-red-700 mt-1">
-          <Shield className="h-3 w-3" /> Admin
-        </span>
+        <div className="flex items-center justify-center sm:justify-end gap-2.5 mt-1 sm:mt-0">
+          <button
+            onClick={() => loadDashboardData(false)}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-50 transition-colors shadow-xs"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-red-700">
+            <Shield className="h-3 w-3" /> Admin
+          </span>
+        </div>
       </header>
 
       {/* Summary stats */}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { createServerFn } from "@tanstack/react-start";
@@ -414,28 +414,31 @@ function EscalationsPage() {
   const [convoMessages, setConvoMessages] = useState<any[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const authRes = await supabase.auth.getSession();
-        const session = authRes?.data?.session;
-        if (!session?.user?.id) {
-          if (mounted) setEscalations([]);
-          return;
-        }
-        const rows = await listEscalations();
-        if (mounted) setEscalations(rows as Escalation[]);
-      } catch (err: any) {
-        if (mounted) toast.error(friendlyError(err, "Failed to load escalations."));
-      } finally {
-        if (mounted) setLoading(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadEscalations = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
+    try {
+      const authRes = await supabase.auth.getSession();
+      const session = authRes?.data?.session;
+      if (!session?.user?.id) {
+        setEscalations([]);
+        return;
       }
-    })();
-    return () => {
-      mounted = false;
-    };
+      const rows = await listEscalations();
+      setEscalations(rows as Escalation[]);
+    } catch (err: any) {
+      toast.error(friendlyError(err, "Failed to load escalations."));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadEscalations();
+  }, [loadEscalations]);
 
   const open = async (id: string) => {
     setActiveId(id);
@@ -485,6 +488,7 @@ function EscalationsPage() {
           },
         });
       }
+      loadEscalations(true);
     } catch (err: any) {
       toast.error(friendlyError(err, "Failed to resolve escalation. Please try again."));
     } finally {
@@ -514,10 +518,11 @@ function EscalationsPage() {
             </p>
           </div>
           <button
-            onClick={() => window.location.reload()}
-            className="flex items-center gap-2 self-start sm:self-auto rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-accent transition-colors"
+            onClick={() => loadEscalations(true)}
+            disabled={refreshing}
+            className="flex items-center gap-2 self-start sm:self-auto rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-accent disabled:opacity-50 transition-colors"
           >
-            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} /> Refresh
           </button>
         </div>
       </header>
