@@ -12,7 +12,10 @@ type Props = {
   onReload: () => void;
   onPromptClick: (prompt: string) => void;
   onEdit?: (messageId: string, newText: string) => void;
-  userId?: string;
+  /** Resolved user ID passed from page level — avoids each bubble resolving its own session */
+  userId?: string | null;
+  /** Map of messageId → vote, bulk-loaded at page level to eliminate N+1 queries */
+  userVotes?: Record<string, 1 | -1>;
 };
 
 export const MessageList = React.memo(function MessageList({
@@ -25,6 +28,7 @@ export const MessageList = React.memo(function MessageList({
   onPromptClick,
   onEdit,
   userId,
+  userVotes,
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -65,7 +69,6 @@ export const MessageList = React.memo(function MessageList({
     return () => clearInterval(id);
   }, [isPending]);
 
-
   return (
     <div ref={scrollContainerRef} className={`flex-1 min-h-0 overflow-y-auto px-2 py-2 sm:pb-5 sm:px-5 sm:py-5 space-y-3 ${isRateLimited ? "pb-80" : "pb-56"}`}>
       {messagesLoading && (
@@ -98,9 +101,9 @@ export const MessageList = React.memo(function MessageList({
             onReload={onReload}
             onEdit={onEdit}
             userId={userId}
+            initialVote={userVotes?.[m.id] ?? null}
           />
         ))}
-
 
       {isPending && messages[messages.length - 1]?.role === "user" && (
         <div className="flex items-center gap-1.5 py-2 px-1 animate-in fade-in duration-300">
@@ -117,5 +120,4 @@ export const MessageList = React.memo(function MessageList({
       <div ref={messagesEndRef} />
     </div>
   );
-}
-);
+});

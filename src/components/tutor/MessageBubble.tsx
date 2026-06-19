@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, X, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +14,10 @@ type Props = {
   isRateLimited?: boolean;
   onReload: () => void;
   onEdit?: (messageId: string, newText: string) => void;
-  userId?: string;
+  /** Resolved user ID from the parent — avoids each bubble doing its own session fetch */
+  userId?: string | null;
+  /** Pre-loaded vote value from parent's bulk fetch — avoids N+1 queries */
+  initialVote?: 1 | -1 | null;
 };
 
 
@@ -24,24 +27,23 @@ const MemoMarkdown = React.memo(
   (prev, next) => prev.content === next.content
 );
 
-export const MessageBubble = React.memo(function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEdit, userId}: Props) {
+export const MessageBubble = React.memo(function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEdit, userId, initialVote}: Props) {
   const [copied, setCopied] = useState(false);
-  const [vote, setVote] = useState<1 | -1 | null>(null);
+  // Initialise from the parent's pre-loaded bulk fetch; fall back to null
+  const [vote, setVote] = useState<1 | -1 | null>(initialVote ?? null);
   const [voting, setVoting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const [collapsed, setCollapsed] = useState(true);
-  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
 
+  // Sync if parent re-delivers a different initialVote (e.g. after bulk reload)
+  const prevInitialVoteRef = useRef(initialVote);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setResolvedUserId(session?.user?.id ?? null);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => setResolvedUserId(session?.user?.id ?? null)
-    );
-    return () => subscription.unsubscribe();
-  }, []);
+    if (prevInitialVoteRef.current !== initialVote) {
+      prevInitialVoteRef.current = initialVote;
+      setVote(initialVote ?? null);
+    }
+  }, [initialVote]);
 
   const COLLAPSE_THRESHOLD = 300;
   const editRef = useRef<HTMLTextAreaElement>(null);
@@ -99,18 +101,8 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
   // Show thinking until we have enough text to stream smoothly
 
 
-  // Load existing vote for this message
-  useEffect(() => {
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m.id || "");
-    if (!resolvedUserId || !m.id || !isUUID || m.role !== "assistant") return;
-    supabase
-      .from("message_feedback")
-      .select("vote")
-      .eq("message_id", m.id)
-      .eq("user_id", resolvedUserId)
-      .maybeSingle()
-      .then(({ data }) => { if (data) setVote(data.vote as 1 | -1); });
-  }, [m.id, resolvedUserId, m.role]);
+  // NOTE: Individual vote loading removed — votes are now loaded in bulk at the
+  // page level and passed down via the `initialVote` prop, eliminating N+1 queries.
 
   const handleCopy = () => {
     navigator.clipboard.writeText(displayText);
@@ -121,7 +113,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
 
   const handleVote = async (v: 1 | -1) => {
     const isValidId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m.id || "");
-    if (!resolvedUserId || !m.id || !isValidId || voting) return;
+    if (!userId || !m.id || !isValidId || voting) return;
     const newVote = vote === v ? null : v;
     // Optimistic update — update UI immediately
     const previousVote = vote;
@@ -133,10 +125,10 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
     try {
       if (newVote === null) {
         await supabase.from("message_feedback").delete()
-          .eq("message_id", m.id).eq("user_id", resolvedUserId);
+          .eq("message_id", m.id).eq("user_id", userId);
       } else {
         await supabase.from("message_feedback").upsert(
-          { message_id: m.id, user_id: resolvedUserId, vote: newVote },
+          { message_id: m.id, user_id: userId, vote: newVote },
           { onConflict: "message_id,user_id" }
         );
       }

@@ -143,6 +143,8 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const [currentPlan, setCurrentPlan] = useState("free");
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
+  /** Map of messageId → vote, loaded in bulk once per thread load */
+  const [userVotes, setUserVotes] = useState<Record<string, 1 | -1>>({});
   const [threadsOpen, setThreadsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [escalationStatus, setEscalationStatus] = useState<
@@ -494,7 +496,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
     (async () => {
       try {
-        const [messagesRes, escalationRes] = await Promise.all([
+        const [messagesRes, escalationRes, feedbackRes] = await Promise.all([
           supabase
             .from("messages")
             .select("*")
@@ -515,6 +517,13 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
               return { data: null, error: null };
             }
           })(),
+          // Bulk-load all votes for this thread in one query
+          userId
+            ? supabase
+                .from("message_feedback")
+                .select("message_id, vote")
+                .eq("user_id", userId)
+            : Promise.resolve({ data: null, error: null }),
         ]);
 
         clearTimeout(timeoutId);
@@ -548,6 +557,20 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           console.error("[Escalation] Failed to fetch status:", escalationRes.error.message);
         }
         setEscalationStatus((escalationRes.data?.status as any) || null);
+
+        // Build votes map from bulk feedback fetch
+        if (feedbackRes.data && feedbackRes.data.length > 0) {
+          const votesMap: Record<string, 1 | -1> = {};
+          for (const row of feedbackRes.data as any[]) {
+            if (row.message_id && row.vote != null) {
+              votesMap[row.message_id] = row.vote as 1 | -1;
+            }
+          }
+          setUserVotes(votesMap);
+        } else {
+          setUserVotes({});
+        }
+
         setMessagesLoading(false);
       } catch (e) {
         clearTimeout(timeoutId);
@@ -748,6 +771,8 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           onReload={handleReload}
           onEdit={handleEdit}
           onPromptClick={handlePromptClick}
+          userId={userId}
+          userVotes={userVotes}
         />
 
         </div>

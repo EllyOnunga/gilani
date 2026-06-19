@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
@@ -390,6 +391,7 @@ function LoadingStep({ label, detail, index }: { label: string; detail: string; 
 // ─── Main Page Component ───────────────────────────────────────────────────────
 
 function QuizzesPage() {
+  const { user } = useAuth();
   const [questionCount, setQuestionCount] = useState(10);
   const [quizId, setQuizId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<MCQ[]>([]);
@@ -437,24 +439,21 @@ function QuizzesPage() {
   useEffect(() => {
     const fetchCurriculum = async () => {
       try {
-        const res = await supabase.auth.getSession();
-        const session = res?.data?.session;
-        if (session?.user?.id) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("curriculum")
-            .eq("id", session.user.id)
-            .maybeSingle();
-          if (profile?.curriculum) {
-            setCurriculum(profile.curriculum as CurriculumType);
-          }
+        if (!user?.id) return;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("curriculum")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (profile?.curriculum) {
+          setCurriculum(profile.curriculum as CurriculumType);
         }
       } catch (err) {
         console.error("Failed to fetch curriculum:", err);
       }
     };
     fetchCurriculum();
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     if (topicFromUrl) setCustomTopic(topicFromUrl);
@@ -466,9 +465,7 @@ function QuizzesPage() {
     setIsGenerating(true);
     setPhase("loading");
     try {
-      const res = await supabase.auth.getSession();
-      const session = res?.data?.session;
-      if (!session) {
+      if (!user) {
         toast.error("Not signed in");
         setIsGenerating(false);
         setPhase("setup");
@@ -546,9 +543,7 @@ function QuizzesPage() {
       .filter((_, i) => userAnswers[i] !== questions[i].correct)
       .map((q) => q.subtopic || fallbackTopic);
     try {
-      const res = await supabase.auth.getSession();
-      const session = res?.data?.session;
-      if (session && quizId) {
+      if (user && quizId) {
         await withTimeout(
           saveAttempt({
             data: {

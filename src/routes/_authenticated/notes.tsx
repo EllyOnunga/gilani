@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
@@ -565,6 +566,7 @@ function setCachedNotes(notes: Note[]) {
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 function NotesPage() {
+  const { user } = useAuth();
   const initialNotes = Route.useLoaderData() as Note[];
   const [notes, setNotes] = useState<Note[]>(() => {
     // Seed from loader if available, otherwise fall back to cache
@@ -724,9 +726,7 @@ function NotesPage() {
     }
     setSaving(true);
     try {
-      const res = await supabase.auth.getSession();
-      const session = res?.data?.session;
-      if (!session) { toast.error("Not signed in"); return; }
+      if (!user) { toast.error("Not signed in"); return; }
       const note = await saveNoteOnly({
         data: {
           title,
@@ -760,9 +760,7 @@ function NotesPage() {
     setSummarising(true);
     setSaving(true);
     try {
-      const res = await supabase.auth.getSession();
-      const session = res?.data?.session;
-      if (!session) {
+      if (!user) {
         toast.error("Not signed in");
         return;
       }

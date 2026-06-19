@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import {
@@ -478,6 +478,7 @@ function todayStr() {
 }
 
 function PlannerPage() {
+  const { user } = useAuth();
   const [plan, setPlan] = useState<StudyPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [initialised, setInitialised] = useState(false);
@@ -514,12 +515,11 @@ function PlannerPage() {
   useEffect(() => {
     const init = async () => {
       if (initialised) return;
+      // Wait for auth to resolve before loading
+      if (!user) return;
       setLoading(true);
       setError(null);
       try {
-        const res = await supabase.auth.getSession();
-        const session = res?.data?.session;
-        if (!session) return;
         const existing = await withTimeout(loadPlan(), 20000, "Loading study plan timed out.");
         if (existing) {
           setPlan(existing);
@@ -533,19 +533,14 @@ function PlannerPage() {
       }
     };
     init();
-  }, [initialised]);
+  }, [initialised, user]);
 
   const handleGenerate = async () => {
+    if (!user) { toast.error("Not signed in"); return; }
     setLoading(true);
     setError(null);
     setDebugInfo("Generating...");
     try {
-      const res = await supabase.auth.getSession();
-      const session = res?.data?.session;
-      if (!session) {
-        toast.error("Not signed in");
-        return;
-      }
       const newPlan = await withTimeout(generatePlan(), 120000, "Generating study plan timed out.");
       setPlan(newPlan);
       setCompleted(new Set());
