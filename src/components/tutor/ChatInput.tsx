@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FileText, Loader2, Paperclip, Send, Trash2, AlertCircle, Clock, CreditCard, X } from "lucide-react";
+import { FileText, Loader2, Paperclip, Send, Square, Trash2, AlertCircle, Clock, CreditCard, X } from "lucide-react";
 
 type AttachedFile = {
   name: string;
@@ -20,6 +20,7 @@ type Props = {
   onRemoveFile: () => void;
   onClearDocError: () => void;
   onUpgrade?: () => void;
+  onStop?: () => void;
   messagesUsed?: number;
   messagesMax?: number;
 };
@@ -104,6 +105,7 @@ export function ChatInput({
   onRemoveFile,
   onClearDocError,
   onUpgrade,
+  onStop,
   messagesUsed = 0,
   messagesMax = 10,
 }: Props) {
@@ -264,11 +266,17 @@ export function ChatInput({
           disabled={isDisabled} onKeyDown={handleKeyDown} style={{ maxHeight: 160 }} />
 
         <div className="pb-2 pr-2 pt-2">
-          <button type="button" onClick={(e) => onSubmit(e as any)}
-            disabled={isDisabled || (!input.trim() && !attachedFile)}
-            className={`flex h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 ${isDisabled || (!input.trim() && !attachedFile) ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed" : "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-primary/20 hover:scale-105 active:scale-95 hover:-translate-y-0.5"}`}
-            title="Send (Enter)">
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          <button type="button" onClick={(e) => { if (isPending) { onStop?.(); } else { onSubmit(e as any); } }}
+            disabled={!isPending && (isDisabled || (!input.trim() && !attachedFile))}
+            className={`flex h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center transition-all duration-200 ${
+              isPending
+                ? "rounded-lg bg-primary text-primary-foreground shadow-md hover:bg-primary/90 active:scale-95"
+                : isDisabled || (!input.trim() && !attachedFile)
+                  ? "rounded-full bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                  : "rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-primary/20 hover:scale-105 active:scale-95 hover:-translate-y-0.5"
+            }`}
+            title={isPending ? "Stop generating" : "Send (Enter)"}>
+            {isPending ? <Square className="h-3.5 w-3.5 fill-current" /> : <Send className="h-4 w-4" />}
           </button>
         </div>
       </div>

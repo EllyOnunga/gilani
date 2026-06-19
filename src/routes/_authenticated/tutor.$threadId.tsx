@@ -303,7 +303,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     },
   });
 
-  const { messages: messagesRaw, setMessages, sendMessage, status, regenerate } = chatHelpers;
+  const { messages: messagesRaw, setMessages, sendMessage, stop, status, regenerate } = chatHelpers;
   const handleReload = useCallback(() => regenerate({ body: { isRetry: true } }), [regenerate]);
   const handlePromptClick = useCallback((prompt: string) => setInput(prompt), [setInput]);
   const messages = messagesRaw as UIMessage[];
@@ -764,6 +764,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           onClearDocError={() => setDocUploadError(null)}
           onInputChange={handleInputChange}
           onSubmit={submit}
+          onStop={stop}
           onFileChange={handleFileChange}
           onRemoveFile={() => {
             setAttachedFile(null);
