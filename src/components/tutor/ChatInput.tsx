@@ -239,7 +239,7 @@ export function ChatInput({
       )}
 
       {/* Main input */}
-      <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-muted/30 backdrop-blur-md shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:bg-card focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-4 focus-within:ring-primary/5">
+      <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-4 focus-within:ring-primary/5">
         {/* Attach button */}
         <div className="pb-2 pl-2 pt-2">
           <input type="file" id="chat-file-attachment" className="sr-only"
