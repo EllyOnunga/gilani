@@ -921,13 +921,13 @@ ${content}`.trim()
             <div className="relative rounded-xl border border-border bg-background p-3 overflow-hidden">
               <input
                 type="file"
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 disabled:cursor-not-allowed"
-                accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/csv,.pdf,.docx,.doc,.txt,.md,.csv"
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-20 disabled:cursor-not-allowed"
+                accept=".pdf,.docx,.doc,.txt,.md,.csv"
                 onChange={handleFileChange}
                 disabled={parsingFile}
               />
               <div
-                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors w-full text-center ${parsingFile ? "opacity-50 bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
+                className={`pointer-events-none flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors w-full text-center ${parsingFile ? "opacity-50 bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
               >
                 {parsingFile
                   ? <><Loader2 className="h-4 w-4 animate-spin" /><span>Parsing document...</span></>

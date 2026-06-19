@@ -244,15 +244,15 @@ export function ChatInput({
       <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-4 focus-within:ring-primary/5">
         {/* Attach button */}
         <div className="relative pb-2 pl-2 pt-2 overflow-hidden flex items-center justify-center">
-          <input type="file" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 disabled:cursor-not-allowed"
-            accept=".pdf,.docx,.doc,.txt,.md,.csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/csv"
+          <input type="file" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-20 disabled:cursor-not-allowed"
+            accept=".pdf,.docx,.doc,.txt,.md,.csv"
             onChange={(e) => {
               onFileChange(e);
               e.target.value = "";
             }}
             disabled={isDisabled} />
           <div
-            className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 ${isDisabled ? "opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
+            className={`pointer-events-none flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 ${isDisabled ? "opacity-40" : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"}`}
             title="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)">
             {parsingFile ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Paperclip className="h-4 w-4" />}
           </div>
