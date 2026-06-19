@@ -648,8 +648,8 @@ function AdminUsersPage() {
           </div>
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm min-w-[320px]">
+            <div className="overflow-x-auto scrollbar-none">
+              <table className="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     {["User", "Email", "Conversations", "Curriculum", "Joined", "Role"].map((h) => (
@@ -698,55 +698,7 @@ function AdminUsersPage() {
               </table>
             </div>
 
-            <div className="block md:hidden divide-y divide-border/50">
-              {filtered.length === 0 && (
-                <div className="py-8 text-center font-serif text-muted-foreground">No users found</div>
-              )}
-              {filtered.map((p) => {
-                const meta = ROLE_META[p.role as Role] ?? ROLE_META.student;
-                const isUpdating = updating === p.id;
-                return (
-                  <div key={p.id} className="p-4 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-sm">{p.display_name ?? "—"}</p>
-                        <p className="font-mono text-[9px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
-                      </div>
-                      <span className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wider ${meta.color}`}>{p.role}</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border/40 font-mono text-muted-foreground">
-                      <div className="col-span-2">
-                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">Email</span>
-                        <span className="break-all">{p.email ?? "—"}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">Curriculum</span>
-                        <span className="capitalize">{p.plan ?? "—"}</span>
-                      </div>
-                      <div>
-                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">Convos</span>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 px-1 py-0.5 text-blue-700 text-[9px] font-mono mt-0.5">
-                          {p.conversation_count ?? 0}
-                        </span>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                      <span className="text-xs font-semibold text-muted-foreground font-mono text-[9px] uppercase">Change Role</span>
-                      <div className="flex items-center gap-2">
-                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
-                          <select value={p.role} onChange={(e) => handleRoleChange(p.id, e.target.value)}
-                            className="rounded border border-border bg-background px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
-                            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                          </select>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
             <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
               <p className="font-mono text-[10px] text-muted-foreground">{filtered.length} of {profileState.length} users</p>
             </div>
@@ -786,8 +738,8 @@ function AdminUsersPage() {
 
           {feedback.length > 0 && (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-sm min-w-[320px]">
+              <div className="overflow-x-auto scrollbar-none">
+                <table className="w-full text-sm min-w-[460px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["User", "Vote", "Message ID", "Date"].map((h) => (
@@ -818,34 +770,7 @@ function AdminUsersPage() {
                 </table>
               </div>
 
-              <div className="block md:hidden divide-y divide-border/50">
-                {feedback.map((f) => (
-                  <div key={f.id} className="p-4 space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold text-sm">{f.profiles?.display_name ?? "—"}</p>
-                        <p className="font-mono text-[9px] text-muted-foreground">{f.user_id?.slice(0, 8)}…</p>
-                      </div>
-                      <div>
-                        {f.vote === 1
-                          ? <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-2 py-0.5 font-mono text-[8px] text-green-700"><ThumbsUp className="h-2.5 w-2.5" /> Good</span>
-                          : <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-2 py-0.5 font-mono text-[8px] text-red-700"><ThumbsDown className="h-2.5 w-2.5" /> Bad</span>
-                        }
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-[11px] pt-1 border-t border-border/40 font-mono text-muted-foreground">
-                      <div>
-                        <span className="text-[9px] block uppercase text-muted-foreground">Message ID</span>
-                        <span>{f.message_id?.slice(0, 12)}…</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[9px] block uppercase text-muted-foreground">Date</span>
-                        <span>{formatDate(f.created_at)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{feedback.length} total responses</p>
               </div>
@@ -965,8 +890,8 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-sm min-w-[320px]">
+              <div className="overflow-x-auto scrollbar-none">
+                <table className="w-full text-sm min-w-[500px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["Key", "Hits", "Resets At", "Status"].map((h) => (
@@ -1000,39 +925,7 @@ function AdminUsersPage() {
                 </table>
               </div>
 
-              <div className="block md:hidden divide-y divide-border/50">
-                {filteredRateLimits.map((r) => {
-                  const resetDate = new Date(r.reset_at);
-                  const isActive = !isNaN(resetDate.getTime()) && resetDate > new Date();
-                  return (
-                    <div key={r.key} className="p-4 space-y-2">
-                      <div className="flex justify-between items-start">
-                        <div className="min-w-0 flex-1 mr-2 font-mono">
-                          <span className="text-[9px] block uppercase text-muted-foreground">Key</span>
-                          <p className="text-xs truncate break-all" title={r.key}>{r.key}</p>
-                        </div>
-                        <div className="flex-shrink-0 text-right font-mono">
-                          <span className="text-[9px] block uppercase text-muted-foreground">Hits</span>
-                          <span className={`font-bold text-sm ${r.count > 10 ? "text-destructive" : r.count > 5 ? "text-amber-600" : "text-foreground"}`}>{r.count}</span>
-                        </div>
-                      </div>
-                      <div className="flex justify-between text-xs pt-1 border-t border-border/50 font-mono text-muted-foreground">
-                        <div>
-                          <span className="text-[9px] block uppercase text-muted-foreground">Resets At</span>
-                          <span>{formatDateTime(r.reset_at)}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[9px] block uppercase text-muted-foreground">Status</span>
-                          {isActive
-                            ? <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-1.5 py-px font-mono text-[9px] text-red-700">Active</span>
-                            : <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-1.5 py-px font-mono text-[9px] text-green-700">Expired</span>
-                          }
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+
               <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{filteredRateLimits.length} keys</p>
               </div>
@@ -1062,8 +955,8 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm min-w-[320px]">
+            <div className="overflow-x-auto scrollbar-none">
+              <table className="w-full text-sm min-w-[580px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     {["Student", "Reason", "Status", "Reviewer", "Date"].map((h) => (
@@ -1097,36 +990,7 @@ function AdminUsersPage() {
               </table>
             </div>
 
-            <div className="block md:hidden divide-y divide-border/50">
-              {filteredEscalations.map((esc) => (
-                <div key={esc.id} className="p-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold text-sm">{esc.profiles?.display_name ?? "—"}</p>
-                      <p className="font-mono text-[9px] text-muted-foreground">{esc.profiles?.email ?? (esc.user_id ? esc.user_id.slice(0, 8) + "…" : "—")}</p>
-                    </div>
-                    <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
-                        esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
-                          "text-amber-600 bg-amber-50 border-amber-200"
-                      }`}>{esc.status}</span>
-                  </div>
-                  <div className="pt-1 border-t border-border/50 text-xs">
-                    <span className="text-[9px] font-mono block uppercase text-muted-foreground">Reason / Detail</span>
-                    <p className="text-foreground leading-relaxed mt-0.5">{esc.detail || esc.reason}</p>
-                  </div>
-                  <div className="flex justify-between text-xs pt-1 border-t border-border/50 font-mono text-muted-foreground">
-                    <div>
-                      <span className="text-[9px] block uppercase text-muted-foreground">Reviewer</span>
-                      <span>{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[9px] block uppercase text-muted-foreground">Date</span>
-                      <span>{formatDate(esc.created_at)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{filteredEscalations.length} escalations shown</p>
               </div>
@@ -1189,9 +1053,8 @@ function AdminUsersPage() {
               className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
 
-          <div className="hidden md:block overflow-x-auto">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[320px]">
+          <div className="overflow-x-auto scrollbar-none">
+              <table className="w-full text-sm min-w-[560px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     {["User", "Email", "Plan", "Expires", "Action"].map((h) => (
@@ -1244,10 +1107,9 @@ function AdminUsersPage() {
                   })}
                 </tbody>
               </table>
-            </div>
           </div>
 
-          <div className="block md:hidden rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="hidden">
             {filteredForPlans.length === 0 && (
               <div className="py-12 text-center font-serif text-muted-foreground">No users found</div>
             )}
@@ -1319,8 +1181,8 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm min-w-[320px]">
+            <div className="overflow-x-auto scrollbar-none">
+              <table className="w-full text-sm min-w-[700px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     {["User", "Plan", "Amount", "Phone", "Receipt", "Status", "Date"].map((h) => (
@@ -1354,45 +1216,7 @@ function AdminUsersPage() {
               </table>
             </div>
 
-            <div className="block md:hidden divide-y divide-border/50">
-              {payments.map((pay) => (
-                <div key={pay.id} className="p-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold text-sm">{pay.profiles?.display_name ?? "—"}</p>
-                      <p className="font-mono text-[9px] text-muted-foreground">{pay.profiles?.email ?? (pay.user_id ? `${pay.user_id.slice(0, 8)}…` : "—")}</p>
-                    </div>
-                    <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[8px] uppercase tracking-wider ${pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
-                        pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
-                          "text-amber-600 bg-amber-50 border-amber-200"
-                      }`}>{pay.status}</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border/50 font-mono text-muted-foreground">
-                    <div>
-                      <span className="text-[9px] block uppercase text-muted-foreground">Plan</span>
-                      <span className="capitalize">{pay.plan}</span>
-                    </div>
-                    <div>
-                      <span className="text-[9px] block uppercase text-muted-foreground">Amount</span>
-                      <span className="font-semibold text-foreground">KES {pay.amount.toLocaleString()}</span>
-                    </div>
-                    <div>
-                      <span className="text-[9px] block uppercase text-muted-foreground">Phone</span>
-                      <span>{pay.phone_number}</span>
-                    </div>
-                    <div>
-                      <span className="text-[9px] block uppercase text-muted-foreground">Receipt</span>
-                      <span>{pay.mpesa_receipt ?? "—"}</span>
-                    </div>
-                  </div>
 
-                  <div className="pt-1 border-t border-border/50 text-right font-mono text-[9px] text-muted-foreground">
-                    <span>Date: {formatDate(pay.created_at)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
               <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{payments.length} payments · KES {totalRevenue.toLocaleString()} completed</p>
               </div>
@@ -1505,8 +1329,8 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm min-w-[320px]">
+            <div className="overflow-x-auto scrollbar-none">
+              <table className="w-full text-sm min-w-[440px]">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     {["Email", "Name", "Status", "Subscribed"].map(h => (
@@ -1533,25 +1357,7 @@ function AdminUsersPage() {
               </table>
             </div>
 
-            <div className="block md:hidden divide-y divide-border/50">
-              {newsletter.map((s) => (
-                <div key={s.id} className="p-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div className="min-w-0 flex-1 mr-2">
-                      <p className="font-mono text-xs font-semibold truncate break-all" title={s.email}>{s.email}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{s.name ?? "—"}</p>
-                    </div>
-                    <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
-                      {s.status}
-                    </span>
-                  </div>
-                  <div className="pt-1 border-t border-border/50 flex justify-between font-mono text-[9px] text-muted-foreground">
-                    <span>Subscribed</span>
-                    <span>{new Date(s.subscribed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
                 <p className="font-mono text-[10px] text-muted-foreground">{newsletter.length} total subscribers</p>
               </div>
