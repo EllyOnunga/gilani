@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,6 +16,10 @@ export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Keep refs of user/session to avoid stale closures in auth subscription callbacks
+  const userRef = useRef<User | null>(null);
+  const sessionRef = useRef<Session | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -64,10 +68,17 @@ export function useAuth(): AuthState {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, s) => {
       if (!active) return;
+      
+      const hasExistingUser = !!userRef.current;
+
       setSession(s);
       setUser(s?.user ?? null);
+      sessionRef.current = s;
+      userRef.current = s?.user ?? null;
+
       if (s?.user) {
-        if (event === "SIGNED_IN") {
+        // Prevent loading spinner (and subsequent component unmounting) if the user is already logged in
+        if (event === "SIGNED_IN" && !hasExistingUser) {
           setLoading(true);
         }
         // Only treat SIGNED_IN as a fresh sign in (OAuth callback lands here)
@@ -90,6 +101,8 @@ export function useAuth(): AuthState {
         if (!active) return;
         setSession(data.session);
         setUser(data.session?.user ?? null);
+        sessionRef.current = data.session;
+        userRef.current = data.session?.user ?? null;
         if (data.session?.user) {
           try {
             // On page load, don't treat as fresh sign in
