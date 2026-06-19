@@ -312,9 +312,15 @@ export function AdminGlobalNotes() {
                     <input
                         ref={fileInputRef}
                         type="file"
-                        accept=".pdf,.docx,.txt,.csv"
+                        accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.doc,application/msword,.txt,text/plain,.md,text/markdown,.csv,text/csv"
                         className="hidden"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+                        onChange={(e) => {
+                            // Extract file and reset synchronously before any await/setState
+                            // to prevent React re-render losing the DOM reference on mobile.
+                            const f = e.target.files?.[0] ?? null;
+                            e.target.value = "";
+                            if (f) handleFile(f);
+                        }}
                     />
                     {parsingFile ? (
                         <><Loader2 className="h-4 w-4 animate-spin" /><span>Parsing file…</span></>
