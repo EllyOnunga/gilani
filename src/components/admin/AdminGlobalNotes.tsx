@@ -297,11 +297,23 @@ export function AdminGlobalNotes() {
                 </div>
 
                 {/* File drop zone */}
-                <div
+                <input
+                    ref={fileInputRef}
+                    id="admin-file-input"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.docx,.doc,.txt,.md,.csv,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFile(f);
+                    }}
+                    onClick={(e) => { (e.target as HTMLInputElement).value = ""; }}
+                />
+                <label
+                    htmlFor="admin-file-input"
                     onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
                     onDragLeave={() => setDragActive(false)}
                     onDrop={handleDrop}
-                    onClick={() => { if (!parsingFile) fileInputRef.current?.click(); }}
                     className={`flex cursor-pointer items-center gap-2 rounded-xl border-2 border-dashed px-4 py-3 text-sm transition-colors ${dragActive
                         ? "border-primary bg-primary/5 text-primary"
                         : attachedFile
@@ -309,19 +321,6 @@ export function AdminGlobalNotes() {
                             : "border-border/60 text-muted-foreground hover:border-primary/50 hover:text-foreground"
                         }`}
                 >
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.doc,application/msword,.txt,text/plain,.md,text/markdown,.csv,text/csv"
-                        className="sr-only"
-                        onChange={(e) => {
-                            // Extract file and reset synchronously before any await/setState
-                            // to prevent React re-render losing the DOM reference on mobile.
-                            const f = e.target.files?.[0] ?? null;
-                            e.target.value = "";
-                            if (f) handleFile(f);
-                        }}
-                    />
                     {parsingFile ? (
                         <><Loader2 className="h-4 w-4 animate-spin" /><span>Parsing file…</span></>
                     ) : attachedFile ? (
@@ -329,7 +328,8 @@ export function AdminGlobalNotes() {
                             <FileText className="h-4 w-4" />
                             <span className="flex-1 truncate">{attachedFile.name}</span>
                             <button
-                                onClick={(e) => { e.stopPropagation(); setAttachedFile(null); }}
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAttachedFile(null); }}
                                 className="ml-auto rounded p-0.5 hover:bg-destructive/10"
                             >
                                 <X className="h-3.5 w-3.5 text-destructive" />
@@ -338,7 +338,7 @@ export function AdminGlobalNotes() {
                     ) : (
                         <><Upload className="h-4 w-4" /><span>Upload document (PDF, DOCX, TXT, CSV — max 2 MB)</span></>
                     )}
-                </div>
+                </label>
 
                 {/* Manual content textarea (shown when no file) */}
                 {!attachedFile && (

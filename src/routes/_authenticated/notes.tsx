@@ -682,15 +682,13 @@ function NotesPage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setDocUploadError(null);
-    // Extract file synchronously BEFORE any state updates / await to prevent
-    // React re-render from losing the input DOM reference on mobile.
-    const file = e.target.files?.[0] ?? null;
-    e.target.value = ""; // reset synchronously so the same file can be re-selected
-    if (file) {
-      handleFileParsing(file);
-    }
+
+    const file = e.target.files?.[0];
+    if (!file) return; // Exit if no file was actually selected
+
+    await handleFileParsing(file);
   };
 
   const handleFileParsing = async (file: File) => {
@@ -919,32 +917,31 @@ ${content}`.trim()
           <h3 className="font-serif text-xl mb-4 text-center sm:text-left">Add Study Note</h3>
           <div className="space-y-3">
             {/* Document Upload Zone */}
-            {/* sr-only keeps input in the paint tree (no display:none) — prevents iOS PWA WebView suspension */}
-            <input
-              ref={fileInputRef}
-              id="notes-file-input"
-              type="file"
-              className="sr-only"
-              accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.doc,application/msword,.txt,text/plain,.md,text/markdown,.csv,text/csv"
-              onChange={handleFileChange}
-              disabled={parsingFile}
-            />
-            {/* label+htmlFor = native user gesture on iOS; ref.current.click() is not treated the same way */}
-            <label
-              htmlFor={parsingFile ? undefined : "notes-file-input"}
-              role="button"
-              aria-disabled={parsingFile}
-              className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-border px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${
-                parsingFile
-                  ? "opacity-50 bg-muted text-muted-foreground cursor-not-allowed pointer-events-none"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]"
-              }`}
-            >
-              {parsingFile
-                ? <><Loader2 className="h-4 w-4 animate-spin" /><span>Parsing document...</span></>
-                : <><Upload className="h-4 w-4" /><span className="hidden sm:inline">Upload Document (PDF, DOCX, TXT, CSV — max 2MB)</span><span className="sm:hidden">Upload Document (max 2MB)</span></>
-              }
-            </label>
+            <div className="relative rounded-xl border border-border bg-background p-3 overflow-hidden">
+              <input
+                id="mobile-doc-upload"
+                type="file"
+                className="hidden"
+                accept=".pdf,.docx,.doc,.txt,.md,.csv,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={handleFileChange}
+                onClick={(e) => { (e.target as HTMLInputElement).value = ""; }}
+                disabled={parsingFile}
+              />
+              <label
+                htmlFor="mobile-doc-upload"
+                className={`flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${
+                  parsingFile
+                    ? "pointer-events-none cursor-not-allowed bg-muted text-muted-foreground opacity-50"
+                    : "cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
+                }`}
+              >
+                {parsingFile ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /><span>Parsing document...</span></>
+                ) : (
+                  <><Upload className="h-4 w-4" /><span className="hidden sm:inline">Upload Document (PDF, DOCX, TXT, CSV — max 2MB)</span><span className="sm:hidden">Upload Document (max 2MB)</span></>
+                )}
+              </label>
+            </div>
 
             {/* Inline upload error banner */}
             {docUploadError && (

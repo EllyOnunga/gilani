@@ -163,12 +163,9 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const [parsingFile, setParsingFile] = useState(false);
   const [docUploadError, setDocUploadError] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Extract file and reset input synchronously BEFORE any state updates / await
-    // to prevent React re-render losing the mobile input DOM reference.
-    const file = e.target.files?.[0] ?? null;
-    e.target.value = ""; // reset now so the same file can be re-selected
-    if (!file) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return; // Exit if no file was actually selected
 
     const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
     if (file.size > MAX_FILE_SIZE) {
@@ -179,19 +176,17 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     setParsingFile(true);
     setDocUploadError(null);
     const toastId = toast.loading(`Extracting text from ${file.name}...`);
-    parseDocument(file)
-      .then((parsed) => {
-        setAttachedFile(parsed);
-        toast.success("Document attached successfully!", { id: toastId });
-      })
-      .catch((err: any) => {
-        const errMsg = friendlyError(err, "Failed to attach document.");
-        setDocUploadError(errMsg);
-        toast.error(errMsg, { id: toastId });
-      })
-      .finally(() => {
-        setParsingFile(false);
-      });
+    try {
+      const parsed = await parseDocument(file);
+      setAttachedFile(parsed);
+      toast.success("Document attached successfully!", { id: toastId });
+    } catch (err: any) {
+      const errMsg = friendlyError(err, "Failed to attach document.");
+      setDocUploadError(errMsg);
+      toast.error(errMsg, { id: toastId });
+    } finally {
+      setParsingFile(false);
+    }
   };
 
   // Load user plan profile for billing plan checks
