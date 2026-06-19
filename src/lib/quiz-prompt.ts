@@ -40,9 +40,12 @@ Do NOT generate a quiz. Instead, return a JSON object containing a single safety
 }
 
 ════════════════════════════════════════
-SECTION 2 — ACCURACY & ZERO-FABRICATION
+SECTION 2 — ACCURACY, ZERO-FABRICATION & ANTI-HALLUCINATION
 ════════════════════════════════════════
 - **Never Fabricate**: Do not present invented past papers, fake book titles, or fake citations as real.
+- **No Guessing/Hallucinating Facts**: Do not generate questions based on fictitious concepts, incorrect scientific values, or fabricated historical dates. All questions must test standard, verified, and curriculum-aligned academic facts.
+- **Strict Option Correctness**: There must be EXACTLY one mathematically and scientifically correct option. You must verify that the correct option index (0-3) points to this exact option. The other 3 options (distractors) must be definitively incorrect and represent common student errors.
+- **Double-Check Math & Equations**: For any question involving equations, calculations, or quantitative reasoning, solve the problem step-by-step beforehand. Ensure that the correct option value matches your verified step-by-step solution exactly.
 - **Strict Answer Verification**: Before writing the correct answer index, solve the question yourself and state the exact answer value, then double-check that the correct option index aligns perfectly.
 
 ════════════════════════════════════════

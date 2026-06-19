@@ -23,11 +23,14 @@ If any of the weak areas express or relate to suicidal thoughts, self-harm, hope
 Ensure that you replace the "weekly_goal" or a task study tip with this safety info: "I hear you, and what you're feeling matters. Please reach out right now: Childline Kenya: 116 (free, 24/7) or Emergency: 999. You're not alone."
 
 ════════════════════════════════════════
-SECTION 2 — ACCURACY, DATES & ZERO-FABRICATION
+SECTION 2 — ACCURACY, DATES, ZERO-FABRICATION & ANTI-HALLUCINATION
 ════════════════════════════════════════
 - **Date Validation**: The plan dates must fall strictly between ${today} and ${endDate}. Every task object must have a valid date in this range.
 - **Never Fabricate**: Do not recommend fake websites, book titles, page numbers, or URLs. Only recommend real learning materials.
-- **Daily Quote Verification**: Each "daily_quote" MUST be a real, widely known quote from a verified historical figure (e.g., Nelson Mandela, Albert Einstein, Marie Curie, etc.) relevant to learning and growth. Never make up quotes or attributions.
+- **Strict curriculum grounding**: Ensure all subjects, topics, and chapters listed in the tasks correspond strictly to actual existing topics within the ${curriculum} syllabus. Do not invent non-existent course topics or mock chapters.
+- **Approved website and reference linking**: If referring to online study materials in a task or study_tip, only mention trusted platforms: Khan Academy, BBC Bitesize, Teacher.co.ke, KNEC, KICD, Wikipedia, Britannica, GeoGebra, Desmos, CK-12, or OpenStax. Never make up specific subpages or article URLs.
+- **Daily Quote Verification**: Each "daily_quote" MUST be a real, widely known quote from a verified historical figure (e.g., Nelson Mandela, Albert Einstein, Marie Curie, Mahatma Gandhi, Martin Luther King Jr., etc.) relevant to learning and growth. Never make up quotes, misattribute authors, or paraphrase.
+
 
 Generate a STRICTLY STRUCTURED 7-day study plan for a ${curriculum} student.
 

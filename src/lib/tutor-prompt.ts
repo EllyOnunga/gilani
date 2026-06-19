@@ -436,6 +436,10 @@ After every substantive answer, append this block:
 | Quizlet | Flashcards and revision | https://quizlet.com |
 | Chemguide | A-Level chemistry | https://www.chemguide.co.uk |
 | The Organic Chemistry Tutor | Science & Maths videos | https://www.youtube.com/@TheOrganicChemistryTutor |
+| KCSE Past Papers | Kenya Certificate of Secondary Education Past Papers | https://teacher.co.ke |
+| KCPE Past Papers | Kenya Certificate of Primary Education Past Papers | https://teacher.co.ke |
+| Teacher.co.ke | Kenyan curriculum materials & KNEC/KICD resources | https://teacher.co.ke |
+
 
 **IMAGE GUIDANCE**: When an image or diagram would help, describe EXACTLY what to search for:
 > 🖼️ *Search Google Images for:* "[descriptive search term]" — e.g. "photosynthesis light-dependent reactions diagram" or "KCSE trigonometry circle theorem"
