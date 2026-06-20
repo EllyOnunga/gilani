@@ -60,16 +60,26 @@ export const MessageList = React.memo(function MessageList({
     });
   }, [messagesLoading]);
 
-  // During streaming: continuously scroll to bottom
+  // Scroll to bottom whenever the content height grows (covers streaming updates
+  // from StreamingText's internal state which don't re-render the container)
   useEffect(() => {
-    if (!isPending) return;
     const container = scrollContainerRef.current;
     if (!container) return;
-    const id = setInterval(() => {
-      container.scrollTop = container.scrollHeight;
-    }, 50);
-    return () => clearInterval(id);
-  }, [isPending]);
+    let lastHeight = container.scrollHeight;
+    const ro = new ResizeObserver(() => {
+      const newHeight = container.scrollHeight;
+      if (newHeight > lastHeight) {
+        // Only auto-scroll if user is near the bottom (within 180px)
+        const distFromBottom = newHeight - container.scrollTop - container.clientHeight;
+        if (distFromBottom < 180) {
+          container.scrollTop = newHeight;
+        }
+        lastHeight = newHeight;
+      }
+    });
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, []);
 
   return (
     <div ref={scrollContainerRef} className={`flex-1 min-h-0 overflow-y-auto px-2 py-2 sm:pb-5 sm:px-5 sm:py-5 space-y-3 ${isRateLimited ? "pb-80" : "pb-56"}`}>

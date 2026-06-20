@@ -85,7 +85,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
   }, [isStreamActive]);
 
   useEffect(() => {
-    if (isStreamActive && visibleText.length >= 20 && !streamReady) setStreamReady(true);
+    if (isStreamActive && visibleText.length > 0 && !streamReady) setStreamReady(true);
   }, [visibleText, isStreamActive, streamReady]);
 
   useEffect(() => {
