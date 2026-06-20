@@ -321,6 +321,10 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     }, 50);
   }, [setInput]);
   const messages = messagesRaw as UIMessage[];
+  const messagesRef = useRef<UIMessage[]>(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
   const handleEdit = useCallback(async (messageId: string, newText: string) => {
     const { data: editedMsg } = await supabase
       .from("messages")
@@ -545,17 +549,21 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       }
 
       if (messagesRes.data && messagesRes.data.length > 0) {
-        setMessages(
-          messagesRes.data.map((m) => ({
-            id: m.id ?? crypto.randomUUID(),
-            role: m.role as "user" | "assistant",
-            content: m.content || "",
-            parts: [{ type: "text" as const, text: m.content || "" }],
-            createdAt: m.created_at ? new Date(m.created_at) : new Date(),
-          })),
-        );
+        if (!silent || messagesRes.data.length >= messagesRef.current.length) {
+          setMessages(
+            messagesRes.data.map((m) => ({
+              id: m.id ?? crypto.randomUUID(),
+              role: m.role as "user" | "assistant",
+              content: m.content || "",
+              parts: [{ type: "text" as const, text: m.content || "" }],
+              createdAt: m.created_at ? new Date(m.created_at) : new Date(),
+            })),
+          );
+        }
       } else {
-        setMessages([]);
+        if (!silent) {
+          setMessages([]);
+        }
       }
 
       if (escalationRes.error) {
