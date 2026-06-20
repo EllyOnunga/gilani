@@ -523,8 +523,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
       if (timeoutId) clearTimeout(timeoutId);
 
-      // Verify that the thread hasn't changed since starting the load
-      if (Route.useParams().threadId !== threadId) return;
+      // Component remounts per-thread (key={threadId}), so no need to re-read params here.
 
       if (messagesRes.error) {
         if (!silent) setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
