@@ -23,6 +23,8 @@ type Props = {
   onStop?: () => void;
   messagesUsed?: number;
   messagesMax?: number;
+  /** Optional ref so parent can programmatically focus the textarea (e.g. after clicking Edit on a bubble) */
+  inputRef?: React.RefObject<HTMLTextAreaElement | null>;
 };
 
 function formatFileSize(bytes: number): string {
@@ -114,8 +116,10 @@ export function ChatInput({
   onStop,
   messagesUsed = 0,
   messagesMax = 10,
+  inputRef: externalInputRef,
 }: Props) {
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const internalRef = useRef<HTMLTextAreaElement | null>(null);
+  const textareaRef = externalInputRef ?? internalRef;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const isRateLimited = useMemo(() => {
     if (!chatError) return false;

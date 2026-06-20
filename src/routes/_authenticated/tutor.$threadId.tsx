@@ -164,6 +164,8 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
   const [parsingFile, setParsingFile] = useState(false);
   const [docUploadError, setDocUploadError] = useState<string | null>(null);
+  /** Ref to ChatInput's textarea so Edit-on-bubble can focus it */
+  const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -307,6 +309,17 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const { messages: messagesRaw, setMessages, sendMessage, stop, status, regenerate } = chatHelpers;
   const handleReload = useCallback(() => regenerate({ body: { isRetry: true } }), [regenerate]);
   const handlePromptClick = useCallback((prompt: string) => setInput(prompt), [setInput]);
+  /** When user clicks Edit on a bubble, load its text into ChatInput and focus it */
+  const handleEditRequest = useCallback((text: string) => {
+    setInput(text);
+    setTimeout(() => {
+      chatInputRef.current?.focus();
+      chatInputRef.current?.setSelectionRange(
+        chatInputRef.current.value.length,
+        chatInputRef.current.value.length
+      );
+    }, 50);
+  }, [setInput]);
   const messages = messagesRaw as UIMessage[];
   const handleEdit = useCallback(async (messageId: string, newText: string) => {
     const { data: editedMsg } = await supabase
@@ -770,7 +783,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           isPending={isPending}
           isRateLimited={isRateLimited}
           onReload={handleReload}
-          onEdit={handleEdit}
+          onEditRequest={handleEditRequest}
           onPromptClick={handlePromptClick}
           userId={userId}
           userVotes={userVotes}
@@ -801,6 +814,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           onSubmit={submit}
           onStop={stop}
           onFileChange={handleFileChange}
+          inputRef={chatInputRef}
           onRemoveFile={() => {
             setAttachedFile(null);
             setDocUploadError(null);

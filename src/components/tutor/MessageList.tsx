@@ -11,7 +11,7 @@ type Props = {
   isRateLimited?: boolean;
   onReload: () => void;
   onPromptClick: (prompt: string) => void;
-  onEdit?: (messageId: string, newText: string) => void;
+  onEditRequest?: (text: string) => void;
   /** Resolved user ID passed from page level — avoids each bubble resolving its own session */
   userId?: string | null;
   /** Map of messageId → vote, bulk-loaded at page level to eliminate N+1 queries */
@@ -27,7 +27,7 @@ export const MessageList = React.memo(function MessageList({
   isRateLimited,
   onReload,
   onPromptClick,
-  onEdit,
+  onEditRequest,
   userId,
   userVotes,
   onVote,
@@ -101,7 +101,7 @@ export const MessageList = React.memo(function MessageList({
             isPending={isPending && idx === messages.length - 1}
             isRateLimited={isRateLimited}
             onReload={onReload}
-            onEdit={onEdit}
+            onEditRequest={onEditRequest}
             userId={userId}
             initialVote={userVotes?.[m.id] ?? null}
             onVote={onVote}

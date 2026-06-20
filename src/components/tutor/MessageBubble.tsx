@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, X, FileText } from "lucide-react";
+import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,7 +13,8 @@ type Props = {
   isPending: boolean;
   isRateLimited?: boolean;
   onReload: () => void;
-  onEdit?: (messageId: string, newText: string) => void;
+  /** Called when user clicks Edit — passes the display text to the parent to load into ChatInput */
+  onEditRequest?: (text: string) => void;
   /** Resolved user ID from the parent — avoids each bubble doing its own session fetch */
   userId?: string | null;
   /** Pre-loaded vote value from parent's bulk fetch — avoids N+1 queries */
@@ -28,13 +29,11 @@ const MemoMarkdown = React.memo(
   (prev, next) => prev.content === next.content
 );
 
-export const MessageBubble = React.memo(function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEdit, userId, initialVote, onVote}: Props) {
+export const MessageBubble = React.memo(function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEditRequest, userId, initialVote, onVote}: Props) {
   const [copied, setCopied] = useState(false);
   // Initialise from the parent's pre-loaded bulk fetch; fall back to null
   const [vote, setVote] = useState<1 | -1 | null>(initialVote ?? null);
   const [voting, setVoting] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editText, setEditText] = useState("");
   const [collapsed, setCollapsed] = useState(true);
 
   // Sync if parent re-delivers a different initialVote (e.g. after bulk reload)
@@ -47,7 +46,6 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
   }, [initialVote]);
 
   const COLLAPSE_THRESHOLD = 300;
-  const editRef = useRef<HTMLTextAreaElement>(null);
 
   const attachmentName = React.useMemo(() => {
     if (m.role !== "user") return null;
@@ -144,20 +142,6 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
     }
   };
 
-  const startEdit = () => {
-    setEditText(displayText);
-    setCollapsed(false);
-    setEditing(true);
-    setTimeout(() => { editRef.current?.focus(); editRef.current?.select(); }, 50);
-  };
-
-  const submitEdit = () => {
-    const trimmed = editText.trim();
-    if (!trimmed || trimmed === displayText) { setEditing(false); return; }
-    onEdit?.(m.id, trimmed);
-    setEditing(false);
-  };
-
   const isUser = m.role === "user";
 
   return (
@@ -170,7 +154,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
       <div
         className={`${m.role === "user" ? "max-w-[88%] sm:max-w-[72%]" : "w-full max-w-[96%] sm:max-w-full"} rounded-2xl px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${
           isUser
-            ? "bg-card border border-border text-foreground rounded-tr-sm shadow-sm"
+            ? "bg-primary/8 border border-primary/20 rounded-tr-sm shadow-sm"
             : isStreamActive && !streamReady ? "text-foreground" : "bg-card border border-border text-foreground rounded-tl-sm shadow-sm"
         }`}
       >
@@ -241,59 +225,37 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
                 <span className="truncate max-w-[200px]">{attachmentName}</span>
               </div>
             )}
-            {editing ? (
-              <div className="flex flex-col gap-2">
-                <textarea
-                  ref={editRef}
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitEdit(); } if (e.key === "Escape") setEditing(false); }}
-                  className="w-full rounded-xl bg-background border border-border text-foreground text-sm px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 min-h-[72px] shadow-inner"
-                  rows={3}
-                />
-                <div className="flex gap-1.5 justify-end">
-                  <button onClick={() => setEditing(false)}
-                    className="rounded-lg px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:text-foreground border border-border hover:bg-muted transition-colors">
-                    Cancel
-                  </button>
-                  <button onClick={submitEdit}
-                    className="rounded-lg px-3 py-1.5 text-[11px] font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm">
-                    Send
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1">
-                <span className="whitespace-pre-wrap">
-                  {collapsed && displayText.length > COLLAPSE_THRESHOLD
-                    ? visibleText.slice(0, COLLAPSE_THRESHOLD) + "…"
-                    : visibleText}
-                </span>
-                {displayText.length > COLLAPSE_THRESHOLD && (
-                  <button
-                    onClick={() => setCollapsed((p) => !p)}
-                    className="self-start text-[10px] font-bold text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
-                  >
-                    {collapsed ? "Show more" : "Show less"}
-                  </button>
-                )}
-              </div>
-            )}
+            <div className="flex flex-col gap-1">
+              <span className="whitespace-pre-wrap text-primary font-medium">
+                {collapsed && displayText.length > COLLAPSE_THRESHOLD
+                  ? visibleText.slice(0, COLLAPSE_THRESHOLD) + "…"
+                  : visibleText}
+              </span>
+              {displayText.length > COLLAPSE_THRESHOLD && (
+                <button
+                  onClick={() => setCollapsed((p) => !p)}
+                  className="self-start text-[10px] font-bold text-primary/60 hover:text-primary underline underline-offset-2 transition-colors"
+                >
+                  {collapsed ? "Show more" : "Show less"}
+                </button>
+              )}
+            </div>
 
-            {!editing && !isStreamActive && (
-              <div className="flex items-center gap-1 mt-1.5 transition-opacity duration-200 justify-end border-t border-border/40 pt-1">
+            {!isStreamActive && (
+              <div className="flex items-center gap-1 mt-1.5 transition-opacity duration-200 justify-end border-t border-primary/20 pt-1">
                 <button onClick={handleCopy}
-                  className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
+                  className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-primary/50 hover:text-primary transition-colors px-2 py-1 rounded hover:bg-primary/10"
                   title="Copy">
                   {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
-                {onEdit && (
-                  <button onClick={isRateLimited ? undefined : startEdit}
+                {onEditRequest && (
+                  <button
+                    onClick={isRateLimited ? undefined : () => onEditRequest(displayText)}
                     disabled={isRateLimited}
                     className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded ${
                       isRateLimited
-                        ? "opacity-40 cursor-not-allowed text-muted-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "opacity-40 cursor-not-allowed text-primary/30"
+                        : "text-primary/50 hover:text-primary hover:bg-primary/10"
                     }`}
                     title={isRateLimited ? "Rate limit reached" : "Edit message"}>
                     <Pencil className="h-3.5 w-3.5" />
@@ -318,6 +280,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
   if (prev.isPending !== next.isPending) return false;
   if (prev.isLast !== next.isLast) return false;
   if (prev.isRateLimited !== next.isRateLimited) return false;
+  if (prev.onEditRequest !== next.onEditRequest) return false;
   const getText = (m: any) =>
     m?.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || m?.content || "";
   if (prev.isPending || next.isPending) return false;
