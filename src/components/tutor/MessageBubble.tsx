@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 import { MarkdownRenderer } from "./MarkdownRenderer";
-import { StreamingText } from "./StreamingText";
 
 type Props = {
   message: any;
@@ -75,22 +74,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
 
   const isStreamActive = isPending && isLast;
   const visibleText = displayText;
-  const [showMarkdown, setShowMarkdown] = useState(!isStreamActive);
-  const [streamReady, setStreamReady] = useState(false);
-
-  useEffect(() => {
-    if (!isStreamActive) setStreamReady(false);
-  }, [isStreamActive]);
-
-  useEffect(() => {
-    if (isStreamActive && visibleText.length > 0 && !streamReady) setStreamReady(true);
-  }, [visibleText, isStreamActive, streamReady]);
-
-  useEffect(() => {
-    if (isStreamActive) {
-      setShowMarkdown(false);
-    }
-  }, [isStreamActive]);
+  const showBubbleCard = visibleText.length > 0;
 
   // Show thinking until we have enough text to stream smoothly
 
@@ -150,24 +134,16 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
         className={`${m.role === "user" ? "max-w-[88%] sm:max-w-[72%]" : "w-full max-w-[96%] sm:max-w-full"} rounded-2xl px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${
           isUser
             ? "bg-primary/8 border border-primary/20 rounded-tr-sm shadow-sm"
-            : isStreamActive && !streamReady ? "text-foreground" : "bg-card border border-border text-foreground rounded-tl-sm shadow-sm"
+            : isStreamActive && !showBubbleCard ? "opacity-0 pointer-events-none" : "bg-card border border-border text-foreground rounded-tl-sm shadow-sm"
         }`}
       >
         {!isUser ? (
           <div className="flex flex-col w-full">
-            {streamReady || (!isStreamActive && visibleText) ? (
+            {visibleText ? (
               <div className="prose-ai relative">
-                {!showMarkdown ? (
-                  <StreamingText
-                    text={visibleText}
-                    isStreaming={isStreamActive}
-                    onComplete={() => setShowMarkdown(true)}
-                  />
-                ) : (
-                  <div className="animate-in fade-in duration-500 fill-mode-both">
-                    <MemoMarkdown content={displayText} />
-                  </div>
-                )}
+                <div className="animate-in fade-in duration-300 fill-mode-both">
+                  <MemoMarkdown content={isStreamActive ? visibleText + " ▋" : visibleText} />
+                </div>
               </div>
             ) : (
               !isStreamActive ? (
