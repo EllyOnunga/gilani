@@ -284,7 +284,7 @@ ${finalContent}`;
                 useSearchGrounding: true,
               },
             },
-            experimental_transform: [stripThoughtProcessTransform(), smoothStream({ delayInMs: 60, chunking: "word" })],
+            experimental_transform: [stripThoughtProcessTransform(), smoothStream({ delayInMs: 30, chunking: "word" })],
             onError: (errorObj) => {
               const error = (errorObj as any)?.error || errorObj;
               console.error(
