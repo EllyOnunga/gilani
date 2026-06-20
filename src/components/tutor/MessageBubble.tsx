@@ -75,7 +75,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
 
   const isStreamActive = isPending && isLast;
   const visibleText = displayText;
-  const [showMarkdown, setShowMarkdown] = useState(false);
+  const [showMarkdown, setShowMarkdown] = useState(!isStreamActive);
   const [streamReady, setStreamReady] = useState(false);
 
   useEffect(() => {
@@ -87,10 +87,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
   }, [visibleText, isStreamActive, streamReady]);
 
   useEffect(() => {
-    if (!isStreamActive && visibleText) {
-      const t = setTimeout(() => setShowMarkdown(true), 150);
-      return () => clearTimeout(t);
-    } else {
+    if (isStreamActive) {
       setShowMarkdown(false);
     }
   }, [isStreamActive]);
@@ -161,7 +158,11 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
             {streamReady || (!isStreamActive && visibleText) ? (
               <div className="prose-ai relative">
                 {!showMarkdown ? (
-                  <StreamingText text={visibleText} />
+                  <StreamingText
+                    text={visibleText}
+                    isStreaming={isStreamActive}
+                    onComplete={() => setShowMarkdown(true)}
+                  />
                 ) : (
                   <div className="animate-in fade-in duration-500 fill-mode-both">
                     <MemoMarkdown content={displayText} />
