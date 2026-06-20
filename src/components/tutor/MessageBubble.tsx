@@ -55,8 +55,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
     const rawText = partsText || (m as any).content || "";
     const match = rawText.match(/\[Document Attached:\s*([^\]\n]+)\]/);
     return match ? match[1].trim() : null;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [m.id, m.role, (m.parts as any)?.[0]?.text, (m as any).content]);
+  }, [m.id, m.role, m.parts, (m as any).content]);
 
   const displayText = React.useMemo(() => {
     const partsText =
@@ -72,8 +71,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
           .replace(/^Student Query:\s*(\(See attached document\))?\s*/m, "")
           .trim()
       : rawText;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [m.id, m.role, (m.parts as any)?.[0]?.text, (m as any).content]);
+  }, [m.id, m.role, m.parts, (m as any).content]);
 
   const isStreamActive = isPending && isLast;
   const visibleText = displayText;
@@ -281,6 +279,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
   if (prev.isLast !== next.isLast) return false;
   if (prev.isRateLimited !== next.isRateLimited) return false;
   if (prev.onEditRequest !== next.onEditRequest) return false;
+  if (prev.initialVote !== next.initialVote) return false;
   const getText = (m: any) =>
     m?.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || m?.content || "";
   if (prev.isPending || next.isPending) return false;
