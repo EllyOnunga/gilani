@@ -34,6 +34,7 @@ export const MessageList = React.memo(function MessageList({
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const innerRef = useRef<HTMLDivElement | null>(null);
 
   // Scroll on new messages (not during streaming)
   useEffect(() => {
@@ -60,77 +61,79 @@ export const MessageList = React.memo(function MessageList({
     });
   }, [messagesLoading]);
 
-  // Scroll to bottom whenever the content height grows (covers streaming updates
-  // from StreamingText's internal state which don't re-render the container)
+  // Scroll to bottom whenever the content height grows (covers streaming updates)
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container) return;
-    let lastHeight = container.scrollHeight;
+    const inner = innerRef.current;
+    if (!container || !inner) return;
+    let lastHeight = inner.scrollHeight;
     const ro = new ResizeObserver(() => {
-      const newHeight = container.scrollHeight;
+      const newHeight = inner.scrollHeight;
       if (newHeight > lastHeight) {
-        // Only auto-scroll if user is near the bottom (within 180px)
-        const distFromBottom = newHeight - container.scrollTop - container.clientHeight;
+        // Only auto-scroll if user is near the bottom (within 180px of previous height)
+        const distFromBottom = lastHeight - container.scrollTop - container.clientHeight;
         if (distFromBottom < 180) {
           container.scrollTop = newHeight;
         }
         lastHeight = newHeight;
       }
     });
-    ro.observe(container);
+    ro.observe(inner);
     return () => ro.disconnect();
   }, []);
 
   return (
-    <div ref={scrollContainerRef} className={`flex-1 min-h-0 overflow-y-auto px-2 py-2 sm:pb-5 sm:px-5 sm:py-5 space-y-3 ${isRateLimited ? "pb-80" : "pb-56"}`}>
-      {messagesLoading && (
-        <div className="flex flex-col items-center justify-center h-full gap-3">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">Loading messages…</p>
-        </div>
-      )}
+    <div ref={scrollContainerRef} className={`flex-1 min-h-0 overflow-y-auto px-2 py-2 sm:px-5 sm:py-5 ${isRateLimited ? "pb-80" : "pb-56"}`}>
+      <div ref={innerRef} className="space-y-3 flex flex-col pb-4">
+        {messagesLoading && (
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">Loading messages…</p>
+          </div>
+        )}
 
-      {messagesLoadError && (
-        <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
-          <p>{messagesLoadError}</p>
-        </div>
-      )}
+        {messagesLoadError && (
+          <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+            <p>{messagesLoadError}</p>
+          </div>
+        )}
 
-      {!messagesLoading && !messagesLoadError && messages.length === 0 && (
-        <EmptyState onPromptClick={onPromptClick} />
-      )}
+        {!messagesLoading && !messagesLoadError && messages.length === 0 && (
+          <EmptyState onPromptClick={onPromptClick} />
+        )}
 
-      {!messagesLoading &&
-        !messagesLoadError &&
-        messages.map((m, idx: number) => (
-          <MessageBubble
-            key={m.id ?? idx}
-            message={m}
-            idx={idx}
-            isLast={idx === messages.length - 1}
-            isPending={isPending && idx === messages.length - 1}
-            isRateLimited={isRateLimited}
-            onReload={onReload}
-            onEditRequest={onEditRequest}
-            userId={userId}
-            initialVote={userVotes?.[m.id] ?? null}
-            onVote={onVote}
-          />
-        ))}
-
-      {isPending && messages[messages.length - 1]?.role === "user" && (
-        <div className="flex items-center gap-1.5 py-2 px-1 animate-in fade-in duration-300">
-          <span className="text-sm text-primary font-medium">Thinking</span>
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
-              style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+        {!messagesLoading &&
+          !messagesLoadError &&
+          messages.map((m, idx: number) => (
+            <MessageBubble
+              key={m.id ?? idx}
+              message={m}
+              idx={idx}
+              isLast={idx === messages.length - 1}
+              isPending={isPending && idx === messages.length - 1}
+              isRateLimited={isRateLimited}
+              onReload={onReload}
+              onEditRequest={onEditRequest}
+              userId={userId}
+              initialVote={userVotes?.[m.id] ?? null}
+              onVote={onVote}
             />
           ))}
-        </div>
-      )}
-      <div ref={messagesEndRef} />
+
+        {isPending && messages[messages.length - 1]?.role === "user" && (
+          <div className="flex items-center gap-1.5 py-2 px-1 animate-in fade-in duration-300">
+            <span className="text-sm text-primary font-medium">Thinking</span>
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
+                style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+              />
+            ))}
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
     </div>
   );
 });

@@ -141,9 +141,27 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
           <div className="flex flex-col w-full">
             {visibleText ? (
               <div className="prose-ai relative">
-                <div className="animate-in fade-in duration-300 fill-mode-both">
-                  <MemoMarkdown content={isStreamActive ? visibleText + " ▋" : visibleText} />
-                </div>
+                {isStreamActive ? (
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                    {visibleText}
+                    <span
+                      className="inline-block w-[2px] h-[1.1em] bg-primary opacity-90 ml-0.5 align-text-bottom rounded-full"
+                      style={{
+                        animation: "streaming-cursor-blink 0.65s infinite step-start",
+                      }}
+                    />
+                    <style dangerouslySetInnerHTML={{ __html: `
+                      @keyframes streaming-cursor-blink {
+                        0%, 100% { opacity: 0.9; }
+                        50% { opacity: 0; }
+                      }
+                    `}} />
+                  </div>
+                ) : (
+                  <div className="animate-in fade-in duration-300 fill-mode-both">
+                    <MemoMarkdown content={visibleText} />
+                  </div>
+                )}
               </div>
             ) : (
               !isStreamActive ? (
