@@ -83,7 +83,7 @@ export const MessageList = React.memo(function MessageList({
   }, []);
 
   return (
-    <div ref={scrollContainerRef} className={`flex-1 min-h-0 overflow-y-auto px-2 py-2 sm:px-5 sm:py-5 ${isRateLimited ? "pb-80" : "pb-56"}`}>
+    <div ref={scrollContainerRef} className={`flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden px-2 py-2 sm:px-5 sm:py-5 ${isRateLimited ? "pb-80" : "pb-56"}`}>
       <div ref={innerRef} className="space-y-3 flex flex-col pb-4">
         {messagesLoading && (
           <div className="flex flex-col items-center justify-center h-full gap-3">

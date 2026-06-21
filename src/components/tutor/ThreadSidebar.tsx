@@ -98,7 +98,7 @@ export function ThreadSidebar({
       )}
 
       {/* Thread List */}
-      <div className="flex-1 overflow-y-auto space-y-0.5 -mx-1 px-1">
+      <div className="flex-1 overflow-y-auto space-y-0.5 -mx-1 px-1 scrollbar-none [&::-webkit-scrollbar]:hidden">
         {threadsLoading && (
           <div className="flex flex-col gap-1.5 py-2">
             {[1,2,3,4].map(i => (
@@ -213,7 +213,7 @@ export function ThreadSidebar({
 
       {/* Mobile sidebar — has close button */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(80%,18rem)] flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out overflow-y-auto lg:hidden rounded-r-2xl ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(80%,18rem)] flex-col bg-sidebar border-r border-border p-4 transition-transform duration-300 ease-in-out overflow-y-auto [&::-webkit-scrollbar]:hidden lg:hidden rounded-r-2xl ${
           threadsOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

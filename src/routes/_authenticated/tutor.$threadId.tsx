@@ -283,7 +283,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     
     
     
-    experimental_throttle: 15,
+    experimental_throttle: 500,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
     onFinish: (message: any) => {
       setChatError(null);
