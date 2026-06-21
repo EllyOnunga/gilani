@@ -522,7 +522,7 @@ function AdminUsersPage() {
   }).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-3 p-3 sm:p-6 lg:p-10">
+    <div className="mx-auto w-full max-w-6xl space-y-3 p-3 sm:p-6 lg:p-10">
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-5 border-b border-border/60 gap-4 text-center sm:text-left">
         <div>
@@ -611,29 +611,29 @@ function AdminUsersPage() {
 
       {/* Tabs */}
       <div className="flex gap-1.5 sm:gap-2 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory">
-          {([
-            { id: "users", label: "Users", icon: User },
-            { id: "escalations", label: "Escalations", icon: AlertTriangle, badge: platformStats.openEscalations },
-            { id: "feedback", label: "Feedback", icon: ThumbsUp },
-            { id: "messages", label: "Messages", icon: MessageSquare, badge: unreadCount },
-            { id: "ratelimits", label: "Limits", icon: BarChart3 },
-            { id: "subscriptions", label: "Subs", icon: CreditCard },
-            { id: "newsletter", label: "Newsletter", icon: Mail },
-            { id: "globalnotes", label: "Notes", icon: BookOpen },
-          ] as const).map((t) => {
-            const Icon = t.icon;
-            return (
-              <button key={t.id} onClick={() => setTab(t.id as any)}
-                className={`snap-start flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 text-[10px] sm:text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 min-h-[36px] sm:min-h-[40px] ${tab === t.id ? "border-primary text-primary bg-primary/5 font-extrabold shadow-sm" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border hover:bg-accent/30"}`}>
-                <Icon className="h-3.5 w-3.5 flex-shrink-0" />
-                <span className="inline">{t.label}</span>
-                {"badge" in t && t.badge > 0 && (
-                  <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground leading-none">{t.badge}</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {([
+          { id: "users", label: "Users", icon: User },
+          { id: "escalations", label: "Escalations", icon: AlertTriangle, badge: platformStats.openEscalations },
+          { id: "feedback", label: "Feedback", icon: ThumbsUp },
+          { id: "messages", label: "Messages", icon: MessageSquare, badge: unreadCount },
+          { id: "ratelimits", label: "Limits", icon: BarChart3 },
+          { id: "subscriptions", label: "Subs", icon: CreditCard },
+          { id: "newsletter", label: "Newsletter", icon: Mail },
+          { id: "globalnotes", label: "Notes", icon: BookOpen },
+        ] as const).map((t) => {
+          const Icon = t.icon;
+          return (
+            <button key={t.id} onClick={() => setTab(t.id as any)}
+              className={`snap-start flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 text-[10px] sm:text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 min-h-[36px] sm:min-h-[40px] ${tab === t.id ? "border-primary text-primary bg-primary/5 font-extrabold shadow-sm" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border hover:bg-accent/30"}`}>
+              <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="inline">{t.label}</span>
+              {"badge" in t && t.badge > 0 && (
+                <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground leading-none">{t.badge}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
       {/* ── Users tab ── */}
       {tab === "users" && (
@@ -966,40 +966,40 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="overflow-x-auto scrollbar-none">
-              <table className="w-full text-sm min-w-[580px]">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40">
-                    {["Student", "Reason", "Status", "Reviewer", "Date"].map((h) => (
-                      <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEscalations.map((esc) => (
-                    <tr key={esc.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                      <td className="px-2 py-2 sm:px-5 sm:py-3">
-                        <p className="font-semibold">{esc.profiles?.display_name ?? "—"}</p>
-                        <p className="font-mono text-[10px] text-muted-foreground">{esc.profiles?.email ?? (esc.user_id ? esc.user_id.slice(0, 8) + "…" : "—")}</p>
-                      </td>
-                      <td className="px-5 py-3 text-xs max-w-[200px]">
-                        <p className="truncate" title={esc.detail ?? esc.reason}>{esc.detail || esc.reason}</p>
-                      </td>
-                      <td className="px-2 py-2 sm:px-5 sm:py-3">
-                        <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
+              <div className="overflow-x-auto scrollbar-none">
+                <table className="w-full text-sm min-w-[580px]">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                      {["Student", "Reason", "Status", "Reviewer", "Date"].map((h) => (
+                        <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredEscalations.map((esc) => (
+                      <tr key={esc.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
+                          <p className="font-semibold">{esc.profiles?.display_name ?? "—"}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">{esc.profiles?.email ?? (esc.user_id ? esc.user_id.slice(0, 8) + "…" : "—")}</p>
+                        </td>
+                        <td className="px-5 py-3 text-xs max-w-[200px]">
+                          <p className="truncate" title={esc.detail ?? esc.reason}>{esc.detail || esc.reason}</p>
+                        </td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
+                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
                             esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
                               "text-amber-600 bg-amber-50 border-amber-200"
-                          }`}>{esc.status}</span>
-                      </td>
-                      <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</td>
-                      <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
-                        {formatDate(esc.created_at)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                            }`}>{esc.status}</span>
+                        </td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
+                          {formatDate(esc.created_at)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
 
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
@@ -1065,59 +1065,59 @@ function AdminUsersPage() {
           </div>
 
           <div className="overflow-x-auto scrollbar-none">
-              <table className="w-full text-sm min-w-[560px]">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40">
-                    {["User", "Email", "Plan", "Expires", "Action"].map((h) => (
-                      <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredForPlans.length === 0 && (
-                    <tr><td colSpan={5} className="py-12 text-center font-serif text-muted-foreground">No users found</td></tr>
-                  )}
-                  {filteredForPlans.map((p) => {
-                    const plan = (p.plan ?? "free") as PlanId;
-                    const isUpdating = updatingPlan === p.id;
-                    const expiry = p.plan_expiry ? new Date(p.plan_expiry) : null;
-                    const isValidExpiry = expiry && !isNaN(expiry.getTime());
-                    const isExpired = isValidExpiry ? expiry < new Date() : false;
-                    return (
-                      <tr key={p.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                        <td className="px-2 py-2 sm:px-5 sm:py-3">
-                          <p className="font-semibold">{p.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
-                        </td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3">
-                          <span className="inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider text-primary border-primary/20">
-                            {PLANS[plan]?.label ?? plan}
+            <table className="w-full text-sm min-w-[560px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/40">
+                  {["User", "Email", "Plan", "Expires", "Action"].map((h) => (
+                    <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredForPlans.length === 0 && (
+                  <tr><td colSpan={5} className="py-12 text-center font-serif text-muted-foreground">No users found</td></tr>
+                )}
+                {filteredForPlans.map((p) => {
+                  const plan = (p.plan ?? "free") as PlanId;
+                  const isUpdating = updatingPlan === p.id;
+                  const expiry = p.plan_expiry ? new Date(p.plan_expiry) : null;
+                  const isValidExpiry = expiry && !isNaN(expiry.getTime());
+                  const isExpired = isValidExpiry ? expiry < new Date() : false;
+                  return (
+                    <tr key={p.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                      <td className="px-2 py-2 sm:px-5 sm:py-3">
+                        <p className="font-semibold">{p.display_name ?? "—"}</p>
+                        <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
+                      </td>
+                      <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
+                      <td className="px-2 py-2 sm:px-5 sm:py-3">
+                        <span className="inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider text-primary border-primary/20">
+                          {PLANS[plan]?.label ?? plan}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 font-mono text-xs">
+                        {isValidExpiry ? (
+                          <span className={isExpired ? "text-destructive" : "text-muted-foreground"}>
+                            {expiry.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                            {isExpired ? " (expired)" : ""}
                           </span>
-                        </td>
-                        <td className="px-5 py-3 font-mono text-xs">
-                          {isValidExpiry ? (
-                            <span className={isExpired ? "text-destructive" : "text-muted-foreground"}>
-                              {expiry.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
-                              {isExpired ? " (expired)" : ""}
-                            </span>
-                          ) : <span className="text-muted-foreground">—</span>}
-                        </td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3">
-                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
-                            <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
-                              className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
-                              {(Object.keys(PLANS) as PlanId[]).map((pid) => (
-                                <option key={pid} value={pid}>{PLANS[pid].label}</option>
-                              ))}
-                            </select>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        ) : <span className="text-muted-foreground">—</span>}
+                      </td>
+                      <td className="px-2 py-2 sm:px-5 sm:py-3">
+                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
+                          <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
+                            className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
+                            {(Object.keys(PLANS) as PlanId[]).map((pid) => (
+                              <option key={pid} value={pid}>{PLANS[pid].label}</option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
           <div className="hidden">
@@ -1125,58 +1125,58 @@ function AdminUsersPage() {
               <div className="py-12 text-center font-serif text-muted-foreground">No users found</div>
             )}
             <div className="divide-y divide-border/50">
-            {filteredForPlans.map((p) => {
-              const plan = (p.plan ?? "free") as PlanId;
-              const isUpdating = updatingPlan === p.id;
-              const expiry = p.plan_expiry ? new Date(p.plan_expiry) : null;
-              const isValidExpiry = expiry && !isNaN(expiry.getTime());
-              const isExpired = isValidExpiry ? expiry < new Date() : false;
-              return (
-                <div key={p.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-semibold text-sm">{p.display_name ?? "—"}</p>
-                      <p className="font-mono text-[9px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[8px] uppercase tracking-wider text-primary border-primary/20">
-                      {PLANS[plan]?.label ?? plan}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border/40 font-mono text-muted-foreground">
-                    <div className="col-span-2">
-                      <span className="text-[9px] font-mono block uppercase text-muted-foreground">Email</span>
-                      <span className="break-all">{p.email ?? "—"}</span>
-                    </div>
-                    <div>
-                      <span className="text-[9px] font-mono block uppercase text-muted-foreground">Expires</span>
-                      <span>
-                        {isValidExpiry ? (
-                          <span className={isExpired ? "text-destructive font-bold" : ""}>
-                            {expiry.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
-                            {isExpired ? " (expired)" : ""}
-                          </span>
-                        ) : "—"}
+              {filteredForPlans.map((p) => {
+                const plan = (p.plan ?? "free") as PlanId;
+                const isUpdating = updatingPlan === p.id;
+                const expiry = p.plan_expiry ? new Date(p.plan_expiry) : null;
+                const isValidExpiry = expiry && !isNaN(expiry.getTime());
+                const isExpired = isValidExpiry ? expiry < new Date() : false;
+                return (
+                  <div key={p.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-semibold text-sm">{p.display_name ?? "—"}</p>
+                        <p className="font-mono text-[9px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[8px] uppercase tracking-wider text-primary border-primary/20">
+                        {PLANS[plan]?.label ?? plan}
                       </span>
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                    <span className="font-mono text-[9px] uppercase text-muted-foreground">Change Plan</span>
-                    <div className="flex items-center gap-2">
-                      {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
-                        <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
-                          className="rounded border border-border bg-background px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
-                          {(Object.keys(PLANS) as PlanId[]).map((pid) => (
-                            <option key={pid} value={pid}>{PLANS[pid].label}</option>
-                          ))}
-                        </select>
-                      )}
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border/40 font-mono text-muted-foreground">
+                      <div className="col-span-2">
+                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">Email</span>
+                        <span className="break-all">{p.email ?? "—"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">Expires</span>
+                        <span>
+                          {isValidExpiry ? (
+                            <span className={isExpired ? "text-destructive font-bold" : ""}>
+                              {expiry.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                              {isExpired ? " (expired)" : ""}
+                            </span>
+                          ) : "—"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                      <span className="font-mono text-[9px] uppercase text-muted-foreground">Change Plan</span>
+                      <div className="flex items-center gap-2">
+                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
+                          <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
+                            className="rounded border border-border bg-background px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
+                            {(Object.keys(PLANS) as PlanId[]).map((pid) => (
+                              <option key={pid} value={pid}>{PLANS[pid].label}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
             <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
               <p className="font-mono text-[10px] text-muted-foreground">{filteredForPlans.length} of {profileState.length} users</p>
@@ -1192,40 +1192,40 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="overflow-x-auto scrollbar-none">
-              <table className="w-full text-sm min-w-[700px]">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40">
-                    {["User", "Plan", "Amount", "Phone", "Receipt", "Status", "Date"].map((h) => (
-                      <th key={h} className="px-2 py-2 sm:px-4 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {payments.map((pay) => (
-                    <tr key={pay.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                      <td className="px-4 py-3">
-                        <p className="font-semibold">{pay.profiles?.display_name ?? "—"}</p>
-                        <p className="font-mono text-[10px] text-muted-foreground">{pay.profiles?.email ?? (pay.user_id ? `${pay.user_id.slice(0, 8)}…` : "—")}</p>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs capitalize">{pay.plan}</td>
-                      <td className="px-4 py-3 font-semibold">KES {pay.amount.toLocaleString()}</td>
-                      <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">{pay.phone_number}</td>
-                      <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">{pay.mpesa_receipt ?? "—"}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
+              <div className="overflow-x-auto scrollbar-none">
+                <table className="w-full text-sm min-w-[700px]">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                      {["User", "Plan", "Amount", "Phone", "Receipt", "Status", "Date"].map((h) => (
+                        <th key={h} className="px-2 py-2 sm:px-4 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payments.map((pay) => (
+                      <tr key={pay.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                        <td className="px-4 py-3">
+                          <p className="font-semibold">{pay.profiles?.display_name ?? "—"}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">{pay.profiles?.email ?? (pay.user_id ? `${pay.user_id.slice(0, 8)}…` : "—")}</p>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs capitalize">{pay.plan}</td>
+                        <td className="px-4 py-3 font-semibold">KES {pay.amount.toLocaleString()}</td>
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">{pay.phone_number}</td>
+                        <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">{pay.mpesa_receipt ?? "—"}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
                             pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
                               "text-amber-600 bg-amber-50 border-amber-200"
-                          }`}>{pay.status}</span>
-                      </td>
-                      <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">
-                        {formatDate(pay.created_at)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                            }`}>{pay.status}</span>
+                        </td>
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">
+                          {formatDate(pay.created_at)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
 
               <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
@@ -1340,33 +1340,33 @@ function AdminUsersPage() {
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="overflow-x-auto scrollbar-none">
-              <table className="w-full text-sm min-w-[440px]">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40">
-                    {["Email", "Name", "Status", "Subscribed"].map(h => (
-                      <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {newsletter.map(s => (
-                    <tr key={s.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                      <td className="px-5 py-3 font-mono text-xs">{s.email}</td>
-                      <td className="px-5 py-3 text-sm">{s.name ?? "—"}</td>
-                      <td className="px-2 py-2 sm:px-5 sm:py-3">
-                        <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
-                          {s.status}
-                        </span>
-                      </td>
-                      <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
-                        {new Date(s.subscribed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
-                      </td>
+              <div className="overflow-x-auto scrollbar-none">
+                <table className="w-full text-sm min-w-[440px]">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                      {["Email", "Name", "Status", "Subscribed"].map(h => (
+                        <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {newsletter.map(s => (
+                      <tr key={s.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                        <td className="px-5 py-3 font-mono text-xs">{s.email}</td>
+                        <td className="px-5 py-3 text-sm">{s.name ?? "—"}</td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3">
+                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+                            {s.status}
+                          </span>
+                        </td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
+                          {new Date(s.subscribed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
 
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
