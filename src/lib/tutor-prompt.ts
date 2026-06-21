@@ -239,39 +239,33 @@ $$T = 2\pi\sqrt{\frac{l}{g}}, \quad F = \frac{GMm}{r^2}$$
 $$\eta = \frac{P_{out}}{P_{in}} \times 100\%$$
 
 ## Chemistry
-⚠️ CRITICAL: Chemical formula formatting — ONE LINE ONLY:
-✅ CORRECT: $\ce{KNO3}$    $\ce{H2SO4}$    $\ce{HCl + NaOH -> NaCl + H2O}$
-❌ WRONG:   \ceKNO3    \ce KNO3    \ce{KNO3} split across lines
-❌ WRONG:   ce H C l + N a O H    (never split formula characters)
-❌ WRONG:   ce{KNO3}  or  $$ce{...}$$  — ALWAYS include the backslash: $\ce{KNO3}$ NOT ce{KNO3}
+⚠️ CRITICAL FORMATTING RULES (NON-NEGOTIABLE):
+1. DELIMITERS ARE MANDATORY: You MUST wrap ALL chemical formulas and equations in LaTeX math delimiters ($...$ or $$...$$). 
+   ✅ CORRECT: $\\ce{H2O}$, $\\ce{2H2 + O2 -> 2H2O}$
+   ❌ WRONG:   \\ce{H2O} (missing $), ce{H2O} (missing \\ and $), H2O (plain text)
+2. NO LINE BREAKS: NEVER split a \\ce{} command across multiple lines. The entire formula must be on ONE line.
+3. BACKSLASH REQUIRED: ALWAYS use \\ce{}, never ce{}.
+4. INLINE ONLY: For lists and bullet points, ALWAYS use inline math $...$, never block math $$...$$.
+5. STATES & CONDITIONS: Include states (s,l,g,aq) and conditions inside the \\ce{}: $\\ce{CaCO3(s) ->[heat] CaO(s) + CO2(g)}$
 
-🚨 THE MOST COMMON MISTAKE: Writing ce{...} without the backslash \\ before ce.
-ALWAYS write $\\ce{formula}$ — the backslash before ce is MANDATORY.
+Use $\\ce{...}$ for ALL chemical notation:
+Compounds:    $\\ce{H2O}$, $\\ce{CO2}$, $\\ce{H2SO4}$, $\\ce{NaCl}$, $\\ce{NH3}$, $\\ce{HCl}$, $\\ce{NaOH}$
+Ions:         $\\ce{Na+}$, $\\ce{Cl-}$, $\\ce{SO4^2-}$, $\\ce{NH4+}$, $\\ce{Fe^3+}$, $\\ce{OH-}$
+Reactions:    $\\ce{2H2 + O2 -> 2H2O}$
+Equilibrium:  $\\ce{N2 + 3H2 <=> 2NH3}$
+Acid-base:    $\\ce{HCl + NaOH -> NaCl + H2O}$
+Redox:        $\\ce{Zn -> Zn^2+ + 2e-}$
+States:       $\\ce{CaCO3(s) -> CaO(s) + CO2(g)}$
+Organic:      $\\ce{CH4}$, $\\ce{C2H5OH}$, $\\ce{C6H12O6}$, $\\ce{CH3COOH}$, $\\ce{C6H6}$
+Isotopes:     $\\ce{^{14}_{6}C}$, $\\ce{^{235}_{92}U}$
 
-CRITICAL CHEMISTRY FORMATTING RULES:
-- ALWAYS write chemical formulas as $\ce{KNO3}$ — NEVER as \ceKNO3 or \ce KNO3 or split across lines
-- ALWAYS include the curly braces: $\ce{H2O}$ NOT $\ce H2O$
-- NEVER split a \ce{} formula across multiple lines
-- The entire formula must be on ONE line inside the curly braces
-
-Use $\ce{...}$ for ALL chemical formulas, equations, ions (mhchem):
-Compounds:    $\ce{H2O}$, $\ce{CO2}$, $\ce{H2SO4}$, $\ce{NaCl}$, $\ce{NH3}$, $\ce{HCl}$, $\ce{NaOH}$
-Ions:         $\ce{Na+}$, $\ce{Cl-}$, $\ce{SO4^2-}$, $\ce{NH4+}$, $\ce{Fe^3+}$, $\ce{OH-}$
-Reactions:    $\ce{2H2 + O2 -> 2H2O}$
-Equilibrium:  $\ce{N2 + 3H2 <=> 2NH3}$
-Acid-base:    $\ce{HCl + NaOH -> NaCl + H2O}$
-Redox:        $\ce{Zn -> Zn^2+ + 2e-}$, $\ce{MnO4- + 8H+ + 5e- -> Mn^2+ + 4H2O}$
-States:       $\ce{CaCO3(s) -> CaO(s) + CO2(g)}$
-Organic:      $\ce{CH4}$, $\ce{C2H5OH}$, $\ce{C6H12O6}$, $\ce{CH3COOH}$, $\ce{C6H6}$
-Isotopes:     $\ce{^{14}_{6}C}$, $\ce{^{235}_{92}U}$
-
-Key chemistry:
-$$n = \frac{m}{M}, \quad c = \frac{n}{V}, \quad PV = nRT$$
-$$\text{pH} = -\log[\ce{H+}], \quad K_w = [\ce{H+}][\ce{OH-}] = 1.0 \times 10^{-14}$$
-$$\Delta H = H_{\text{products}} - H_{\text{reactants}}$$
-$$\text{Atom economy} = \frac{M_r\text{ desired product}}{\sum M_r\text{ all products}} \times 100\%$$
-$$\text{\% yield} = \frac{\text{actual yield}}{\text{theoretical yield}} \times 100\%$$
-$$E = \frac{Q}{F} \quad \text{(electrochemistry, Faraday's law)}$$
+Key chemistry formulas (ALWAYS use $$...$$ for standalone equations):
+$$n = \\frac{m}{M}, \\quad c = \\frac{n}{V}, \\quad PV = nRT$$
+$$\\text{pH} = -\\log[\\ce{H+}], \\quad K_w = [\\ce{H+}][\\ce{OH-}] = 1.0 \\times 10^{-14}$$
+$$\\Delta H = H_{\\text{products}} - H_{\\text{reactants}}$$
+$$\\text{Atom economy} = \\frac{M_r(\\text{desired product})}{\\sum M_r(\\text{all products})} \\times 100\\%$$
+$$\\text{\\% yield} = \\frac{\\text{actual yield}}{\\text{theoretical yield}} \\times 100\\%$$
+$$E = \\frac{Q}{F} \\quad \\text{(Faraday's law)}$$
 
 ## Diagrams
 For processes, cycles, flows, classifications, timelines, or relationships (e.g. breathing cycle, water cycle, food chains, circuit topology, organisational hierarchies):
