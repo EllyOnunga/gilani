@@ -22,6 +22,7 @@ import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiStreamTestRouteImport } from './routes/api/stream-test'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedTutorRouteImport } from './routes/_authenticated/tutor'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -101,6 +102,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStreamTestRoute = ApiStreamTestRouteImport.update({
+  id: '/api/stream-test',
+  path: '/api/stream-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tutor': typeof AuthenticatedTutorRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/stream-test': typeof ApiStreamTestRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
   '/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
@@ -237,6 +244,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tutor': typeof AuthenticatedTutorRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/stream-test': typeof ApiStreamTestRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
   '/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
@@ -269,6 +277,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tutor': typeof AuthenticatedTutorRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/stream-test': typeof ApiStreamTestRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
   '/_authenticated/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tutor'
     | '/api/chat'
+    | '/api/stream-test'
     | '/admin/users'
     | '/teacher/escalations'
     | '/tutor/$threadId'
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tutor'
     | '/api/chat'
+    | '/api/stream-test'
     | '/admin/users'
     | '/teacher/escalations'
     | '/tutor/$threadId'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/tutor'
     | '/api/chat'
+    | '/api/stream-test'
     | '/_authenticated/admin/users'
     | '/_authenticated/teacher/escalations'
     | '/_authenticated/tutor/$threadId'
@@ -387,6 +399,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiStreamTestRoute: typeof ApiStreamTestRoute
   ApiMpesaCallbackRoute: typeof ApiMpesaCallbackRoute
   ApiMpesaInitiateRoute: typeof ApiMpesaInitiateRoute
   ApiNewsletterSendRoute: typeof ApiNewsletterSendRoute
@@ -485,6 +498,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stream-test': {
+      id: '/api/stream-test'
+      path: '/api/stream-test'
+      fullPath: '/api/stream-test'
+      preLoaderRoute: typeof ApiStreamTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -656,6 +676,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiStreamTestRoute: ApiStreamTestRoute,
   ApiMpesaCallbackRoute: ApiMpesaCallbackRoute,
   ApiMpesaInitiateRoute: ApiMpesaInitiateRoute,
   ApiNewsletterSendRoute: ApiNewsletterSendRoute,

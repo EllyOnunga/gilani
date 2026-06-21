@@ -3,7 +3,7 @@ import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, FileText } from "
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-import { MarkdownRenderer } from "./MarkdownRenderer";
+import { StreamingMarkdown } from "./StreamingMarkdown";
 
 type Props = {
   message: any;
@@ -23,10 +23,6 @@ type Props = {
 
 
 
-const MemoMarkdown = React.memo(
-  ({ content }: { content: string }) => <MarkdownRenderer content={content} />,
-  (prev, next) => prev.content === next.content
-);
 
 export const MessageBubble = React.memo(function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEditRequest, userId, initialVote, onVote}: Props) {
   const [copied, setCopied] = useState(false);
@@ -141,27 +137,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
           <div className="flex flex-col w-full">
             {visibleText ? (
               <div className="prose-ai relative">
-                {isStreamActive ? (
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                    {visibleText}
-                    <span
-                      className="inline-block w-[2px] h-[1.1em] bg-primary opacity-90 ml-0.5 align-text-bottom rounded-full"
-                      style={{
-                        animation: "streaming-cursor-blink 0.65s infinite step-start",
-                      }}
-                    />
-                    <style dangerouslySetInnerHTML={{ __html: `
-                      @keyframes streaming-cursor-blink {
-                        0%, 100% { opacity: 0.9; }
-                        50% { opacity: 0; }
-                      }
-                    `}} />
-                  </div>
-                ) : (
-                  <div className="animate-in fade-in duration-300 fill-mode-both">
-                    <MemoMarkdown content={visibleText} />
-                  </div>
-                )}
+                <StreamingMarkdown content={visibleText} isStreaming={isStreamActive} />
               </div>
             ) : (
               !isStreamActive ? (
@@ -237,7 +213,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
             {!isStreamActive && (
               <div className="flex items-center gap-1 mt-1.5 transition-opacity duration-200 justify-end border-t border-primary/20 pt-1">
                 <button onClick={handleCopy}
-                  className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-primary/50 hover:text-primary transition-colors px-2 py-1 rounded hover:bg-primary/10"
+                  className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-white/70 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/10"
                   title="Copy">
                   {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
@@ -248,7 +224,7 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
                     className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded ${
                       isRateLimited
                         ? "opacity-40 cursor-not-allowed text-primary/30"
-                        : "text-primary/50 hover:text-primary hover:bg-primary/10"
+                        : "text-white/70 hover:text-white hover:bg-white/10"
                     }`}
                     title={isRateLimited ? "Rate limit reached" : "Edit message"}>
                     <Pencil className="h-3.5 w-3.5" />
@@ -275,9 +251,15 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
   if (prev.isRateLimited !== next.isRateLimited) return false;
   if (prev.onEditRequest !== next.onEditRequest) return false;
   if (prev.initialVote !== next.initialVote) return false;
+  if (prev.userId !== next.userId) return false;
+  if (prev.onVote !== next.onVote) return false;
+  if (prev.onReload !== next.onReload) return false;
   const getText = (m: any) =>
     m?.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || m?.content || "";
-  if (prev.isPending || next.isPending) return false;
+  // During streaming: only re-render if text actually changed
+  if (prev.isPending || next.isPending) {
+    return getText(prev.message) === getText(next.message);
+  }
   return getText(prev.message) === getText(next.message) && prev.message?.id === next.message?.id;
 }
 );

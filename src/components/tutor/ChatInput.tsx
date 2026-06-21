@@ -334,7 +334,7 @@ export function ChatInput({
             parsingFile     ? "Parsing document…" :
                               "Ask anything…"
           }
-          disabled={isDisabled} onKeyDown={handleKeyDown} style={{ maxHeight: 160 }} />
+          disabled={isDisabled} onKeyDown={handleKeyDown} style={{ maxHeight: 160, overflowY: 'hidden' }} />
 
         <div className="pb-2 pr-2 pt-2">
           <button type="button" onClick={(e) => { if (isPending) { onStop?.(); } else { onSubmit(e as any); } }}

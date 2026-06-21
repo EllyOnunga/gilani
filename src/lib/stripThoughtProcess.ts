@@ -33,6 +33,7 @@ export function stripThoughtProcessTransform<TOOLS extends ToolSet>() {
           return;
         }
 
+        console.log(`[STRIP-DEBUG] raw delta in (len=${chunk.text.length}): ${JSON.stringify(chunk.text.slice(0, 200))}`);
         buffer += chunk.text;
         let outText = "";
 
@@ -73,7 +74,14 @@ export function stripThoughtProcessTransform<TOOLS extends ToolSet>() {
         }
 
         if (outText.length > 0) {
-          controller.enqueue({ ...chunk, text: outText } as TextStreamPart<TOOLS>);
+          // Split large flushes (e.g. everything released right after a
+          // </thought_process> close tag) into word-sized deltas instead of
+          // one giant chunk, so downstream smoothStream can actually pace
+          // it out instead of dumping it on the client in one paint.
+          const words = outText.match(/\S+\s*/g) || [outText];
+          for (const w of words) {
+            controller.enqueue({ ...chunk, text: w } as TextStreamPart<TOOLS>);
+          }
         }
         // If outText is empty, we swallow this delta entirely (no enqueue) —
         // e.g. when the whole chunk was inside the thought_process block,
@@ -81,12 +89,21 @@ export function stripThoughtProcessTransform<TOOLS extends ToolSet>() {
       },
 
       flush(controller) {
-        // Stream ended mid-strip — discard any unterminated tag content.
-        if (!stripping && buffer.length > 0) {
+        if (buffer.length === 0) return;
+        if (stripping) {
+          // The model never closed </thought_process> before the stream ended.
+          // Discarding here would silently produce an empty response (the
+          // original bug). Instead, assume reasoning is done and release
+          // everything we were holding, split into word-sized deltas so the
+          // client doesn't get one giant paint.
+          console.warn("[stripThoughtProcess] stream ended without a closing tag — releasing buffered text instead of discarding it");
+        }
+        const words = buffer.match(/\S+\s*/g) || [buffer];
+        for (const w of words) {
           controller.enqueue({
             type: "text-delta",
             id: "strip-flush",
-            text: buffer,
+            text: w,
           } as TextStreamPart<TOOLS>);
         }
         buffer = "";

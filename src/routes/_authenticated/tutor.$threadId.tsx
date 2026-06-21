@@ -277,6 +277,13 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const chatHelpers: any = useChat({
     id: threadId,
     transport,
+    // With smoothStream now emitting ~950 small word-level chunks per response
+    // (vs ~30 large bursts before), useChat's default "re-render on every chunk"
+    // behavior was hammering the main thread (~64 renders/sec) and freezing the
+    // tab. Throttle UI-state updates here; the rAF typewriter in StreamingMarkdown
+    // still does its own independent smooth reveal of whatever text is available
+    // at each throttled update, so visual smoothness is unaffected.
+    experimental_throttle: 50,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
     onFinish: (message: any) => {
       setChatError(null);
@@ -308,6 +315,16 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const { messages: messagesRaw, setMessages, sendMessage, stop, status, regenerate } = chatHelpers;
   const handleReload = useCallback(() => regenerate({ body: { isRetry: true } }), [regenerate]);
   const handlePromptClick = useCallback((prompt: string) => setInput(prompt), [setInput]);
+  const handleVote = useCallback((msgId: string, vote: 1 | -1 | null) => {
+    setUserVotes((prev) => {
+      if (vote === null) {
+        const next = { ...prev };
+        delete next[msgId];
+        return next;
+      }
+      return { ...prev, [msgId]: vote };
+    });
+  }, [setUserVotes]);
   /** When user clicks Edit on a bubble, load its text into ChatInput and focus it */
   const handleEditRequest = useCallback((text: string) => {
     setInput(text);
@@ -794,16 +811,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           onPromptClick={handlePromptClick}
           userId={userId}
           userVotes={userVotes}
-          onVote={(msgId: string, vote: 1 | -1 | null) => {
-            setUserVotes((prev) => {
-              if (vote === null) {
-                const next = { ...prev };
-                delete next[msgId];
-                return next;
-              }
-              return { ...prev, [msgId]: vote };
-            });
-          }}
+          onVote={handleVote}
         />
 
         </div>

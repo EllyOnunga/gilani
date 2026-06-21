@@ -1,5 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export async function authenticateRequest(request: Request) {
@@ -38,20 +36,9 @@ export async function authenticateRequest(request: Request) {
     });
   }
 
-  const supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    auth: {
-      storage: undefined,
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-  const { data, error } = await supabaseClient.auth.getUser(token);
+  // Use the already-initialized admin client — avoids creating a new TCP connection
+  // per request which was causing ETIMEDOUT under load.
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
   if (error || !data?.user) {
     console.error(
       "[API Auth Error] Token verification failed:",
@@ -64,7 +51,7 @@ export async function authenticateRequest(request: Request) {
   }
 
   return {
-    supabase: supabaseClient,
+    supabase: supabaseAdmin,
     userId: data.user.id,
     user: data.user,
   };

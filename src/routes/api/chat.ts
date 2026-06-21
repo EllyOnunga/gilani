@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
 import { streamText, embed, smoothStream } from "ai";
-import { stripThoughtProcessTransform } from "@/lib/stripThoughtProcess";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { withTimeout } from "@/lib/async";
@@ -282,9 +281,18 @@ ${finalContent}`;
             providerOptions: {
               google: {
                 useSearchGrounding: true,
+                thinkingConfig: {
+                  thinkingBudget: 1024,
+                  includeThoughts: false,
+                },
               },
             },
-            experimental_transform: [stripThoughtProcessTransform(), smoothStream({ delayInMs: 30, chunking: "word" })],
+            // Line-level chunking keeps frame count near the original ~31 raw bursts
+            // (confirmed safe) while still smoothing pacing more evenly than no transform.
+            // Word/few-word chunking produced 300-950 frames, which combined with this
+            // app's per-commit render cost (Sentry instrumentation, ResizeObserver reflow,
+            // markdown/KaTeX work) caused SSE reader backpressure and a multi-second stall.
+            experimental_transform: smoothStream({ chunking: "line", delayInMs: 20 }),
             onError: (errorObj) => {
               const error = (errorObj as any)?.error || errorObj;
               console.error(

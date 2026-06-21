@@ -411,6 +411,12 @@ const JS_BLOCKLIST = new Set([
 // ─── preprocessLatex ─────────────────────────────────────────────────────────
 
 function preprocessLatex(raw: string): string {
+  // Guard: if text has unclosed fences or math delimiters, skip heavy regex
+  // passes entirely — the regex engine backtracks catastrophically on partial tokens.
+  const fenceCount = (raw.match(/```/g) || []).length;
+  const mathCount  = (raw.match(/\$\$/g) || []).length;
+  if (fenceCount % 2 !== 0 || mathCount % 2 !== 0) return raw;
+
   // 0. Protect fenced code blocks from ALL substitutions
   const FENCE_TOKEN = "\x00FENCE\x00";
   const fenceBlocks: string[] = [];
@@ -421,6 +427,30 @@ function preprocessLatex(raw: string): string {
 
   // 2. Inline math \( … \) → $ … $
   s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_m, inner) => `$${inner.trim()}$`);
+
+  // 2b. Fix missing backslash before ce{...} inside math delimiters: $ce{ATP}$ → $\ce{ATP}$
+  // The AI model sometimes drops the backslash. Must run BEFORE step 3 protects the
+  // span, or the malformed "ce{...}" (parsed by KaTeX as plain italic variables c, e,
+  // followed by a braced group) gets locked in as-is and silently mis-renders.
+  s = s.replace(/\$(\$?)ce\{/g, (_m, dbl) => `$${dbl}\\ce{`);
+
+  // 2c. Fix severely garbled \ce output: occasionally the model emits a chemical
+  // formula as \ce followed by ONE CHARACTER PER LINE (e.g. \ce\nC\n6\nH\n12\n...),
+  // immediately followed by a condensed duplicate of the same formula with no braces
+  // (e.g. \ceC6H12O6...). This also normalizes a Unicode minus sign (−) that
+  // sometimes appears in place of an ASCII hyphen in reaction arrows. Must run before
+  // step 3 protects $...$ spans, since this garbled text isn't wrapped in $ yet.
+  s = s.replace(
+    /\\ce\n((?:[A-Za-z0-9()+\u2212><\u2013\u2014-]{1,3}\n)+)/g,
+    (_m, body) => `\\ce{${body.replace(/\u2212>/g, "->").replace(/\u2212/g, "-").replace(/\s+/g, "")}}\n`
+  );
+  s = s.replace(
+    /(\\ce\{([^}]+)\})\n\\ce([A-Za-z0-9()+\u2212><\u2013\u2014-]+)/g,
+    (m, full, formula, dupRaw) => {
+      const dupNormalized = dupRaw.replace(/\u2212>/g, "->").replace(/\u2212/g, "-").replace(/\s+/g, "");
+      return dupNormalized === formula ? full : m;
+    }
+  );
 
   // 3. Protect existing $…$ and $$…$$ blocks — use a UUID-style token to avoid collisions
   const TOKEN = `\x00latex_${Math.random().toString(36).slice(2)}_\x00`;
@@ -442,12 +472,25 @@ function preprocessLatex(raw: string): string {
   // 4b. Wrap bare \ce{…} that aren't already inside $ … $
   s = s.replace(/\\ce\{([^}]+)\}/g, (_m, inner) => `$\\ce{${inner}}$`);
 
-  // 5. Auto-detect chemical formulas — skip JS/TS/React blocklisted words
+  // 4c. Re-protect the $\ce{...}$ spans just created in 4a/4b — steps 5-10 below
+  // are regex passes that don't know they're inside math mode, so without this,
+  // e.g. step 6's reaction-arrow rule would inject a SECOND, nested $...$ block
+  // inside an already-open \ce{} span (invalid LaTeX: $\ce{... $\rightarrow$ ...}$).
+  s = s.replace(/\$\\ce\{[^}]+\}\$/g, (match) => {
+    latexBlocks.push(match);
+    return TOKEN;
+  });
+
+  // 5. Auto-detect chemical formulas — conservative: must have digit + multiple elements
+  // Skip if already tokenised (inside a TOKEN placeholder)
   s = s.replace(
-    /\b([A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*)+(?:\([A-Z][a-z]?\d*\)\d*)*)\b/g,
+    /\b([A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*){1,}(?:\([A-Z][a-z]?\d*\)\d*)*)\b/g,
     (_m, formula) => {
       if (!/\d/.test(formula)) return formula;
       if (JS_BLOCKLIST.has(formula)) return formula;
+      // Must contain at least 2 distinct element symbols (uppercase letters)
+      const elementCount = (formula.match(/[A-Z]/g) || []).length;
+      if (elementCount < 2) return formula;
       return `$\\ce{${formula}}$`;
     }
   );

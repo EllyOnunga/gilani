@@ -46,7 +46,7 @@ export const MessageList = React.memo(function MessageList({
     if (remaining < 150 || lastMessage?.role === "user") {
       container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages.length, messages[messages.length - 1]?.id]);
 
   // Jump to bottom instantly once messages finish loading for this thread
   useEffect(() => {
@@ -73,7 +73,7 @@ export const MessageList = React.memo(function MessageList({
         // Only auto-scroll if user is near the bottom (within 180px of previous height)
         const distFromBottom = lastHeight - container.scrollTop - container.clientHeight;
         if (distFromBottom < 180) {
-          container.scrollTop = newHeight;
+          container.scrollTop = container.scrollHeight;
         }
         lastHeight = newHeight;
       }
@@ -120,14 +120,33 @@ export const MessageList = React.memo(function MessageList({
             />
           ))}
 
-        {isPending && messages[messages.length - 1]?.role === "user" && (
+        {isPending && (() => {
+          const last = messages[messages.length - 1];
+          if (!last) return true;
+          if (last.role === "user") return true;
+          // Keep "Thinking" visible until the assistant message actually has
+          // visible text — otherwise the indicator vanishes the instant the
+          // SDK appends an empty assistant placeholder, leaving a dead gap
+          // with no feedback while waiting for the first real token.
+          const text =
+            last.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") ||
+            (last as any).content ||
+            "";
+          return text.trim().length === 0;
+        })() && (
           <div className="flex items-center gap-1.5 py-2 px-1 animate-in fade-in duration-300">
+            <style dangerouslySetInnerHTML={{ __html: `
+              @keyframes thinking-dot-bounce {
+                0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+                40% { transform: translateY(-6px); opacity: 1; }
+              }
+            ` }} />
             <span className="text-sm text-primary font-medium">Thinking</span>
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
                 className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
-                style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                style={{ animation: `thinking-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
               />
             ))}
           </div>
