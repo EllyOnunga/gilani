@@ -14,7 +14,7 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.80",
+    "@ai-sdk/google": "^3.0.83",
     "@ai-sdk/openai-compatible": "^2.0.48",
     "@ai-sdk/react": "^3.0.193",
     "@fontsource/inter": "^5.2.8",
@@ -57,7 +57,7 @@
     "@tanstack/router-plugin": "^1.167.28",
     "@types/dompurify": "^3.0.5",
     "@vercel/analytics": "^2.0.1",
-    "ai": "6.0.191",
+    "ai": "^6.0.208",
     "ai-elements": "^1.9.0",
     "ai-fallback": "^2.0.1",
     "class-variance-authority": "^0.7.1",

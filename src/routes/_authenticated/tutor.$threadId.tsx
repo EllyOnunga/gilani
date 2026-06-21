@@ -277,13 +277,13 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const chatHelpers: any = useChat({
     id: threadId,
     transport,
-    // With smoothStream now emitting ~950 small word-level chunks per response
-    // (vs ~30 large bursts before), useChat's default "re-render on every chunk"
-    // behavior was hammering the main thread (~64 renders/sec) and freezing the
-    // tab. Throttle UI-state updates here; the rAF typewriter in StreamingMarkdown
-    // still does its own independent smooth reveal of whatever text is available
-    // at each throttled update, so visual smoothness is unaffected.
-    experimental_throttle: 50,
+    // smoothStream with word chunking + 10ms delay gives smooth word-by-word reveals.
+    
+    
+    
+    
+    
+    experimental_throttle: 15,
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
     onFinish: (message: any) => {
       setChatError(null);

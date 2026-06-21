@@ -22,6 +22,9 @@ export default defineConfig({
     ssr: {
       external: ["nodemailer"],
     },
+    optimizeDeps: {
+      include: ["katex", "katex/dist/contrib/mhchem.min.js"],
+    },
     build: {
       chunkSizeWarningLimit: 600,
       rollupOptions: {

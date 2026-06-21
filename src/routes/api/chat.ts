@@ -281,18 +281,14 @@ ${finalContent}`;
             providerOptions: {
               google: {
                 useSearchGrounding: true,
-                thinkingConfig: {
-                  thinkingBudget: 1024,
-                  includeThoughts: false,
-                },
               },
             },
-            // Line-level chunking keeps frame count near the original ~31 raw bursts
-            // (confirmed safe) while still smoothing pacing more evenly than no transform.
-            // Word/few-word chunking produced 300-950 frames, which combined with this
-            // app's per-commit render cost (Sentry instrumentation, ResizeObserver reflow,
-            // markdown/KaTeX work) caused SSE reader backpressure and a multi-second stall.
-            experimental_transform: smoothStream({ chunking: "line", delayInMs: 20 }),
+            // REVERTED back to "line": word-level chunking caused the same
+            // SSE backpressure / multi-second stall reported previously (~10s
+            // dump delay observed). Keeping line-chunking until the stall's
+            // actual cause (likely unrelated per-commit cost, not chunking
+            // granularity itself) is isolated separately.
+            // experimental_transform: smoothStream({ chunking: "word", delayInMs: 10 }),
             onError: (errorObj) => {
               const error = (errorObj as any)?.error || errorObj;
               console.error(
@@ -302,6 +298,7 @@ ${finalContent}`;
             },
             onFinish: async ({ text: assistantText, providerMetadata, finishReason }) => {
               console.log(`[API Chat] google finished. Length: ${assistantText.length}. FinishReason: ${finishReason}`);
+
               const safeText = assistantText.trim() || "Sorry, I could not generate a response right now. Please try again.";
               try {
                 const assistantParts = [{ type: "text" as const, text: safeText }];

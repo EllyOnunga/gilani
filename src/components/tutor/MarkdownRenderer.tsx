@@ -3,31 +3,12 @@ import DOMPurify from "dompurify";
 import { FunctionGraphBlock } from "./FunctionGraph";
 import { ExternalLink, AlertCircle, Lightbulb, AlertTriangle, Info } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
+// rehypeKatex removed — using custom math renderer to support mhchem \ce{}
 import remarkGfm from "remark-gfm";
+import katex from "katex";
 import "katex/dist/katex.min.css";
 import "katex/dist/contrib/mhchem.min.js";
 
-// KaTeX and mhchem loaded lazily to keep the initial bundle small
-let _katex: typeof import("katex").default | null = null;
-let _katexLoadPromise: Promise<typeof import("katex").default> | null = null;
-async function getKatex() {
-  if (_katex) return _katex;
-  if (_katexLoadPromise) return _katexLoadPromise;
-  _katexLoadPromise = (async () => {
-    const katexMod = await import("katex");
-    const katexInstance = katexMod.default;
-    // mhchem patches the katex module it imports internally — ensure it sees
-    // the SAME instance by exposing it on globalThis before loading mhchem,
-    // since mhchem.min.js resolves "katex" via the module cache / global.
-    (globalThis as any).katex = katexInstance;
-    await import("katex/dist/contrib/mhchem.min.js" as any);
-    _katex = katexInstance;
-    return katexInstance;
-  })();
-  return _katexLoadPromise;
-}
 
 
 // ─── Mermaid Component ────────────────────────────────────────────────────────
@@ -135,36 +116,54 @@ function Callout({ type, children }: { type: CalloutType; children: React.ReactN
   );
 }
 
+// ─── KaTeX macros ─────────────────────────────────────────────────────────────
+
+const KATEX_MACROS: Record<string, string> = {
+  "\\vec":    "\\overrightarrow{#1}",
+  "\\unit":   "\\mathrm{#1}",
+  "\\degree": "^\\circ",
+  "\\mol":    "\\text{mol}",
+  "\\kJ":     "\\text{kJ}",
+  "\\atm":    "\\text{atm}",
+};
+
 // ─── Markdown Components ──────────────────────────────────────────────────────
 
 // Lazy-rendered KaTeX block — only loads KaTeX bundle when first math is encountered
-function LazyKatexBlock({ expression }: { expression: string }) {
+function LazyKatexBlock({ expression, displayMode = true }: { expression: string; displayMode?: boolean }) {
   const [html, setHtml] = React.useState<string | null>(null);
   const [error, setError] = React.useState(false);
 
   React.useEffect(() => {
-    let cancelled = false;
-    getKatex().then((katex) => {
-      if (cancelled) return;
-      try {
-        const rendered = katex.renderToString(expression, {
-          displayMode: true,
-          throwOnError: false,
-          strict: false,
-          trust: true,
-          macros: KATEX_MACROS,
-        });
-        setHtml(rendered);
-      } catch {
-        setError(true);
-      }
-    });
-    return () => { cancelled = true; };
-  }, [expression]);
+    try {
+      const rendered = katex.renderToString(expression, {
+        displayMode,
+        throwOnError: false,
+        strict: false,
+        trust: true,
+        macros: KATEX_MACROS,
+      });
+      console.log("[KX OK]", JSON.stringify(expression.slice(0, 60)));
+      setHtml(rendered);
+    } catch (e: any) {
+      console.log("[KX FAIL]", JSON.stringify(expression.slice(0, 60)), e?.message);
+      setError(true);
+    }
+  }, [expression, displayMode]);
 
-  if (error) return <code className="block bg-[#1e1e2e] text-green-300 font-mono text-[11px] leading-relaxed p-3 rounded-xl overflow-x-auto">{expression}</code>;
-  if (!html) return <div className="my-3 h-8 rounded-lg bg-muted/30 animate-pulse" />;
-  return <div className="my-3 overflow-x-auto py-2 px-1 rounded-lg bg-muted/30 border border-border/40" dangerouslySetInnerHTML={{ __html: html }} />;
+  if (error) {
+    return displayMode
+      ? <code className="block bg-[#1e1e2e] text-green-300 font-mono text-[11px] leading-relaxed p-3 rounded-xl overflow-x-auto">{expression}</code>
+      : <code className="inline bg-[#1e1e2e] text-green-300 font-mono text-[11px] px-1 rounded">{expression}</code>;
+  }
+  if (!html) {
+    return displayMode
+      ? <div className="my-3 h-8 rounded-lg bg-muted/30 animate-pulse" />
+      : <span className="inline-block h-4 w-12 align-middle rounded bg-muted/30 animate-pulse" />;
+  }
+  return displayMode
+    ? <div className="my-4 text-center overflow-x-auto" dangerouslySetInnerHTML={{ __html: html }} />
+    : <span className="inline-block align-middle" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 // Generic SVG diagrams (anatomy, physics setups, lab apparatus, circuits, etc.)
@@ -291,8 +290,15 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
     );
   },
   code: ({ inline, children, className, ...props }: any) => {
-    const lang = (className || "").replace("language-", "").toLowerCase();
-    const text = String(children).trim();
+    let lang = (className || "").replace("language-", "").toLowerCase();
+    let text = String(children).trim();
+
+    // Intercept inline math marker from preprocessLatex (works for both inline and block nodes)
+    if (text.startsWith("math-inline:")) {
+      lang = "math-inline";
+      text = text.replace("math-inline:", "").trim();
+    }
+    const isInline = !className || className === "";
 
     // Mermaid diagrams
     if (!inline && lang === "mermaid") {
@@ -324,12 +330,15 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       return <SmilesDrawer smiles={text} />;
     }
     // Render fenced math/latex/tex blocks as KaTeX display math
-    if (!inline && (lang === "latex" || lang === "math" || lang === "tex")) {
-      return <LazyKatexBlock expression={text} />;
+    // lang === "math-inline" comes from preprocessLatex converting single-$ spans;
+    // everything else (latex/math/tex) renders as display/block math.
+    if (lang === "latex" || lang === "math" || lang === "tex" || lang === "math-inline") {
+      const isDisplay = lang !== "math-inline";
+      return <LazyKatexBlock expression={text} displayMode={isDisplay} />;
     }
     // Render fenced chemistry blocks
     if (!inline && (lang === "chemistry" || lang === "chem")) {
-      return <LazyKatexBlock expression={`\\ce{${text}}`} />;
+      return <LazyKatexBlock expression={`\\ce{${text}}`} displayMode={true} />;
     }
 
     // Function / equation graphs — AI provides a JSON spec
@@ -342,21 +351,28 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       return <DiagramSVG svg={text} />;
     }
 
+    // Untagged blocks that are purely LaTeX (no prose) — render as KaTeX not code
+    const isPureLatex = !lang && !text.includes("`") && !text.includes("math-inline:") &&
+      (text.trimStart().startsWith("\\") || text.trimStart().startsWith("\ce{")) &&
+      (text.includes("\\ce{") || text.includes("\\frac") || text.includes("\\xrightarrow"));
+    if (isPureLatex) {
+      return <LazyKatexBlock expression={text} displayMode={true} />;
+    }
     // Regular code blocks with language badge
     if (!inline && lang) {
       return (
-        <div className="relative my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">
+        <span className="block relative my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">
           <span className="absolute top-2 right-3 text-[9px] font-mono uppercase tracking-widest text-zinc-500 select-none">
             {lang}
           </span>
           <code className="block text-green-300 font-mono text-[11px] leading-relaxed p-3 pt-6 overflow-x-auto">
             {children}
           </code>
-        </div>
+        </span>
       );
     }
 
-    return inline ? (
+    return isInline ? (
       <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px] text-primary">
         {children}
       </code>
@@ -366,9 +382,12 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
       </code>
     );
   },
-  pre: ({ children }) => (
-    <pre className="my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">{children}</pre>
-  ),
+  pre: ({ children }: any) => {
+    const child = React.Children.only(children) as any;
+    const lang = (child?.props?.className || "").replace("language-", "");
+    if (!lang || ["math","latex","tex","math-inline"].includes(lang)) return <>{children}</>;
+    return <pre className="my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">{children}</pre>;
+  },
   hr: () => <hr className="my-3 border-border/60" />,
   table: ({ children }) => (
     <div className="my-3 overflow-x-auto rounded-xl border border-border">
@@ -386,17 +405,6 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
   td: ({ children }) => <td className="px-3 py-2 text-sm">{children}</td>,
 };
 
-// ─── KaTeX macros ─────────────────────────────────────────────────────────────
-
-const KATEX_MACROS: Record<string, string> = {
-  "\\vec":    "\\overrightarrow{#1}",
-  "\\unit":   "\\mathrm{#1}",
-  "\\degree": "^\\circ",
-  "\\mol":    "\\text{mol}",
-  "\\kJ":     "\\text{kJ}",
-  "\\atm":    "\\text{atm}",
-};
-
 // ─── Element symbol blocklist ─────────────────────────────────────────────────
 // Prevents common JS/TS/React words from being wrapped in \ce{}
 
@@ -410,7 +418,7 @@ const JS_BLOCKLIST = new Set([
 
 // ─── preprocessLatex ─────────────────────────────────────────────────────────
 
-function preprocessLatex(raw: string): string {
+export function preprocessLatex(raw: string): string {
   // Guard: if text has unclosed fences or math delimiters, skip heavy regex
   // passes entirely — the regex engine backtracks catastrophically on partial tokens.
   const fenceCount = (raw.match(/```/g) || []).length;
@@ -459,6 +467,15 @@ function preprocessLatex(raw: string): string {
     latexBlocks.push(match);
     return TOKEN;
   });
+
+  // 4-pre. Fix bare ce{} missing backslash (Gemini sometimes drops the \)
+  // Inside $$...$$ blocks: just add the backslash back (no word boundary — digit prefix like 6ce is valid)
+  s = s.replace(/\$\$([\s\S]*?)\$\$/g, (_m, inner) => {
+    const fixed = inner.replace(/(?<!\\)ce\{/g, '\\ce{');
+    return `$$${fixed}$$`;
+  });
+  // Outside math blocks: wrap in $\ce{...}$
+  s = s.replace(/(?<!\\)ce\{([^}]+)\}/g, (_m, inner) => `$\\ce{${inner}}$`);
 
   // 4a. Fix split \ce across lines e.g. \ce\nK\nN\nO\n3
   s = s.replace(/\\ce\s*\n([A-Z][\s\S]*?)\n(?=\n|[^A-Za-z0-9])/g, (_m, inner) => {
@@ -532,28 +549,38 @@ function preprocessLatex(raw: string): string {
   // 13. Restore fenced code blocks
   s = s.replace(new RegExp(FENCE_TOKEN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), () => fenceBlocks.shift()!);
 
+  // 14. Final pass: fix any bare ce{ that survived inside restored $...$ or $$...$$ blocks
+  s = s.replace(/\$\$([\s\S]*?)\$\$/g, (_m, inner) => `$$${inner.replace(/(?<!\\)ce\{/g, "\\ce{")}$$`);
+  s = s.replace(/\$([^\$\n]+?)\$/g, (_m, inner) => `$${inner.replace(/(?<!\\)ce\{/g, "\\ce{")}$`);
+
+  // 15. Convert $$...$$ (display) and $...$ (inline) math into fenced ```math blocks
+  // so they flow through the existing fenced-code -> LazyKatexBlock renderer
+  // (remarkMath/rehypeKatex were removed; react-markdown v10 has no default
+  // handler for raw mdast math/inlineMath nodes).
+  s = s.replace(/\$\$([\s\S]+?)\$\$/g, (_m, inner) => `\n\`\`\`math\n${inner.trim()}\n\`\`\`\n`);
+  s = s.replace(/\$([^\$\n]+?)\$/g, (_m, inner) => `\`math-inline: ${inner.trim()}\``);
+
   return s;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-type Props = { content: string };
+// skipPreprocess: set by callers (e.g. StreamingMarkdown's stable blocks)
+// that already ran preprocessLatex on the full text before splitting into
+// \n\n chunks — avoids re-running the full 15-step regex pipeline a second
+// time per block, which is correct either way (fence-protection makes it
+// idempotent) but wasteful on the main thread during streaming.
+type Props = { content: string; skipPreprocess?: boolean };
 
-export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content }: Props) {
-  const processed = React.useMemo(() => preprocessLatex(content), [content]);
+export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, skipPreprocess = false }: Props) {
+  const processed = React.useMemo(
+    () => (skipPreprocess ? content : preprocessLatex(content)),
+    [content, skipPreprocess]
+  );
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkMath]}
-      rehypePlugins={[
-        [rehypeKatex, {
-          strict: false,
-          // CS-KATEX-001: trust:false prevents \href javascript: URI injection
-          trust: false,
-          throwOnError: false,
-          errorColor: "#cc0000",
-          macros: KATEX_MACROS,
-        }],
-      ]}
+      remarkPlugins={[remarkGfm]}
+
       components={markdownComponents}
     >
       {processed}

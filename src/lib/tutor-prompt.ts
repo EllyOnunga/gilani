@@ -243,6 +243,10 @@ $$\eta = \frac{P_{out}}{P_{in}} \times 100\%$$
 ✅ CORRECT: $\ce{KNO3}$    $\ce{H2SO4}$    $\ce{HCl + NaOH -> NaCl + H2O}$
 ❌ WRONG:   \ceKNO3    \ce KNO3    \ce{KNO3} split across lines
 ❌ WRONG:   ce H C l + N a O H    (never split formula characters)
+❌ WRONG:   ce{KNO3}  or  $$ce{...}$$  — ALWAYS include the backslash: $\ce{KNO3}$ NOT ce{KNO3}
+
+🚨 THE MOST COMMON MISTAKE: Writing ce{...} without the backslash \\ before ce.
+ALWAYS write $\\ce{formula}$ — the backslash before ce is MANDATORY.
 
 CRITICAL CHEMISTRY FORMATTING RULES:
 - ALWAYS write chemical formulas as $\ce{KNO3}$ — NEVER as \ceKNO3 or \ce KNO3 or split across lines

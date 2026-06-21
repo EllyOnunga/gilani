@@ -42,7 +42,7 @@ export const createGoogleAiProvider = (apiKey?: string) => {
         chatModel: (modelId?: string) => {
           const cleanModelId = modelId && modelId.includes("gemini")
             ? modelId.replace(/^google\//, "")
-            : "gemini-2.5-flash-lite";
+            : "gemini-2.5-flash";
           return googleInstance(cleanModelId);
         },
       };

@@ -24,7 +24,7 @@ type Props = {
 
 
 
-export const MessageBubble = React.memo(function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEditRequest, userId, initialVote, onVote}: Props) {
+export function MessageBubble({ message: m, idx, isLast, isPending, isRateLimited, onReload, onEditRequest, userId, initialVote, onVote}: Props) {
   const [copied, setCopied] = useState(false);
   // Initialise from the parent's pre-loaded bulk fetch; fall back to null
   const [vote, setVote] = useState<1 | -1 | null>(initialVote ?? null);
@@ -52,21 +52,18 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
     return match ? match[1].trim() : null;
   }, [m.id, m.role, m.parts, (m as any).content]);
 
-  const displayText = React.useMemo(() => {
+  const displayText = (() => {
     const partsText =
       m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || "";
     const rawText = partsText || (m as any).content || "";
     return m.role === "user"
       ? rawText
-          // Strip document content block (with or without trailing newlines)
           .replace(/<DocumentContent[^>]*>[\s\S]*?<\/DocumentContent>\n*/g, "")
-          // Strip attachment marker line (relax the \n\n requirement)
           .replace(/\[Document Attached:[^\]]+\]\n*/g, "")
-          // Strip the "Student Query:" prefix wrapper
           .replace(/^Student Query:\s*(\(See attached document\))?\s*/m, "")
           .trim()
       : rawText;
-  }, [m.id, m.role, m.parts, (m as any).content]);
+  })();
 
   const isStreamActive = isPending && isLast;
   const visibleText = displayText;
@@ -244,22 +241,4 @@ export const MessageBubble = React.memo(function MessageBubble({ message: m, idx
       </div>
     </div>
   );
-}, (prev, next) => {
-  // Only re-render if this bubble's content or streaming-relevant props changed
-  if (prev.isPending !== next.isPending) return false;
-  if (prev.isLast !== next.isLast) return false;
-  if (prev.isRateLimited !== next.isRateLimited) return false;
-  if (prev.onEditRequest !== next.onEditRequest) return false;
-  if (prev.initialVote !== next.initialVote) return false;
-  if (prev.userId !== next.userId) return false;
-  if (prev.onVote !== next.onVote) return false;
-  if (prev.onReload !== next.onReload) return false;
-  const getText = (m: any) =>
-    m?.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || m?.content || "";
-  // During streaming: only re-render if text actually changed
-  if (prev.isPending || next.isPending) {
-    return getText(prev.message) === getText(next.message);
-  }
-  return getText(prev.message) === getText(next.message) && prev.message?.id === next.message?.id;
 }
-);
