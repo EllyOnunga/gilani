@@ -354,6 +354,7 @@ function preprocessLatex(raw: string): string {
   s = s.replace(/\\ce\{([^}]+)\}/g, "$\\ce{$1}$");
 
   // Step 9: Wrap \xrightarrow and \xleftarrow with their arguments
+  // This is the KEY FIX - wrap the ENTIRE command including braces
   s = s.replace(/\\xrightarrow\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g, "$\\xrightarrow{$1}$");
   s = s.replace(/\\xleftarrow\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g, "$\\xleftarrow{$1}$");
   s = s.replace(/\\overset\{([^}]+)\}\{([^}]+)\}/g, "$\\overset{$1}{$2}$");
@@ -545,6 +546,128 @@ const markdownComponents: any = {
       </blockquote>
     );
   },
+  code: ({ inline, children, className, ...props }: any) => {
+    const rawLang = (className || "").replace("language-", "").toLowerCase();
+    const langs = rawLang.split(/\s+/).filter(Boolean);
+
+    let text = Array.isArray(children)
+      ? children.join("")
+      : String(children || "").trim();
+
+    let isMath = langs.some((l: string) =>
+      ["latex", "math", "tex", "math-inline"].includes(l)
+    );
+    let isChem = langs.some((l: string) => ["chemistry", "chem"].includes(l));
+    let isMermaid = langs.includes("mermaid");
+    let isSmiles = langs.some((l: string) => ["smiles", "smi"].includes(l));
+    let isGraph = langs.some((l: string) =>
+      ["function-plot", "graph", "plot"].includes(l)
+    );
+    let isSvg = langs.some((l: string) => ["svg", "diagram"].includes(l));
+    let displayMode = !langs.includes("math-inline");
+
+    if (text.startsWith("math-inline:")) {
+      isMath = true;
+      displayMode = false;
+      text = text.replace("math-inline:", "").trim();
+    }
+
+    if (!inline && isMermaid) {
+      let cleanMermaid = text
+        .replace(/\$\\longrightarrow\$/g, "-->")
+        .replace(/\$\\rightarrow\$/g, "-->")
+        .replace(/\$\\to\$/g, "-->")
+        .replace(/\$\\leftarrow\$/g, "<--")
+        .replace(/\$\\leftrightarrow\$/g, "<-->")
+        .replace(/\$([^$]+)\$/g, (_m: string, inner: string) => inner.trim());
+
+      cleanMermaid = cleanMermaid.replace(
+        /([A-Za-z0-9_]+)(\[)([^\[\]\n]*[()][^\[\]\n]*)(\])/g,
+        (_m: string, nodeId: string, open: string, label: string, close: string) => {
+          const trimmed = label.trim();
+          if (trimmed.startsWith('"') && trimmed.endsWith('"'))
+            return `${nodeId}${open}${label}${close}`;
+          const escaped = trimmed.replace(/"/g, "&quot;");
+          return `${nodeId}${open}"${escaped}"${close}`;
+        }
+      );
+      return <MermaidDiagram code={cleanMermaid} isStreaming={isStreaming} />;
+    }
+
+    if (!inline && isSmiles) {
+      return <SmilesDrawer smiles={text} isStreaming={isStreaming} />;
+    }
+
+    if (isMath) {
+      return <KatexRenderer expression={text} displayMode={displayMode && !inline} isStreaming={isStreaming} />;
+    }
+
+    if (isChem) {
+      return <KatexRenderer expression={`\\ce{${text}}`} displayMode={!inline} isStreaming={isStreaming} />;
+    }
+
+    if (!inline && isGraph) {
+      return <FunctionGraphBlock spec={text} isStreaming={isStreaming} />;
+    }
+
+    if (!inline && isSvg) {
+      return <DiagramSVG svg={text} isStreaming={isStreaming} />;
+    }
+
+    const isPureLatex =
+      !rawLang &&
+      !text.includes("`") &&
+      !text.includes("math-inline:") &&
+      (text.trimStart().startsWith("\\") || text.trimStart().startsWith("\\ce{")) &&
+      (text.includes("\\ce{") ||
+        text.includes("\\frac") ||
+        text.includes("\\xrightarrow") ||
+        text.includes("\\sum") ||
+        text.includes("\\int") ||
+        text.includes("\\lim") ||
+        text.includes("\\begin{") ||
+        text.includes("$"));
+
+    if (isPureLatex) {
+      return <KatexRenderer expression={text} displayMode={true} isStreaming={isStreaming} />;
+    }
+
+    const looksLikeMath =
+      text.includes("\\frac") ||
+      text.includes("\\ce{") ||
+      text.includes("\\text{") ||
+      text.includes("\\times") ||
+      text.includes("\\cdot") ||
+      (text.startsWith("$") && text.endsWith("$"));
+
+    if (!inline && looksLikeMath && !rawLang) {
+      return <KatexRenderer expression={text} displayMode={true} isStreaming={isStreaming} />;
+    }
+
+    const primaryLang = langs[0];
+    if (!inline && primaryLang) {
+      return (
+        <span className="block relative my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">
+          <span className="absolute top-2 right-3 text-[9px] font-mono uppercase tracking-widest text-zinc-500 select-none">
+            {rawLang}
+          </span>
+          <code className="block text-green-300 font-mono text-[11px] leading-relaxed p-3 pt-6 overflow-x-auto">
+            {children}
+          </code>
+        </span>
+      );
+    }
+
+    return inline ? (
+      <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px] text-primary">
+        {children}
+      </code>
+    ) : (
+      <code className="block bg-[#1e1e2e] text-green-300 font-mono text-[11px] leading-relaxed p-3 rounded-xl overflow-x-auto">
+        {children}
+      </code>
+    );
+  },
   pre: ({ children }: any) => {
     const child = React.Children.only(children) as any;
     const lang = (child?.props?.className || "").replace("language-", "");
@@ -584,13 +707,19 @@ const markdownComponents: any = {
   td: ({ children }: any) => (
     <td className="px-3 py-2 text-sm">{children}</td>
   ),
+
+  math: ({ value }: any) => (
+    <KatexRenderer expression={value || ""} displayMode={true} />
+  ),
+  inlineMath: ({ value }: any) => (
+    <KatexRenderer expression={value || ""} displayMode={false} />
+  ),
 };
 
 type Props = {
   content: string;
   skipPreprocess?: boolean;
   className?: string;
-  isStreaming?: boolean;
 };
 
 export const MarkdownRenderer = React.memo(function MarkdownRenderer({
@@ -604,146 +733,11 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
     [content, skipPreprocess]
   );
 
-  // Create streaming-aware components inside the component
-  const componentsWithStreaming = useMemo(() => ({
-    ...markdownComponents,
-    // Override math components to pass isStreaming
-    math: ({ value }: any) => (
-      <KatexRenderer expression={value || ""} displayMode={true} isStreaming={isStreaming} />
-    ),
-    inlineMath: ({ value }: any) => (
-      <KatexRenderer expression={value || ""} displayMode={false} isStreaming={isStreaming} />
-    ),
-    // Override code component to pass isStreaming
-    code: ({ inline, children, className, ...props }: any) => {
-      const rawLang = (className || "").replace("language-", "").toLowerCase();
-      const langs = rawLang.split(/\s+/).filter(Boolean);
-
-      let text = Array.isArray(children)
-        ? children.join("")
-        : String(children || "").trim();
-
-      let isMath = langs.some((l: string) =>
-        ["latex", "math", "tex", "math-inline"].includes(l)
-      );
-      let isChem = langs.some((l: string) => ["chemistry", "chem"].includes(l));
-      let isMermaid = langs.includes("mermaid");
-      let isSmiles = langs.some((l: string) => ["smiles", "smi"].includes(l));
-      let isGraph = langs.some((l: string) =>
-        ["function-plot", "graph", "plot"].includes(l)
-      );
-      let isSvg = langs.some((l: string) => ["svg", "diagram"].includes(l));
-      let displayMode = !langs.includes("math-inline");
-
-      if (text.startsWith("math-inline:")) {
-        isMath = true;
-        displayMode = false;
-        text = text.replace("math-inline:", "").trim();
-      }
-
-      if (!inline && isMermaid) {
-        let cleanMermaid = text
-          .replace(/\$\\longrightarrow\$/g, "-->")
-          .replace(/\$\\rightarrow\$/g, "-->")
-          .replace(/\$\\to\$/g, "-->")
-          .replace(/\$\\leftarrow\$/g, "<--")
-          .replace(/\$\\leftrightarrow\$/g, "<-->")
-          .replace(/\$([^$]+)\$/g, (_m: string, inner: string) => inner.trim());
-
-        cleanMermaid = cleanMermaid.replace(
-          /([A-Za-z0-9_]+)(\[)([^\[\]\n]*[()][^\[\]\n]*)(\])/g,
-          (_m: string, nodeId: string, open: string, label: string, close: string) => {
-            const trimmed = label.trim();
-            if (trimmed.startsWith('"') && trimmed.endsWith('"'))
-              return `${nodeId}${open}${label}${close}`;
-            const escaped = trimmed.replace(/"/g, "&quot;");
-            return `${nodeId}${open}"${escaped}"${close}`;
-          }
-        );
-        return <MermaidDiagram code={cleanMermaid} />;
-      }
-
-      if (!inline && isSmiles) {
-        return <SmilesDrawer smiles={text} />;
-      }
-
-      if (isMath) {
-        return <KatexRenderer expression={text} displayMode={displayMode && !inline} isStreaming={isStreaming} />;
-      }
-
-      if (isChem) {
-        return <KatexRenderer expression={`\\ce{${text}}`} displayMode={!inline} isStreaming={isStreaming} />;
-      }
-
-      if (!inline && isGraph) {
-        return <FunctionGraphBlock spec={text} />;
-      }
-
-      if (!inline && isSvg) {
-        return <DiagramSVG svg={text} />;
-      }
-
-      const isPureLatex =
-        !rawLang &&
-        !text.includes("`") &&
-        !text.includes("math-inline:") &&
-        (text.trimStart().startsWith("\\") || text.trimStart().startsWith("\\ce{")) &&
-        (text.includes("\\ce{") ||
-          text.includes("\\frac") ||
-          text.includes("\\xrightarrow") ||
-          text.includes("\\sum") ||
-          text.includes("\\int") ||
-          text.includes("\\lim") ||
-          text.includes("\\begin{") ||
-          text.includes("$"));
-
-      if (isPureLatex) {
-        return <KatexRenderer expression={text} displayMode={true} isStreaming={isStreaming} />;
-      }
-
-      const looksLikeMath =
-        text.includes("\\frac") ||
-        text.includes("\\ce{") ||
-        text.includes("\\text{") ||
-        text.includes("\\times") ||
-        text.includes("\\cdot") ||
-        (text.startsWith("$") && text.endsWith("$"));
-
-      if (!inline && looksLikeMath && !rawLang) {
-        return <KatexRenderer expression={text} displayMode={true} isStreaming={isStreaming} />;
-      }
-
-      const primaryLang = langs[0];
-      if (!inline && primaryLang) {
-        return (
-          <span className="block relative my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">
-            <span className="absolute top-2 right-3 text-[9px] font-mono uppercase tracking-widest text-zinc-500 select-none">
-              {rawLang}
-            </span>
-            <code className="block text-green-300 font-mono text-[11px] leading-relaxed p-3 pt-6 overflow-x-auto">
-              {children}
-            </code>
-          </span>
-        );
-      }
-
-      return inline ? (
-        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px] text-primary">
-          {children}
-        </code>
-      ) : (
-        <code className="block bg-[#1e1e2e] text-green-300 font-mono text-[11px] leading-relaxed p-3 rounded-xl overflow-x-auto">
-          {children}
-        </code>
-      );
-    },
-  }), [isStreaming]);
-
   return (
     <div className={`markdown-content text-foreground ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        components={componentsWithStreaming}
+        components={markdownComponents}
       >
         {processed}
       </ReactMarkdown>
