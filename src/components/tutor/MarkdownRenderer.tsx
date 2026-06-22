@@ -1,15 +1,30 @@
 import React, { useMemo } from "react";
 import DOMPurify from "dompurify";
-import { FunctionGraphBlock } from "./FunctionGraph"; // Ensure this path is correct
+import { FunctionGraphBlock } from "./FunctionGraph";
 import { ExternalLink, AlertCircle, Lightbulb, AlertTriangle, Info } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import "katex/dist/contrib/mhchem.min.js";
+import "katex/contrib/mhchem";
 
-// ─── Math Repair Helper ───────────────────────────────────────────────────────
+const verifyMhchem = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    const test = katex.renderToString("\\ce{H2O}", { throwOnError: true, strict: false });
+    if (test.includes("mord") && test.includes("mathrm")) {
+      console.log("✅ mhchem is working perfectly!");
+    }
+  } catch (e: any) {
+    console.error("❌ mhchem NOT loaded:", e.message);
+  }
+};
+
+if (typeof window !== 'undefined') {
+  verifyMhchem();
+}
+
 const repairMath = (expr: string): string => {
   return expr
     .replace(/[\x00-\x1F]rac/g, "\\frac")
@@ -38,14 +53,13 @@ const repairMath = (expr: string): string => {
     .trim();
 };
 
-// ─── KaTeX Macros ─────────────────────────────────────────────────────────────
 const KATEX_MACROS: Record<string, string> = {
   "\\vec": "\\overrightarrow{#1}",
   "\\unit": "\\mathrm{#1}",
   "\\degree": "^\\circ",
-  "\\mol": "\\text{mol}",
-  "\\kJ": "\\text{kJ}",
-  "\\atm": "\\text{atm}",
+  "\\mol": "\\mathrm{mol}",
+  "\\kJ": "\\mathrm{kJ}",
+  "\\atm": "\\mathrm{atm}",
   "\\N": "\\mathbb{N}",
   "\\Z": "\\mathbb{Z}",
   "\\Q": "\\mathbb{Q}",
@@ -55,7 +69,6 @@ const KATEX_MACROS: Record<string, string> = {
   "\\pdiff": "\\partial",
 };
 
-// ─── Mermaid Component ───────────────────────────────────────────────────────
 function MermaidDiagram({ code }: { code: string }) {
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -111,7 +124,6 @@ function MermaidDiagram({ code }: { code: string }) {
   );
 }
 
-// ─── SMILES Drawer Component ──────────────────────────────────────────────────
 function SmilesDrawer({ smiles }: { smiles: string }) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
@@ -143,7 +155,6 @@ function SmilesDrawer({ smiles }: { smiles: string }) {
   );
 }
 
-// ─── Callout Component ───────────────────────────────────────────────────────
 const CALLOUT_CONFIG = {
   NOTE: {
     icon: Info,
@@ -200,7 +211,6 @@ function Callout({ type, children }: { type: CalloutType; children: React.ReactN
   );
 }
 
-// ─── KaTeX Renderer ───────────────────────────────────────────────────────────
 function KatexRenderer({
   expression,
   displayMode = true,
@@ -210,17 +220,16 @@ function KatexRenderer({
 }) {
   const cleaned = repairMath(expression).replace(/\\\\/g, "\\");
 
-  // Don't attempt to render incomplete expressions
-  if (!expression || (expression.includes("\\ce{") && !expression.match(/\\ce\{[^}]+\}/))) {
+  if (!expression) {
     return <span className="text-muted-foreground">{expression}</span>;
   }
 
   try {
     const html = katex.renderToString(cleaned, {
       displayMode,
-      throwOnError: true,
+      throwOnError: false,
       strict: false,
-      trust: false,
+      trust: true,
       macros: KATEX_MACROS,
       output: "html",
     });
@@ -236,12 +245,15 @@ function KatexRenderer({
       />
     );
   } catch (error) {
-    // Show as plain text instead of red error box
-    return <span className="font-mono text-sm text-muted-foreground">{expression}</span>;
+    console.error("KaTeX rendering error:", error, "Expression:", expression);
+    return (
+      <span className="font-mono text-sm text-red-400 bg-red-950/20 px-1 rounded">
+        {expression}
+      </span>
+    );
   }
 }
 
-// ─── Diagram SVG Component ────────────────────────────────────────────────────
 function DiagramSVG({ svg }: { svg: string }) {
   const ref = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
@@ -257,7 +269,6 @@ function DiagramSVG({ svg }: { svg: string }) {
   );
 }
 
-// ─── JS / Framework Blocklist ────────────────────────────────────────────────
 const JS_BLOCKLIST = new Set([
   "React", "ReactDOM", "TypeScript", "JavaScript", "NextJS", "NodeJS",
   "Props", "State", "Ref", "Context", "Provider", "Consumer",
@@ -266,7 +277,6 @@ const JS_BLOCKLIST = new Set([
   "NaN", "Infinity", "undefined", "null", "true", "false",
 ]);
 
-// ─── Physics / Chemistry Units ────────────────────────────────────────────────
 const PHYSICS_UNITS = [
   "m/s\\^2", "m/s", "km/h", "km/s", "mol/L", "g/mol", "kg/mol",
   "kJ/mol", "J/mol", "eV", "MeV", "GeV", "°C", "°F", "°K", "K",
@@ -280,14 +290,15 @@ const PHYSICS_UNITS = [
   "lm", "lx", "Bq", "Gy", "Sv", "kat", "mol", "mmol",
 ];
 
-// ── Preprocess LaTeX / Math / Chemistry / Physics ───────────────────────────
-// ── Preprocess LaTeX / Math / Chemistry / Physics ───────────────────────────
 function preprocessLatex(raw: string): string {
   if (!raw || typeof raw !== "string") return raw;
 
   let s = raw;
 
-  // Step 1: Fix control-character mangling
+  // Step 1: Normalize backslashes
+  s = s.replace(/\\\\/g, "\\");
+
+  // Step 2: Fix control-character mangling
   s = s
     .replace(/[\x00-\x1F]rac/g, "\\frac")
     .replace(/[\x00-\x1F]imes/g, "\\times")
@@ -301,23 +312,11 @@ function preprocessLatex(raw: string): string {
     .replace(/[\x00-\x1F]right/g, "\\right")
     .replace(/[\x00-\x1F]ce\b/g, "\\ce");
 
-  // ★★★ NEW STEP 1.5: FIX MISSING $ BEFORE \ce ★★★
-  // Catch: \ce{...} without preceding $
-  // Also catch: ce{...} without \ and $
-  // But DON'T double-wrap if already has $
-  s = s.replace(/(^|[^$\\])\\ce\{/g, "$1$\\ce{");
-  s = s.replace(/(^|[^$\\])ce\{/g, "$1$\\ce{");
-
-  // Ensure closing } is followed by $ if not already
-  // This fixes: $\\ce{H2O} → $\\ce{H2O}$
-  s = s.replace(/\$\\ce\{([^}]+)\}(?!\$)/g, "$\\ce{$1}$");
-
-  // Step 2: Check for balanced fences - if unbalanced, return as-is
+  // Step 3: Check for balanced fences
   const fenceCount = (s.match(/```/g) || []).length;
-  const mathCount = (s.match(/\$\$/g) || []).length;
-  if (fenceCount % 2 !== 0 || mathCount % 2 !== 0) return s;
+  if (fenceCount % 2 !== 0) return s;
 
-  // Step 3: Protect code blocks (triple backticks)
+  // Step 4: Protect code blocks
   const FENCE_TOKEN = "\x00FENCE\x00";
   const fenceBlocks: string[] = [];
   s = s.replace(/```[\s\S]*?```/g, (match) => {
@@ -325,7 +324,7 @@ function preprocessLatex(raw: string): string {
     return FENCE_TOKEN;
   });
 
-  // Step 4: Protect inline code (single backticks)
+  // Step 5: Protect inline code
   const INLINE_CODE_TOKEN = "\x00ICODE\x00";
   const inlineCodeBlocks: string[] = [];
   s = s.replace(/`[^`\n]+`/g, (match) => {
@@ -333,51 +332,51 @@ function preprocessLatex(raw: string): string {
     return INLINE_CODE_TOKEN;
   });
 
-  // Step 5: Convert \[...\] and \(...\) to $$...$$ and $...$
-  s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `$$\n${inner.trim()}\n$$`);
-  s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_m, inner) => `$${inner.trim()}$`);
-
-  // Step 6: Wrap ALL \ce{...} in $...$ if not already wrapped
-  // Match \ce{...} that is NOT already inside $...$
-  s = s.replace(/(^|[^$\\])\\ce\{([^}]+)\}/g, "$1$\\ce{$2}$");
-  // Handle \ce at start of line
-  s = s.replace(/^\\ce\{([^}]+)\}/gm, "$\\ce{$1}$");
-
-  // Step 7: Protect existing math blocks ($...$ and $$...$$)
-  const MATH_TOKEN = `\x00MATH_${Math.random().toString(36).slice(2)}_\x00`;
+  // Step 6: Protect existing math blocks
+  const MATH_TOKEN = "\x00MATH\x00";
   const mathBlocks: string[] = [];
-  s = s.replace(/(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)/g, (match) => {
+  s = s.replace(/(\$\$[\s\S]*?\$\$|\$(?!\s)[^\$\n]*?(?<!\s)\$)/g, (match) => {
     mathBlocks.push(match);
     return MATH_TOKEN;
   });
 
-  // Step 8: Wrap common LaTeX commands that appear outside math mode
-  // This catches: \frac, \text, \times, \cdot, \sqrt, etc.
+  // Step 7: Convert \[...\] and \(...\) 
+  s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `$$\n${inner.trim()}\n$$`);
+  s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_m, inner) => `$${inner.trim()}$`);
 
-  // Wrap \frac{...}{...}
-  s = s.replace(/(^|[^$\\])\\frac\{([^}]+)\}\{([^}]+)\}/g, "$1$\\frac{$2}{$3}$");
+  // Step 8: Wrap ALL \ce{...} in $...$
+  s = s.replace(/(^|[^a-zA-Z\\])ce\{([^}]+)\}/g, "$1\\ce{$2}");
+  s = s.replace(/\\ce\{([^}]+)\}/g, "$\\ce{$1}$");
 
-  // Wrap \text{...}
-  s = s.replace(/(^|[^$\\])\\text\{([^}]+)\}/g, "$1$\\text{$2}$");
+  // Step 9: Wrap \xrightarrow and \xleftarrow with their arguments
+  // This is the KEY FIX - wrap the ENTIRE command including braces
+  s = s.replace(/\\xrightarrow\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g, "$\\xrightarrow{$1}$");
+  s = s.replace(/\\xleftarrow\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g, "$\\xleftarrow{$1}$");
+  s = s.replace(/\\overset\{([^}]+)\}\{([^}]+)\}/g, "$\\overset{$1}{$2}$");
 
-  // Wrap \times, \cdot, \pm (standalone operators)
-  s = s.replace(/(^|[^$\\])\\times\b/g, "$1$\\times$");
-  s = s.replace(/(^|[^$\\])\\cdot\b/g, "$1$\\cdot$");
-  s = s.replace(/(^|[^$\\])\\pm\b/g, "$1$\\pm$");
+  // Wrap other LaTeX commands
+  s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$\\frac{$1}{$2}$");
+  s = s.replace(/\\text\{([^}]+)\}/g, "$\\text{$1}$");
+  s = s.replace(/\\sqrt\{([^}]+)\}/g, "$\\sqrt{$1}$");
 
-  // Wrap \sqrt{...}
-  s = s.replace(/(^|[^$\\])\\sqrt\{([^}]+)\}/g, "$1$\\sqrt{$2}$");
+  // Wrap standalone operators
+  s = s.replace(/\\times\b/g, "$\\times$");
+  s = s.replace(/\\cdot\b/g, "$\\cdot$");
+  s = s.replace(/\\pm\b/g, "$\\pm$");
+  s = s.replace(/\\rightarrow\b/g, "$\\rightarrow$");
+  s = s.replace(/\\leftarrow\b/g, "$\\leftarrow$");
+  s = s.replace(/\\longrightarrow\b/g, "$\\longrightarrow$");
+  s = s.replace(/\\leftrightarrow\b/g, "$\\leftrightarrow$");
 
-  // Wrap subscripts/superscripts that are outside math
+  // Step 10: Wrap subscripts/superscripts
   s = s.replace(/([a-zA-Z0-9])_\{([^}]+)\}/g, "$1$_{$2}$");
   s = s.replace(/([a-zA-Z0-9])\^(\{[^}]+\}|\d)/g, "$1^$2");
 
-  // Step 9: Auto-detect chemical formulas (e.g., H2O, NaCl, Ca(OH)2)
-  // Only if they don't already have \ce{}
+  // Step 11: Auto-detect chemical formulas
   s = s.replace(
     /\b([A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*){1,}(?:\([A-Z][a-z]?\d*\)\d*)*)\b/g,
     (_m, formula) => {
-      if (!/\d/.test(formula)) return formula; // Must have subscript
+      if (!/\d/.test(formula)) return formula;
       if (JS_BLOCKLIST.has(formula)) return formula;
       const elementCount = (formula.match(/[A-Z]/g) || []).length;
       if (elementCount < 2) return formula;
@@ -385,18 +384,18 @@ function preprocessLatex(raw: string): string {
     }
   );
 
-  // Step 10: Convert arrow notation to LaTeX arrows
-  s = s.replace(/(^|[^$\\])(\s)(->|-->|<->|<=>)(\s)/g, (_m, pre, preSp, arrow, postSp) => {
+  // Step 12: Convert arrow notation
+  s = s.replace(/(\s)(->|-->|<->|<=>)(\s)/g, (_m, preSp, arrow, postSp) => {
     const katexArrow: Record<string, string> = {
-      "->": "\\rightarrow",
-      "-->": "\\longrightarrow",
-      "<->": "\\leftrightarrow",
-      "<=>": "\\rightleftharpoons",
+      "->": "$\\rightarrow$",
+      "-->": "$\\longrightarrow$",
+      "<->": "$\\leftrightarrow$",
+      "<=>": "$\\rightleftharpoons$",
     };
-    return `${pre}${preSp}$${katexArrow[arrow]}$${postSp}`;
+    return `${preSp}${katexArrow[arrow]}${postSp}`;
   });
 
-  // Step 11: Wrap physics values with units
+  // Step 13: Wrap physics values with units
   const unitPattern = PHYSICS_UNITS.join("|");
   s = s.replace(
     new RegExp(`\\b(\\d+(?:\\.\\d+)?)\\s*(${unitPattern})\\b`, "g"),
@@ -408,31 +407,14 @@ function preprocessLatex(raw: string): string {
     }
   );
 
-  // Step 12: Bold definitions like "Term: Definition"
-  s = s.replace(/^([A-Z][^:\n]{2,40}):\s+([A-Z].+)$/gm, (_m, term, def) => {
-    return `**${term}**: ${def}`;
-  });
-
-  // Step 13: Restore math blocks
-  s = s.replace(
-    new RegExp(MATH_TOKEN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
-    () => mathBlocks.shift()!
-  );
-
-  // Step 14: Restore inline code and code blocks
-  s = s.replace(
-    new RegExp(INLINE_CODE_TOKEN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
-    () => inlineCodeBlocks.shift()!
-  );
-  s = s.replace(
-    new RegExp(FENCE_TOKEN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
-    () => fenceBlocks.shift()!
-  );
+  // Step 14: Restore all protected blocks
+  s = s.replace(new RegExp(MATH_TOKEN, "g"), () => mathBlocks.shift()!);
+  s = s.replace(new RegExp(INLINE_CODE_TOKEN, "g"), () => inlineCodeBlocks.shift()!);
+  s = s.replace(new RegExp(FENCE_TOKEN, "g"), () => fenceBlocks.shift()!);
 
   return s;
 }
 
-// ─── Markdown Components ──────────────────────────────────────────────────────
 const markdownComponents: any = {
   h1: ({ children }: any) => (
     <h1 className="text-lg font-extrabold mt-4 mb-1.5 text-primary border-b border-primary/20 pb-1 leading-snug">
@@ -585,7 +567,6 @@ const markdownComponents: any = {
       text = text.replace("math-inline:", "").trim();
     }
 
-    // Mermaid diagrams
     if (!inline && isMermaid) {
       let cleanMermaid = text
         .replace(/\$\\longrightarrow\$/g, "-->")
@@ -608,32 +589,26 @@ const markdownComponents: any = {
       return <MermaidDiagram code={cleanMermaid} />;
     }
 
-    // SMILES chemical structures
     if (!inline && isSmiles) {
       return <SmilesDrawer smiles={text} />;
     }
 
-    // Math/LaTeX - render directly, NOT in code block
     if (isMath) {
       return <KatexRenderer expression={text} displayMode={displayMode && !inline} />;
     }
 
-    // Chemistry - render directly, NOT in code block
     if (isChem) {
       return <KatexRenderer expression={`\\ce{${text}}`} displayMode={!inline} />;
     }
 
-    // Function plots
     if (!inline && isGraph) {
       return <FunctionGraphBlock spec={text} />;
     }
 
-    // SVG diagrams
     if (!inline && isSvg) {
       return <DiagramSVG svg={text} />;
     }
 
-    // Auto-detect pure LaTeX in code blocks - render as math, NOT code
     const isPureLatex =
       !rawLang &&
       !text.includes("`") &&
@@ -652,7 +627,6 @@ const markdownComponents: any = {
       return <KatexRenderer expression={text} displayMode={true} />;
     }
 
-    // Check if it looks like math/chemistry even without language tag
     const looksLikeMath =
       text.includes("\\frac") ||
       text.includes("\\ce{") ||
@@ -662,11 +636,9 @@ const markdownComponents: any = {
       (text.startsWith("$") && text.endsWith("$"));
 
     if (!inline && looksLikeMath && !rawLang) {
-      // Render as math, not code
       return <KatexRenderer expression={text} displayMode={true} />;
     }
 
-    // ONLY show code block styling for actual programming languages
     const primaryLang = langs[0];
     if (!inline && primaryLang) {
       return (
@@ -681,7 +653,6 @@ const markdownComponents: any = {
       );
     }
 
-    // Inline code
     return inline ? (
       <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px] text-primary">
         {children}
@@ -695,7 +666,6 @@ const markdownComponents: any = {
   pre: ({ children }: any) => {
     const child = React.Children.only(children) as any;
     const lang = (child?.props?.className || "").replace("language-", "");
-    // Don't wrap math/latex/chemistry in pre - let them render directly
     if (
       !lang ||
       ["math", "latex", "tex", "math-inline", "chemistry", "chem"].includes(lang)
@@ -741,7 +711,6 @@ const markdownComponents: any = {
   ),
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
 type Props = {
   content: string;
   skipPreprocess?: boolean;
