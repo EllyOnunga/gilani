@@ -131,10 +131,10 @@ ${curriculum === "IGCSE" ? `## IGCSE
 
 EXAMPLE (Biology, hard):
 {
-  "question": "Which statement BEST evaluates the effect of increasing $\\text{CO}_2$ concentration on the rate of photosynthesis in a C3 plant?",
-  "options": ["Rate increases indefinitely as $\\text{CO}_2$ rises", "Rate increases until limited by light intensity or temperature", "Rate decreases because excess $\\text{CO}_2$ inhibits RuBiSCO", "Rate is unaffected because $\\text{CO}_2$ is not the limiting factor"],
+  "question": "Which statement BEST evaluates the effect of increasing $CO_2$ concentration on the rate of photosynthesis in a C3 plant?",
+  "options": ["Rate increases indefinitely as $CO_2$ rises", "Rate increases until limited by light intensity or temperature", "Rate decreases because excess $\\text{CO}_2$ inhibits RuBiSCO", "Rate is unaffected because $\\text{CO}_2$ is not the limiting factor"],
   "correct": 1,
-  "explanation": "Photosynthesis rate rises with $\\text{CO}_2$ until another factor (light or temperature) becomes limiting — the law of limiting factors. Option A ignores limiting factors. Option C is incorrect; RuBiSCO is not inhibited by $\\text{CO}_2$. Option D is false when $\\text{CO}_2$ is the current limiting factor.",
+  "explanation": "Photosynthesis rate rises with $CO_2$ until another factor (light or temperature) becomes limiting — the law of limiting factors. Option A ignores limiting factors. Option C is incorrect; RuBiSCO is not inhibited by $\\text{CO}_2$. Option D is false when $\\text{CO}_2$ is the current limiting factor.",
   "difficulty": "hard",
   "subtopic": "Photosynthesis — Limiting Factors",
   "curriculum": "IGCSE"
@@ -156,15 +156,38 @@ EXPLANATION FORMAT (mandatory for numeric questions):
 "The correct answer is [value] because [full working]. [wrong value 1] results from [specific mistake]. [wrong value 2] results from [specific mistake]. [wrong value 3] results from [specific mistake]."
 
 ════════════════════════════════════════
-MATH FORMATTING — ALWAYS USE LATEX
+MATH & CHEMISTRY FORMATTING — ALWAYS USE LATEX
 ════════════════════════════════════════
 
-Inline: $x = 2a + b$    Block: $$ F = ma $$
-Powers: $x^2$  Roots: $\\sqrt{x}$, $\\sqrt{b^2 - 4ac}$  Fractions: $\\frac{a}{b}$
-Chemistry: $\\ce{H2O}$, $\\ce{CO2}$, $\\ce{SO4^2-}$
+CRITICAL: You MUST wrap ALL mathematical and chemical formulas in LaTeX using single dollar signs ($).
 
-NEVER write: x^2, sqrt(x), H2O in plain text. Always use $\\ce{...}$ for chemistry, never $\\text{...}$.
-Options must be plain strings — no "A)", "1.", or letter prefixes.
+MATH:
+- Inline: $x = 2a + b$
+- Block: $$F = ma$$
+- Powers: $x^2$
+- Roots: $\\sqrt{x}$, $\\sqrt{b^2 - 4ac}$
+- Fractions: $\\frac{a}{b}$
+
+CHEMISTRY (USE STANDARD LATEX SUBSCRIPTS, NOT \\ce):
+- Water: $H_2O$
+- Carbon dioxide: $CO_2$
+- Glucose: $C_6H_{12}O_6$
+- Sulfate ion: $SO_4^{2-}$
+- Chemical arrow: $\\rightarrow$ (NEVER use plain text ->)
+
+CORRECT EXAMPLE (Photosynthesis equation):
+$6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2$
+
+WRONG EXAMPLES (DO NOT DO THIS):
+- 6CO2 + 6H2O -> C6H12O6 + 6O2 (plain text, no LaTeX)
+- $\\ce{6CO2 + 6H2O -> C6H12O6 + 6O2}$ (\\ce is not supported)
+
+FORMATTING RULES:
+1. Always use subscripts for chemistry: $H_2O$, $CO_2$, $C_6H_{12}O_6$
+2. Use $\\rightarrow$ for chemical reaction arrows
+3. Include a space after option letters: "A. $6CO_2...$" NOT "A.$6CO_2...$"
+4. NEVER write chemical formulas in plain text (CO2, H2O, etc.)
+5. Options must be plain strings — no "A)", "1.", or letter prefixes in the JSON value itself
 
 ════════════════════════════════════════
 OUTPUT SCHEMA

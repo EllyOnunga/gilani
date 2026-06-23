@@ -3,9 +3,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 
-const LazyMarkdownRenderer = lazy(() =>
-  import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer }))
-);
+import { MarkdownRenderer } from "@/components/tutor/MarkdownRenderer";
 
 import { NewsletterSubscribe } from "@/components/NewsletterSubscribe";
 import { supabase } from "@/integrations/supabase/client";
@@ -465,9 +463,9 @@ function Dashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold leading-tight">{t.subject}</p>
                       <div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-full">
-                        <Suspense fallback={<span>{t.task}</span>}>
-                          <LazyMarkdownRenderer content={t.task} />
-                        </Suspense>
+
+                        <MarkdownRenderer content={t.task} />
+
                       </div>
                     </div>
                     <span className="flex-shrink-0 font-mono text-[10px] text-muted-foreground bg-background border border-border/50 rounded-md px-1.5 py-0.5">
@@ -516,9 +514,9 @@ function Dashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold leading-tight">{rt.subject}</p>
                       <div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-full">
-                        <Suspense fallback={<span>{rt.topic}</span>}>
-                          <LazyMarkdownRenderer content={rt.topic} />
-                        </Suspense>
+
+                        <MarkdownRenderer content={rt.topic} />
+
                       </div>
                     </div>
                     <Link

@@ -1,5 +1,9 @@
-import { InlineMath, BlockMath } from "react-katex";
+import * as ReactKatex from 'react-katex';
 import "katex/dist/katex.min.css";
+
+// Safely extract components to handle Vite's CJS/ESM interop quirks
+const InlineMath = (ReactKatex as any).InlineMath || (ReactKatex as any).default?.InlineMath;
+const BlockMath = (ReactKatex as any).BlockMath || (ReactKatex as any).default?.BlockMath;
 
 interface MathTextProps {
   text: string;
@@ -14,6 +18,12 @@ interface MathTextProps {
  */
 export function MathText({ text, className }: MathTextProps) {
   if (!text) return null;
+
+  // Safety fallback: If react-katex fails to load, just render raw text instead of crashing
+  if (!InlineMath || !BlockMath) {
+    console.error("[MathText] react-katex components are undefined. Falling back to raw text.");
+    return <span className={className}>{text}</span>;
+  }
 
   const cleanedText = cleanMathString(text);
   const parts = splitMath(cleanedText);

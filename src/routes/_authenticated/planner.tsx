@@ -22,14 +22,12 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { getErrorMessage, withTimeout } from "@/lib/async";
 import { lazy, Suspense } from "react";
-const LazyMarkdownRenderer = lazy(() =>
-  import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer }))
-);
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { checkPlanRateLimit, getRateLimitStatus } from "@/lib/rate-limit.server";
 import { buildPlannerPrompt } from "@/lib/planner-prompt";
 import { sanitizeUntrustedInput } from "@/lib/tutor-prompt";
+import MarkdownRenderer from "@/components/tutor/MarkdownRenderer";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -363,7 +361,7 @@ const generatePlan = createServerFn({ method: "POST" }).handler(async () => {
 
   console.log("Generating plan with providers...");
   for (let i = 0; i < models.length; i++) {
-      const { model, name } = models[i];
+    const { model, name } = models[i];
     try {
       if (i > 0) {
         const { backoffDelay } = await import("@/lib/provider-backoff");
@@ -509,7 +507,7 @@ function PlannerPage() {
       } catch { /* ignore */ }
     })();
     return () => { mounted = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -638,7 +636,7 @@ function PlannerPage() {
             </p>
             <p className="font-mono text-[11px] font-bold text-foreground">
               {doneTasks} / {totalTasks}
-              <span className="text-muted-foreground font-normal ml-1">({totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0}%)</span>
+              <span className="text-muted-foreground font-normal ml-1">({totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0}%)</span>
             </p>
           </div>
           <div className="h-2.5 rounded-full bg-muted overflow-hidden">
@@ -663,35 +661,32 @@ function PlannerPage() {
       )}
 
       {error && (
-        <div className={`rounded-xl border overflow-hidden animate-in-slide ${
-          isRateLimited
+        <div className={`rounded-xl border overflow-hidden animate-in-slide ${isRateLimited
             ? "border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30"
             : "border-destructive/30 bg-destructive/10"
-        }`}>
+          }`}>
           <div className="flex items-start gap-2.5 px-4 py-3">
             <div className="flex-shrink-0 mt-0.5">
               {isRateLimited
                 ? (secondsLeft > 0
-                    ? <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    : <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />)
+                  ? <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  : <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />)
                 : <AlertCircle className="h-4 w-4 text-destructive" />
               }
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-xs font-semibold ${
-                isRateLimited ? "text-amber-800 dark:text-amber-300" : "text-destructive"
-              }`}>
+              <p className={`text-xs font-semibold ${isRateLimited ? "text-amber-800 dark:text-amber-300" : "text-destructive"
+                }`}>
                 {isRateLimited
                   ? (isDaily ? "Daily planner limit reached" : "Slow down a little…")
                   : "Plan generation failed"}
               </p>
-              <p className={`text-[11px] mt-0.5 ${
-                isRateLimited ? "text-amber-700/80 dark:text-amber-400/80" : "text-destructive/80"
-              }`}>
+              <p className={`text-[11px] mt-0.5 ${isRateLimited ? "text-amber-700/80 dark:text-amber-400/80" : "text-destructive/80"
+                }`}>
                 {isRateLimited
                   ? (isDaily
-                      ? `You've used your daily plan generation allowance.${secondsLeft > 0 ? ` Resets in ${formatTime(secondsLeft)}.` : " Resets at midnight (EAT)."}`
-                      : `You're generating plans too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`)
+                    ? `You've used your daily plan generation allowance.${secondsLeft > 0 ? ` Resets in ${formatTime(secondsLeft)}.` : " Resets at midnight (EAT)."}`
+                    : `You're generating plans too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`)
                   : error}
               </p>
             </div>
@@ -748,11 +743,10 @@ function PlannerPage() {
                 <button
                   key={date}
                   onClick={() => setSelectedDate(date)}
-                  className={`flex flex-col items-center rounded-md px-0.5 py-0.5 border transition-all w-full ${
-                    isSelected
+                  className={`flex flex-col items-center rounded-md px-0.5 py-0.5 border transition-all w-full ${isSelected
                       ? "border-primary bg-primary/10 text-primary shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:bg-accent"
-                  }`}
+                    }`}
                 >
                   <span className="font-mono text-[7px] uppercase">
                     {d.toLocaleDateString("en-KE", { weekday: "short" })}
@@ -810,11 +804,10 @@ function PlannerPage() {
                     <button
                       key={task.id}
                       onClick={() => toggleTask(task.id)}
-                      className={`w-full flex items-start gap-3 rounded-xl border p-4 sm:p-5 text-left transition-all active:scale-[0.99] ${
-                        done
+                      className={`w-full flex items-start gap-3 rounded-xl border p-4 sm:p-5 text-left transition-all active:scale-[0.99] ${done
                           ? "border-border/40 bg-muted/40 opacity-60"
                           : "border-border bg-card shadow-sm hover:shadow-md"
-                      }`}
+                        }`}
                     >
                       {done ? (
                         <CheckSquare className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
@@ -834,11 +827,11 @@ function PlannerPage() {
                           <span
                             className={`rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${PRIORITY_COLOR[task.priority] || PRIORITY_COLOR.medium}`}
                           >
-                            {task.priority}
+                            <MarkdownRenderer content={task.priority} />
                           </span>
                           {task.type && (
                             <span className="font-mono text-[9px] text-muted-foreground border border-border rounded-full px-2 py-0.5">
-                              {task.type}
+                              <MarkdownRenderer content={task.type} />
                             </span>
                           )}
                         </div>
@@ -850,9 +843,8 @@ function PlannerPage() {
                         {task.study_tip && (
                           <div className="text-xs text-primary/80 mt-2 bg-primary/5 border border-primary/15 rounded-lg px-3 py-2 leading-relaxed flex items-start gap-1">
                             <span>💡</span>
-                            <Suspense fallback={<span>{task.study_tip}</span>}>
-                              <LazyMarkdownRenderer content={task.study_tip} />
-                            </Suspense>
+                            <MarkdownRenderer content={task.study_tip} />
+
                           </div>
                         )}
                       </div>
@@ -866,9 +858,9 @@ function PlannerPage() {
 
               {dailyQuote && (
                 <div className="mt-2 text-[11px] text-muted-foreground italic text-center border-t border-border/40 pt-3 px-4 flex items-center justify-center gap-0.5">
-                  <Suspense fallback={<span>&ldquo;{dailyQuote}&rdquo;</span>}>
-                    <LazyMarkdownRenderer content={dailyQuote} />
-                  </Suspense>
+
+                  <MarkdownRenderer content={dailyQuote} />
+
                 </div>
               )}
             </div>

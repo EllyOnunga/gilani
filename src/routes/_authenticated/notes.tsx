@@ -28,9 +28,7 @@ import { z } from "zod";
 import { getErrorMessage, withTimeout, friendlyError } from "@/lib/async";
 import { buildNotesPrompt } from "@/lib/notes-prompt";
 import { sanitizeUntrustedInput } from "@/lib/tutor-prompt";
-const LazyMarkdownRenderer = lazy(() =>
-  import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer })),
-);
+import MarkdownRenderer from "@/components/tutor/MarkdownRenderer";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────────
 
@@ -835,8 +833,8 @@ ${content}`.trim()
       {/* Rate Limit Banner */}
       {notesRateError && (
         <div className={`rounded-xl border overflow-hidden animate-in-slide ${isRateLimited
-            ? "border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30"
-            : "border-destructive/30 bg-destructive/10"
+          ? "border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30"
+          : "border-destructive/30 bg-destructive/10"
           }`}>
           <div className="flex items-start gap-2.5 px-4 py-3">
             <div className="flex-shrink-0 mt-0.5">
@@ -937,11 +935,10 @@ ${content}`.trim()
               />
               <label
                 htmlFor="mobile-doc-upload"
-                className={`flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${
-                  parsingFile
+                className={`flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${parsingFile
                     ? "pointer-events-none cursor-not-allowed bg-muted text-muted-foreground opacity-50"
                     : "cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
-                }`}
+                  }`}
               >
                 {parsingFile ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /><span>Parsing document...</span></>
@@ -1097,7 +1094,7 @@ ${content}`.trim()
                   <div className="flex items-center gap-3 min-w-0">
                     <FileText className="h-5 w-5 flex-shrink-0 text-primary" />
                     <div className="min-w-0">
-                      <p className="font-semibold text-sm truncate">{note.title}</p>
+                      <p className="font-semibold text-sm truncate"><MarkdownRenderer content={note.title} /></p>
                       <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
                         {note.created_at
                           ? new Date(note.created_at).toLocaleDateString("en-KE", {
@@ -1124,13 +1121,9 @@ ${content}`.trim()
                           AI Summary
                         </p>
                         <div className="text-sm leading-relaxed text-foreground/90 markdown-note-summary break-words overflow-hidden">
-                          <Suspense
-                            fallback={
-                              <div className="h-10 w-full animate-pulse bg-muted/50 rounded" />
-                            }
-                          >
-                            <LazyMarkdownRenderer content={note.summary} />
-                          </Suspense>
+
+                          <MarkdownRenderer content={note.summary} />
+
                         </div>
                       </div>
                     )}
