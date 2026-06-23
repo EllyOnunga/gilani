@@ -10,7 +10,7 @@ export const Route = createFileRoute("/faq")({
       { name: "description", content: "Frequently asked questions about GilaniAI — your AI study assistant." },
       { name: "robots", content: "index, follow" },
     ],
-    links: [{ rel: "canonical", href: "https://gilaniai.vercel.app/faq" }],
+    links: [{ rel: "canonical", href: "https://gilaniai.site/faq" }],
   }),
   component: FAQPage,
 });

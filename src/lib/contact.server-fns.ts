@@ -22,8 +22,8 @@ export const submitContactFn = createServerFn({ method: "POST" })
     const { getRequest } = await import("@tanstack/react-start/server");
     const request = getRequest();
     const ip = request.headers.get("cf-connecting-ip") ||
-                request.headers.get("x-forwarded-for")?.split(",")[0] ||
-                "unknown";
+      request.headers.get("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
     const rlKey = `contact:${ip}`;
     const { data: rlData } = await supabaseAdmin.rpc("upsert_rate_limit", {
       p_key: rlKey, p_max: 3, p_reset_at: new Date(Date.now() + 3600000).toISOString()
@@ -73,7 +73,7 @@ export const submitContactFn = createServerFn({ method: "POST" })
       html: `
         <p>Hi ${data.name},</p>
         <p>Thanks for reaching out! We've received your message and will get back to you within 24 hours (Mon–Fri).</p>
-        <p>If your matter is urgent, you can also email us directly at <a href="mailto:support@gilaniai.vercel.app">support@gilaniai.vercel.app</a>.</p>
+        <p>If your matter is urgent, you can also email us directly at <a href="mailto:support@gilaniai.site">support@gilaniai.site</a>.</p>
         <br/>
         <p>— The GilaniAI Team</p>
       `,

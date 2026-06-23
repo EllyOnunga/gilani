@@ -9,7 +9,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 // Escape HTML to prevent XSS in email templates
 function esc(str: string): string {
-  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 export const Route = createFileRoute("/api/newsletter/subscribe")({
@@ -91,7 +91,7 @@ export const Route = createFileRoute("/api/newsletter/subscribe")({
                   <li>New feature announcements</li>
                   <li>Exam guides and learning resources</li>
                 </ul>
-                <p>Start studying smarter today at <a href="${process.env.APP_URL}">${esc(process.env.APP_URL || "gilaniai.vercel.app")}</a></p>
+                <p>Start studying smarter today at <a href="${process.env.APP_URL}">${esc(process.env.APP_URL || "gilaniai.site")}</a></p>
                 <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb;" />
                 <p style="font-size:12px;color:#6b7280;">
                   To unsubscribe, visit your account settings.

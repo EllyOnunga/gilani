@@ -4,7 +4,7 @@
 
   <!-- Homepage — highest priority -->
   <url>
-    <loc>https://gilaniai.vercel.app/</loc>
+    <loc>https://gilaniai.site/</loc>
     <lastmod>2026-06-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -12,7 +12,7 @@
 
   <!-- About page -->
   <url>
-    <loc>https://gilaniai.vercel.app/about</loc>
+    <loc>https://gilaniai.site/about</loc>
     <lastmod>2026-06-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -20,19 +20,19 @@
 
   <!-- Legal pages -->
   <url>
-    <loc>https://gilaniai.vercel.app/privacy</loc>
+    <loc>https://gilaniai.site/privacy</loc>
     <lastmod>2026-06-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://gilaniai.vercel.app/terms</loc>
+    <loc>https://gilaniai.site/terms</loc>
     <lastmod>2026-06-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://gilaniai.vercel.app/cookies</loc>
+    <loc>https://gilaniai.site/cookies</loc>
     <lastmod>2026-06-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

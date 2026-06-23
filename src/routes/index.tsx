@@ -50,14 +50,14 @@ export const Route = createFileRoute("/")({
       { name: "robots", content: "index, follow" },
       // Open Graph
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://gilaniai.vercel.app/" },
+      { property: "og:url", content: "https://gilaniai.site/" },
       { property: "og:title", content: "GilaniAI — AI Study Assistant" },
       {
         property: "og:description",
         content:
           "Your AI-powered study assistant. Socratic tutoring, quizzes, smart notes, study planner, and teacher escalation — free to start.",
       },
-      { property: "og:image", content: "https://gilaniai.vercel.app/icon-512.png" },
+      { property: "og:image", content: "https://gilaniai.site/icon-512.png" },
       { property: "og:image:alt", content: "GilaniAI — Ethical AI Study Assistant" },
       // Twitter
       { name: "twitter:card", content: "summary" },
@@ -67,9 +67,9 @@ export const Route = createFileRoute("/")({
         content:
           "Your AI study assistant. Quizzes, notes, planner and real teacher review — free to start.",
       },
-      { name: "twitter:image", content: "https://gilaniai.vercel.app/icon-512.png" },
+      { name: "twitter:image", content: "https://gilaniai.site/icon-512.png" },
     ],
-    links: [{ rel: "canonical", href: "https://gilaniai.vercel.app/" }],
+    links: [{ rel: "canonical", href: "https://gilaniai.site/" }],
   }),
   component: Landing,
 });
@@ -679,13 +679,12 @@ function Landing() {
             {Object.values(PLANS).map((plan) => {
               const isPremium = plan.id === "premium";
               const isSchool = plan.id === "school";
-              
+
               return (
-                <div 
+                <div
                   key={plan.id}
-                  className={`relative rounded-2xl border ${
-                    isPremium ? "border-2 border-primary bg-card/65 backdrop-blur-sm" : "border-border bg-card"
-                  } p-6 flex flex-col justify-between hover:scale-[1.02] hover:shadow-lg transition-all duration-300`}
+                  className={`relative rounded-2xl border ${isPremium ? "border-2 border-primary bg-card/65 backdrop-blur-sm" : "border-border bg-card"
+                    } p-6 flex flex-col justify-between hover:scale-[1.02] hover:shadow-lg transition-all duration-300`}
                 >
                   {isPremium && (
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm whitespace-nowrap">
@@ -694,14 +693,13 @@ function Landing() {
                   )}
                   <div>
                     <div className="mb-4 mt-1">
-                      <span className={`rounded-full px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold ${
-                        isPremium ? "bg-primary/10 text-primary" : 
-                        isSchool ? "bg-violet-500/10 text-violet-500" :
-                        "bg-muted/60 text-muted-foreground"
-                      }`}>
-                        {plan.id === "free" ? "Starter" : 
-                         plan.id === "basic" ? "Basic" :
-                         plan.id === "premium" ? "Monthly Saver" : "Institutional"}
+                      <span className={`rounded-full px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold ${isPremium ? "bg-primary/10 text-primary" :
+                          isSchool ? "bg-violet-500/10 text-violet-500" :
+                            "bg-muted/60 text-muted-foreground"
+                        }`}>
+                        {plan.id === "free" ? "Starter" :
+                          plan.id === "basic" ? "Basic" :
+                            plan.id === "premium" ? "Monthly Saver" : "Institutional"}
                       </span>
                     </div>
                     <h3 className="font-serif text-xl font-bold mb-1">{plan.label}</h3>
@@ -721,9 +719,8 @@ function Landing() {
                         isPremium || isSchool ? "Priority Teacher Escalation" : "Community support"
                       ].map((feat) => (
                         <li key={feat} className="flex gap-2.5 items-start">
-                          <Check className={`h-4 w-4 flex-shrink-0 ${
-                            isPremium ? "text-primary" : isSchool ? "text-violet-500" : "text-emerald-500"
-                          }`} />
+                          <Check className={`h-4 w-4 flex-shrink-0 ${isPremium ? "text-primary" : isSchool ? "text-violet-500" : "text-emerald-500"
+                            }`} />
                           <span className={isPremium ? "text-foreground/90 font-medium" : ""}>{feat}</span>
                         </li>
                       ))}
@@ -731,11 +728,10 @@ function Landing() {
                   </div>
                   <Link
                     to="/register"
-                    className={`w-full inline-flex items-center justify-center rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all ${
-                      isPremium 
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20" 
+                    className={`w-full inline-flex items-center justify-center rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all ${isPremium
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20"
                         : "border border-border text-foreground hover:bg-accent"
-                    }`}
+                      }`}
                   >
                     {plan.price === 0 ? "Get Started Free" : "Upgrade Plan"}
                   </Link>

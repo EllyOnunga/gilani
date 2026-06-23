@@ -23,7 +23,7 @@ export const Route = createFileRoute("/register")({
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
-    links: [{ rel: "canonical", href: "https://gilaniai.vercel.app/register" }],
+    links: [{ rel: "canonical", href: "https://gilaniai.site/register" }],
   }),
   component: RegisterPage,
 });
@@ -168,11 +168,10 @@ function RegisterPage() {
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${
-                    role === r
+                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${role === r
                       ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:bg-accent"
-                  }`}
+                    }`}
                 >
                   {r}
                 </button>
@@ -185,7 +184,7 @@ function RegisterPage() {
             placeholder="Your name"
             value={displayName}
             onChange={(e) => setName(e.target.value)}
-                maxLength={80}
+            maxLength={80}
             className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 animate-in-slide"
           />
 
@@ -195,7 +194,7 @@ function RegisterPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-                maxLength={254}
+            maxLength={254}
             className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 animate-in-slide"
           />
 
@@ -208,7 +207,7 @@ function RegisterPage() {
               placeholder="Password (min 8 chars)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-                maxLength={128}
+              maxLength={128}
               className="w-full rounded-md border border-border bg-background px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
             />
             <button

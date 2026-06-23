@@ -87,7 +87,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     </div>
   );
 }
-const SITE_URL = "https://gilaniai.vercel.app";
+const SITE_URL = "https://gilaniai.site";
 const OG_IMAGE = `${SITE_URL}/icon-512.png`;
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -167,7 +167,7 @@ const JSON_LD = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "GilaniAI",
-  url: "https://gilaniai.vercel.app",
+  url: "https://gilaniai.site",
   description:
     "Curriculum-grounded AI tutoring platform for KCSE, CBC and IGCSE students in Kenya. Includes AI tutor, quizzes, notes summariser, study planner, and teacher escalation.",
   applicationCategory: "EducationApplication",
@@ -182,7 +182,7 @@ const JSON_LD = JSON.stringify({
     reviewCount: "312",
     bestRating: "5",
   },
-  author: { "@type": "Organization", name: "GilaniAI", url: "https://gilaniai.vercel.app" },
+  author: { "@type": "Organization", name: "GilaniAI", url: "https://gilaniai.site" },
   inLanguage: ["en", "sw"],
   audience: {
     "@type": "Audience",

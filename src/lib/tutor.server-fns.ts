@@ -94,7 +94,7 @@ export const generateThreadTitleFn = createServerFn({ method: "POST" })
           maxTokens: 20,
           prompt: `Generate a short 3-5 word title for a study session that starts with this question: "${firstMessage.slice(0, 200)}". Reply with only the title itself. Do not wrap in quotes. Do not include prefixes like "Title:". No punctuation.`,
         } as any);
-        
+
         if (result.text) {
           title = result.text.trim();
           console.log(`[Title Gen] Successfully generated title.`);
@@ -195,7 +195,7 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
       .eq("id", studentId)
       .maybeSingle();
     const studentName = profile?.display_name || "A student";
-    const appUrl = process.env.APP_URL || "https://gilaniai.vercel.app";
+    const appUrl = process.env.APP_URL || "https://gilaniai.site";
 
     if (reviewerId) {
       // Notify specific teacher in DB
@@ -310,7 +310,7 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
     // Email student
     const { data: studentUser } = await supabaseAdmin.auth.admin.getUserById(studentId);
     if (studentUser?.user?.email) {
-      const appUrl = process.env.APP_URL || "https://gilaniai.vercel.app";
+      const appUrl = process.env.APP_URL || "https://gilaniai.site";
       await sendTransactionalEmail({
         to: studentUser.user.email,
         subject: `[GilaniAI] Teacher Responded to your Study Session!`,

@@ -72,7 +72,7 @@ function ContactPage() {
           {[
             {
               icon: Mail, title: "Email us",
-              body: <a href="mailto:support@gilaniai.vercel.app" className="text-xs font-medium text-primary hover:underline break-all">support@gilaniai.vercel.app</a>,
+              body: <a href="mailto:support@gilaniai.site" className="text-xs font-medium text-primary hover:underline break-all">support@gilaniai.site</a>,
               sub: "For general enquiries, account issues, and billing questions."
             },
             {

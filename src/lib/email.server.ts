@@ -77,14 +77,14 @@ function escapeHtml(str: string): string {
 // ─── Shared Design Tokens ────────────────────────────────────────────────────
 
 const BRAND_ORANGE = "#d9531e";
-const BRAND_DARK   = "#111111";
-const BG_PAGE      = "#f4f4f5";
-const BG_CARD      = "#ffffff";
-const TEXT_BODY    = "#374151";
-const TEXT_MUTED   = "#6b7280";
-const TEXT_LIGHT   = "#9ca3af";
-const BORDER       = "#e5e7eb";
-const APP_URL      = process.env.APP_URL || "https://gilaniai.vercel.app";
+const BRAND_DARK = "#111111";
+const BG_PAGE = "#f4f4f5";
+const BG_CARD = "#ffffff";
+const TEXT_BODY = "#374151";
+const TEXT_MUTED = "#6b7280";
+const TEXT_LIGHT = "#9ca3af";
+const BORDER = "#e5e7eb";
+const APP_URL = process.env.APP_URL || "https://gilaniai.site";
 
 // ─── Shared Header ───────────────────────────────────────────────────────────
 

@@ -21,4 +21,4 @@ Disallow: /admin
 Disallow: /teacher
 Disallow: /api/
 
-Sitemap: https://gilaniai.vercel.app/sitemap.xml
+Sitemap: https://gilaniai.site/sitemap.xml

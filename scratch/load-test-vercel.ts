@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 //npx tsx --env-file=.env scratch/load-test-vercel.ts
 
 const CONCURRENT_USERS = 20;
-const DEPLOYED_URL = "https://gilaniai.vercel.app/api/chat";
+const DEPLOYED_URL = "https://gilaniai.site/api/chat";
 
 const supabaseClient = createClient(
     process.env.SUPABASE_URL!,
@@ -89,7 +89,7 @@ async function runSingleUserSession(
             headers: {
                 "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json",
-                "Origin": "https://gilaniai.vercel.app"
+                "Origin": "https://gilaniai.site"
             },
             body: JSON.stringify({
                 threadId: convoId,

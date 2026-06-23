@@ -124,7 +124,7 @@ const resolveEscalation = createServerFn({ method: "POST" })
           .eq("id", esc.user_id)
           .single();
         const studentName = studentProfile?.display_name || "Student";
-        const appUrl = process.env.APP_URL || "https://gilaniai.vercel.app";
+        const appUrl = process.env.APP_URL || "https://gilaniai.site";
         if (studentEmail) {
           await sendTransactionalEmail({
             to: studentEmail,
@@ -269,18 +269,16 @@ function EscalationCard({
     color: "text-muted-foreground border-border",
   };
   return (
-    <div className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-shadow ${
-      urgent ? "border-red-300 dark:border-red-800" : "border-border"
-    } ${isOpen ? "shadow-md" : ""}`}>
+    <div className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-shadow ${urgent ? "border-red-300 dark:border-red-800" : "border-border"
+      } ${isOpen ? "shadow-md" : ""}`}>
       {/* Card header */}
       <button
         onClick={onOpen}
         className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-left hover:bg-muted/30 transition-colors"
       >
         <div className="flex items-start gap-3 min-w-0">
-          <div className={`flex-shrink-0 mt-0.5 h-8 w-8 rounded-full flex items-center justify-center ${
-            urgent ? "bg-red-100 dark:bg-red-950/40" : "bg-muted/60"
-          }`}>
+          <div className={`flex-shrink-0 mt-0.5 h-8 w-8 rounded-full flex items-center justify-center ${urgent ? "bg-red-100 dark:bg-red-950/40" : "bg-muted/60"
+            }`}>
             <User className={`h-4 w-4 ${urgent ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`} />
           </div>
           <div className="min-w-0 flex-1">
@@ -295,18 +293,17 @@ function EscalationCard({
             <p className="text-xs text-muted-foreground">
               {esc.created_at
                 ? new Date(esc.created_at).toLocaleString("en-KE", {
-                    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-                  })
+                  day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+                })
                 : "—"}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={`hidden sm:inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
-            isOpen
+          <span className={`hidden sm:inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${isOpen
               ? "border-border bg-muted text-muted-foreground"
               : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
-          }`}>
+            }`}>
             {isOpen ? "Collapse" : "Respond"}
           </span>
           {isOpen
@@ -339,17 +336,15 @@ function EscalationCard({
                 ) : (
                   convoMessages.map((msg, i) => (
                     <div key={i} className={`flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                      <span className={`font-mono text-[9px] uppercase tracking-wider flex items-center gap-1 ${
-                        msg.role === "user" ? "text-primary/70" : "text-muted-foreground"
-                      }`}>
+                      <span className={`font-mono text-[9px] uppercase tracking-wider flex items-center gap-1 ${msg.role === "user" ? "text-primary/70" : "text-muted-foreground"
+                        }`}>
                         <User className="h-2.5 w-2.5" />
                         {msg.role === "user" ? "Student" : "GilaniAI"}
                       </span>
-                      <div className={`rounded-xl px-3 py-2 text-xs max-w-[85%] leading-relaxed ${
-                        msg.role === "user"
+                      <div className={`rounded-xl px-3 py-2 text-xs max-w-[85%] leading-relaxed ${msg.role === "user"
                           ? "bg-primary/10 text-foreground rounded-tr-sm"
                           : "bg-card border border-border text-foreground rounded-tl-sm"
-                      }`}>
+                        }`}>
                         {msg.content}
                       </div>
                     </div>

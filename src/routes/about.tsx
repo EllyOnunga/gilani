@@ -32,9 +32,9 @@ export const Route = createFileRoute("/about")({
         content:
           "AI tutoring grounded in Kenyan curriculum standards with real teacher escalation built in.",
       },
-      { property: "og:url", content: "https://gilaniai.vercel.app/about" },
+      { property: "og:url", content: "https://gilaniai.site/about" },
     ],
-    links: [{ rel: "canonical", href: "https://gilaniai.vercel.app/about" }],
+    links: [{ rel: "canonical", href: "https://gilaniai.site/about" }],
   }),
   component: About,
 });

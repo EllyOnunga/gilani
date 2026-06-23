@@ -63,8 +63,8 @@ export const assignUserRole = createServerFn({ method: "POST" })
       const userName = authResult.user.user_metadata?.full_name || "there";
       const dashboard =
         role === "teacher" ? "/teacher/escalations"
-        : role === "admin" ? "/admin/users"
-        : "/dashboard";
+          : role === "admin" ? "/admin/users"
+            : "/dashboard";
       if (userEmail) {
         sendTransactionalEmail({
           to: userEmail,
@@ -73,7 +73,7 @@ export const assignUserRole = createServerFn({ method: "POST" })
             heading: `Welcome, ${userName}!`,
             body: `Your account has been created successfully as a <strong>${role}</strong>. You're all set to start using GilaniAI — your curriculum-aligned AI study assistant for KCSE & CBC.`,
             buttonText: "Go to Dashboard",
-            buttonUrl: `${process.env.APP_URL || "https://gilaniai.vercel.app"}/login?signout=true&redirect=${dashboard}`,
+            buttonUrl: `${process.env.APP_URL || "https://gilaniai.site"}/login?signout=true&redirect=${dashboard}`,
             footerNote: "You're receiving this because you just registered on GilaniAI.",
           }),
         }).catch((err) => console.error("[Welcome Email] Failed:", err));
@@ -140,7 +140,7 @@ export const sendPasswordResetConfirmationFn = createServerFn({ method: "POST" }
       to: userEmail,
       subject: "Your GilaniAI Password Was Changed",
       html: passwordResetConfirmationEmail(userName),
-      text: `Hi ${userName || "there"},\n\nYour GilaniAI password was successfully changed.\n\nIf you did NOT make this change, reset your password immediately at: ${process.env.APP_URL || "https://gilaniai.vercel.app"}/forgot-password\n\nBest regards,\nThe GilaniAI Team`,
+      text: `Hi ${userName || "there"},\n\nYour GilaniAI password was successfully changed.\n\nIf you did NOT make this change, reset your password immediately at: ${process.env.APP_URL || "https://gilaniai.site"}/forgot-password\n\nBest regards,\nThe GilaniAI Team`,
     });
 
     return { sent };

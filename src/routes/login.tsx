@@ -39,7 +39,7 @@ export const Route = createFileRoute("/login")({
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
-    links: [{ rel: "canonical", href: "https://gilaniai.vercel.app/login" }],
+    links: [{ rel: "canonical", href: "https://gilaniai.site/login" }],
   }),
   component: LoginPage,
 });
