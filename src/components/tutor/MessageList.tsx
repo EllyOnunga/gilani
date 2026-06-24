@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback, useMemo } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { EmptyState } from "./EmptyState";
 import { Loader2 } from "lucide-react";
@@ -12,9 +12,7 @@ type Props = {
   onReload: () => void;
   onPromptClick: (prompt: string) => void;
   onEditRequest?: (text: string) => void;
-  /** Resolved user ID passed from page level — avoids each bubble resolving its own session */
   userId?: string | null;
-  /** Map of messageId → vote, bulk-loaded at page level to eliminate N+1 queries */
   userVotes?: Record<string, 1 | -1>;
   onVote?: (messageId: string, vote: 1 | -1 | null) => void;
 };
@@ -32,76 +30,157 @@ export const MessageList = React.memo(function MessageList({
   userVotes,
   onVote,
 }: Props) {
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const innerRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const isAutoScrollingRef = useRef(true);
+  const lastMessageCountRef = useRef(0);
+
+  // Memoize the "should show thinking" logic
+  const showThinking = useMemo(() => {
+    if (!isPending) return false;
+    const last = messages[messages.length - 1];
+    if (!last) return true;
+    if (last.role === "user") return true;
+    const text =
+      last.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") ||
+      last.content ||
+      "";
+    return text.trim().length === 0;
+  }, [isPending, messages]);
+
+  // Smart scroll: only auto-scroll if user is near bottom
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // Check if user is near the bottom (within 200px)
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    const shouldScroll = distanceFromBottom < 200 || isAutoScrollingRef.current;
+
+    if (shouldScroll) {
+      container.scrollTo({ top: container.scrollHeight, behavior });
+    }
+  }, []);
 
   // Scroll on new messages (not during streaming)
   useEffect(() => {
     if (isPending) return;
-    const container = scrollContainerRef.current;
-    if (!container || messages.length === 0) return;
-    const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
-    const lastMessage = messages[messages.length - 1];
-    if (remaining < 150 || lastMessage?.role === "user") {
-      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
-    }
-  }, [messages.length, messages[messages.length - 1]?.id]);
+    if (messages.length === 0) return;
 
-  // Jump to bottom instantly once messages finish loading for this thread
+    const messageCountChanged = messages.length !== lastMessageCountRef.current;
+    lastMessageCountRef.current = messages.length;
+
+    if (messageCountChanged) {
+      scrollToBottom("smooth");
+    }
+  }, [messages.length, scrollToBottom, isPending]);
+
+  // Jump to bottom instantly when messages finish loading
   useEffect(() => {
     if (messagesLoading || messages.length === 0) return;
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    // Double rAF ensures layout has painted the newly rendered messages
+
+    // Use double rAF to ensure layout is painted
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        container.scrollTop = container.scrollHeight;
+        scrollToBottom("instant");
+        isAutoScrollingRef.current = true;
       });
     });
-  }, [messagesLoading]);
+  }, [messagesLoading, scrollToBottom]);
 
-  // Scroll to bottom whenever the content height grows (covers streaming updates)
+  // Auto-scroll during streaming with ResizeObserver
   useEffect(() => {
     const container = scrollContainerRef.current;
     const inner = innerRef.current;
     if (!container || !inner) return;
+
     let lastHeight = inner.scrollHeight;
-    const ro = new ResizeObserver(() => {
+    let rafId: number;
+
+    const handleResize = () => {
       const newHeight = inner.scrollHeight;
+
       if (newHeight > lastHeight) {
-        // Only auto-scroll if user is near the bottom (within 180px of previous height)
-        const distFromBottom = lastHeight - container.scrollTop - container.clientHeight;
-        if (distFromBottom < 180) {
-          container.scrollTop = container.scrollHeight;
+        // Check if user is near bottom
+        const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+
+        if (distanceFromBottom < 200) {
+          // Use rAF for smooth scrolling during streaming
+          cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(() => {
+            container.scrollTop = container.scrollHeight;
+          });
         }
+
         lastHeight = newHeight;
       }
-    });
+    };
+
+    const ro = new ResizeObserver(handleResize);
     ro.observe(inner);
-    return () => ro.disconnect();
+
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  // Detect when user manually scrolls up (disable auto-scroll)
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      isAutoScrollingRef.current = distanceFromBottom < 100;
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <div ref={scrollContainerRef} className={`flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden px-2 py-2 sm:px-5 sm:py-5 ${isRateLimited ? "pb-80" : "pb-56"}`}>
+    <div
+      ref={scrollContainerRef}
+      role="log"
+      aria-label="Chat messages"
+      aria-live="polite"
+      className={`flex-1 min-h-0 overflow-y-auto px-2 py-2 sm:px-5 sm:py-5 ${isRateLimited ? "pb-80" : "pb-56"
+        }`}
+      style={{ scrollBehavior: "smooth" }}
+    >
       <div ref={innerRef} className="space-y-3 flex flex-col pb-4">
+        {/* Loading state */}
         {messagesLoading && (
-          <div className="flex flex-col items-center justify-center h-full gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">Loading messages…</p>
+          <div
+            className="flex flex-col items-center justify-center h-full gap-3"
+            role="status"
+            aria-label="Loading messages"
+          >
+            <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden="true" />
+            <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
+              Loading messages…
+            </p>
           </div>
         )}
 
+        {/* Error state */}
         {messagesLoadError && (
-          <div className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+          <div
+            className="mx-auto max-w-xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive"
+            role="alert"
+          >
             <p>{messagesLoadError}</p>
           </div>
         )}
 
+        {/* Empty state */}
         {!messagesLoading && !messagesLoadError && messages.length === 0 && (
           <EmptyState onPromptClick={onPromptClick} />
         )}
 
+        {/* Messages */}
         {!messagesLoading &&
           !messagesLoadError &&
           messages.map((m, idx: number) => (
@@ -120,38 +199,37 @@ export const MessageList = React.memo(function MessageList({
             />
           ))}
 
-        {isPending && (() => {
-          const last = messages[messages.length - 1];
-          if (!last) return true;
-          if (last.role === "user") return true;
-          // Keep "Thinking" visible until the assistant message actually has
-          // visible text — otherwise the indicator vanishes the instant the
-          // SDK appends an empty assistant placeholder, leaving a dead gap
-          // with no feedback while waiting for the first real token.
-          const text =
-            last.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") ||
-            (last as any).content ||
-            "";
-          return text.trim().length === 0;
-        })() && (
-          <div className="flex items-center gap-1.5 py-2 px-1 animate-in fade-in duration-300">
-            <style dangerouslySetInnerHTML={{ __html: `
-              @keyframes thinking-dot-bounce {
-                0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
-                40% { transform: translateY(-6px); opacity: 1; }
-              }
-            ` }} />
+        {/* Thinking indicator */}
+        {showThinking && (
+          <div
+            className="flex items-center gap-1.5 py-2 px-1 animate-in fade-in duration-300"
+            role="status"
+            aria-label="AI is thinking"
+          >
+            <style
+              dangerouslySetInnerHTML={{
+                __html: `
+                  @keyframes thinking-dot-bounce {
+                    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+                    40% { transform: translateY(-6px); opacity: 1; }
+                  }
+                `,
+              }}
+            />
             <span className="text-sm text-primary font-medium">Thinking</span>
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
                 className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
                 style={{ animation: `thinking-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                aria-hidden="true"
               />
             ))}
           </div>
         )}
-        <div ref={messagesEndRef} />
+
+        {/* Scroll anchor */}
+        <div ref={messagesEndRef} aria-hidden="true" />
       </div>
     </div>
   );

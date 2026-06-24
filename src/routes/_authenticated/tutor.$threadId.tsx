@@ -278,12 +278,8 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     id: threadId,
     transport,
     // smoothStream with word chunking + 10ms delay gives smooth word-by-word reveals.
-    
-    
-    
-    
-    
-    experimental_throttle: 500,
+    experimental_throttle: 700,
+
     onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
     onFinish: (message: any) => {
       setChatError(null);
@@ -394,7 +390,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         const docText =
           attachedFile.text.length > MAX_DOC_CHARS
             ? attachedFile.text.slice(0, MAX_DOC_CHARS) +
-              "\n\n[Document truncated to 8000 characters due to size limits]"
+            "\n\n[Document truncated to 8000 characters due to size limits]"
             : attachedFile.text;
         finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${docText}\n</DocumentContent>\n\nStudent Query: ${trimmedInput || "(See attached document)"}`;
       }
@@ -548,9 +544,9 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         })(),
         userId
           ? supabase
-              .from("message_feedback")
-              .select("message_id, vote")
-              .eq("user_id", userId)
+            .from("message_feedback")
+            .select("message_id, vote")
+            .eq("user_id", userId)
           : Promise.resolve({ data: null, error: null }),
       ]);
 
@@ -800,44 +796,44 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         />
         {/* Messages area */}
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-        <MessageList
-          messages={messages}
-          messagesLoading={messagesLoading}
-          messagesLoadError={messagesLoadError}
-          isPending={isPending}
-          isRateLimited={isRateLimited}
-          onReload={handleReload}
-          onEditRequest={handleEditRequest}
-          onPromptClick={handlePromptClick}
-          userId={userId}
-          userVotes={userVotes}
-          onVote={handleVote}
-        />
+          <MessageList
+            messages={messages}
+            messagesLoading={messagesLoading}
+            messagesLoadError={messagesLoadError}
+            isPending={isPending}
+            isRateLimited={isRateLimited}
+            onReload={handleReload}
+            onEditRequest={handleEditRequest}
+            onPromptClick={handlePromptClick}
+            userId={userId}
+            userVotes={userVotes}
+            onVote={handleVote}
+          />
 
         </div>
         {/* Input area */}
         <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">
-        <ChatInput
-          input={input}
-          isPending={isPending}
-          parsingFile={parsingFile}
-          attachedFile={attachedFile}
-          chatError={chatError}
-          docUploadError={docUploadError}
-          onClearDocError={() => setDocUploadError(null)}
-          onInputChange={handleInputChange}
-          onSubmit={submit}
-          onStop={stop}
-          onFileChange={handleFileChange}
-          inputRef={chatInputRef}
-          onRemoveFile={() => {
-            setAttachedFile(null);
-            setDocUploadError(null);
-          }}
-          onUpgrade={() => setShowPlans(true)}
-          messagesUsed={messagesUsed}
-          messagesMax={messagesMax}
-        />
+          <ChatInput
+            input={input}
+            isPending={isPending}
+            parsingFile={parsingFile}
+            attachedFile={attachedFile}
+            chatError={chatError}
+            docUploadError={docUploadError}
+            onClearDocError={() => setDocUploadError(null)}
+            onInputChange={handleInputChange}
+            onSubmit={submit}
+            onStop={stop}
+            onFileChange={handleFileChange}
+            inputRef={chatInputRef}
+            onRemoveFile={() => {
+              setAttachedFile(null);
+              setDocUploadError(null);
+            }}
+            onUpgrade={() => setShowPlans(true)}
+            messagesUsed={messagesUsed}
+            messagesMax={messagesMax}
+          />
         </div>
       </main>
       {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
