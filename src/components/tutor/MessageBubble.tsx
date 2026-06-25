@@ -137,7 +137,7 @@ export const MessageBubble = memo(function MessageBubble({
       <div
         className={`${isUser ? "max-w-[88%] sm:max-w-[72%]" : "w-full max-w-[96%] sm:max-w-full"
           } rounded-2xl px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${isUser
-            ? "bg-primary/8 border border-primary/20 rounded-tr-sm shadow-sm"
+            ? "bg-primary text-primary-foreground rounded-tr-sm shadow-sm"
             : isStreamActive && !showBubbleCard
               ? "opacity-0 pointer-events-none"
               : "bg-card border border-border text-foreground rounded-tl-sm shadow-sm"
@@ -227,13 +227,13 @@ export const MessageBubble = memo(function MessageBubble({
           /* User message */
           <div className="flex flex-col gap-1.5">
             {attachmentName && (
-              <div className="flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary w-fit max-w-full select-none">
+              <div className="flex items-center gap-1.5 rounded-md border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-1.5 text-xs font-semibold text-primary-foreground w-fit max-w-full select-none">
                 <FileText className="h-3.5 w-3.5 flex-shrink-0" />
                 <span className="truncate max-w-[200px]">{attachmentName}</span>
               </div>
             )}
             <div className="flex flex-col gap-1">
-              <span className="whitespace-pre-wrap text-white font-medium">
+              <span className="whitespace-pre-wrap text-primary-foreground font-medium">
                 {collapsed && displayText.length > COLLAPSE_THRESHOLD
                   ? displayText.slice(0, COLLAPSE_THRESHOLD) + "…"
                   : displayText}
@@ -241,7 +241,7 @@ export const MessageBubble = memo(function MessageBubble({
               {displayText.length > COLLAPSE_THRESHOLD && (
                 <button
                   onClick={() => setCollapsed((p) => !p)}
-                  className="self-start text-[10px] font-bold text-primary/60 hover:text-primary underline underline-offset-2 transition-colors"
+                  className="self-start text-[10px] font-bold text-primary-foreground/60 hover:text-primary-foreground underline underline-offset-2 transition-colors"
                   aria-expanded={!collapsed}
                 >
                   {collapsed ? "Show more" : "Show less"}
@@ -250,10 +250,10 @@ export const MessageBubble = memo(function MessageBubble({
             </div>
 
             {!isStreamActive && (
-              <div className="flex items-center gap-1 mt-1.5 transition-opacity duration-200 justify-end border-t border-primary/20 pt-1">
+              <div className="flex items-center gap-1 mt-1.5 transition-opacity duration-200 justify-end border-t border-primary-foreground/20 pt-1">
                 <button
                   onClick={handleCopy}
-                  className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-white/70 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/10"
+                  className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider text-primary-foreground/75 hover:text-primary-foreground transition-colors px-2 py-1 rounded hover:bg-primary-foreground/10"
                   title="Copy"
                   aria-label="Copy message"
                 >
@@ -264,8 +264,8 @@ export const MessageBubble = memo(function MessageBubble({
                     onClick={isRateLimited ? undefined : () => onEditRequest(displayText)}
                     disabled={isRateLimited}
                     className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded ${isRateLimited
-                      ? "opacity-40 cursor-not-allowed text-white/30"
-                      : "text-white/70 hover:text-white hover:bg-white/10"
+                      ? "opacity-40 cursor-not-allowed text-primary-foreground/35"
+                      : "text-primary-foreground/75 hover:text-primary-foreground hover:bg-primary-foreground/10"
                       }`}
                     title={isRateLimited ? "Rate limit reached" : "Edit message"}
                     aria-label="Edit message"
@@ -276,7 +276,7 @@ export const MessageBubble = memo(function MessageBubble({
                 {onDelete && (
                   <button
                     onClick={() => onDelete(m.id)}
-                    className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded text-white/70 hover:text-red-400 hover:bg-white/10"
+                    className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded text-primary-foreground/75 hover:text-red-300 hover:bg-primary-foreground/10"
                     title="Delete message"
                     aria-label="Delete message"
                   >

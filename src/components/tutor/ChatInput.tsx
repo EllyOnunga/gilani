@@ -298,7 +298,7 @@ export function ChatInput({
       )}
 
       {/* Main input */}
-      <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus-within:ring-4 focus-within:ring-primary/5">
+      <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus-within:ring-2 focus-within:ring-primary/10">
         {/* File input: hidden with onClick reset so the file blob is untouched during onChange */}
         <input
           id="chat-file-input"
@@ -332,7 +332,7 @@ export function ChatInput({
             isPending       ? "Waiting for response…" :
             isRateLimited   ? secondsLeft > 0 ? `Cooling down… ${formatTime(secondsLeft)}` : "Rate limit reached…" :
             parsingFile     ? "Parsing document…" :
-                              "Ask anything…"
+            "Ask anything…"
           }
           disabled={isDisabled} onKeyDown={handleKeyDown} style={{ maxHeight: 160, overflowY: 'hidden' }} />
 
@@ -341,13 +341,13 @@ export function ChatInput({
             disabled={!isPending && (isDisabled || (!input.trim() && !attachedFile))}
             className={`flex h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center transition-all duration-200 ${
               isPending
-                ? "rounded-lg bg-primary text-primary-foreground shadow-md hover:bg-primary/90 active:scale-95"
+                ? "rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 active:scale-95"
                 : isDisabled || (!input.trim() && !attachedFile)
                   ? "rounded-full bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
                   : "rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-primary/20 hover:scale-105 active:scale-95 hover:-translate-y-0.5"
             }`}
             title={isPending ? "Stop generating" : "Send (Enter)"}>
-            {isPending ? <Square className="h-3.5 w-3.5 fill-current" /> : <Send className="h-4 w-4" />}
+            {isPending ? <Square className="h-3 w-3 fill-current" /> : <Send className="h-3.5 w-3.5" />}
           </button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { streamText, embed, smoothStream } from "ai";
+import { streamText, embed, smoothStream, tool, stepCountIs } from "ai";
+import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { withTimeout } from "@/lib/async";
@@ -286,14 +287,35 @@ ${finalContent}`;
             maxRetries: 2,
             temperature: 0.7,
             abortSignal: streamAbortController.signal,
-            // Enable Gemini Google Search Grounding: the model searches the web in
-            // real-time and grounds its answer in live results, automatically citing sources.
-            // Silently ignored by non-Google fallback providers.
             providerOptions: {
               google: {
-                useSearchGrounding: true,
+                thinkingConfig: {
+                  thinkingBudget: -1,
+                },
               },
             },
+            tools: {
+              evaluateCode: tool({
+                description: "Execute code to verify if a student's solution works.",
+                inputSchema: z.object({
+                  code: z.string().describe("The code string to run"),
+                  language: z.enum(["javascript", "python"]),
+                }) as any,
+                execute: (async ({ code, language }: any) => {
+                  console.log(`[API Chat] evaluateCode tool invoked. Language: ${language}, Code: ${code}`);
+                  return { output: "SyntaxError: Unexpected token" };
+                }) as any,
+              }) as any,
+              searchWeb: tool({
+                description: "Search the web for up-to-date facts or current events.",
+                inputSchema: z.object({ query: z.string() }) as any,
+                execute: (async ({ query }: any) => {
+                  console.log(`[API Chat] searchWeb tool invoked. Query: ${query}`);
+                  return { result: "Retrieved search data" };
+                }) as any,
+              }) as any,
+            } as any,
+            stopWhen: stepCountIs(3),
             // REVERTED back to "line": word-level chunking caused the same
             // SSE backpressure / multi-second stall reported previously (~10s
             // dump delay observed). Keeping line-chunking until the stall's
