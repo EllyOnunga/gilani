@@ -7,7 +7,6 @@ import { authenticateRequest } from "@/lib/api-auth.server";
 import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import { buildQuizPrompt } from "@/lib/quiz-prompt";
 import { sanitizeUntrustedInput } from "@/lib/tutor-prompt";
-import { backoffDelay } from "@/lib/provider-backoff";
 import { generateObject } from "ai";
 
 // Suppress noisy AI SDK warnings (e.g. Groq's lack of strict JSON schema support)
@@ -93,21 +92,23 @@ export const generateQuiz = createServerFn({ method: "POST" })
             throw new Error("Question count must be between 1 and 50");
 
         const gateway = createLovableAiGatewayProvider();
-        const models = gateway.getAllChatModels();
+        const models = gateway.getAllChatModels("llama-3.1-8b-instant");
 
         let object: any = null;
         let lastError: any = null;
 
+        // Fail fast across providers: no internal SDK retries (maxRetries: 0)
+        // and no inter-provider backoff delay. A failing provider should hand
+        // off to the next one in well under a second, not tens of seconds.
         for (let i = 0; i < models.length; i++) {
             const { model } = models[i];
             try {
-                if (i > 0) await backoffDelay(i);
                 console.log(
                     `[Quiz Generation] Attempting with model: ${model.provider}/${model.modelId}`,
                 );
                 const result = await generateObject({
                     model,
-                    maxRetries: 1,
+                    maxRetries: 0,
                     schema: z.object({
                         questions: z.array(
                             z.object({

@@ -237,7 +237,7 @@ export const generatePlan = createServerFn({ method: "POST" }).handler(async () 
     }
 
     const { generateText } = await import("ai");
-    const models = createLovableAiGatewayProvider().getAllChatModels();
+    const models = createLovableAiGatewayProvider().getAllChatModels("gemini-3.5-flash");
     if (models.length === 0) throw new Error("No AI providers are configured.");
 
     const today = new Date().toISOString().split("T")[0];
@@ -262,11 +262,20 @@ export const generatePlan = createServerFn({ method: "POST" }).handler(async () 
                 const { backoffDelay } = await import("@/lib/provider-backoff");
                 await backoffDelay(i);
             }
+            // Force JSON Object Mode on Groq/OpenAI-compatible fallbacks so
+            // their output is guaranteed valid JSON instead of relying on
+            // repairAndParseJson's best-effort text cleanup.
+            const jsonModeProviderOptions =
+                name === "groq" || name === "openai" || name === "mistral"
+                    ? { [name]: { response_format: { type: "json_object" } } }
+                    : undefined;
+
             const result = await generateText({
                 model: model as any,
                 prompt: prompt,
                 temperature: 0.4,
                 maxTokens: 4000,
+                ...(jsonModeProviderOptions ? { providerOptions: jsonModeProviderOptions } : {}),
             } as any);
 
             const textResult = result.text.trim();

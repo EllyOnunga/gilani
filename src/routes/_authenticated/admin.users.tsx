@@ -3,6 +3,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabase } from "@/integrations/supabase/client";
+import { GilaniLoader } from "@/components/GilaniLoader";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { Settings, UserCheck, Loader2, Shield, GraduationCap, User, MessageSquare, Mail, Clock, CheckCircle, CheckCircle2, Inbox, ThumbsUp, ThumbsDown, Search, BarChart3, AlertTriangle, RefreshCw, CreditCard, DollarSign, TrendingUp, Calendar, Crown, BookOpen, Activity, Send, Users } from "lucide-react";
@@ -442,12 +443,7 @@ function AdminUsersPage() {
   }, [profileState, planSearch]);
 
   if (loadingData) {
-    return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center p-5 sm:p-8 text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-        <p className="text-sm text-muted-foreground font-medium">Loading admin dashboard...</p>
-      </div>
-    );
+    return <GilaniLoader />;
   }
 
   const handleRoleChange = async (userId: string, role: string) => {

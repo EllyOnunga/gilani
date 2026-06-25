@@ -189,7 +189,7 @@ export const ingestNote = createServerFn({ method: "POST" })
     }
 
     const { generateText } = await import("ai");
-    const models = createLovableAiGatewayProvider().getAllChatModels();
+    const models = createLovableAiGatewayProvider().getAllChatModels("gemini-3.5-flash");
     if (models.length === 0) throw new Error("No AI providers are configured.");
 
     let parsed: StudyMaterialResponse | null = null;
@@ -202,10 +202,20 @@ export const ingestNote = createServerFn({ method: "POST" })
           const { backoffDelay } = await import("@/lib/provider-backoff");
           await backoffDelay(i);
         }
+        // Groq/OpenAI-compatible models don't reliably follow "return only
+        // JSON" prompt instructions on their own — force JSON Object Mode at
+        // the API level so the response is guaranteed to be valid JSON,
+        // rather than relying on repairAndParseJson's text-cleanup fallback.
+        const jsonModeProviderOptions =
+          name === "groq" || name === "openai" || name === "mistral"
+            ? { [name]: { response_format: { type: "json_object" } } }
+            : undefined;
+
         const result = await generateText({
           model: model as any,
           maxTokens: 4000,
           prompt: buildNotesPrompt({ title, heading, subheading, content }),
+          ...(jsonModeProviderOptions ? { providerOptions: jsonModeProviderOptions } : {}),
         } as any);
         const textResult = result.text.trim();
         if (textResult) {

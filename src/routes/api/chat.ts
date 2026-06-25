@@ -76,11 +76,9 @@ export const Route = createFileRoute("/api/chat")({
             });
           }
 
-          // ─── Use ai-gateway for all providers ────────────────────────────
+          // ─── Use ai-gateway, with automatic multi-provider fallback ──────
           const gateway = createGoogleAiProvider();
-          const chatModel = gateway.chatModel();
-
-          console.log(`[API Chat] Using provider: google (gemini)`);
+          const chatModel = gateway.chatModel("gemini-2.5-flash");
 
           if (!chatModel) {
             return new Response(
@@ -88,6 +86,8 @@ export const Route = createFileRoute("/api/chat")({
               { status: 500, headers: { "Content-Type": "application/json" } },
             );
           }
+
+          console.log(`[API Chat] Using provider: google (gemini), with fallback`);
 
           // ─── Database Checks ─────────────────────────────────────────────
           const { data: thread } = await supabaseAdmin
@@ -264,10 +264,20 @@ ${finalContent}`;
           });
 
 
-          // ─── Stream with Gemini ────────────────────────────────────────────
+          // ─── Stream with Gemini (auto-fallback to Groq/OpenAI/Mistral) ───
           console.log(`[API Chat] Streaming with provider: google (gemini)`);
 
           let insertedMessageId: string | null = null;
+          let streamFailed = false;
+
+          // Safety net: if the provider never produces a first token (a true
+          // hang, not an error), abort after 25s so the user gets a clear
+          // timeout message instead of waiting indefinitely.
+          const streamAbortController = new AbortController();
+          const streamTimeoutId = setTimeout(() => {
+            console.error("[API Chat] Stream timed out waiting for first token — aborting.");
+            streamAbortController.abort();
+          }, 25000);
 
           const result = streamText({
             model: chatModel,
@@ -275,6 +285,7 @@ ${finalContent}`;
             messages: aiMessages,
             maxRetries: 2,
             temperature: 0.7,
+            abortSignal: streamAbortController.signal,
             // Enable Gemini Google Search Grounding: the model searches the web in
             // real-time and grounds its answer in live results, automatically citing sources.
             // Silently ignored by non-Google fallback providers.
@@ -291,12 +302,15 @@ ${finalContent}`;
             // experimental_transform: smoothStream({ chunking: "word", delayInMs: 10 }),
             onError: (errorObj) => {
               const error = (errorObj as any)?.error || errorObj;
+              streamFailed = true;
+              clearTimeout(streamTimeoutId);
               console.error(
                 `[API Chat] google onError:`,
                 typeof error === "object" ? JSON.stringify(error).slice(0, 300) : String(error),
               );
             },
             onFinish: async ({ text: assistantText, providerMetadata, finishReason }) => {
+              clearTimeout(streamTimeoutId);
               console.log(`[API Chat] google finished. Length: ${assistantText.length}. FinishReason: ${finishReason}`);
 
               const safeText = assistantText.trim() || "Sorry, I could not generate a response right now. Please try again.";
@@ -344,6 +358,21 @@ ${finalContent}`;
               "Content-Type": "text/event-stream",
               "Connection": "keep-alive",
               "X-Accel-Buffering": "no",
+            },
+            // Without this, a mid-stream provider failure (bad key, quota,
+            // model outage) reaches the client as a silently dead connection
+            // — the thinking indicator spins forever with no error surfaced.
+            // This turns it into a readable message that useChat's onError
+            // can pick up immediately.
+            onError: (error) => {
+              const err = error as any;
+              if (err?.name === "AbortError" || /aborted/i.test(String(err?.message || ""))) {
+                return "GilaniAI is taking too long to respond. Please try again.";
+              }
+              if (isRateLimitError(error)) {
+                return "The AI service is temporarily over capacity. Please try again in a moment.";
+              }
+              return "GilaniAI couldn't generate a response right now. Please try again — if this keeps happening, contact support.";
             },
           });
         } catch (error: unknown) {

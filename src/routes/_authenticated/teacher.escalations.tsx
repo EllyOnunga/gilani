@@ -1,3 +1,4 @@
+import { GilaniLoader } from "@/components/GilaniLoader";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
@@ -824,12 +825,7 @@ function EscalationsPage() {
       )}
 
       {/* ── Loading ── */}
-      {loading && (
-        <div className="flex flex-col items-center py-10 sm:py-16 gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading escalations…</p>
-        </div>
-      )}
+      {loading && <GilaniLoader fullScreen={false} />}
 
       {/* ── Empty state ── */}
       {!loading && filteredEscalations.length === 0 && (

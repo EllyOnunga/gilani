@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Menu, Plus, Loader2 } from "lucide-react";
+import { GilaniLoader } from "@/components/GilaniLoader";
 import { parseDocument } from "@/lib/document-parser";
 import {
   createEscalationNotification,
@@ -83,12 +84,7 @@ function TutorThread() {
   }, []);
 
   if (authLoading) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center bg-background text-foreground">
-        <Loader2 className="h-6 w-6 animate-spin text-primary mb-3" />
-        <p className="text-sm text-muted-foreground font-medium">Verifying credentials…</p>
-      </div>
-    );
+    return <GilaniLoader />;
   }
 
   // key={threadId} forces TutorThreadInner to remount on every thread switch.

@@ -59,7 +59,7 @@ export const createGoogleAiProvider = (apiKey?: string) => {
           const cleanModelId =
             modelId && !modelId.includes("gemini") && !modelId.includes("google")
               ? modelId.replace(/^groq\//, "")
-              : "llama-3.3-70b-versatile";
+              : "llama-3.1-8b-instant";
           return groq.chatModel(cleanModelId);
         },
       };
@@ -119,8 +119,10 @@ export const createGoogleAiProvider = (apiKey?: string) => {
         },
       });
     },
-    getAllChatModels: (modelId?: string) =>
-      instantiatedProviders.map((p) => ({ model: p.chatModel(modelId), name: p.name })),
+    getAllChatModels: (modelId?: string, onlyProvider?: "openai" | "groq" | "google" | "mistral") =>
+      instantiatedProviders
+        .filter((p) => !onlyProvider || p.name === onlyProvider)
+        .map((p) => ({ model: p.chatModel(modelId), name: p.name })),
     textEmbeddingModel: (_modelId?: string) => {
       type EmbedAttempt = { name: string; getModel: () => any };
 

@@ -38,7 +38,47 @@ export async function authenticateRequest(request: Request) {
 
   // Use the already-initialized admin client — avoids creating a new TCP connection
   // per request which was causing ETIMEDOUT under load.
-  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  // Retry once on transient network failures (DNS hiccups like EAI_AGAIN,
+  // dropped connections) before treating it as a real auth failure.
+  const isTransientNetworkError = (err: unknown): boolean => {
+    const msg = String((err as any)?.message || err || "");
+    const cause = (err as any)?.cause;
+    const causeCode = cause?.code || "";
+    return (
+      causeCode === "EAI_AGAIN" ||
+      causeCode === "ECONNRESET" ||
+      causeCode === "ETIMEDOUT" ||
+      /fetch failed/i.test(msg) ||
+      /network/i.test(msg)
+    );
+  };
+
+  let data: Awaited<ReturnType<typeof supabaseAdmin.auth.getUser>>["data"] | undefined;
+  let error: Awaited<ReturnType<typeof supabaseAdmin.auth.getUser>>["error"] | undefined;
+  const MAX_AUTH_RETRIES = 2;
+
+  for (let attempt = 0; attempt <= MAX_AUTH_RETRIES; attempt++) {
+    try {
+      const result = await supabaseAdmin.auth.getUser(token);
+      data = result.data;
+      error = result.error;
+      break;
+    } catch (networkErr) {
+      if (attempt < MAX_AUTH_RETRIES && isTransientNetworkError(networkErr)) {
+        console.warn(
+          `[API Auth] Transient network error on attempt ${attempt + 1}, retrying:`,
+          (networkErr as any)?.message || networkErr,
+        );
+        await new Promise((res) => setTimeout(res, 300 * (attempt + 1)));
+        continue;
+      }
+      throw new Response(
+        JSON.stringify({ error: "Unable to reach authentication service. Please check your connection and try again." }),
+        { status: 503, headers: { "Content-Type": "application/json" } },
+      );
+    }
+  }
+
   if (error || !data?.user) {
     console.error(
       "[API Auth Error] Token verification failed:",

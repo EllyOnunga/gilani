@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Logo } from "@/components/ui/logo";
+import { GilaniLoader } from "@/components/GilaniLoader";
 import { useAuth } from "@/hooks/use-auth";
 import { PLANS } from "@/lib/plans";
 
@@ -222,6 +223,13 @@ function Landing() {
   const [subEmail, setSubEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // While auth is resolving, or once we know the user is logged in and about
+  // to be redirected, don't flash the full marketing page — show a lightweight
+  // loading screen instead.
+  if (loading || user) {
+    return <GilaniLoader />;
+  }
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
