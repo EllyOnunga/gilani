@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo, memo } from "react";
-import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, FileText } from "lucide-react";
+import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SmoothMarkdownRenderer } from "@/components/tutor/SmoothMarkdownRenderer";
@@ -15,6 +15,7 @@ type Props = {
   userId?: string | null;
   initialVote?: 1 | -1 | null;
   onVote?: (messageId: string, vote: 1 | -1 | null) => void;
+  onDelete?: (messageId: string) => void;
 };
 
 // Memoize the entire component to prevent unnecessary re-renders
@@ -29,6 +30,7 @@ export const MessageBubble = memo(function MessageBubble({
   userId,
   initialVote,
   onVote,
+  onDelete,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [vote, setVote] = useState<1 | -1 | null>(initialVote ?? null);
@@ -231,7 +233,7 @@ export const MessageBubble = memo(function MessageBubble({
               </div>
             )}
             <div className="flex flex-col gap-1">
-              <span className="whitespace-pre-wrap text-primary font-medium">
+              <span className="whitespace-pre-wrap text-white font-medium">
                 {collapsed && displayText.length > COLLAPSE_THRESHOLD
                   ? displayText.slice(0, COLLAPSE_THRESHOLD) + "…"
                   : displayText}
@@ -262,13 +264,23 @@ export const MessageBubble = memo(function MessageBubble({
                     onClick={isRateLimited ? undefined : () => onEditRequest(displayText)}
                     disabled={isRateLimited}
                     className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded ${isRateLimited
-                      ? "opacity-40 cursor-not-allowed text-primary/30"
+                      ? "opacity-40 cursor-not-allowed text-white/30"
                       : "text-white/70 hover:text-white hover:bg-white/10"
                       }`}
                     title={isRateLimited ? "Rate limit reached" : "Edit message"}
                     aria-label="Edit message"
                   >
                     <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={() => onDelete(m.id)}
+                    className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded text-white/70 hover:text-red-400 hover:bg-white/10"
+                    title="Delete message"
+                    aria-label="Delete message"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>

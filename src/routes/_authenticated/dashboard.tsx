@@ -12,22 +12,14 @@ import { z } from "zod";
 import {
   MessageCircle,
   BookOpenText,
-  ListChecks,
-  CalendarDays,
   Flame,
-  Award,
-  AlertCircle,
-  ArrowRight,
-  BarChart3,
-  Clock,
   Target,
   Zap,
   ChevronRight,
-  User,
-  BookOpen,
-  FileText,
 } from "lucide-react";
 import { getRequest } from "@tanstack/react-start/server";
+import { generateText } from "ai";
+import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -35,6 +27,13 @@ import { authenticateRequest } from "@/lib/api-auth.server";
 type RevisionTopic = {
   subject: string;
   topic: string;
+};
+
+type DailyInsights = {
+  tip: string;
+  topicOfDay: string;
+  didYouKnow: string;
+  streakMotivation: string;
 };
 
 type DashboardData = {
@@ -181,6 +180,39 @@ const loadDashboardData = createServerFn({ method: "GET" })
     };
   });
 
+// ─── Daily Insights Server Function ───────────────────────────────────────────
+
+const fetchDailyInsights = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ curriculum: z.string(), streak: z.number() }))
+  .handler(async ({ data }) => {
+    const { curriculum, streak } = data;
+    const provider = createGoogleAiProvider();
+    const model = provider.chatModel("gemini-2.5-flash");
+    const { text } = await generateText({
+      model,
+      prompt: `You are an educational assistant for ${curriculum} students in Kenya. Generate 4 short pieces of educational content. Respond ONLY with valid JSON, no markdown, no backticks.
+
+{
+  "tip": "A practical study tip for ${curriculum} students (1-2 sentences)",
+  "topicOfDay": "A specific ${curriculum} syllabus topic with a one-sentence explanation of a key concept",
+  "didYouKnow": "A fascinating educational fact relevant to ${curriculum} subjects (1-2 sentences)",
+  "streakMotivation": "${streak > 0 ? `An encouraging message about maintaining a ${streak}-day study streak` : "An encouraging message to start a study streak today"} (1 sentence)"
+}`,
+      maxOutputTokens: 400,
+    });
+    try {
+      const clean = text.replace(/```json|```/g, "").trim();
+      return JSON.parse(clean) as DailyInsights;
+    } catch {
+      return {
+        tip: "Break your study sessions into 25-minute focused blocks with 5-minute breaks for maximum retention.",
+        topicOfDay: "Photosynthesis: Plants convert sunlight, water and CO₂ into glucose and oxygen via the Calvin cycle.",
+        didYouKnow: "The human brain can store approximately 2.5 petabytes of information — equivalent to 3 million hours of TV.",
+        streakMotivation: streak > 0 ? `${streak} days strong — consistency is the foundation of excellence!` : "Every expert was once a beginner — start your streak today!",
+      } satisfies DailyInsights;
+    }
+  });
+
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -217,6 +249,8 @@ function getGreeting() {
 function Dashboard() {
   const { roles, loading } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [insights, setInsights] = useState<DailyInsights | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -227,8 +261,20 @@ function Dashboard() {
         ).padStart(2, "0")}`;
         const res = await loadDashboardData({ data: { localDate } });
         setData(res);
+        // Fetch AI insights using curriculum from loaded data
+        try {
+          const ins = await fetchDailyInsights({
+            data: { curriculum: res.curriculum || "KCSE", streak: res.streak || 0 },
+          });
+          setInsights(ins);
+        } catch (e) {
+          console.error("[Dashboard] insights error:", e);
+        } finally {
+          setInsightsLoading(false);
+        }
       } catch (err) {
         console.error("[Dashboard] load error:", err);
+        setInsightsLoading(false);
       }
     };
 
@@ -339,7 +385,7 @@ function Dashboard() {
       </header>
 
       {/* ── Study Suite ── */}
-      <section className="animate-in-slide [animation-delay:40ms]">
+      <section className="animate-in-slide [animation-delay:20ms]">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 className="font-serif text-lg font-semibold">Your Study Suite</h3>
@@ -349,7 +395,6 @@ function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
           {[
             { title: "AI Tutor", description: "Curriculum-precise answers, worked proofs & teacher escalation.", icon: MessageCircle, to: "/tutor", cta: "Start session" },
-            { title: "Analytics", description: "Track mastery scores, streaks and focus concepts over time.", icon: BarChart3, to: "/analytics", cta: "View stats" },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -372,6 +417,66 @@ function Dashboard() {
               </Link>
             );
           })}
+        </div>
+      </section>
+
+      {/* ── Daily Educational Insights ── */}
+      <section className="animate-in-slide [animation-delay:40ms]">
+        <div className="mb-4">
+          <h3 className="font-serif text-lg font-semibold">Today's Learning Insights</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">Personalised for your {curriculum} curriculum</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            {
+              label: "Study Tip",
+              icon: Zap,
+              content: insights?.tip,
+              accent: "text-primary",
+              bg: "bg-primary/5 border-primary/20",
+            },
+            {
+              label: "Topic of the Day",
+              icon: Target,
+              content: insights?.topicOfDay,
+              accent: "text-violet-600 dark:text-violet-400",
+              bg: "bg-violet-50 dark:bg-violet-950/20 border-violet-200/60 dark:border-violet-800/40",
+            },
+            {
+              label: "Did You Know?",
+              icon: BookOpenText,
+              content: insights?.didYouKnow,
+              accent: "text-teal-600 dark:text-teal-400",
+              bg: "bg-teal-50 dark:bg-teal-950/20 border-teal-200/60 dark:border-teal-800/40",
+            },
+            {
+              label: streak > 0 ? `${streak}-Day Streak` : "Start Your Streak",
+              icon: Flame,
+              content: insights?.streakMotivation,
+              accent: "text-amber-600 dark:text-amber-400",
+              bg: "bg-amber-50 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-800/40",
+            },
+          ].map((card) => (
+            <div
+              key={card.label}
+              className={`rounded-xl border p-4 sm:p-5 flex flex-col gap-3 ${card.bg}`}
+            >
+              <div className="flex items-center gap-2">
+                <card.icon className={`h-4 w-4 shrink-0 ${card.accent}`} />
+                <p className={`font-mono text-[10px] uppercase tracking-widest font-bold ${card.accent}`}>
+                  {card.label}
+                </p>
+              </div>
+              {insightsLoading ? (
+                <div className="space-y-2">
+                  <div className="h-3 w-full rounded bg-current opacity-10 animate-pulse" />
+                  <div className="h-3 w-4/5 rounded bg-current opacity-10 animate-pulse" />
+                </div>
+              ) : (
+                <p className="text-sm leading-relaxed text-foreground/80">{card.content}</p>
+              )}
+            </div>
+          ))}
         </div>
       </section>
 

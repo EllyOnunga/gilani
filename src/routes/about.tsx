@@ -3,12 +3,8 @@ import { Logo } from "@/components/ui/logo";
 import { LegalFooter } from "@/components/LegalLayout";
 import {
   ArrowLeft,
-  BookOpenText,
   MessageCircle,
   ShieldCheck,
-  BarChart3,
-  ListChecks,
-  CalendarDays,
   Users,
   Zap,
   Brain,
@@ -47,38 +43,6 @@ const FEATURES = [
       "Asks guiding questions instead of giving direct answers — building real understanding grounded in KCSE, CBC and IGCSE standards.",
     color: "text-blue-500",
     bg: "bg-blue-500/10",
-  },
-  {
-    icon: BookOpenText,
-    title: "Smart Notes Summariser",
-    description:
-      "Upload PDFs, DOCX or paste text. GilaniAI extracts key concepts, generates flashcards and writes exam-ready summaries.",
-    color: "text-emerald-500",
-    bg: "bg-emerald-500/10",
-  },
-  {
-    icon: ListChecks,
-    title: "Practice Quizzes",
-    description:
-      "AI-generated MCQs with Kenyan real-world context, difficulty tiers, and deep explanations targeting your weak areas.",
-    color: "text-orange-500",
-    bg: "bg-orange-500/10",
-  },
-  {
-    icon: CalendarDays,
-    title: "Syllabus Planner",
-    description:
-      "A 7-day personalised revision schedule built from your quiz history, weak topics, and exam timeline.",
-    color: "text-violet-500",
-    bg: "bg-violet-500/10",
-  },
-  {
-    icon: BarChart3,
-    title: "Performance Analytics",
-    description:
-      "Track mastery scores, daily streaks and study patterns over time so you always know where to focus next.",
-    color: "text-pink-500",
-    bg: "bg-pink-500/10",
   },
   {
     icon: ShieldCheck,
@@ -268,7 +232,7 @@ function About() {
             </p>
             <h2 className="font-serif text-3xl font-bold">Everything a student needs</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-2xl mx-auto">
             {FEATURES.map(({ icon: Icon, title, description, color, bg }) => (
               <div key={title} className="rounded-xl border border-border bg-card p-5 space-y-3">
                 <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${bg}`}>
