@@ -7,7 +7,6 @@ import { GilaniLoader } from "@/components/GilaniLoader";
 import { parseDocument } from "@/lib/document-parser";
 import {
   createEscalationNotification,
-  deleteThreadFn,
   generateThreadTitleFn,
   lookupTeacherByEmail,
   createEscalationFn,
@@ -38,8 +37,6 @@ import { toast } from "sonner";
 import { ChatHeader } from "@/components/tutor/ChatHeader";
 import { ChatInput } from "@/components/tutor/ChatInput";
 import { PlansModal } from "@/components/PlansModal";
-import { ThreadSidebar } from "@/components/tutor/ThreadSidebar";
-import { DeleteModal } from "@/components/tutor/DeleteModal";
 import { EscalateModal } from "@/components/tutor/EscalateModal";
 import { MessageList } from "@/components/tutor/MessageList";
 import { getRateLimitStatus } from "@/lib/rate-limit.server";
@@ -723,61 +720,10 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   };
 
   return (
-    <div className="flex h-full flex-col lg:flex-row bg-background text-foreground overflow-hidden">
-      <ThreadSidebar
-        threads={threads}
-        threadId={threadId}
-        threadsOpen={threadsOpen}
-        threadsLoading={threadsLoading}
-        threadsLoadError={threadsLoadError}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onSelectThread={handleSelectThread}
-        onNewThread={createNewThread}
-        onDeleteClick={setDeleteConfirmId}
-        onClose={() => setThreadsOpen(false)}
-        escalationStatus={escalationStatus}
-        escalating={escalating}
-        messagesLoading={messagesLoading}
-        onEscalate={() => setEscalateModalOpen(true)}
-        onExportPDF={handleExportPDF}
-        onExportWord={handleExportWord}
-        threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
-      />
+    <div className="flex h-full bg-background text-foreground overflow-hidden">
       {/* Main chat area */}
-      <main className="flex flex-col min-w-0 overflow-hidden" style={{ flex: 1, minHeight: 0 }}>
-        {/* Mobile top bar */}
-        <div className="flex-shrink-0 flex items-center gap-2 border-b border-border bg-sidebar px-3 py-1.5 lg:hidden">
-          <button
-            onClick={() => setThreadsOpen(true)}
-            className="flex-shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-            title="Open sessions"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setThreadsOpen(true)}
-            className="flex-1 min-w-0 text-left"
-            title="Switch session"
-          >
-            <p className="text-sm font-semibold truncate leading-tight">
-              {threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
-            </p>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-              tap to switch
-            </p>
-          </button>
-          <button
-            onClick={createNewThread}
-            className="flex-shrink-0 flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
-            title="New session"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New
-          </button>
-        </div>
-
-        {/* Chat header — desktop only */}
+      <main className="flex flex-col min-w-0 overflow-hidden w-full h-full" style={{ flex: 1, minHeight: 0 }}>
+        {/* Chat header */}
         <ChatHeader
           title={threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
           escalationStatus={escalationStatus}
@@ -788,7 +734,6 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           onExportWord={handleExportWord}
           threadId={threadId}
           threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
-          className="hidden lg:flex"
         />
         {/* Messages area */}
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
@@ -805,7 +750,6 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
             userVotes={userVotes}
             onVote={handleVote}
           />
-
         </div>
         {/* Input area */}
         <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">
@@ -849,29 +793,6 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           }}
           isEscalating={escalating}
           error={escalateEmailError}
-        />
-      )}
-
-      {/* Delete Modal */}
-      {deleteConfirmId && (
-        <DeleteModal
-          onConfirm={async () => {
-            const id = deleteConfirmId;
-            setDeleteConfirmId(null);
-            const toastId = toast.loading("Deleting session...");
-            try {
-              await deleteThreadFn({ data: { threadId: id! } });
-              setThreads((prev) => prev.filter((t) => t.id !== id));
-              toast.success("Session deleted successfully!", { id: toastId });
-              if (id === threadId) {
-                navigate({ to: "/tutor" as const });
-              }
-            } catch (err: any) {
-              console.error("Failed to delete thread:", err);
-              toast.error(friendlyError(err, "Failed to delete session."), { id: toastId });
-            }
-          }}
-          onCancel={() => setDeleteConfirmId(null)}
         />
       )}
     </div>

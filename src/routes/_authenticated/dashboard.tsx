@@ -313,7 +313,7 @@ function Dashboard() {
           </div>
 
           {/* Stat pills */}
-          <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 mx-auto sm:mx-0">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 mx-auto sm:mx-0">
             {/* Streak */}
             <div className="flex flex-col items-center gap-1 rounded-lg border border-border px-1 sm:px-4 py-2 min-w-0">
               <Flame className="h-4 w-4 text-primary" />
@@ -322,16 +322,6 @@ function Dashboard() {
               </p>
               <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground text-center truncate w-full">
                 day streak
-              </p>
-            </div>
-            {/* Quizzes */}
-            <div className="flex flex-col items-center gap-1 rounded-lg border border-border px-1 sm:px-4 py-2 min-w-0">
-              <Award className="h-4 w-4 text-primary" />
-              <p className="font-serif text-base sm:text-lg leading-none font-bold text-foreground">
-                {isLoading ? "—" : quizzesCompleted}
-              </p>
-              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground text-center truncate w-full">
-                quizzes
               </p>
             </div>
             {/* Messages */}
@@ -344,60 +334,21 @@ function Dashboard() {
                 messages
               </p>
             </div>
-            {/* Notes */}
-            <div className="flex flex-col items-center gap-1 rounded-lg border border-border px-1 sm:px-4 py-2 min-w-0">
-              <FileText className="h-4 w-4 text-primary" />
-              <p className="font-serif text-base sm:text-lg leading-none font-bold text-foreground">
-                {isLoading ? "—" : notesCount}
-              </p>
-              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground text-center truncate w-full">
-                notes
-              </p>
-            </div>
           </div>
         </div>
       </header>
 
-      {/* ── Quick Actions ── */}
-      <section className="animate-in-slide [animation-delay:40ms] rounded-2xl border border-border bg-card p-4 sm:p-6">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="font-serif text-lg font-semibold text-foreground">Quick Actions</h3>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: "Ask the Tutor", icon: MessageCircle, to: "/tutor" },
-            { label: "Take a Quiz", icon: ListChecks, to: "/quizzes" },
-            { label: "Upload Notes", icon: BookOpenText, to: "/notes" },
-            { label: "Study Planner", icon: CalendarDays, to: "/planner" },
-          ].map(({ label, icon: Icon, to }) => (
-            <Link
-              key={to}
-              to={to as any}
-              className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-background p-2.5 sm:p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/50"
-            >
-              <div className="rounded-lg p-2.5 bg-primary/10 text-primary transition-transform duration-200 group-hover:scale-110">
-                <Icon className="h-5 w-5" />
-              </div>
-              <span className="text-xs font-semibold text-foreground">{label}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
       {/* ── Study Suite ── */}
-      <section className="animate-in-slide [animation-delay:80ms]">
+      <section className="animate-in-slide [animation-delay:40ms]">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 className="font-serif text-lg font-semibold">Your Study Suite</h3>
             <p className="text-xs text-muted-foreground mt-0.5">All your study tools in one place</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
           {[
             { title: "AI Tutor", description: "Curriculum-precise answers, worked proofs & teacher escalation.", icon: MessageCircle, to: "/tutor", cta: "Start session" },
-            { title: "Study Notes", description: "Upload notes, get AI summaries, key concepts & flashcards.", icon: BookOpenText, to: "/notes", cta: "Add notes" },
-            { title: "Quizzes", description: "AI-generated MCQs with explanations and difficulty tiers.", icon: ListChecks, to: "/quizzes", cta: "Practice now" },
-            { title: "Planner", description: "7-day schedule built from your quiz history and weak areas.", icon: CalendarDays, to: "/planner", cta: "View plan" },
             { title: "Analytics", description: "Track mastery scores, streaks and focus concepts over time.", icon: BarChart3, to: "/analytics", cta: "View stats" },
           ].map((item) => {
             const Icon = item.icon;
@@ -405,7 +356,7 @@ function Dashboard() {
               <Link
                 key={item.to}
                 to={item.to as any}
-                className="group flex flex-col justify-between rounded-xl border border-border bg-card p-2.5 sm:p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5"
+                className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5"
               >
                 <div>
                   <div className="p-2 rounded-lg w-fit bg-primary/10 text-primary mb-3 transition-transform duration-200 group-hover:scale-105">
@@ -423,116 +374,6 @@ function Dashboard() {
           })}
         </div>
       </section>
-
-      {/* ── Widgets Grid ── */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 animate-in-slide [animation-delay:120ms]">
-
-        {/* Today's Schedule */}
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border/50">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" />
-              <h3 className="font-serif text-base font-semibold">Today's Schedule</h3>
-            </div>
-            <Link to="/planner" className="font-mono text-[10px] uppercase tracking-widest text-primary hover:underline">
-              Full plan →
-            </Link>
-          </div>
-          <div className="p-5">
-            {isLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />)}
-              </div>
-            ) : plannerTasks.length === 0 ? (
-              <div className="py-5 sm:py-8 text-center flex flex-col items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
-                  <CalendarDays className="h-5 w-5 text-muted-foreground/50" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">No tasks scheduled</p>
-                  <Link to="/planner" className="text-xs text-primary hover:underline mt-1 inline-block">Generate a study plan →</Link>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {plannerTasks.map((t, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/40 hover:bg-muted/50 transition-colors">
-                    <div className="flex-shrink-0 h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Target className="h-3.5 w-3.5 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold leading-tight">{t.subject}</p>
-                      <div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-full">
-
-                        <MarkdownRenderer content={t.task} />
-
-                      </div>
-                    </div>
-                    <span className="flex-shrink-0 font-mono text-[10px] text-muted-foreground bg-background border border-border/50 rounded-md px-1.5 py-0.5">
-                      {t.duration}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Focus Topics */}
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border/50">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-primary" />
-              <h3 className="font-serif text-base font-semibold">Focus Topics</h3>
-            </div>
-            <Link to="/planner" className="font-mono text-[10px] uppercase tracking-widest text-primary hover:underline">
-              View plan →
-            </Link>
-          </div>
-          <div className="p-5">
-            {isLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => <div key={i} className="h-12 rounded-lg bg-muted/50 animate-pulse" />)}
-              </div>
-            ) : revisionTopics.length === 0 ? (
-              <div className="py-5 sm:py-8 text-center flex flex-col items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
-                  <AlertCircle className="h-5 w-5 text-muted-foreground/50" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">No revision targets yet</p>
-                  <Link to="/quizzes" search={{} as any} className="text-xs text-primary hover:underline mt-1 inline-block">Take a quiz to find weak areas →</Link>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {revisionTopics.map((rt, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/40 hover:bg-muted/50 transition-colors">
-                    <span className="flex-shrink-0 inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary font-mono text-[10px] font-bold">
-                      {idx + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold leading-tight">{rt.subject}</p>
-                      <div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-full">
-
-                        <MarkdownRenderer content={rt.topic} />
-
-                      </div>
-                    </div>
-                    <Link
-                      to="/quizzes" search={{ topic: rt.topic } as any}
-                      className="flex-shrink-0 font-mono text-[10px] text-primary border border-primary/30 rounded-md px-2 py-0.5 hover:bg-primary/10 transition-colors"
-                    >
-                      Quiz
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-      </div>
 
       {/* Newsletter Banner */}
       <NewsletterSubscribe

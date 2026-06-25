@@ -663,9 +663,9 @@ export function QuizzesPage({ topicFromUrl }: QuizzesPageProps) {
                 )}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium">
-                      <MathText text={q.question} />
-                    </p>
+                    <div className="text-sm font-medium">
+                      <MarkdownRenderer content={q.question} />
+                    </div>
                     {q.difficulty && (
                       <span
                         className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono uppercase ${q.difficulty === "easy"
@@ -805,7 +805,7 @@ export function QuizzesPage({ topicFromUrl }: QuizzesPageProps) {
                   <span className="font-mono text-[11px] mr-2.5 uppercase font-bold opacity-60">
                     {["A", "B", "C", "D"][i]}.
                   </span>
-                  <MathText text={opt} />
+                  <MarkdownRenderer content={opt} />
                 </button>
               );
             })}

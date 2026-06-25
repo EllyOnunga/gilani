@@ -25,6 +25,10 @@ import {
   Users,
   Mail,
   MoreHorizontal,
+  ChevronDown,
+  Trash2,
+  Plus,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createServerFn } from "@tanstack/react-start";
@@ -36,6 +40,10 @@ import { Logo } from "@/components/ui/logo";
 import { GilaniLoader } from "@/components/GilaniLoader";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { PlansModal } from "@/components/PlansModal";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteThreadFn } from "@/lib/tutor.server-fns";
+import { withTimeout } from "@/lib/async";
+import { DeleteModal } from "@/components/tutor/DeleteModal";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
@@ -143,6 +151,82 @@ function AuthedShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const [tutorChatsOpen, setTutorChatsOpen] = useState(true);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
+  const isAdmin = roles.includes("admin");
+  const isTeacher = roles.includes("teacher") && !roles.includes("admin");
+  const isStudent = !isAdmin && !isTeacher;
+
+  const threadsQuery = useQuery({
+    queryKey: ["threads", user?.id],
+    queryFn: async () => {
+      const { data, error } = (await withTimeout(
+        Promise.resolve(
+          supabase
+            .from("conversations")
+            .select("id,title,updated_at")
+            .eq("user_id", user?.id as string)
+            .order("updated_at", { ascending: false }),
+        ),
+        8000,
+        "Database connection timed out",
+      )) as any;
+      if (error) throw new Error(`Failed to load sessions: ${error.message}`);
+      return (data ?? []) as { id: string; title?: string | null; updated_at?: string | null }[];
+    },
+    enabled: !!user?.id && isStudent,
+  });
+  const threads = threadsQuery.data ?? [];
+  const threadsLoading = !!user?.id && threadsQuery.isPending;
+
+  const createNewThread = async () => {
+    const sessionRes = await supabase.auth.getSession();
+    const userId = sessionRes?.data?.session?.user?.id;
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from("conversations")
+      .insert([{ title: "New thread", user_id: userId }])
+      .select()
+      .single();
+    if (error) {
+      console.error("[TutorThread] create thread error:", error);
+      toast.error("Failed to start a new chat session.");
+      return;
+    }
+    const newId = (data as any).id;
+
+    // Invalidate threads query
+    queryClient.invalidateQueries({ queryKey: ["threads", userId] });
+
+    // Navigate to new thread
+    navigate({ to: "/tutor/$threadId", params: { threadId: newId } } as any);
+    setSidebarOpen(false);
+  };
+
+  const handleDeleteThread = async (id: string) => {
+    const toastId = toast.loading("Deleting session...");
+    try {
+      await deleteThreadFn({ data: { threadId: id } });
+      queryClient.invalidateQueries({ queryKey: ["threads", user?.id] });
+      toast.success("Session deleted successfully!", { id: toastId });
+      if (path.includes(`/tutor/${id}`)) {
+        navigate({ to: "/tutor" as any });
+      }
+    } catch (err: any) {
+      console.error("Failed to delete thread:", err);
+      toast.error("Failed to delete session.", { id: toastId });
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleOpenSidebar = () => setSidebarOpen(true);
+    window.addEventListener("custom:open-sidebar", handleOpenSidebar);
+    return () => window.removeEventListener("custom:open-sidebar", handleOpenSidebar);
+  }, []);
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === "undefined") return true;
     return document.documentElement.classList.contains("dark");
@@ -315,8 +399,6 @@ function AuthedShell() {
   }
 
   // Prevent rendering student content for admin/teacher before redirect fires
-  const isAdmin = roles.includes("admin");
-  const isTeacher = roles.includes("teacher") && !roles.includes("admin");
   const studentOnlyPaths2 = [
     "/dashboard",
     "/notes",
@@ -345,21 +427,22 @@ function AuthedShell() {
       {/* Global Subscription/Upgrade plans Modal */}
       {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
 
-      {/* Mobile Top Navigation Header */}
-      <header className="flex h-16 w-full items-center justify-between border-b border-border bg-sidebar px-4 lg:hidden sticky top-0 z-30">
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground"
-          title="Open Menu"
-        >
-          <Menu className="h-6 w-6" />
-        </button>
-        <div className="flex-1 flex justify-start">
-          <Logo to="/dashboard" size="sm" />
-        </div>
-        <NotificationBell userId={user.id} />
-      </header>
-      {/* Disclaimer Banner - dismissible warning */}
+      {/* Mobile Top Navigation Header (hidden on tutor pages to allow full-screen chat experience) */}
+      {!path.startsWith("/tutor") && (
+        <header className="flex h-16 w-full items-center justify-between border-b border-border bg-sidebar px-4 lg:hidden sticky top-0 z-30">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 hover:text-foreground"
+            title="Open Menu"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+          <div className="flex-1 flex justify-start">
+            <Logo to="/dashboard" size="sm" />
+          </div>
+          <NotificationBell userId={user.id} />
+        </header>
+      )}
 
       {/* Sidebar Backdrop Overlay for Mobile */}
       {sidebarOpen && (
@@ -393,29 +476,98 @@ function AuthedShell() {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto min-h-0">
-          {!isTeacher &&
-            !isAdmin &&
-            STUDENT_NAV.map(({ to, label, icon: Icon }) => {
-              const active = path === to || path.startsWith(to + "/");
-              return (
-                <Link
-                  key={to}
-                  to={to}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${
-                    active ? "border-primary text-primary bg-transparent font-semibold shadow-sm" : "border-transparent text-muted-foreground hover:bg-black/5"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </Link>
-              );
-            })}
           {!isTeacher && !isAdmin && (
             <>
-              <div className="pt-1 pb-0.5 px-3">
-                <div className="border-t border-border/40" />
+              {/* New Chat Button */}
+              <button
+                onClick={createNewThread}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm mb-4"
+              >
+                <Plus className="h-4 w-4" />
+                New Chat
+              </button>
+
+              {/* Dashboard Link */}
+              <Link
+                to="/dashboard"
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${
+                  path === "/dashboard"
+                    ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
+                    : "border-transparent text-muted-foreground hover:bg-black/5"
+                }`}
+              >
+                <GraduationCap className="h-4 w-4" />
+                Dashboard
+              </Link>
+
+              {/* Tutor Chats with Dropdown */}
+              <div className="space-y-1">
+                <button
+                  onClick={() => setTutorChatsOpen((v) => !v)}
+                  className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${
+                    path.startsWith("/tutor")
+                      ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
+                      : "border-transparent text-muted-foreground hover:bg-black/5"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <MessageCircle className="h-4 w-4" />
+                    <span>Tutor Chats</span>
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform duration-200 ${
+                      tutorChatsOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {tutorChatsOpen && (
+                  <div className="pl-6 pr-1 py-1 space-y-1 border-l border-border/40 ml-5 max-h-60 overflow-y-auto">
+                    {threadsLoading && (
+                      <div className="text-xs text-muted-foreground py-2 px-3 flex items-center gap-1.5 animate-pulse">
+                        <Loader2 className="h-3 w-3 animate-spin text-primary" /> Loading chats...
+                      </div>
+                    )}
+                    {!threadsLoading && threads.length === 0 && (
+                      <div className="text-xs text-muted-foreground/60 py-2 px-3">
+                        No recent chats
+                      </div>
+                    )}
+                    {!threadsLoading &&
+                      threads.map((t) => {
+                        const isCurrent = path === `/tutor/${t.id}` || path.startsWith(`/tutor/${t.id}/`);
+                        return (
+                          <div
+                            key={t.id}
+                            className={`group flex items-center justify-between rounded-md px-2 py-1 text-xs transition-colors ${
+                              isCurrent
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-muted-foreground hover:bg-black/5 hover:text-foreground"
+                            }`}
+                          >
+                            <Link
+                              to={`/tutor/${t.id}`}
+                              onClick={() => setSidebarOpen(false)}
+                              className="truncate flex-1 py-0.5 text-left"
+                              title={t.title || "Untitled Chat"}
+                            >
+                              {t.title || "Untitled Chat"}
+                            </Link>
+                            <button
+                              onClick={() => setDeleteConfirmId(t.id)}
+                              className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
+                              title="Delete chat"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
+
+              {/* Escalations Button for Student */}
               <button
                 onClick={(e) => {
                   setSidebarOpen(false);
@@ -429,7 +581,7 @@ function AuthedShell() {
                 className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 border-transparent text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
               >
                 <ShieldAlert className="h-4 w-4" />
-                Escalate
+                Escalations
               </button>
             </>
           )}
@@ -450,13 +602,6 @@ function AuthedShell() {
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
               </Link>
-              <Link
-                to={"/settings" as any}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path === "/settings" ? "border-primary text-primary bg-transparent font-semibold shadow-sm" : "border-transparent text-muted-foreground hover:bg-black/5"}`}
-              >
-                <Settings className="h-4 w-4" /> Settings
-              </Link>
             </>
           )}
           {isAdmin && (
@@ -475,18 +620,11 @@ function AuthedShell() {
               >
                 <Users className="h-4 w-4" /> Users & Roles
               </Link>
-              <Link
-                to={"/settings" as any}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path === "/settings" ? "border-primary text-primary bg-transparent font-semibold shadow-sm" : "border-transparent text-muted-foreground hover:bg-black/5"}`}
-              >
-                <Settings className="h-4 w-4" /> Settings
-              </Link>
             </>
           )}
         </nav>
 
-        <div className="mt-auto space-y-3 border-t border-border pt-6">
+        <div className="mt-auto space-y-1.5 border-t border-border pt-4">
           {/* PWA Install Button */}
           {pwaInstallable && (
             <button
@@ -501,78 +639,76 @@ function AuthedShell() {
                   (window as any).__pwaInstallPrompt = null;
                 }
               }}
-              className="w-full flex items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary hover:bg-primary/20 hover:border-primary/60 transition-all"
+              className="w-full flex items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/20 hover:border-primary/60 transition-all mb-2"
             >
               <Smartphone className="h-3.5 w-3.5" />
               Install GilaniAI App
             </button>
           )}
 
+          {/* Settings */}
+          <Link
+            to={"/settings" as any}
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${
+              path === "/settings"
+                ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
+                : "border-transparent text-muted-foreground hover:bg-black/5"
+            }`}
+          >
+            <Settings className="h-4 w-4" />
+            Settings
+          </Link>
 
-          <div className="flex items-center justify-between gap-2 border border-border/20 rounded-xl bg-card/50 p-2 shadow-xs min-w-0">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-primary/20 bg-background/50 shadow-inner">
-                {avatarUrl ? (
-                  avatarUrl.startsWith("preset:") ? (
-                    <PresetAvatarSVG preset={avatarUrl.substring(7)} />
-                  ) : (
-                    <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                  )
+          {/* Contact */}
+          <Link
+            to={"/contact" as any}
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${
+              path === "/contact"
+                ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
+                : "border-transparent text-muted-foreground hover:bg-black/5"
+            }`}
+          >
+            <Mail className="h-4 w-4" />
+            Contact
+          </Link>
+
+          {/* User Info Card */}
+          <div className="flex items-center gap-2 border border-border/20 rounded-xl bg-card/50 p-2 shadow-xs min-w-0 mt-1">
+            <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-primary/20 bg-background/50 shadow-inner">
+              {avatarUrl ? (
+                avatarUrl.startsWith("preset:") ? (
+                  <PresetAvatarSVG preset={avatarUrl.substring(7)} />
                 ) : (
-                  <span className="font-serif text-[11px] font-bold text-primary">
-                    {(profileName || user?.email || "U").substring(0, 2).toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-bold leading-tight text-foreground" title={profileName || user?.email || ""}>
-                  {profileName || user?.email?.split("@")[0]}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wider text-primary">
-                    {currentPlan}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="relative flex-shrink-0" ref={userMenuRef}>
-              <button
-                onClick={() => setUserMenuOpen((v) => !v)}
-                className="flex items-center justify-center rounded-lg border border-border bg-background p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                title="Account actions"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-              {userMenuOpen && (
-                <div className="absolute bottom-full right-0 mb-1 w-44 rounded-lg border border-border bg-popover shadow-md z-50 py-1 text-xs">
-                  <Link
-                    to={"/settings" as any}
-                    onClick={() => { setUserMenuOpen(false); setSidebarOpen(false); }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                  >
-                    <Settings className="h-3.5 w-3.5" />
-                    Settings
-                  </Link>
-                  <Link
-                    to={"/contact" as any}
-                    onClick={() => { setUserMenuOpen(false); setSidebarOpen(false); }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                  >
-                    <Mail className="h-3.5 w-3.5" />
-                    Contact us
-                  </Link>
-                  <div className="my-1 border-t border-border/50" />
-                  <button
-                    onClick={signOut}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-destructive hover:bg-destructive/10 transition-colors"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    Logout
-                  </button>
-                </div>
+                  <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                )
+              ) : (
+                <span className="font-serif text-[11px] font-bold text-primary">
+                  {(profileName || user?.email || "U").substring(0, 2).toUpperCase()}
+                </span>
               )}
             </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-bold leading-tight text-foreground" title={profileName || user?.email || ""}>
+                {profileName || user?.email?.split("@")[0]}
+              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wider text-primary">
+                  {currentPlan}
+                </span>
+              </div>
+            </div>
           </div>
+
+          {/* Logout */}
+          <button
+            onClick={signOut}
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 border-transparent text-destructive hover:bg-destructive/10"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
         </div>
       </aside>
       <main className={`flex-1 min-w-0 flex flex-col overflow-x-hidden ${path.startsWith("/tutor") ? "overflow-hidden h-full" : "overflow-y-auto scroll-smooth"}`}>
@@ -581,6 +717,18 @@ function AuthedShell() {
           <Outlet />
         </div>
       </main>
+
+      {/* Sidebar Delete Thread Modal */}
+      {deleteConfirmId && (
+        <DeleteModal
+          onConfirm={() => {
+            const id = deleteConfirmId;
+            setDeleteConfirmId(null);
+            handleDeleteThread(id);
+          }}
+          onCancel={() => setDeleteConfirmId(null)}
+        />
+      )}
     </div>
   );
 }

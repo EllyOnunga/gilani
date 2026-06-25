@@ -92,7 +92,12 @@ export const generateQuiz = createServerFn({ method: "POST" })
             throw new Error("Question count must be between 1 and 50");
 
         const gateway = createLovableAiGatewayProvider();
-        const models = gateway.getAllChatModels("llama-3.1-8b-instant");
+        // Quiz generation goes straight to Groq — no Gemini fallback
+        // attempt. Gemini's connection to this network has been unreliable
+        // (ECONNRESET), and trying it first was adding several seconds of
+        // dead time before falling through. If Groq itself fails, that
+        // failure surfaces immediately rather than masking a real outage.
+        const models = gateway.getAllChatModels("llama-3.1-8b-instant", "groq");
 
         let object: any = null;
         let lastError: any = null;

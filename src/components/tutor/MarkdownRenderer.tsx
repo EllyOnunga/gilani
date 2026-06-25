@@ -220,7 +220,7 @@ function KatexRenderer({
   displayMode?: boolean;
   isStreaming?: boolean;
 }) {
-  const cleaned = repairMath(expression).replace(/\\\\/g, "\\");
+   const cleaned = repairMath(expression).replace(/\\\\([a-zA-Z])/g, "\\$1");
 
   if (!expression) {
     return <span className="text-muted-foreground">{expression}</span>;
@@ -373,8 +373,8 @@ function preprocessLatex(raw: string): string {
   s = s.replace(/\\leftrightarrow\b/g, "$\\leftrightarrow$");
 
   // Step 10: Wrap subscripts/superscripts
-  s = s.replace(/([a-zA-Z0-9])_\{([^}]+)\}/g, "$1$_{$2}$");
-  s = s.replace(/([a-zA-Z0-9])\^(\{[^}]+\}|\d)/g, "$1^$2");
+  //s = s.replace(/([a-zA-Z0-9])_\{([^}]+)\}/g, "$1$_{$2}$");
+  //s = s.replace(/([a-zA-Z0-9])\^(\{[^}]+\}|\d)/g, "$1^$2");
 
   // Step 11: Auto-detect chemical formulas
   s = s.replace(
@@ -607,13 +607,25 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
   // Create streaming-aware components inside the component
   const componentsWithStreaming = useMemo(() => ({
     ...markdownComponents,
-    // Override math components to pass isStreaming
-    math: ({ value }: any) => (
-      <KatexRenderer expression={value || ""} displayMode={true} isStreaming={isStreaming} />
-    ),
-    inlineMath: ({ value }: any) => (
-      <KatexRenderer expression={value || ""} displayMode={false} isStreaming={isStreaming} />
-    ),
+        // Replace your existing math and inlineMath overrides with this:
+    math: ({ value, children, ...props }: any) => {
+      let expr = value;
+      if (!expr && children) {
+        if (typeof children === 'string') expr = children;
+        else if (Array.isArray(children)) expr = children.map((c: any) => typeof c === 'string' ? c : c?.props?.value || c?.props?.children || "").join("");
+        else expr = String(children);
+      }
+      return <KatexRenderer expression={expr || ""} displayMode={true} isStreaming={isStreaming} />;
+    },
+    inlineMath: ({ value, children, ...props }: any) => {
+      let expr = value;
+      if (!expr && children) {
+        if (typeof children === 'string') expr = children;
+        else if (Array.isArray(children)) expr = children.map((c: any) => typeof c === 'string' ? c : c?.props?.value || c?.props?.children || "").join("");
+        else expr = String(children);
+      }
+      return <KatexRenderer expression={expr || ""} displayMode={false} isStreaming={isStreaming} />;
+    },
     // Override code component to pass isStreaming
     code: ({ inline, children, className, ...props }: any) => {
       const rawLang = (className || "").replace("language-", "").toLowerCase();
