@@ -164,6 +164,27 @@
     font-family: var(--font-serif);
     letter-spacing: -0.01em;
   }
+
+  /* Sleek, minimal focus state app-wide: no chunky default ring/outline,
+     just a faint offset outline for keyboard accessibility. */
+  button,
+  a,
+  [role="button"],
+  input,
+  textarea,
+  select {
+    outline: none;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 1.5px solid var(--color-ring);
+    outline-offset: 2px;
+  }
 }
 
 /* ── Marquee & Cursor Animations ─────────────────────────────────── */

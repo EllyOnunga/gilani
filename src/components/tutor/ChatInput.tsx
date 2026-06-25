@@ -339,15 +339,15 @@ export function ChatInput({
         <div className="pb-2 pr-2 pt-2">
           <button type="button" onClick={(e) => { if (isPending) { onStop?.(); } else { onSubmit(e as any); } }}
             disabled={!isPending && (isDisabled || (!input.trim() && !attachedFile))}
-            className={`flex h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center transition-all duration-200 ${
+            className={`flex h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
               isPending
-                ? "rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 active:scale-95"
+                ? "bg-foreground text-background hover:bg-foreground/85 active:scale-95"
                 : isDisabled || (!input.trim() && !attachedFile)
-                  ? "rounded-full bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
-                  : "rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-primary/20 hover:scale-105 active:scale-95 hover:-translate-y-0.5"
+                  ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                  : "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-primary/20 hover:scale-105 active:scale-95 hover:-translate-y-0.5"
             }`}
             title={isPending ? "Stop generating" : "Send (Enter)"}>
-            {isPending ? <Square className="h-3 w-3 fill-current" /> : <Send className="h-3.5 w-3.5" />}
+            {isPending ? <Square className="h-2.5 w-2.5 fill-current rounded-[1px]" /> : <Send className="h-3.5 w-3.5" />}
           </button>
         </div>
       </div>

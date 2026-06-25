@@ -24,7 +24,25 @@ import {
   Trash2,
   Plus,
   Loader2,
+  PanelLeftClose,
+  PanelLeft,
+  Pencil,
+  Check,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
@@ -36,7 +54,7 @@ import { GilaniLoader } from "@/components/GilaniLoader";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { PlansModal } from "@/components/PlansModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteThreadFn } from "@/lib/tutor.server-fns";
+import { deleteThreadFn, renameThreadFn } from "@/lib/tutor.server-fns";
 import { withTimeout } from "@/lib/async";
 import { DeleteModal } from "@/components/tutor/DeleteModal";
 
@@ -198,6 +216,42 @@ function AuthedShell() {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("sidebar-collapsed") === "true";
+  });
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("sidebar-collapsed", String(next));
+      }
+      return next;
+    });
+  };
+
+  const startRename = (id: string, currentTitle: string) => {
+    setRenamingId(id);
+    setRenameValue(currentTitle || "");
+    requestAnimationFrame(() => renameInputRef.current?.select());
+  };
+
+  const commitRename = async (id: string) => {
+    const trimmed = renameValue.trim();
+    setRenamingId(null);
+    if (!trimmed) return;
+    try {
+      await renameThreadFn({ data: { threadId: id, title: trimmed } });
+      queryClient.invalidateQueries({ queryKey: ["threads", user?.id] });
+    } catch (err) {
+      console.error("Failed to rename thread:", err);
+      toast.error("Failed to rename chat.");
+    }
+  };
 
   const queryClient = useQueryClient();
   const isAdmin = roles.includes("admin");
@@ -493,70 +547,96 @@ function AuthedShell() {
 
       {/* Responsive Aside Navigation Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar p-6 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden rounded-r-2xl ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-sidebar p-4 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden rounded-r-2xl ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } ${collapsed ? "w-64 lg:w-[72px] lg:p-3" : "w-64"
           }`}
       >
-        {/* Brand logo & Mobile Close Button */}
-        <div className="flex items-center justify-between mb-8 min-w-0 w-full relative">
-          <div className="flex flex-col items-center justify-center text-center min-w-0 flex-1">
-            <Logo to="/dashboard" onClick={() => setSidebarOpen(false)} size="md" className="mx-auto" />
-            <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              Ethical Learning
-            </p>
+        {/* Brand logo, Collapse Toggle & Mobile Close Button */}
+        <div className={`flex items-center mb-6 min-w-0 w-full relative ${collapsed ? "justify-center lg:flex-col lg:gap-2" : "justify-between"}`}>
+          <div className={`flex flex-col items-center justify-center text-center min-w-0 ${collapsed ? "" : "flex-1"}`}>
+            <Logo to="/dashboard" onClick={() => setSidebarOpen(false)} size={collapsed ? "sm" : "md"} className="mx-auto" />
+            {!collapsed && (
+              <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Ethical Learning
+              </p>
+            )}
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-black/5 lg:hidden flex-shrink-0 ml-2 absolute right-0 top-1/2 -translate-y-1/2"
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent lg:hidden flex-shrink-0 ml-2 absolute right-0 top-1/2 -translate-y-1/2"
             title="Close menu"
           >
             <X className="h-5 w-5" />
           </button>
+          <button
+            onClick={toggleCollapsed}
+            className={`hidden lg:flex rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground flex-shrink-0 transition-colors ${collapsed ? "" : "absolute right-0 top-1/2 -translate-y-1/2"}`}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto min-h-0">
+        <nav className="flex-1 flex flex-col space-y-1 min-h-0 overflow-hidden">
           {!isTeacher && !isAdmin && (
-            <>
+            <TooltipProvider delayDuration={200}>
               {/* New Chat Button */}
-              <button
-                onClick={createNewThread}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm mb-4"
-              >
-                <Plus className="h-4 w-4" />
-                New Chat
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={createNewThread}
+                    className={`flex w-full items-center rounded-lg border border-border text-sm font-semibold text-foreground hover:bg-sidebar-accent transition-colors mb-3 ${collapsed ? "lg:justify-center lg:p-2.5 justify-center gap-2 px-3 py-2" : "justify-center gap-2 px-3 py-2"}`}
+                  >
+                    <Plus className="h-4 w-4 flex-shrink-0" />
+                    {!collapsed && "New Chat"}
+                    <span className="lg:hidden">{collapsed ? "New Chat" : null}</span>
+                  </button>
+                </TooltipTrigger>
+                {collapsed && <TooltipContent side="right" className="hidden lg:block">New Chat</TooltipContent>}
+              </Tooltip>
 
               {/* Dashboard Link */}
-              <Link
-                to="/dashboard"
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path === "/dashboard"
-                    ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
-                    : "border-transparent text-muted-foreground hover:bg-black/5"
-                  }`}
-              >
-                <GraduationCap className="h-4 w-4" />
-                Dashboard
-              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center rounded-lg text-sm font-medium transition-colors border-2 ${collapsed ? "lg:justify-center lg:px-2.5 gap-3 px-3 py-2" : "gap-3 px-3 py-2"} ${path === "/dashboard"
+                        ? "border-transparent bg-sidebar-accent text-foreground font-semibold"
+                        : "border-transparent text-muted-foreground hover:bg-sidebar-accent"
+                      }`}
+                  >
+                    <GraduationCap className="h-4 w-4 flex-shrink-0" />
+                    <span className={collapsed ? "lg:hidden" : ""}>Dashboard</span>
+                  </Link>
+                </TooltipTrigger>
+                {collapsed && <TooltipContent side="right" className="hidden lg:block">Dashboard</TooltipContent>}
+              </Tooltip>
 
               {/* Escalations Button for Student */}
-              <button
-                onClick={(e) => {
-                  setSidebarOpen(false);
-                  const isTutorThread = path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
-                  if (isTutorThread) {
-                    window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
-                  } else {
-                    toast.info("Please select or create a study session first, then use the Escalate button in the chat.");
-                  }
-                }}
-                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 border-transparent text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-              >
-                <ShieldAlert className="h-4 w-4" />
-                Escalations
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      setSidebarOpen(false);
+                      const isTutorThread = path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
+                      if (isTutorThread) {
+                        window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
+                      } else {
+                        toast.info("Please select or create a study session first, then use the Escalate button in the chat.");
+                      }
+                    }}
+                    className={`flex w-full items-center rounded-lg text-sm font-medium transition-colors border-2 border-transparent text-muted-foreground hover:bg-sidebar-accent hover:text-foreground ${collapsed ? "lg:justify-center lg:px-2.5 gap-3 px-3 py-2" : "gap-3 px-3 py-2"}`}
+                  >
+                    <ShieldAlert className="h-4 w-4 flex-shrink-0" />
+                    <span className={collapsed ? "lg:hidden" : ""}>Escalations</span>
+                  </button>
+                </TooltipTrigger>
+                {collapsed && <TooltipContent side="right" className="hidden lg:block">Escalations</TooltipContent>}
+              </Tooltip>
 
-              {/* Chat History Grouped Chronologically */}
-              <div className="mt-5 space-y-4">
+              {/* Chat History Grouped Chronologically (hidden in collapsed rail mode) */}
+              <div className={`mt-4 space-y-4 flex-1 overflow-y-auto min-h-0 ${collapsed ? "hidden lg:hidden" : ""}`}>
                 {threadsLoading ? (
                   <div className="text-xs text-muted-foreground/60 py-2 px-3 flex items-center gap-2 animate-pulse">
                     <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
@@ -596,26 +676,60 @@ function AuthedShell() {
                                     : "text-muted-foreground hover:bg-sidebar-accent/40 hover:text-foreground"
                                   }`}
                               >
-                                <Link
-                                  to={"/tutor/$threadId" as any}
-                                  params={{ threadId: t.id } as any}
-                                  onClick={() => setSidebarOpen(false)}
-                                  className="truncate flex-1 py-0.5 text-left outline-hidden"
-                                  title={t.title || "Untitled Chat"}
-                                >
-                                  {t.title || "Untitled Chat"}
-                                </Link>
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setDeleteConfirmId(t.id);
-                                  }}
-                                  className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive transition-opacity flex-shrink-0 cursor-pointer"
-                                  title="Delete chat"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
+                                {renamingId === t.id ? (
+                                  <input
+                                    ref={renameInputRef}
+                                    value={renameValue}
+                                    onChange={(e) => setRenameValue(e.target.value)}
+                                    onBlur={() => commitRename(t.id)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") { e.preventDefault(); commitRename(t.id); }
+                                      if (e.key === "Escape") { e.preventDefault(); setRenamingId(null); }
+                                    }}
+                                    className="flex-1 min-w-0 bg-transparent border border-primary/40 rounded-md px-1.5 py-0.5 text-xs outline-hidden focus:border-primary"
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <Link
+                                    to={"/tutor/$threadId" as any}
+                                    params={{ threadId: t.id } as any}
+                                    onClick={() => setSidebarOpen(false)}
+                                    onDoubleClick={(e) => {
+                                      e.preventDefault();
+                                      startRename(t.id, t.title || "Untitled Chat");
+                                    }}
+                                    className="truncate flex-1 py-0.5 text-left outline-hidden"
+                                    title={t.title || "Untitled Chat"}
+                                  >
+                                    {t.title || "Untitled Chat"}
+                                  </Link>
+                                )}
+                                {renamingId !== t.id && (
+                                  <div className="flex items-center gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100 transition-opacity flex-shrink-0">
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        startRename(t.id, t.title || "Untitled Chat");
+                                      }}
+                                      className="p-1 rounded-md hover:bg-sidebar-accent text-muted-foreground/60 hover:text-foreground cursor-pointer"
+                                      title="Rename chat"
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setDeleteConfirmId(t.id);
+                                      }}
+                                      className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive cursor-pointer"
+                                      title="Delete chat"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -625,9 +739,7 @@ function AuthedShell() {
                   })
                 )}
               </div>
-
-
-            </>
+            </TooltipProvider>
           )}
 
           {isTeacher && (
@@ -639,8 +751,8 @@ function AuthedShell() {
                 to={"/teacher/escalations" as any}
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path.startsWith("/teacher/escalations")
-                    ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
-                    : "border-transparent text-muted-foreground hover:bg-black/5"
+                    ? "border-transparent bg-sidebar-accent text-foreground font-semibold"
+                    : "border-transparent text-muted-foreground hover:bg-sidebar-accent"
                   }`}
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
@@ -656,8 +768,8 @@ function AuthedShell() {
                 to={"/admin/users" as any}
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path.startsWith("/admin")
-                    ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
-                    : "border-transparent text-muted-foreground hover:bg-black/5"
+                    ? "border-transparent bg-sidebar-accent text-foreground font-semibold"
+                    : "border-transparent text-muted-foreground hover:bg-sidebar-accent"
                   }`}
               >
                 <Users className="h-4 w-4" /> Users & Roles
@@ -666,93 +778,74 @@ function AuthedShell() {
           )}
         </nav>
 
-        <div className="mt-auto space-y-1.5 border-t border-border pt-4">
-          {/* PWA Install Button */}
-          {pwaInstallable && (
-            <button
-              id="pwa-install-btn"
-              onClick={async () => {
-                const prompt = (window as any).__pwaInstallPrompt;
-                if (!prompt) return;
-                prompt.prompt();
-                const { outcome } = await prompt.userChoice;
-                if (outcome === "accepted") {
-                  setPwaInstallable(false);
-                  (window as any).__pwaInstallPrompt = null;
-                }
-              }}
-              className="w-full flex items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/20 hover:border-primary/60 transition-all mb-2"
-            >
-              <Smartphone className="h-3.5 w-3.5" />
-              Install GilaniAI App
-            </button>
-          )}
-
-          {/* Settings */}
-          <Link
-            to={"/settings" as any}
-            onClick={() => setSidebarOpen(false)}
-            className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path === "/settings"
-                ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
-                : "border-transparent text-muted-foreground hover:bg-black/5"
-              }`}
-          >
-            <Settings className="h-4 w-4" />
-            Settings
-          </Link>
-
-          {/* Contact */}
-          <Link
-            to={"/contact" as any}
-            onClick={() => setSidebarOpen(false)}
-            className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path === "/contact"
-                ? "border-primary text-primary bg-transparent font-semibold shadow-sm"
-                : "border-transparent text-muted-foreground hover:bg-black/5"
-              }`}
-          >
-            <Mail className="h-4 w-4" />
-            Contact
-          </Link>
-
-          {/* User Info Card */}
-          <Link
-            to={"/settings" as any}
-            onClick={() => setSidebarOpen(false)}
-            className="flex items-center gap-2 border border-border/20 rounded-xl bg-card/50 p-2 shadow-xs min-w-0 mt-1 hover:bg-black/5 transition-colors cursor-pointer text-left"
-          >
-            <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-primary/20 bg-background/50 shadow-inner">
-              {avatarUrl ? (
-                avatarUrl.startsWith("preset:") ? (
-                  <PresetAvatarSVG preset={avatarUrl.substring(7)} />
-                ) : (
-                  <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                )
-              ) : (
-                <span className="font-serif text-[11px] font-bold text-primary">
-                  {(profileName || user?.email || "U").substring(0, 2).toUpperCase()}
+        <div className="mt-auto border-t border-border pt-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={`flex w-full items-center border border-border/20 rounded-xl bg-card/50 shadow-xs min-w-0 hover:bg-sidebar-accent transition-colors cursor-pointer text-left outline-hidden ${collapsed ? "lg:justify-center lg:p-1.5 gap-2 p-2" : "gap-2 p-2"}`}
+              >
+                <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-primary/20 bg-background/50 shadow-inner">
+                  {avatarUrl ? (
+                    avatarUrl.startsWith("preset:") ? (
+                      <PresetAvatarSVG preset={avatarUrl.substring(7)} />
+                    ) : (
+                      <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    )
+                  ) : (
+                    <span className="font-serif text-[11px] font-bold text-primary">
+                      {(profileName || user?.email || "U").substring(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
+                  <p className="truncate text-xs font-bold leading-tight text-foreground" title={profileName || user?.email || ""}>
+                    {profileName || user?.email?.split("@")[0]}
+                  </p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="start" className="w-60">
+              <DropdownMenuLabel className="flex flex-col gap-1">
+                <span className="truncate font-bold" title={profileName || user?.email || ""}>
+                  {profileName || user?.email?.split("@")[0]}
                 </span>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-bold leading-tight text-foreground" title={profileName || user?.email || ""}>
-                {profileName || user?.email?.split("@")[0]}
-              </p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wider text-primary">
+                <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wider text-primary">
                   {currentPlan}
                 </span>
-              </div>
-            </div>
-          </Link>
-
-          {/* Logout */}
-          <button
-            onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 border-transparent text-destructive hover:bg-destructive/10"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </button>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => { setSidebarOpen(false); navigate({ to: "/settings" as any }); }}>
+                <Settings className="h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSidebarOpen(false); navigate({ to: "/contact" as any }); }}>
+                <Mail className="h-4 w-4" />
+                Contact
+              </DropdownMenuItem>
+              {pwaInstallable && (
+                <DropdownMenuItem
+                  onClick={async () => {
+                    const prompt = (window as any).__pwaInstallPrompt;
+                    if (!prompt) return;
+                    prompt.prompt();
+                    const { outcome } = await prompt.userChoice;
+                    if (outcome === "accepted") {
+                      setPwaInstallable(false);
+                      (window as any).__pwaInstallPrompt = null;
+                    }
+                  }}
+                >
+                  <Smartphone className="h-4 w-4" />
+                  Install GilaniAI App
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+                <LogOut className="h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
       <main className={`flex-1 min-w-0 flex flex-col overflow-x-hidden ${path.startsWith("/tutor") ? "overflow-hidden h-full" : "overflow-y-auto scroll-smooth"}`}>

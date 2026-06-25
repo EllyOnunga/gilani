@@ -326,3 +326,24 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
       });
     }
   });
+
+export const renameThreadFn = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ threadId: z.string().uuid(), title: z.string().trim().min(1).max(120) }))
+  .handler(async ({ data }) => {
+    const request = (await import("@tanstack/react-start/server")).getRequest();
+    const { authenticateRequest } = await import("@/lib/api-auth.server");
+    let authResult: Awaited<ReturnType<typeof authenticateRequest>>;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
+    // Only rename the thread if it belongs to the authenticated user
+    const { error } = await supabaseAdmin
+      .from("conversations")
+      .update({ title: data.title })
+      .eq("id", data.threadId)
+      .eq("user_id", authResult.userId);
+    if (error) throw error;
+    return { success: true };
+  });
