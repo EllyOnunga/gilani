@@ -322,17 +322,9 @@ function Dashboard() {
   const memberSince = data?.memberSince ?? "";
 
   // Curriculum pill colours
-  const curriculumColor =
-    curriculum === "CBC"
-      ? "bg-teal-500/10 text-teal-600 border-teal-300/60"
-      : curriculum === "IGCSE"
-        ? "bg-violet-500/10 text-violet-600 border-violet-300/60"
-        : "bg-blue-500/10 text-blue-600 border-blue-300/60";
+  const curriculumColor = "bg-muted text-foreground border-border";
 
-  const planColor =
-    plan === "Free"
-      ? "bg-muted text-muted-foreground border-border"
-      : "bg-amber-500/10 text-amber-600 border-amber-300/60";
+  const planColor = "bg-muted text-foreground border-border";
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-10">
@@ -362,7 +354,7 @@ function Dashboard() {
                     <span
                       className="inline-flex items-center gap-1.5 rounded-md border border-border px-1.5 py-px font-mono text-[10px] font-bold uppercase tracking-wider text-foreground"
                     >
-                      {plan === "Free" ? "Free Plan" : `⭐ ${plan}`}
+                      {plan === "Free" ? "Free Plan" : `${plan} Plan`}
                     </span>
                   )}
                   {memberSince && (
@@ -406,34 +398,30 @@ function Dashboard() {
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 className="font-serif text-lg font-semibold">Your Study Suite</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">All your study tools in one place</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Get curriculum-accurate help the moment you're stuck — no waiting for office hours.
+            </p>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 max-w-md">
-          {[
-            { title: "AI Tutor", description: "Curriculum-precise answers, worked proofs & teacher escalation.", icon: MessageCircle, to: "/tutor", cta: "Start session" },
-          ].map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to as any}
-                className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/50 hover:-translate-y-0.5"
-              >
-                <div>
-                  <div className="p-2 rounded-lg w-fit bg-primary/10 text-primary mb-3 transition-transform duration-200 group-hover:scale-105">
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <p className="text-sm font-bold group-hover:text-primary transition-colors">{item.title}</p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">{item.description}</p>
-                </div>
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
-                  <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-primary">{item.cta}</span>
-                  <ChevronRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-primary" />
-                </div>
-              </Link>
-            );
-          })}
+        <div className="max-w-md">
+          <Link
+            to="/tutor"
+            className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:border-foreground/30 hover:-translate-y-0.5"
+          >
+            <div>
+              <div className="p-2 rounded-lg w-fit bg-muted text-muted-foreground mb-3">
+                <MessageCircle className="h-4 w-4" />
+              </div>
+              <p className="text-sm font-bold">AI Tutor</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
+                Curriculum-precise answers, worked proofs & teacher escalation.
+              </p>
+            </div>
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
+              <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-muted-foreground">Start session</span>
+              <ChevronRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-muted-foreground" />
+            </div>
+          </Link>
         </div>
       </section>
 
@@ -449,38 +437,30 @@ function Dashboard() {
               label: "Study Tip",
               icon: Zap,
               content: insights?.tip,
-              accent: "text-primary",
-              bg: "bg-primary/5 border-primary/20",
             },
             {
               label: "Topic of the Day",
               icon: Target,
               content: insights?.topicOfDay,
-              accent: "text-violet-600 dark:text-violet-400",
-              bg: "bg-violet-50 dark:bg-violet-950/20 border-violet-200/60 dark:border-violet-800/40",
             },
             {
               label: "Did You Know?",
               icon: BookOpenText,
               content: insights?.didYouKnow,
-              accent: "text-teal-600 dark:text-teal-400",
-              bg: "bg-teal-50 dark:bg-teal-950/20 border-teal-200/60 dark:border-teal-800/40",
             },
             {
               label: streak > 0 ? `${streak}-Day Streak` : "Start Your Streak",
               icon: Flame,
               content: insights?.streakMotivation,
-              accent: "text-amber-600 dark:text-amber-400",
-              bg: "bg-amber-50 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-800/40",
             },
           ].map((card) => (
             <div
               key={card.label}
-              className={`rounded-xl border p-4 sm:p-5 flex flex-col gap-3 ${card.bg}`}
+              className="rounded-xl border border-border bg-card p-4 sm:p-5 flex flex-col gap-3"
             >
               <div className="flex items-center gap-2">
-                <card.icon className={`h-4 w-4 shrink-0 ${card.accent}`} />
-                <p className={`font-mono text-[10px] uppercase tracking-widest font-bold ${card.accent}`}>
+                <card.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <p className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
                   {card.label}
                 </p>
               </div>

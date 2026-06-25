@@ -223,6 +223,45 @@ function AuthedShell() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const [revealedThreadId, setRevealedThreadId] = useState<string | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
+  const handleThreadTouchStart = (id: string) => {
+    longPressTriggeredRef.current = false;
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      setRevealedThreadId(id);
+    }, 450);
+  };
+
+  const handleThreadTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    // Reset shortly after release so a genuine long-press still blocks the
+    // immediate click, but a later normal tap on the same row works again.
+    setTimeout(() => { longPressTriggeredRef.current = false; }, 50);
+  };
+
+  // Tap anywhere outside a revealed thread row dismisses the action icons
+  useEffect(() => {
+    if (!revealedThreadId) return;
+    const handler = (e: TouchEvent | MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(`[data-thread-id="${revealedThreadId}"]`)) {
+        setRevealedThreadId(null);
+      }
+    };
+    document.addEventListener("touchstart", handler);
+    document.addEventListener("mousedown", handler);
+    return () => {
+      document.removeEventListener("touchstart", handler);
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [revealedThreadId]);
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => {
@@ -671,7 +710,13 @@ function AuthedShell() {
                             return (
                               <div
                                 key={t.id}
-                                className={`group flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition-all relative ${isCurrent
+                                data-thread-id={t.id}
+                                onTouchStart={() => handleThreadTouchStart(t.id)}
+                                onTouchEnd={handleThreadTouchEnd}
+                                onTouchMove={handleThreadTouchEnd}
+                                onContextMenu={(e) => e.preventDefault()}
+                                style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTapHighlightColor: "transparent" }}
+                                className={`group flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition-all relative select-none ${isCurrent
                                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-xs"
                                     : "text-muted-foreground hover:bg-sidebar-accent/40 hover:text-foreground"
                                   }`}
@@ -693,7 +738,13 @@ function AuthedShell() {
                                   <Link
                                     to={"/tutor/$threadId" as any}
                                     params={{ threadId: t.id } as any}
-                                    onClick={() => setSidebarOpen(false)}
+                                    onClick={(e) => {
+                                      if (longPressTriggeredRef.current) {
+                                        e.preventDefault();
+                                        return;
+                                      }
+                                      setSidebarOpen(false);
+                                    }}
                                     onDoubleClick={(e) => {
                                       e.preventDefault();
                                       startRename(t.id, t.title || "Untitled Chat");
@@ -705,28 +756,37 @@ function AuthedShell() {
                                   </Link>
                                 )}
                                 {renamingId !== t.id && (
-                                  <div className="flex items-center gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100 transition-opacity flex-shrink-0">
+                                  <div className={`flex items-center flex-shrink-0 transition-opacity ${revealedThreadId === t.id
+                                      ? "gap-1 opacity-100"
+                                      : "gap-0.5 opacity-0 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100"
+                                    }`}>
                                     <button
                                       onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         startRename(t.id, t.title || "Untitled Chat");
+                                        setRevealedThreadId(null);
                                       }}
-                                      className="p-1 rounded-md hover:bg-sidebar-accent text-muted-foreground/60 hover:text-foreground cursor-pointer"
+                                      className={`flex items-center gap-1 rounded-md hover:bg-sidebar-accent text-muted-foreground/60 hover:text-foreground cursor-pointer ${revealedThreadId === t.id ? "px-2 py-1 text-[11px] font-semibold" : "p-1"
+                                        }`}
                                       title="Rename chat"
                                     >
                                       <Pencil className="h-3.5 w-3.5" />
+                                      {revealedThreadId === t.id && <span>Edit</span>}
                                     </button>
                                     <button
                                       onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         setDeleteConfirmId(t.id);
+                                        setRevealedThreadId(null);
                                       }}
-                                      className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive cursor-pointer"
+                                      className={`flex items-center gap-1 rounded-md hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive cursor-pointer ${revealedThreadId === t.id ? "px-2 py-1 text-[11px] font-semibold" : "p-1"
+                                        }`}
                                       title="Delete chat"
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
+                                      {revealedThreadId === t.id && <span>Delete</span>}
                                     </button>
                                   </div>
                                 )}
