@@ -22,14 +22,25 @@ export function PomodoroTimer({ open, onOpenChange, showTrigger = true }: Props)
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const dispatchTick = (minutes: number, seconds: number, running: boolean) => {
+    window.dispatchEvent(new CustomEvent("pomodoro:tick", { detail: { minutes, seconds, running } }));
+  };
+
   const startTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     setTimerRunning(true);
     timerRef.current = setInterval(() => {
       setTimerSeconds((s) => {
-        if (s > 0) return s - 1;
+        if (s > 0) {
+          const newS = s - 1;
+          setTimerMinutes((m) => { dispatchTick(m, newS, true); return m; });
+          return newS;
+        }
         setTimerMinutes((m) => {
-          if (m > 0) return m - 1;
+          if (m > 0) {
+            dispatchTick(m - 1, 59, true);
+            return m - 1;
+          }
           clearInterval(timerRef.current!);
           setTimerRunning(false);
           if (timerMode === "study") {
@@ -37,11 +48,13 @@ export function PomodoroTimer({ open, onOpenChange, showTrigger = true }: Props)
             setTimerMode("break");
             setTimerMinutes(5);
             setTimerSeconds(0);
+            dispatchTick(5, 0, false);
           } else {
             toast.success("⏰ Break over! Time to study.", { duration: 6000 });
             setTimerMode("study");
             setTimerMinutes(25);
             setTimerSeconds(0);
+            dispatchTick(25, 0, false);
           }
           return 0;
         });
@@ -53,6 +66,7 @@ export function PomodoroTimer({ open, onOpenChange, showTrigger = true }: Props)
   const pauseTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     setTimerRunning(false);
+    dispatchTick(timerMinutes, timerSeconds, false);
   };
 
   const resetTimer = () => {
@@ -61,6 +75,7 @@ export function PomodoroTimer({ open, onOpenChange, showTrigger = true }: Props)
     setTimerMode("study");
     setTimerMinutes(25);
     setTimerSeconds(0);
+    dispatchTick(25, 0, false);
   };
 
   useEffect(() => {

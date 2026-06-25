@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, useMemo, memo } from "react";
-import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, FileText, Trash2 } from "lucide-react";
+import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, FileText, Trash2, Download, ShieldAlert, Timer, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SmoothMarkdownRenderer } from "@/components/tutor/SmoothMarkdownRenderer";
+import { PomodoroTimer } from "@/components/tutor/PomodoroTimer";
 
 type Props = {
   message: any;
@@ -16,6 +17,13 @@ type Props = {
   initialVote?: 1 | -1 | null;
   onVote?: (messageId: string, vote: 1 | -1 | null) => void;
   onDelete?: (messageId: string) => void;
+  // Session action props (only shown on last assistant bubble)
+  onExportPDF?: () => void;
+  onExportWord?: () => void;
+  onEscalate?: () => void;
+  escalationStatus?: "open" | "in_review" | "resolved" | null;
+  escalating?: boolean;
+  messagesLoading?: boolean;
 };
 
 // Memoize the entire component to prevent unnecessary re-renders
@@ -31,8 +39,15 @@ export const MessageBubble = memo(function MessageBubble({
   initialVote,
   onVote,
   onDelete,
+  onExportPDF,
+  onExportWord,
+  onEscalate,
+  escalationStatus,
+  escalating,
+  messagesLoading,
 }: Props) {
   const [copied, setCopied] = useState(false);
+  const [timerOpen, setTimerOpen] = useState(false);
   const [vote, setVote] = useState<1 | -1 | null>(initialVote ?? null);
   const [voting, setVoting] = useState(false);
   const [collapsed, setCollapsed] = useState(true);
@@ -144,6 +159,7 @@ export const MessageBubble = memo(function MessageBubble({
           }`}
       >
         {!isUser ? (
+          <>
           <div className="flex flex-col w-full">
             {showBubbleCard ? (
               <div className="prose-ai relative">
@@ -220,9 +236,83 @@ export const MessageBubble = memo(function MessageBubble({
                 >
                   <ThumbsDown className="h-3.5 w-3.5" />
                 </button>
+
+                {/* Session actions — only on last assistant bubble */}
+                {isLast && (onExportPDF || onExportWord || onEscalate) && (
+                  <>
+                    <span className="w-px h-3 bg-border/60 mx-0.5" />
+
+                    {/* Study Timer */}
+                    <button
+                      onClick={() => setTimerOpen(true)}
+                      className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
+                      title="Study Timer"
+                      aria-label="Open study timer"
+                    >
+                      <Timer className="h-3.5 w-3.5" />
+                    </button>
+
+                    {/* Export PDF */}
+                    {onExportPDF && (
+                      <button
+                        onClick={onExportPDF}
+                        className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
+                        title="Export PDF"
+                        aria-label="Export as PDF"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">PDF</span>
+                      </button>
+                    )}
+
+                    {/* Export Word */}
+                    {onExportWord && (
+                      <button
+                        onClick={onExportWord}
+                        className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
+                        title="Export Word"
+                        aria-label="Export as Word"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">DOC</span>
+                      </button>
+                    )}
+
+                    {/* Escalate */}
+                    {onEscalate && (
+                      escalationStatus ? (
+                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
+                          escalationStatus === "resolved" ? "text-green-600" :
+                          escalationStatus === "in_review" ? "text-blue-600" : "text-amber-600"
+                        }`}>
+                          {escalationStatus === "resolved"
+                            ? <><CheckCircle2 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Reviewed</span></>
+                            : <><Clock className="h-3.5 w-3.5 animate-pulse" /><span className="hidden sm:inline">{escalationStatus === "in_review" ? "Reviewing" : "Pending"}</span></>
+                          }
+                        </span>
+                      ) : (
+                        <button
+                          onClick={onEscalate}
+                          disabled={escalating || messagesLoading}
+                          className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-600 hover:text-amber-700 transition-colors px-2 py-1 rounded hover:bg-amber-50 disabled:opacity-50"
+                          title="Escalate to teacher"
+                          aria-label="Escalate to teacher"
+                        >
+                          {escalating
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            : <ShieldAlert className="h-3.5 w-3.5" />
+                          }
+                          <span className="hidden sm:inline">{escalating ? "Escalating…" : "Escalate"}</span>
+                        </button>
+                      ) as React.ReactNode
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
+          <PomodoroTimer open={timerOpen} onOpenChange={setTimerOpen} showTrigger={false} />
+          </>
         ) : (
           /* User message */
           <div className="flex flex-col gap-1.5">

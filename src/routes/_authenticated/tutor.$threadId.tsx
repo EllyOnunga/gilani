@@ -726,14 +726,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         {/* Chat header */}
         <ChatHeader
           title={threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
-          escalationStatus={escalationStatus}
-          escalating={escalating}
-          messagesLoading={messagesLoading}
-          onEscalate={() => setEscalateModalOpen(true)}
-          onExportPDF={handleExportPDF}
-          onExportWord={handleExportWord}
           threadId={threadId}
-          threadTitle={threads.find((t) => t.id === threadId)?.title || ""}
         />
         {/* Messages area */}
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
@@ -749,6 +742,11 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
             userId={userId}
             userVotes={userVotes}
             onVote={handleVote}
+            onExportPDF={handleExportPDF}
+            onExportWord={handleExportWord}
+            onEscalate={() => setEscalateModalOpen(true)}
+            escalationStatus={escalationStatus}
+            escalating={escalating}
           />
         </div>
         {/* Input area */}

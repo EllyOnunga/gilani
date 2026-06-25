@@ -15,6 +15,11 @@ type Props = {
   userId?: string | null;
   userVotes?: Record<string, 1 | -1>;
   onVote?: (messageId: string, vote: 1 | -1 | null) => void;
+  onExportPDF?: () => void;
+  onExportWord?: () => void;
+  onEscalate?: () => void;
+  escalationStatus?: "open" | "in_review" | "resolved" | null;
+  escalating?: boolean;
 };
 
 export const MessageList = React.memo(function MessageList({
@@ -29,6 +34,11 @@ export const MessageList = React.memo(function MessageList({
   userId,
   userVotes,
   onVote,
+  onExportPDF,
+  onExportWord,
+  onEscalate,
+  escalationStatus,
+  escalating,
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -196,6 +206,12 @@ export const MessageList = React.memo(function MessageList({
               userId={userId}
               initialVote={userVotes?.[m.id] ?? null}
               onVote={onVote}
+              onExportPDF={onExportPDF}
+              onExportWord={onExportWord}
+              onEscalate={onEscalate}
+              escalationStatus={escalationStatus}
+              escalating={escalating}
+              messagesLoading={messagesLoading}
             />
           ))}
 
