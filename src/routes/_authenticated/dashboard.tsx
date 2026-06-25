@@ -261,16 +261,33 @@ function Dashboard() {
         ).padStart(2, "0")}`;
         const res = await loadDashboardData({ data: { localDate } });
         setData(res);
-        // Fetch AI insights using curriculum from loaded data
-        try {
-          const ins = await fetchDailyInsights({
-            data: { curriculum: res.curriculum || "KCSE", streak: res.streak || 0 },
-          });
-          setInsights(ins);
-        } catch (e) {
-          console.error("[Dashboard] insights error:", e);
-        } finally {
-          setInsightsLoading(false);
+
+        // Retrieve/save AI insights daily cache
+        const cacheKey = `gilani_daily_insights_${res.userId}_${localDate}`;
+        const cached = localStorage.getItem(cacheKey);
+        let loadedInsights = null;
+        if (cached) {
+          try {
+            loadedInsights = JSON.parse(cached);
+            setInsights(loadedInsights);
+            setInsightsLoading(false);
+          } catch {
+            localStorage.removeItem(cacheKey);
+          }
+        }
+
+        if (!loadedInsights) {
+          try {
+            const ins = await fetchDailyInsights({
+              data: { curriculum: res.curriculum || "KCSE", streak: res.streak || 0 },
+            });
+            setInsights(ins);
+            localStorage.setItem(cacheKey, JSON.stringify(ins));
+          } catch (e) {
+            console.error("[Dashboard] insights error:", e);
+          } finally {
+            setInsightsLoading(false);
+          }
         }
       } catch (err) {
         console.error("[Dashboard] load error:", err);
@@ -385,14 +402,14 @@ function Dashboard() {
       </header>
 
       {/* ── Study Suite ── */}
-      <section className="animate-in-slide [animation-delay:20ms]">
+      <section className="animate-in-slide [animation-delay:40ms]">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
             <h3 className="font-serif text-lg font-semibold">Your Study Suite</h3>
             <p className="text-xs text-muted-foreground mt-0.5">All your study tools in one place</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
+        <div className="grid grid-cols-1 gap-4 max-w-md">
           {[
             { title: "AI Tutor", description: "Curriculum-precise answers, worked proofs & teacher escalation.", icon: MessageCircle, to: "/tutor", cta: "Start session" },
           ].map((item) => {

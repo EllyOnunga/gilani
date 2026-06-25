@@ -527,7 +527,8 @@ function AuthedShell() {
                             }`}
                           >
                             <Link
-                              to={`/tutor/${t.id}`}
+                              to={"/tutor/$threadId" as any}
+                              params={{ threadId: t.id } as any}
                               onClick={() => setSidebarOpen(false)}
                               className="truncate flex-1 py-0.5 text-left"
                               title={t.title || "Untitled Chat"}
@@ -656,7 +657,11 @@ function AuthedShell() {
           </Link>
 
           {/* User Info Card */}
-          <div className="flex items-center gap-2 border border-border/20 rounded-xl bg-card/50 p-2 shadow-xs min-w-0 mt-1">
+          <Link
+            to={"/settings" as any}
+            onClick={() => setSidebarOpen(false)}
+            className="flex items-center gap-2 border border-border/20 rounded-xl bg-card/50 p-2 shadow-xs min-w-0 mt-1 hover:bg-black/5 transition-colors cursor-pointer text-left"
+          >
             <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-primary/20 bg-background/50 shadow-inner">
               {avatarUrl ? (
                 avatarUrl.startsWith("preset:") ? (
@@ -680,7 +685,7 @@ function AuthedShell() {
                 </span>
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* Logout */}
           <button
