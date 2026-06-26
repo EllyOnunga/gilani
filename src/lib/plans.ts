@@ -59,6 +59,10 @@ export const PLANS: Record<PlanId, Plan> = {
   },
 };
 
+// Pay-as-you-go: KES 1 = 1,000 tokens, minimum KES 10
+export const TOPUP_TOKENS_PER_KES = 1_000;
+export const TOPUP_MIN_KES = 10;
+
 export function getPlanLimits(plan: string): Plan {
   return PLANS[plan as PlanId] ?? PLANS.free;
 }

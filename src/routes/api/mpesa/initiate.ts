@@ -3,7 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { initiateSTKPush } from "@/lib/mpesa.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { PLANS } from "@/lib/plans";
+import { PLANS, TOPUP_MIN_KES } from "@/lib/plans";
 import { z } from "zod";
 
 // CS-INJ-001: Validates Kenyan phone numbers: 07xx, 01xx, +2547xx, +2541xx, 2547xx
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/mpesa/initiate")({
 
           const { userId } = authResult;
           const body = await request.json().catch(() => ({}));
-          const { phone, plan } = body as { phone?: string; plan?: string };
+          const { phone, plan, amount: rawAmount } = body as { phone?: string; plan?: string; amount?: number };
 
           if (!phone || !plan) {
             return new Response(JSON.stringify({ error: "phone and plan are required" }), {
@@ -41,13 +41,26 @@ export const Route = createFileRoute("/api/mpesa/initiate")({
             });
           }
 
-          if (!PLANS[plan as keyof typeof PLANS] || plan === "free") {
-            return new Response(JSON.stringify({ error: "Invalid plan selected" }), {
-              status: 400, headers: { "Content-Type": "application/json" },
-            });
-          }
+          // Pay-as-you-go top-up
+          const isTopup = plan === "topup";
+          let amount: number;
 
-          const amount = PLANS[plan as keyof typeof PLANS].price;
+          if (isTopup) {
+            const parsed = Math.floor(Number(rawAmount));
+            if (!parsed || parsed < TOPUP_MIN_KES) {
+              return new Response(JSON.stringify({ error: `Minimum top-up is KES ${TOPUP_MIN_KES}` }), {
+                status: 400, headers: { "Content-Type": "application/json" },
+              });
+            }
+            amount = parsed;
+          } else {
+            if (!PLANS[plan as keyof typeof PLANS] || plan === "free") {
+              return new Response(JSON.stringify({ error: "Invalid plan selected" }), {
+                status: 400, headers: { "Content-Type": "application/json" },
+              });
+            }
+            amount = PLANS[plan as keyof typeof PLANS].price;
+          }
           const { checkoutRequestId } = await initiateSTKPush(phone, amount, userId, plan);
 
           await supabaseAdmin.from("payments").insert({

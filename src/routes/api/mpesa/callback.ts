@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { upgradePlan } from "@/lib/mpesa.server";
+import { upgradePlan, creditTopupTokens } from "@/lib/mpesa.server";
+import { sendTransactionalEmail, mpesaReceiptEmail } from "@/lib/email.server";
+import { getPlanLimits, TOPUP_TOKENS_PER_KES } from "@/lib/plans";
 
 export const Route = createFileRoute("/api/mpesa/callback")({
   server: {
@@ -66,8 +68,63 @@ export const Route = createFileRoute("/api/mpesa/callback")({
             return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
           }
 
-          // Upgrade user plan
-          await upgradePlan(payment.user_id, payment.plan, receipt);
+          const isTopup = payment.plan === "topup";
+
+          if (isTopup) {
+            await creditTopupTokens(payment.user_id, payment.amount);
+          } else {
+            await upgradePlan(payment.user_id, payment.plan, receipt);
+          }
+
+          // Send receipt email
+          try {
+            const { data: profile } = await supabaseAdmin
+              .from("profiles")
+              .select("email, display_name")
+              .eq("id", payment.user_id)
+              .maybeSingle();
+
+            if (profile?.email) {
+              const tokensAdded = isTopup ? payment.amount * TOPUP_TOKENS_PER_KES : null;
+              const plan = isTopup ? null : getPlanLimits(payment.plan);
+              const expiryDate = isTopup ? null : (() => {
+                const d = new Date();
+                d.setDate(d.getDate() + 30);
+                return d.toLocaleDateString("en-KE", { timeZone: "Africa/Nairobi", dateStyle: "long" });
+              })();
+
+              const planLabel = isTopup
+                ? `Top-Up — ${tokensAdded!.toLocaleString("en-KE")} tokens`
+                : plan!.label;
+              const planDescription = isTopup
+                ? `KES ${payment.amount} × 1,000 tokens/KES = ${tokensAdded!.toLocaleString("en-KE")} tokens added to your wallet`
+                : plan!.description;
+
+              await sendTransactionalEmail({
+                to: profile.email,
+                subject: isTopup
+                  ? `Top-up confirmed — ${tokensAdded!.toLocaleString("en-KE")} tokens added`
+                  : `Payment confirmed — ${planLabel} receipt`,
+                fromEmail: "support@gilaniai.site",
+                fromName: "GilaniAI Billing",
+                html: mpesaReceiptEmail({
+                  userName: profile.display_name ?? profile.email?.split("@")[0],
+                  planLabel,
+                  planDescription,
+                  amount: payment.amount,
+                  mpesaReceipt: receipt,
+                  phone: payment.phone_number,
+                  expiryDate: expiryDate ?? "No expiry — tokens never expire",
+                }),
+                text: isTopup
+                  ? `Hi ${profile.display_name ?? "there"},\n\nYour top-up of KES ${payment.amount} was received.\n\nTokens added: ${tokensAdded!.toLocaleString("en-KE")}\nReceipt: ${receipt}\nTokens never expire.\n\nThank you!\n\nsupport@gilaniai.site`
+                  : `Hi ${profile.display_name ?? "there"},\n\nYour payment of KES ${payment.amount} was received.\n\nPlan: ${planLabel}\nReceipt: ${receipt}\nValid Until: ${expiryDate}\n\nThank you for using GilaniAI!\n\nsupport@gilaniai.site`,
+              });
+              console.log(`[M-Pesa Callback] 📧 Receipt sent to ${profile.email}`);
+            }
+          } catch (emailErr: any) {
+            console.error("[M-Pesa Callback] Failed to send receipt email:", emailErr?.message);
+          }
 
           console.log(`[M-Pesa Callback] ✅ ${payment.user_id} → ${payment.plan} (${receipt})`);
           return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });

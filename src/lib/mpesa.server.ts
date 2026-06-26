@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getPlanLimits } from "@/lib/plans";
+import { getPlanLimits, TOPUP_TOKENS_PER_KES } from "@/lib/plans";
 
 const MPESA_BASE = process.env.MPESA_ENV === "production"
   ? "https://api.safaricom.co.ke"
@@ -93,4 +93,19 @@ export async function upgradePlan(userId: string, plan: string, receipt: string)
   if (error) throw new Error(`Failed to upgrade plan: ${error.message}`);
 
   console.log(`[M-Pesa] User ${userId} upgraded to ${plan} via receipt ${receipt}`);
+}
+
+export async function creditTopupTokens(userId: string, amount: number): Promise<number> {
+  const tokensToAdd = amount * TOPUP_TOKENS_PER_KES;
+
+  // Atomically increment topup_tokens
+  const { data, error } = await supabaseAdmin.rpc("increment_topup_tokens", {
+    p_user_id: userId,
+    p_tokens: tokensToAdd,
+  }).single();
+
+  if (error) throw new Error(`Failed to credit tokens: ${error.message}`);
+
+  console.log(`[M-Pesa] Credited ${tokensToAdd} tokens to user ${userId} (KES ${amount})`);
+  return tokensToAdd;
 }
