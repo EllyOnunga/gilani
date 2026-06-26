@@ -247,109 +247,107 @@ function Dashboard() {
   const memberSince = data?.memberSince ?? "";
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-10">
+    <div className="mx-auto max-w-5xl space-y-12 p-4 sm:p-6 lg:p-8">
 
       {/* ── Hero Header ── */}
-      <header className="animate-in-slide rounded-2xl border border-border bg-card p-4 sm:p-6">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-primary mb-1 text-center sm:text-left">
-          Dashboard
-        </p>
-
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between items-center sm:items-start">
-          {/* Greeting */}
-          <div className="flex-1 min-w-0">
-            {isLoading ? (
-              <div className="space-y-2">
-                <div className="h-8 w-48 rounded-lg bg-white/20 animate-pulse" />
-                <div className="h-4 w-32 rounded-lg bg-white/20 animate-pulse" />
+      <header className="animate-in-slide flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between items-start">
+        {/* Greeting */}
+        <div className="flex-1 min-w-0">
+          <p className="font-mono text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
+            Workspace / Dashboard
+          </p>
+          {isLoading ? (
+            <div className="space-y-3">
+              <div className="h-9 w-64 rounded bg-muted/60 animate-pulse" />
+              <div className="h-4 w-40 rounded bg-muted/60 animate-pulse" />
+            </div>
+          ) : (
+            <>
+              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-tight">
+                {getGreeting()},{" "}
+                <span className="capitalize text-foreground font-bold">{displayName}</span>. Ready to study?
+              </h2>
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                {plan && (
+                  <span
+                    className="inline-flex items-center rounded-md bg-muted/30 border border-border/40 px-2 py-0.5 font-mono text-[9px] font-medium text-foreground"
+                  >
+                    {plan === "Free" ? "Free Tier" : `${plan} Member`}
+                  </span>
+                )}
+                {memberSince && (
+                  <span className="font-mono text-[9px] text-muted-foreground/60">
+                    Joined {memberSince}
+                  </span>
+                )}
               </div>
-            ) : (
-              <>
-                <h2 className="font-serif text-xl sm:text-3xl lg:text-4xl text-balance leading-tight text-foreground text-center sm:text-left">
-                  {getGreeting()},{" "}
-                  <span className="capitalize">{displayName}</span>. Ready to study?
-                </h2>
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3">
-                  {plan && (
-                    <span
-                      className="inline-flex items-center gap-1.5 rounded-md border border-border px-1.5 py-px font-mono text-[10px] font-bold uppercase tracking-wider text-foreground"
-                    >
-                      {plan === "Free" ? "Free Plan" : `${plan} Plan`}
-                    </span>
-                  )}
-                  {memberSince && (
-                    <span className="font-mono text-[10px] text-muted-foreground">
-                      Member since {memberSince}
-                    </span>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+            </>
+          )}
+        </div>
 
-          {/* Stat pills */}
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0 mx-auto sm:mx-0">
-            {/* Streak */}
-            <div className="flex flex-col items-center gap-1 rounded-lg border border-border px-1 sm:px-4 py-2 min-w-0">
-              <Flame className="h-4 w-4 text-primary" />
-              <p className="font-serif text-base sm:text-lg leading-none font-bold text-foreground">
-                {isLoading ? "—" : streak}
-              </p>
-              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground text-center truncate w-full">
-                day streak
+        {/* Stat pills */}
+        <div className="flex items-center gap-4 divide-x divide-border/20 w-full sm:w-auto shrink-0 border border-border/40 rounded-xl bg-muted/10 p-3 sm:px-4 sm:py-3">
+          {/* Streak */}
+          <div className="flex flex-col items-start gap-0.5 px-2 min-w-[90px]">
+            <div className="flex items-center gap-1.5 text-muted-foreground/60">
+              <Flame className="h-3.5 w-3.5" />
+              <p className="font-mono text-[9px] uppercase tracking-widest font-semibold">
+                Streak
               </p>
             </div>
-            {/* Messages */}
-            <div className="flex flex-col items-center gap-1 rounded-lg border border-border px-1 sm:px-4 py-2 min-w-0">
-              <MessageCircle className="h-4 w-4 text-primary" />
-              <p className="font-serif text-base sm:text-lg leading-none font-bold text-foreground">
-                {isLoading ? "—" : messagesCount}
-              </p>
-              <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground text-center truncate w-full">
-                messages
+            <p className="text-xl font-bold tracking-tight text-foreground mt-1">
+              {isLoading ? "—" : `${streak} days`}
+            </p>
+          </div>
+          {/* Messages */}
+          <div className="flex flex-col items-start gap-0.5 pl-6 pr-2 min-w-[90px]">
+            <div className="flex items-center gap-1.5 text-muted-foreground/60">
+              <MessageCircle className="h-3.5 w-3.5" />
+              <p className="font-mono text-[9px] uppercase tracking-widest font-semibold">
+                Messages
               </p>
             </div>
+            <p className="text-xl font-bold tracking-tight text-foreground mt-1">
+              {isLoading ? "—" : messagesCount}
+            </p>
           </div>
         </div>
       </header>
 
       {/* ── Study Suite ── */}
-      <section className="animate-in-slide [animation-delay:40ms]">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div>
-            <h3 className="font-serif text-lg font-semibold">Your Study Suite</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Get curriculum-accurate help the moment you're stuck — no waiting for office hours.
-            </p>
-          </div>
+      <section className="animate-in-slide [animation-delay:40ms] space-y-4">
+        <div>
+          <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">Your Study Suite</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Get curriculum-accurate assistance instantly without any wait.
+          </p>
         </div>
         <div className="max-w-md">
           <Link
             to="/tutor"
-            className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:border-foreground/30 hover:-translate-y-0.5"
+            className="group flex flex-col justify-between rounded-xl border border-dashed border-border/60 bg-muted/5 p-5 transition-all duration-200 hover:border-border hover:bg-muted/10 hover:-translate-y-0.5"
           >
             <div>
-              <div className="p-2 rounded-lg w-fit bg-muted text-muted-foreground mb-3">
-                <MessageCircle className="h-4 w-4" />
+              <div className="p-2.5 rounded-lg w-fit bg-muted/40 text-muted-foreground mb-4">
+                <MessageCircle className="h-4 w-4 text-foreground" />
               </div>
-              <p className="text-sm font-bold">AI Tutor</p>
-              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
-                Curriculum-precise answers, worked proofs & teacher escalation.
+              <p className="text-sm font-semibold text-foreground">AI Tutor Session</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground/80">
+                Detailed step-by-step guidance, curriculum matches, and expert support.
               </p>
             </div>
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
-              <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-muted-foreground">Start session</span>
-              <ChevronRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-muted-foreground" />
+            <div className="flex items-center justify-between mt-5 pt-4 border-t border-border/20">
+              <span className="text-[9px] font-mono uppercase tracking-widest font-bold text-muted-foreground">Start new session</span>
+              <ChevronRight className="h-3.5 w-3.5 opacity-40 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-foreground" />
             </div>
           </Link>
         </div>
       </section>
 
       {/* ── Daily Educational Insights ── */}
-      <section className="animate-in-slide [animation-delay:40ms]">
-        <div className="mb-4">
-          <h3 className="font-serif text-lg font-semibold">Today's Learning Insights</h3>
-
+      <section className="animate-in-slide [animation-delay:80ms] space-y-4">
+        <div>
+          <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">Daily Learning Insights</h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
@@ -376,21 +374,21 @@ function Dashboard() {
           ].map((card) => (
             <div
               key={card.label}
-              className="rounded-xl border border-border bg-card p-4 sm:p-5 flex flex-col gap-3"
+              className="rounded-xl border border-border/30 bg-muted/5 p-5 flex flex-col gap-3 hover:bg-muted/10 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <card.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <p className="font-mono text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                <card.icon className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+                <p className="font-mono text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/60">
                   {card.label}
                 </p>
               </div>
               {insightsLoading ? (
                 <div className="space-y-2">
-                  <div className="h-3 w-full rounded bg-current opacity-10 animate-pulse" />
-                  <div className="h-3 w-4/5 rounded bg-current opacity-10 animate-pulse" />
+                  <div className="h-3 w-full rounded bg-muted/60 animate-pulse" />
+                  <div className="h-3 w-4/5 rounded bg-muted/60 animate-pulse" />
                 </div>
               ) : (
-                <p className="text-sm leading-relaxed text-foreground/80">{card.content}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{card.content}</p>
               )}
             </div>
           ))}
