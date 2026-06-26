@@ -218,32 +218,23 @@ export const MessageList = React.memo(function MessageList({
             />
           ))}
 
-        {/* Thinking indicator */}
+        {/* Thinking indicator — shimmer skeleton, matches assistant bubble layout */}
         {showThinking && (
           <div
-            className="flex items-center gap-1.5 py-2 px-1 animate-in fade-in duration-300"
+            className="w-full max-w-[96%] sm:max-w-full animate-in fade-in duration-500"
             role="status"
             aria-label="AI is thinking"
           >
-            <style
-              dangerouslySetInnerHTML={{
-                __html: `
-                  @keyframes thinking-dot-bounce {
-                    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
-                    40% { transform: translateY(-6px); opacity: 1; }
-                  }
-                `,
-              }}
-            />
-            <span className="text-sm text-primary font-medium">Thinking</span>
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className="inline-block w-1.5 h-1.5 rounded-full bg-primary"
-                style={{ animation: `thinking-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
-                aria-hidden="true"
-              />
-            ))}
+            <div className="flex flex-col gap-2.5 px-1 py-3">
+              {["w-[72%]", "w-[88%]", "w-[55%]"].map((width, i) => (
+                <div
+                  key={i}
+                  className={`h-3 rounded-full bg-muted animate-pulse ${width}`}
+                  style={{ animationDelay: `${i * 120}ms` }}
+                  aria-hidden="true"
+                />
+              ))}
+            </div>
           </div>
         )}
 
