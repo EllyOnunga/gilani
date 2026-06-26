@@ -210,30 +210,53 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     };
   }, []);
 
+  // ─── Rate limit status helpers ──────────────────────────────────────────────
+  const refreshRateLimitStatus = useCallback(async () => {
+    try {
+      const status = await getRateLimitStatus({ data: "chat" });
+      setMessagesUsed((status as any).messagesUsed ?? 0);
+      setMessagesMax((status as any).messagesMax ?? 10);
+      if (status.isRateLimited) {
+        const secs = Math.ceil(status.retryAfterMs / 1000);
+        setChatError(JSON.stringify({
+          retryAfterMs: status.retryAfterMs,
+          isDaily: status.isDaily,
+          message: status.isDaily
+            ? `Daily message limit reached. Resets in ${secs}s.`
+            : `Rate limit exceeded. Try again in ${secs}s.`,
+        }));
+      }
+    } catch { /* ignore – not signed in */ }
+  }, []);
+
   // Check rate limit status on page load so warning persists after refresh
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const status = await getRateLimitStatus({ data: "chat" });
-        if (mounted) {
-          setMessagesUsed((status as any).messagesUsed ?? 0);
-          setMessagesMax((status as any).messagesMax ?? 10);
-        }
-        if (mounted && status.isRateLimited) {
-          const secs = Math.ceil(status.retryAfterMs / 1000);
-          setChatError(JSON.stringify({
-            retryAfterMs: status.retryAfterMs,
-            isDaily: status.isDaily,
-            message: status.isDaily
-              ? `Daily message limit reached. Resets in ${secs}s.`
-              : `Rate limit exceeded. Try again in ${secs}s.`,
-          }));
-        }
-      } catch { /* ignore – not signed in */ }
-    })();
-    return () => { mounted = false; };
-  }, []);
+    refreshRateLimitStatus();
+  }, [refreshRateLimitStatus]);
+
+  // Subscribe to rate_limits table via Realtime so server-side increments
+  // propagate immediately — user sees the warning without refreshing.
+  useEffect(() => {
+    if (!userId) return;
+    const dailyKey = `${userId}:chat:day`;
+    const channel = supabase
+      .channel(`rate-limit-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "rate_limits",
+          filter: `key=eq.${dailyKey}`,
+        },
+        () => {
+          // Re-poll status whenever the rate_limit row changes
+          refreshRateLimitStatus();
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, refreshRateLimitStatus]);
   useEffect(() => {
     const safety = setTimeout(() => {
       setMessagesLoading((prev) => {
@@ -298,6 +321,8 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           )
         );
       }
+      // Refresh rate limit counter after each completed AI response
+      refreshRateLimitStatus();
     },
   });
 
@@ -367,6 +392,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     regenerate({ body: { isRetry: true } });
   }, [threadId, messagesRaw, setMessages, regenerate]);
   const isPending = status === "submitted" || status === "streaming";
+
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
@@ -597,6 +623,23 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     }
   }, [threadId, userId, setMessages]);
 
+  const handleDeleteMessage = useCallback(async (messageId: string) => {
+    // Optimistically remove from UI immediately
+    setMessages((prev: UIMessage[]) => prev.filter((m: UIMessage) => m.id !== messageId));
+    try {
+      const { error } = await supabase
+        .from("messages")
+        .delete()
+        .eq("id", messageId);
+      if (error) throw error;
+      toast.success("Message deleted");
+    } catch {
+      // Revert on failure by reloading
+      loadMessages(true);
+      toast.error("Failed to delete message");
+    }
+  }, [setMessages, loadMessages]);
+
   // Load messages on mount/thread switch
   useEffect(() => {
     loadMessages(false);
@@ -738,6 +781,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
             isRateLimited={isRateLimited}
             onReload={handleReload}
             onEditRequest={handleEditRequest}
+            onDelete={handleDeleteMessage}
             onPromptClick={handlePromptClick}
             userId={userId}
             userVotes={userVotes}

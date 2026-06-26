@@ -12,6 +12,7 @@ type Props = {
   onReload: () => void;
   onPromptClick: (prompt: string) => void;
   onEditRequest?: (text: string) => void;
+  onDelete?: (messageId: string) => void;
   userId?: string | null;
   userVotes?: Record<string, 1 | -1>;
   onVote?: (messageId: string, vote: 1 | -1 | null) => void;
@@ -31,6 +32,7 @@ export const MessageList = React.memo(function MessageList({
   onReload,
   onPromptClick,
   onEditRequest,
+  onDelete,
   userId,
   userVotes,
   onVote,
@@ -203,6 +205,7 @@ export const MessageList = React.memo(function MessageList({
               isRateLimited={isRateLimited}
               onReload={onReload}
               onEditRequest={onEditRequest}
+              onDelete={onDelete}
               userId={userId}
               initialVote={userVotes?.[m.id] ?? null}
               onVote={onVote}

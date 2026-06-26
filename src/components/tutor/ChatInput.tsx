@@ -147,6 +147,11 @@ export function ChatInput({
     );
   }, [chatError]);
 
+  // Warn when approaching limit (80–99%)
+  const usagePct = messagesMax > 0 ? messagesUsed / messagesMax : 0;
+  const isApproachingLimit = !isRateLimited && usagePct >= 0.8 && messagesMax < 999_999;
+  const remaining = Math.max(0, messagesMax - messagesUsed);
+
   const { secondsLeft, isDaily, maxSeconds, customMessage } = useRateLimitCountdown(isRateLimited ? chatError : null);
   const isDisabled = isPending || parsingFile || isRateLimited;
 
@@ -173,6 +178,44 @@ export function ChatInput({
   return (
     <div className="px-2 pb-2 pt-1 sm:px-4 sm:pb-4 sm:pt-3 sm:bg-background/95 sm:backdrop-blur-sm sm:border-t sm:border-border/40">
       <div className="lg:max-w-3xl lg:mx-auto">
+      {/* Approaching-limit soft warning */}
+      {isApproachingLimit && (
+        <div className="mb-2.5 rounded-2xl border border-orange-200 bg-orange-50/60 dark:bg-orange-950/20 dark:border-orange-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between gap-2.5 px-3.5 py-2.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertCircle className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400 flex-shrink-0" />
+              <p className="text-[11px] font-semibold text-orange-800 dark:text-orange-300 truncate">
+                {remaining <= 1
+                  ? "Last message — upgrade to continue chatting"
+                  : `${remaining} message${remaining === 1 ? "" : "s"} left today`}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* usage pill */}
+              <span className="font-mono text-[10px] text-orange-600 dark:text-orange-400 tabular-nums">
+                {messagesUsed}/{messagesMax}
+              </span>
+              {onUpgrade && (
+                <button
+                  onClick={onUpgrade}
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-lg bg-orange-500 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-orange-600 active:scale-95 transition-all duration-200"
+                >
+                  <CreditCard className="h-2.5 w-2.5" /> Upgrade
+                </button>
+              )}
+            </div>
+          </div>
+          {/* thin usage bar */}
+          <div className="h-0.5 bg-orange-100 dark:bg-orange-900/40">
+            <div
+              className="h-full bg-orange-400 dark:bg-orange-500 transition-all duration-500"
+              style={{ width: `${Math.min(100, usagePct * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Rate limit banner with countdown */}
       {isRateLimited && (
         <div className="mb-2.5 rounded-2xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
