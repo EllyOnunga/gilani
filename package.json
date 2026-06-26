@@ -57,6 +57,7 @@
     "@tanstack/router-plugin": "^1.167.28",
     "@types/dompurify": "^3.0.5",
     "@vercel/analytics": "^2.0.1",
+    "africastalking": "^0.8.0",
     "ai": "^6.0.208",
     "ai-elements": "^1.9.0",
     "ai-fallback": "^2.0.1",
