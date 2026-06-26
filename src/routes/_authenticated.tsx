@@ -624,7 +624,7 @@ function AuthedShell() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={createNewThread}
-                    className={`flex w-full items-center rounded-lg border border-border text-sm font-semibold text-foreground hover:bg-sidebar-accent transition-colors mb-3 ${collapsed ? "lg:justify-center lg:p-2.5 justify-center gap-2 px-3 py-2" : "justify-center gap-2 px-3 py-2"}`}
+                    className={`flex w-full items-center rounded-lg border border-border text-sm font-semibold text-foreground hover:bg-sidebar-accent transition-colors mb-3 ${collapsed ? "lg:justify-center lg:p-2.5 gap-3 px-3 py-2" : "justify-start gap-3 px-3 py-2"}`}
                   >
                     <Plus className="h-4 w-4 flex-shrink-0" />
                     {!collapsed && "New Chat"}
