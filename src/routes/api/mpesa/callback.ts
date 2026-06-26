@@ -3,6 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { upgradePlan, creditTopupTokens } from "@/lib/mpesa.server";
 import { sendTransactionalEmail, mpesaReceiptEmail } from "@/lib/email.server";
+import { sendSMS } from "@/lib/sms.server";
 
 export const Route = createFileRoute("/api/mpesa/callback")({
   server: {
@@ -132,6 +133,19 @@ export const Route = createFileRoute("/api/mpesa/callback")({
             }
           } catch (emailErr: any) {
             console.error("[M-Pesa Callback] Failed to send receipt email:", emailErr?.message);
+          }
+
+          // Send SMS notification to the phone used for payment
+          try {
+            const isTopupSMS = payment.plan === "topup";
+            const smsMessage = isTopupSMS
+              ? `GilaniAI: Your top-up of KES ${payment.amount} was received. ${(payment.amount * 1000).toLocaleString()} tokens added to your wallet. Receipt: ${receipt}. support@gilaniai.site`
+              : `GilaniAI: Payment of KES ${payment.amount} confirmed. Your ${payment.plan} plan is now active for 30 days. Receipt: ${receipt}. support@gilaniai.site`;
+
+            await sendSMS(payment.phone_number, smsMessage);
+          } catch (smsErr: any) {
+            // Non-fatal — payment already confirmed
+            console.error("[M-Pesa Callback] Failed to send SMS:", smsErr?.message);
           }
 
           console.log(`[M-Pesa Callback] ✅ ${payment.user_id} → ${payment.plan} (${receipt})`);
