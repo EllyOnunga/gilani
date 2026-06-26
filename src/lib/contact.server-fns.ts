@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import { z } from "zod";
-import { sendTransactionalEmail } from "./email.server";
+import { sendTransactionalEmail, emailTemplate } from "./email.server";
 
 export const submitContactFn = createServerFn({ method: "POST" })
   .inputValidator(
@@ -70,19 +70,67 @@ export const submitContactFn = createServerFn({ method: "POST" })
     });
 
     // 3. Auto-reply to sender
+    const categoryLabels: Record<string, string> = {
+      general: "General Enquiry",
+      bug: "Bug Report",
+      billing: "Billing",
+      account: "Account",
+      curriculum: "Curriculum",
+      partnership: "Partnership",
+      press: "Press",
+      other: "Other",
+    };
     await sendTransactionalEmail({
       to: data.email,
       subject: "We received your message — GilaniAI Support",
       fromEmail: "support@gilaniai.site",
       fromName: "GilaniAI Support",
-      html: `
-        <p>Hi ${data.name},</p>
-        <p>Thanks for reaching out! We've received your message and will get back to you within 24 hours (Mon–Fri).</p>
-        <p>If your matter is urgent, you can email us directly at <a href="mailto:support@gilaniai.site">support@gilaniai.site</a> or <a href="mailto:contact@gilaniai.site">contact@gilaniai.site</a>.</p>
-        <br/>
-        <p>— The GilaniAI Team</p>
-      `,
-      text: `Hi ${data.name},\n\nThanks for reaching out! We've received your message and will get back to you within 24 hours (Mon–Fri).\n\n— The GilaniAI Team`,
+      html: emailTemplate({
+        heading: "We\'ve received your message",
+        body: `
+          <p style="margin:0 0 16px">Hi <strong>${esc(data.name)}</strong>,</p>
+          <p style="margin:0 0 16px">
+            Thanks for reaching out to GilaniAI Support. We\'ve received your message and a
+            member of our team will get back to you within <strong>24 hours (Mon–Fri)</strong>.
+          </p>
+
+          <!-- Message summary card -->
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
+            <tr>
+              <td style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px">
+                <p style="margin:0 0 10px;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;font-weight:600">Your submission</p>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="font-size:12px;color:#9ca3af;padding-bottom:6px;width:90px">Category</td>
+                    <td style="font-size:13px;color:#111111;font-weight:600;padding-bottom:6px">${esc(categoryLabels[data.category] ?? data.category)}</td>
+                  </tr>
+                  ${data.subject ? `<tr>
+                    <td style="font-size:12px;color:#9ca3af;padding-bottom:6px">Subject</td>
+                    <td style="font-size:13px;color:#111111;padding-bottom:6px">${esc(data.subject)}</td>
+                  </tr>` : ""}
+                  <tr>
+                    <td style="font-size:12px;color:#9ca3af;vertical-align:top;padding-top:4px">Message</td>
+                    <td style="font-size:13px;color:#374151;line-height:1.6;padding-top:4px">${esc(data.message).replace(/\n/g, "<br/>")}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <p style="margin:0 0 8px;font-size:13px;color:#6b7280">
+            While you wait, you might find answers in our
+            <a href="https://gilaniai.site/faq" style="color:#d9531e">Help &amp; FAQ</a> page.
+          </p>
+          <p style="margin:0;font-size:13px;color:#6b7280">
+            For urgent matters email us directly at
+            <a href="mailto:support@gilaniai.site" style="color:#d9531e">support@gilaniai.site</a>.
+          </p>
+        `,
+        buttonText: "Visit GilaniAI",
+        buttonUrl: "https://gilaniai.site",
+        footerNote: "You received this because you submitted a message via the GilaniAI contact form. If this wasn\'t you, please ignore this email.",
+      }),
+      text: `Hi ${data.name},\n\nThanks for reaching out! We\'ve received your message (${categoryLabels[data.category] ?? data.category}) and will get back to you within 24 hours (Mon–Fri).\n\nFor urgent matters: support@gilaniai.site\nHelp & FAQ: https://gilaniai.site/faq\n\n— The GilaniAI Team`,
     });
 
     return { ok: true };
