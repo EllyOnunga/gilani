@@ -99,7 +99,7 @@ export async function creditTopupTokens(userId: string, amount: number): Promise
   const tokensToAdd = amount * TOPUP_TOKENS_PER_KES;
 
   // Atomically increment topup_tokens
-  const { data, error } = await supabaseAdmin.rpc("increment_topup_tokens", {
+  const { data, error } = await (supabaseAdmin as any).rpc("increment_topup_tokens", {
     p_user_id: userId,
     p_tokens: tokensToAdd,
   }).single();

@@ -3,7 +3,6 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { upgradePlan, creditTopupTokens } from "@/lib/mpesa.server";
 import { sendTransactionalEmail, mpesaReceiptEmail } from "@/lib/email.server";
-import { getPlanLimits, TOPUP_TOKENS_PER_KES } from "@/lib/plans";
 
 export const Route = createFileRoute("/api/mpesa/callback")({
   server: {
@@ -68,6 +67,15 @@ export const Route = createFileRoute("/api/mpesa/callback")({
             return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
           }
 
+          const TOPUP_TOKENS_PER_KES = 1_000;
+          const getPlanLimits = (plan: string) => {
+            const PLANS: Record<string, { label: string; description: string }> = {
+              basic:   { label: "Student Basic",   description: "50 msgs, 10 quizzes, 10 planners, 15 uploads/day" },
+              premium: { label: "Student Premium", description: "Unlimited messages, 50 quizzes, 30 planners, 50 uploads/day" },
+              school:  { label: "School License",  description: "Unlimited messages, 100 quizzes, 100 planners, 150 uploads/day" },
+            };
+            return PLANS[plan] ?? { label: plan, description: "" };
+          };
           const isTopup = payment.plan === "topup";
 
           if (isTopup) {
