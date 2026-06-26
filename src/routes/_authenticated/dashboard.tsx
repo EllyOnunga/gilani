@@ -125,7 +125,8 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
 
     try {
       const provider = createGoogleAiProvider();
-      const model = provider.chatModel("gemini-2.5-flash");
+      // Use Groq model if configured, otherwise fall back to Gemini
+      const model = provider.chatModel("groq/llama-3.1-8b-instant");
       const { text } = await generateText({
         model,
         prompt: `You are an educational assistant for ${curriculum} students in Kenya. Generate 4 short pieces of educational content. Respond ONLY with valid JSON, no markdown, no backticks.
@@ -141,8 +142,28 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
       const clean = text.replace(/```json|```/g, "").trim();
       return JSON.parse(clean) as DailyInsights;
     } catch (err) {
-      console.error("[Dashboard Server] fetchDailyInsights error, returning fallback:", err);
-      return fallback;
+      console.warn("[Dashboard Server] Groq insights fetch failed, trying Gemini fallback...", err);
+      try {
+        const provider = createGoogleAiProvider();
+        const model = provider.chatModel("gemini-2.5-flash");
+        const { text } = await generateText({
+          model,
+          prompt: `You are an educational assistant for ${curriculum} students in Kenya. Generate 4 short pieces of educational content. Respond ONLY with valid JSON, no markdown, no backticks.
+
+{
+  "tip": "A practical study tip for ${curriculum} students (1-2 sentences)",
+  "topicOfDay": "A specific ${curriculum} syllabus topic with a one-sentence explanation of a key concept",
+  "didYouKnow": "A fascinating educational fact relevant to ${curriculum} subjects (1-2 sentences)",
+  "streakMotivation": "${streak > 0 ? `An encouraging message about maintaining a ${streak}-day study streak` : "An encouraging message to start a study streak today"} (1 sentence)"
+}`,
+          maxOutputTokens: 400,
+        });
+        const clean = text.replace(/```json|```/g, "").trim();
+        return JSON.parse(clean) as DailyInsights;
+      } catch (geminiErr) {
+        console.error("[Dashboard Server] Both Groq and Gemini insights fetch failed, returning static fallback:", geminiErr);
+        return fallback;
+      }
     }
   });
 
