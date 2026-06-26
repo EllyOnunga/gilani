@@ -215,6 +215,8 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
         const emailResult = await sendTransactionalEmail({
           to: reviewerUser.user.email,
           subject: `[GilaniAI] Escalation Assigned: Review Requested`,
+          fromEmail: "info@gilaniai.site",
+          fromName: "GilaniAI",
           html: emailTemplate({
             heading: "New Escalation Assigned",
             body: `<strong>${studentName}</strong> has requested your review on their study session. Please check your escalations dashboard to respond.`,
@@ -260,6 +262,8 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
           await sendTransactionalEmail({
             to: validEmails,
             subject: `[GilaniAI] New Escalation Request Available`,
+            fromEmail: "info@gilaniai.site",
+            fromName: "GilaniAI",
             html: emailTemplate({
               heading: "New Escalation Request Available",
               body: `<strong>${studentName}</strong> has requested a teacher review on their study session. Since this request is unassigned, any teacher can claim and review it.`,
@@ -314,6 +318,8 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
       await sendTransactionalEmail({
         to: studentUser.user.email,
         subject: `[GilaniAI] Teacher Responded to your Study Session!`,
+        fromEmail: "info@gilaniai.site",
+        fromName: "GilaniAI",
         html: emailTemplate({
           heading: "Your teacher has responded! 🎉",
           body: "Great news — your teacher has reviewed your study session and left a response. Click below to view their feedback and continue learning.",

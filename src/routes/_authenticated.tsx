@@ -656,7 +656,7 @@ function AuthedShell() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={(e) => {
+                    onClick={() => {
                       setSidebarOpen(false);
                       const isTutorThread = path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
                       if (isTutorThread) {

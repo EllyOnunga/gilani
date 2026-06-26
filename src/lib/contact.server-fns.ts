@@ -54,6 +54,7 @@ export const submitContactFn = createServerFn({ method: "POST" })
     await sendTransactionalEmail({
       to: adminEmail,
       subject: `[GilaniAI Contact] ${data.category} — ${data.subject || data.name}`,
+      fromEmail: "info@gilaniai.site",
       html: `
         <h2>New contact message</h2>
         <p><strong>Name:</strong> ${esc(data.name)}</p>
@@ -70,10 +71,12 @@ export const submitContactFn = createServerFn({ method: "POST" })
     await sendTransactionalEmail({
       to: data.email,
       subject: "We received your message — GilaniAI Support",
+      fromEmail: "support@gilaniai.site",
+      fromName: "GilaniAI Support",
       html: `
         <p>Hi ${data.name},</p>
         <p>Thanks for reaching out! We've received your message and will get back to you within 24 hours (Mon–Fri).</p>
-        <p>If your matter is urgent, you can also email us directly at <a href="mailto:support@gilaniai.site">support@gilaniai.site</a>.</p>
+        <p>If your matter is urgent, you can email us directly at <a href="mailto:support@gilaniai.site">support@gilaniai.site</a> or <a href="mailto:contact@gilaniai.site">contact@gilaniai.site</a>.</p>
         <br/>
         <p>— The GilaniAI Team</p>
       `,

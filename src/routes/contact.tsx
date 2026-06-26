@@ -71,9 +71,14 @@ function ContactPage() {
         <div className="space-y-4 lg:col-span-1">
           {[
             {
-              icon: Mail, title: "Email us",
+              icon: Mail, title: "Support & Billing",
               body: <a href="mailto:support@gilaniai.site" className="text-xs font-medium text-primary hover:underline break-all">support@gilaniai.site</a>,
-              sub: "For general enquiries, account issues, and billing questions."
+              sub: "For account issues, billing questions, and general enquiries."
+            },
+            {
+              icon: Mail, title: "Contact & Partnerships",
+              body: <a href="mailto:contact@gilaniai.site" className="text-xs font-medium text-primary hover:underline break-all">contact@gilaniai.site</a>,
+              sub: "For press, partnership, and curriculum collaboration inquiries."
             },
             {
               icon: MapPin, title: "Based in Kenya",

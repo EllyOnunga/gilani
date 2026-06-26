@@ -54,17 +54,12 @@ function ResetPasswordPage() {
       console.error("[ResetPassword] Confirmation email failed:", err)
     );
 
-    toast.success("Password has been successfully updated! Redirecting...");
+    toast.success("Password updated successfully! Please sign in with your new password.");
 
-    // Redirect based on role
-    setTimeout(() => {
-      if (roles.includes("admin")) {
-        navigate({ to: "/admin/users" as any });
-      } else if (roles.includes("teacher")) {
-        navigate({ to: "/teacher/escalations" as any });
-      } else {
-        navigate({ to: "/dashboard" as any });
-      }
+    // Sign the user out so they must re-authenticate with the new password
+    setTimeout(async () => {
+      await supabase.auth.signOut();
+      navigate({ to: "/login" as any });
     }, 1500);
   };
 

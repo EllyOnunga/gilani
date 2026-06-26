@@ -1,6 +1,11 @@
 /**
- * Backend utility for sending transactional emails via SendGrid API.
+ * Backend utility for sending transactional emails via Resend API.
  * Uses fetch — no npm package needed, works on Vercel serverless.
+ *
+ * From-address routing:
+ *  - Auth / account emails   → noreply@gilaniai.site
+ *  - Notifications / alerts  → info@gilaniai.site
+ *  - Support / contact reply → support@gilaniai.site
  */
 
 export interface EmailPayload {
@@ -9,6 +14,8 @@ export interface EmailPayload {
   html: string;
   text?: string;
   fromName?: string;
+  /** Override the default from-address (noreply@gilaniai.site) */
+  fromEmail?: string;
 }
 
 export async function sendTransactionalEmail({
@@ -17,29 +24,27 @@ export async function sendTransactionalEmail({
   html,
   text,
   fromName = "GilaniAI",
+  fromEmail = "noreply@gilaniai.site",
 }: EmailPayload): Promise<boolean> {
-  const apiKey = process.env.SENDGRID_API_KEY;
-  const senderEmail = process.env.SENDER_EMAIL || "onboarding@resend.dev";
+  const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
-    console.error("[Email] SENDGRID_API_KEY is not set");
+    console.error("[Email] RESEND_API_KEY is not set");
     return false;
   }
 
   const recipients = Array.isArray(to) ? to : [to];
 
-  const body = {
-    personalizations: [{ to: recipients.map((email) => ({ email })) }],
-    from: { email: senderEmail, name: fromName },
+  const body: Record<string, unknown> = {
+    from: `${fromName} <${fromEmail}>`,
+    to: recipients,
     subject,
-    content: [
-      ...(text ? [{ type: "text/plain", value: text }] : []),
-      { type: "text/html", value: html },
-    ],
+    html,
+    ...(text ? { text } : {}),
   };
 
   try {
-    const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,8 +55,7 @@ export async function sendTransactionalEmail({
 
     if (!response.ok) {
       const err = await response.text();
-      console.error("[Email] SendGrid error:", response.status, response.statusText, err);
-      console.error("[Email] Sender used:", senderEmail);
+      console.error("[Email] Resend error:", response.status, response.statusText, err);
       return false;
     }
 
@@ -81,7 +85,6 @@ const BRAND_DARK = "#111111";
 const BG_PAGE = "#f4f4f5";
 const BG_CARD = "#ffffff";
 const TEXT_BODY = "#374151";
-const TEXT_MUTED = "#6b7280";
 const TEXT_LIGHT = "#9ca3af";
 const BORDER = "#e5e7eb";
 const APP_URL = process.env.APP_URL || "https://gilaniai.site";
@@ -127,15 +130,11 @@ function emailFooter(footerNote?: string): string {
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center" style="padding-bottom:16px">
-                    <a href="${APP_URL}/dashboard"    style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Dashboard</a>
+                    <a href="${APP_URL}/dashboard" style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Dashboard</a>
                     <span style="color:#374151">|</span>
-                    <a href="${APP_URL}/tutor"        style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Tutor</a>
+                    <a href="${APP_URL}/tutor"     style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Tutor</a>
                     <span style="color:#374151">|</span>
-                    <a href="${APP_URL}/notes"        style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Notes</a>
-                    <span style="color:#374151">|</span>
-                    <a href="${APP_URL}/quizzes"      style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Quizzes</a>
-                    <span style="color:#374151">|</span>
-                    <a href="${APP_URL}/planner"      style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Planner</a>
+                    <a href="${APP_URL}/contact"   style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Contact</a>
                   </td>
                 </tr>
               </table>
@@ -150,13 +149,13 @@ function emailFooter(footerNote?: string): string {
 
               <!-- Legal -->
               <p style="margin:0;font-size:11px;color:#4b5563;font-family:system-ui,sans-serif;text-align:center;line-height:1.8">
-                © ${new Date().getFullYear()} GilaniAI · Nairobi, Kenya
+                &copy; ${new Date().getFullYear()} GilaniAI &middot; Nairobi, Kenya
                 <br>
                 <a href="${APP_URL}/privacy" style="color:#6b7280;text-decoration:underline">Privacy Policy</a>
-                &nbsp;·&nbsp;
+                &nbsp;&middot;&nbsp;
                 <a href="${APP_URL}/faq"     style="color:#6b7280;text-decoration:underline">Help &amp; FAQ</a>
-                &nbsp;·&nbsp;
-                <a href="mailto:support@gilaniai.com" style="color:#6b7280;text-decoration:underline">Contact Support</a>
+                &nbsp;&middot;&nbsp;
+                <a href="mailto:support@gilaniai.site" style="color:#6b7280;text-decoration:underline">Contact Support</a>
               </p>
             </td>
           </tr>
@@ -236,7 +235,7 @@ export function emailTemplate({
                   <td style="border-radius:8px;background:${BRAND_ORANGE}">
                     <a href="${safeButtonUrl}"
                        style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:8px;font-family:system-ui,sans-serif;letter-spacing:0.01em">
-                      ${escapeHtml(buttonText)} →
+                      ${escapeHtml(buttonText)} &rarr;
                     </a>
                   </td>
                 </tr>
@@ -269,7 +268,7 @@ export function emailTemplate({
 export function passwordResetConfirmationEmail(userName?: string): string {
   const name = userName ? escapeHtml(userName) : "there";
   const resetUrl = `${APP_URL}/forgot-password`;
-  const supportUrl = `mailto:support@gilaniai.com?subject=${encodeURIComponent("Unauthorized password reset on my account")}`;
+  const supportUrl = `mailto:support@gilaniai.site?subject=${encodeURIComponent("Unauthorized password reset on my account")}`;
 
   return emailTemplate({
     heading: "Your Password Was Reset",
@@ -293,10 +292,12 @@ export function passwordResetConfirmationEmail(userName?: string): string {
       </table>
 
       <p style="margin:0 0 8px;font-size:13px;color:#6b7280">
-        ✅ <strong>This was you?</strong> No action needed — you're all set.
+        &check; <strong>This was you?</strong> No action needed &mdash; you&rsquo;re all set.
       </p>
       <p style="margin:0;font-size:13px;color:#6b7280">
-        ⚠️ <strong>Wasn't you?</strong> Your account may be compromised. Reset your password immediately and contact our support team.
+        &warning; <strong>Wasn&rsquo;t you?</strong> Your account may be compromised.
+        <a href="${resetUrl}" style="color:${BRAND_ORANGE}">Reset your password</a> immediately and
+        <a href="${supportUrl}" style="color:${BRAND_ORANGE}">contact our support team</a>.
       </p>
     `,
     buttonText: "Sign In to Your Account",
