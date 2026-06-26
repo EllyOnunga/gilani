@@ -116,11 +116,19 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
   .inputValidator(z.object({ curriculum: z.string(), streak: z.number() }))
   .handler(async ({ data }) => {
     const { curriculum, streak } = data;
-    const provider = createGoogleAiProvider();
-    const model = provider.chatModel("gemini-2.5-flash");
-    const { text } = await generateText({
-      model,
-      prompt: `You are an educational assistant for ${curriculum} students in Kenya. Generate 4 short pieces of educational content. Respond ONLY with valid JSON, no markdown, no backticks.
+    const fallback = {
+      tip: "Break your study sessions into 25-minute focused blocks with 5-minute breaks for maximum retention.",
+      topicOfDay: "Photosynthesis: Plants convert sunlight, water and CO₂ into glucose and oxygen via the Calvin cycle.",
+      didYouKnow: "The human brain can store approximately 2.5 petabytes of information — equivalent to 3 million hours of TV.",
+      streakMotivation: streak > 0 ? `${streak} days strong — consistency is the foundation of excellence!` : "Every expert was once a beginner — start your streak today!",
+    } satisfies DailyInsights;
+
+    try {
+      const provider = createGoogleAiProvider();
+      const model = provider.chatModel("gemini-2.5-flash");
+      const { text } = await generateText({
+        model,
+        prompt: `You are an educational assistant for ${curriculum} students in Kenya. Generate 4 short pieces of educational content. Respond ONLY with valid JSON, no markdown, no backticks.
 
 {
   "tip": "A practical study tip for ${curriculum} students (1-2 sentences)",
@@ -128,18 +136,13 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
   "didYouKnow": "A fascinating educational fact relevant to ${curriculum} subjects (1-2 sentences)",
   "streakMotivation": "${streak > 0 ? `An encouraging message about maintaining a ${streak}-day study streak` : "An encouraging message to start a study streak today"} (1 sentence)"
 }`,
-      maxOutputTokens: 400,
-    });
-    try {
+        maxOutputTokens: 400,
+      });
       const clean = text.replace(/```json|```/g, "").trim();
       return JSON.parse(clean) as DailyInsights;
-    } catch {
-      return {
-        tip: "Break your study sessions into 25-minute focused blocks with 5-minute breaks for maximum retention.",
-        topicOfDay: "Photosynthesis: Plants convert sunlight, water and CO₂ into glucose and oxygen via the Calvin cycle.",
-        didYouKnow: "The human brain can store approximately 2.5 petabytes of information — equivalent to 3 million hours of TV.",
-        streakMotivation: streak > 0 ? `${streak} days strong — consistency is the foundation of excellence!` : "Every expert was once a beginner — start your streak today!",
-      } satisfies DailyInsights;
+    } catch (err) {
+      console.error("[Dashboard Server] fetchDailyInsights error, returning fallback:", err);
+      return fallback;
     }
   });
 
