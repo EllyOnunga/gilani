@@ -411,11 +411,11 @@ function SettingsPage() {
                 <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                   <div className="flex items-center gap-2.5">
                     <User className="h-5 w-5 text-primary" />
-                    <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Profile Details</h3>
+                    <h3 className="font-serif text-xl font-bold text-foreground">Profile Details</h3>
                   </div>
 
                   {/* Avatar Picker Section */}
-                  <div className="flex flex-col sm:flex-row items-center gap-5 bg-background/40 border border-border/20 p-4 rounded-xl">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 bg-background/40 border border-border/20 p-4 rounded-xl">
                     <div className="relative group flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border-2 border-primary/20 bg-background shadow-inner">
                       {avatarUrl ? (
                         avatarUrl.startsWith("preset:") ? (
@@ -483,11 +483,11 @@ function SettingsPage() {
 
                   </div>
 
-                  <div className="flex justify-center pt-2">
+                  <div className="flex justify-end pt-2">
                     <button
                       disabled={busy}
                       type="submit"
-                      className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/95 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/95 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
                     >
                       <Save className="h-4 w-4" /> {busy ? "Saving..." : "Save Profile"}
                     </button>
@@ -500,7 +500,7 @@ function SettingsPage() {
                 <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                   <div className="flex items-center gap-2.5">
                     <Brain className="h-5 w-5 text-primary" />
-                    <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Tutor Preferences</h3>
+                    <h3 className="font-serif text-xl font-bold text-foreground">Tutor Preferences</h3>
                   </div>
 
                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -513,7 +513,7 @@ function SettingsPage() {
                       <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
                         Tutor Tone / Personality
                       </label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {[
                           { id: "encouraging", label: "Encouraging", desc: "Warm & supportive" },
                           { id: "scholarly", label: "Scholarly", desc: "Formal & precise" },
@@ -541,7 +541,7 @@ function SettingsPage() {
                       <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
                         Teaching Methodology
                       </label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {[
                           { id: "socratic", label: "Socratic Method", desc: "Guides with hints" },
                           { id: "direct", label: "Direct Mentor", desc: "Immediate solutions" },
@@ -569,7 +569,7 @@ function SettingsPage() {
                       <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
                         Scaffolding Depth Level
                       </label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {[
                           { id: "guided", label: "Highly Scaffolded", desc: "Small incremental hints" },
                           { id: "standard", label: "Standard Paced", desc: "Standard target level" },
@@ -593,11 +593,11 @@ function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-center pt-2">
+                  <div className="flex justify-end pt-2">
                     <button
                       disabled={busy}
                       type="submit"
-                      className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/95 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/95 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
                     >
                       <Save className="h-4 w-4" /> {busy ? "Saving..." : "Save Preferences"}
                     </button>
@@ -611,7 +611,7 @@ function SettingsPage() {
               <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
                   {isDark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
-                  <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Display Theme</h3>
+                  <h3 className="font-serif text-xl font-bold text-foreground">Display Theme</h3>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Choose between Light mode (scholarly warm parchment layout) and Dark mode (charcoal deep theme).
@@ -670,7 +670,7 @@ function SettingsPage() {
               <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
                   <CreditCard className="h-5 w-5 text-primary" />
-                  <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Subscription Plan</h3>
+                  <h3 className="font-serif text-xl font-bold text-foreground">Subscription Plan</h3>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
@@ -679,7 +679,7 @@ function SettingsPage() {
 
                 {/* Current plan + usage */}
                 <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <Zap className="h-4 w-4 text-primary" />
                       <span className="font-bold capitalize text-sm text-foreground">{currentPlan} Plan</span>
@@ -687,7 +687,7 @@ function SettingsPage() {
                     </div>
                     {currentPlan !== "school" && (
                       <button type="button" onClick={() => setShowPlans(true)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer">
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer w-full sm:w-auto">
                         <CreditCard className="h-3 w-3" /> Upgrade
                       </button>
                     )}
@@ -752,13 +752,13 @@ function SettingsPage() {
               <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
                   <Shield className="h-5 w-5 text-primary" />
-                  <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Consent & Security</h3>
+                  <h3 className="font-serif text-xl font-bold text-foreground">Consent & Security</h3>
                 </div>
 
                 <div className="space-y-5">
                   {/* AI Disclaimer Consent */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-background/50 border border-border/20 p-4 rounded-xl">
-                    <div className="space-y-1">
+                    <div className="space-y-1 flex-1 min-w-0">
                       <p className="text-sm font-bold flex items-center gap-2 text-foreground">
                         <AlertTriangle className="h-4 w-4 text-amber-500" /> AI Disclaimer Agreement
                       </p>
@@ -789,8 +789,8 @@ function SettingsPage() {
                   </div>
 
                   {/* Cookie Consent */}
-                  <div className="flex items-center justify-between bg-background/50 border border-border/20 p-4 rounded-xl">
-                    <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-4 bg-background/50 border border-border/20 p-4 rounded-xl">
+                    <div className="space-y-1 flex-1 min-w-0">
                       <p className="text-sm font-bold flex items-center gap-2 text-foreground">
                         <Cookie className="h-4 w-4 text-primary" /> Cookie Storage Consent
                       </p>
@@ -815,8 +815,8 @@ function SettingsPage() {
                   </div>
 
                   {/* Analytics Consent */}
-                  <div className="flex items-center justify-between bg-background/50 border border-border/20 p-4 rounded-xl">
-                    <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-4 bg-background/50 border border-border/20 p-4 rounded-xl">
+                    <div className="space-y-1 flex-1 min-w-0">
                       <p className="text-sm font-bold flex items-center gap-2 text-foreground">
                         <BarChart className="h-4 w-4 text-primary" /> Usage Analytics Telemetry
                       </p>
@@ -890,7 +890,7 @@ function SettingsPage() {
                         <p className="text-xs font-semibold text-destructive">
                           Are you sure? This will permanently delete your account, profile, and all chat history.
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <button
                             onClick={handleDeleteAccount}
                             disabled={deleting}
