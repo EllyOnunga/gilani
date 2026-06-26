@@ -801,13 +801,13 @@ function SettingsPage() {
                       onClick={() => toggleConsent("cookie", !cookieConsent)}
                       type="button"
                       className={`relative inline-flex h-4.5 w-8 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
-                        cookieConsent ? "bg-primary" : "bg-muted"
+                        cookieConsent ? "bg-foreground" : "bg-muted"
                       }`}
                       title="Toggle Cookies"
                     >
                       <span
                         className={`inline-block h-3 w-3 transform rounded-full transition-transform ${
-                          cookieConsent ? "translate-x-4.5 bg-primary-foreground" : "translate-x-0.5 bg-muted-foreground"
+                          cookieConsent ? "translate-x-4.5 bg-background" : "translate-x-0.5 bg-muted-foreground"
                         }`}
                       />
                     </button>
@@ -827,13 +827,13 @@ function SettingsPage() {
                       onClick={() => toggleConsent("analytics", !analyticsConsent)}
                       type="button"
                       className={`relative inline-flex h-4.5 w-8 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
-                        analyticsConsent ? "bg-primary" : "bg-muted"
+                        analyticsConsent ? "bg-foreground" : "bg-muted"
                       }`}
                       title="Toggle Analytics"
                     >
                       <span
                         className={`inline-block h-3 w-3 transform rounded-full transition-transform ${
-                          analyticsConsent ? "translate-x-4.5 bg-primary-foreground" : "translate-x-0.5 bg-muted-foreground"
+                          analyticsConsent ? "translate-x-4.5 bg-background" : "translate-x-0.5 bg-muted-foreground"
                         }`}
                       />
                     </button>
