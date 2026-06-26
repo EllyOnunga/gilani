@@ -226,6 +226,23 @@ export const MessageList = React.memo(function MessageList({
             aria-label="AI is thinking"
           >
             <div className="flex flex-col gap-2.5 px-1 py-3">
+              <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes thinking-shimmer {
+                  0% { background-position: 200% center; }
+                  100% { background-position: -200% center; }
+                }
+              ` }} />
+              <span
+                className="text-xs font-medium mb-1 select-none"
+                style={{
+                  background: "linear-gradient(90deg, var(--muted-foreground,#888) 25%, var(--foreground,#eee) 50%, var(--muted-foreground,#888) 75%)",
+                  backgroundSize: "200% 100%",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  animation: "thinking-shimmer 2s linear infinite",
+                }}
+              >Thinking…</span>
               {["w-[72%]", "w-[88%]", "w-[55%]"].map((width, i) => (
                 <div
                   key={i}
