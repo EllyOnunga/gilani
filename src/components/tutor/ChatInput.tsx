@@ -319,7 +319,7 @@ export function ChatInput({
 
       {/* Attached file pill */}
       {attachedFile && (
-        <div className="mb-2.5 flex items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5/30 backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-3 shadow-sm">
+        <div className="mb-2.5 flex items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5 backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-3 shadow-sm">
           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
             <FileText className="h-4 w-4 text-primary" />
           </div>
@@ -341,7 +341,7 @@ export function ChatInput({
       )}
 
       {/* Main input */}
-      <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus-within:ring-2 focus-within:ring-primary/10">
+      <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus-within:ring-2 focus-within:ring-primary/10">
         {/* File input: hidden with onClick reset so the file blob is untouched during onChange */}
         <input
           id="chat-file-input"
@@ -358,10 +358,10 @@ export function ChatInput({
             htmlFor={isDisabled ? undefined : "chat-file-input"}
             aria-label="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)"
             aria-disabled={isDisabled}
-            className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 ${
+            className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${
               isDisabled
                 ? "opacity-40 cursor-not-allowed pointer-events-none"
-                : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground active:scale-90"
+                : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90"
             }`}
             title="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)">
             {parsingFile ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Paperclip className="h-4 w-4" />}
@@ -369,28 +369,34 @@ export function ChatInput({
         </div>
 
         <textarea ref={textareaRef}
-          className="min-h-[44px] sm:min-h-[40px] flex-1 resize-none bg-transparent py-3 sm:py-2.5 pr-1 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-[44px] sm:min-h-[40px] flex-1 resize-none bg-transparent py-3 sm:py-2.5 pr-1 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 transition-opacity duration-200"
           rows={1} value={input} onChange={onInputChange}
           placeholder={
             isPending       ? "Waiting for response…" :
             isRateLimited   ? secondsLeft > 0 ? `Cooling down… ${formatTime(secondsLeft)}` : "Rate limit reached…" :
             parsingFile     ? "Parsing document…" :
-            "Ask anything…"
+            "Ask GilaniAI anything…"
           }
           disabled={isDisabled} onKeyDown={handleKeyDown} style={{ maxHeight: 160, overflowY: 'hidden' }} />
 
-        <div className="pb-2 pr-2 pt-2">
+        <div className="pb-2 pr-2 pt-2 flex items-center">
           <button type="button" onClick={(e) => { if (isPending) { onStop?.(); } else { onSubmit(e as any); } }}
             disabled={!isPending && (isDisabled || (!input.trim() && !attachedFile))}
-            className={`flex h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+            title={isPending ? "Stop generating" : "Send (Enter)"}
+            className={`flex flex-shrink-0 items-center justify-center gap-1.5 rounded-full transition-all duration-200 ${
               isPending
-                ? "bg-foreground text-background hover:bg-foreground/85 active:scale-95"
+                ? "h-8 w-8 bg-transparent border-2 border-primary text-primary hover:bg-primary/10 active:scale-95"
                 : isDisabled || (!input.trim() && !attachedFile)
-                  ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
-                  : "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-primary/20 hover:scale-105 active:scale-95 hover:-translate-y-0.5"
-            }`}
-            title={isPending ? "Stop generating" : "Send (Enter)"}>
-            {isPending ? <Square className="h-2.5 w-2.5 fill-current rounded-[1px]" /> : <Send className="h-3.5 w-3.5" />}
+                  ? "h-8 w-8 bg-muted text-muted-foreground opacity-40 cursor-not-allowed"
+                  : "h-8 sm:h-8 px-3 sm:px-3.5 bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 hover:scale-105 active:scale-95"
+            }`}>
+            {isPending
+              ? <Square className="h-3 w-3" />
+              : <>
+                  <Send className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline text-[11px] font-bold tracking-wide">Send</span>
+                </>
+            }
           </button>
         </div>
       </div>
@@ -411,9 +417,21 @@ export function ChatInput({
           </span>
         )}
       </div>
+      {/* Mobile: thinking indicator */}
+      {isPending && (
+        <div className="mt-1 flex items-center gap-1.5 px-1 sm:hidden">
+          <span className="inline-flex gap-0.5">
+            {[0,1,2].map(i => (
+              <span key={i} className="h-1 w-1 rounded-full bg-primary/70 animate-bounce" style={{ animationDelay: `${i * 120}ms` }} />
+            ))}
+          </span>
+          <span className="font-mono text-[9px] text-primary/70 font-semibold animate-pulse">GilaniAI is thinking…</span>
+        </div>
+      )}
+
       {/* Mobile: only show char count when typing */}
       {input.length > 0 && (
-        <div className="mt-1 flex justify-end px-1 sm:hidden">
+        <div className="mt-1 flex justify-end px-1 sm:hidden animate-in fade-in duration-200">
           <span className={`font-mono text-[9px] font-semibold tabular-nums ${input.length > 3000 ? "text-amber-500" : "text-muted-foreground/70"}`}>
             {input.length.toLocaleString()} chars
           </span>
