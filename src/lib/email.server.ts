@@ -16,6 +16,8 @@ export interface EmailPayload {
   fromName?: string;
   /** Override the default from-address (noreply@gilaniai.site) */
   fromEmail?: string;
+  /** Set Reply-To header so recipients can reply directly to the original sender */
+  replyTo?: string;
 }
 
 export async function sendTransactionalEmail({
@@ -25,6 +27,7 @@ export async function sendTransactionalEmail({
   text,
   fromName = "GilaniAI",
   fromEmail = "noreply@gilaniai.site",
+  replyTo,
 }: EmailPayload): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
 
@@ -41,6 +44,7 @@ export async function sendTransactionalEmail({
     subject,
     html,
     ...(text ? { text } : {}),
+    ...(replyTo ? { reply_to: replyTo } : {}),
   };
 
   try {

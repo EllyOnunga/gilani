@@ -49,12 +49,13 @@ export const submitContactFn = createServerFn({ method: "POST" })
       throw new Error("Failed to save message. Please try again.");
     }
 
-    // 2. Notify admin
-    const adminEmail = process.env.ADMIN_EMAIL || "onungaelly@gmail.com";
+    // 2. Notify admin at support inbox
     await sendTransactionalEmail({
-      to: adminEmail,
+      to: "support@gilaniai.site",
       subject: `[GilaniAI Contact] ${data.category} — ${data.subject || data.name}`,
       fromEmail: "info@gilaniai.site",
+      fromName: "GilaniAI Notifications",
+      replyTo: data.email,
       html: `
         <h2>New contact message</h2>
         <p><strong>Name:</strong> ${esc(data.name)}</p>
@@ -63,6 +64,7 @@ export const submitContactFn = createServerFn({ method: "POST" })
         <p><strong>Subject:</strong> ${esc(data.subject || "—")}</p>
         <hr/>
         <p>${esc(data.message).replace(/\n/g, "<br/>")}</p>
+        <p style="color:#888;font-size:12px">Reply directly to this email to respond to ${esc(data.name)}.</p>
       `,
       text: `Name: ${data.name}\nEmail: ${data.email}\nCategory: ${data.category}\nSubject: ${data.subject || "—"}\n\n${data.message}`,
     });
