@@ -76,14 +76,14 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
   switch (preset) {
     case "socrates":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-700 to-zinc-900 p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-amber-500 to-amber-700 p-2 text-white">
           <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" strokeWidth="1" />
           <path d="M12 24h8M16 24V14M13 14h6M11 11h10v3H11z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
     case "curie":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-600 to-zinc-800 p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-emerald-500 to-emerald-700 p-2 text-white">
           <path d="M11 23h10M13 23v-7a3 3 0 0 1-1-2.5v-3.5h8v3.5a3 3 0 0 1-1 2.5v7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="16" cy="7" r="1" fill="currentColor" />
           <circle cx="12" cy="15" r="1.2" fill="currentColor" />
@@ -92,7 +92,7 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
       );
     case "galileo":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-800 to-black p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-blue-500 to-blue-700 p-2 text-white">
           <path d="M9 23l7-7M23 9l-7 7M16 16l4 4M21 7l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
           <circle cx="24" cy="16" r="0.8" fill="currentColor" />
           <polygon points="12,7 13,9 15,9 13,10 14,12 12,11 10,12 11,10 9,9 11,9" fill="currentColor" />
@@ -100,14 +100,14 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
       );
     case "lovelace":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-500 to-zinc-700 p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-purple-500 to-purple-700 p-2 text-white">
           <circle cx="16" cy="16" r="5" stroke="currentColor" strokeWidth="1.5" fill="none" />
           <path d="M16 8v3M16 21v3M8 16h3M21 16h3M10.5 10.5l2 2M19.5 19.5l2 2M10.5 19.5l2-2M19.5 10.5l2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
       );
     case "hypatia":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-700 to-zinc-800 p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-pink-500 to-pink-700 p-2 text-white">
           <circle cx="16" cy="16" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" />
           <line x1="16" y1="9" x2="16" y2="23" stroke="currentColor" strokeWidth="1" />
           <line x1="9" y1="16" x2="23" y2="16" stroke="currentColor" strokeWidth="1" />
@@ -116,7 +116,7 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
       );
     case "einstein":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-900 to-zinc-750 p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-rose-500 to-rose-700 p-2 text-white">
           <path d="M12 15a4 4 0 0 1 8 0c0 2.5-2 3.5-2 5h-4c0-1.5-2-2.5-2-5zM13 23h6M14 26h4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
           <line x1="16" y1="7" x2="16" y2="9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           <line x1="8" y1="11" x2="10" y2="12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -366,23 +366,23 @@ function SettingsPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-5xl space-y-8 p-4 sm:p-6 lg:p-8 animate-in-slide">
+      <div className="mx-auto max-w-5xl space-y-6 p-3 sm:p-6 lg:p-10 animate-in-slide">
         {/* Header */}
-        <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-border/60 pb-5">
+        <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-border/60 pb-5 text-center sm:text-left">
           <div>
-            <p className="font-mono text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-2">
-              Workspace / Settings
+            <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
+              Preferences
             </p>
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">App Preferences</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Customize tutor styling, change profile appearance, and oversee subscription plans.
+            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-bold">App Settings</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Customize your tutor's persona, change your profile appearance, and oversee subscription parameters.
             </p>
           </div>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
           {/* Navigation Sidebar */}
-          <div className="md:col-span-1 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible border border-border/30 bg-muted/5 rounded-2xl p-2 gap-1 flex-shrink-0 scrollbar-none">
+          <div className="md:col-span-1 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible border border-border/40 bg-card/40 rounded-2xl p-2 gap-2 flex-shrink-0 scrollbar-none">
             {TABS.map((t) => {
               const TabIcon = t.icon;
               const isSelected = activeTab === t.id;
@@ -390,13 +390,13 @@ function SettingsPage() {
                 <button
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`flex items-center gap-2.5 rounded-xl px-3.5 py-3 text-xs font-medium whitespace-nowrap md:w-full transition-all duration-200 relative ${
+                  className={`flex items-center gap-2.5 rounded-xl px-3.5 py-3 text-xs font-semibold whitespace-nowrap md:w-full transition-all duration-200 border-2 ${
                     isSelected
-                      ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r"
-                      : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
+                      ? "border-primary text-primary bg-transparent font-bold shadow-sm scale-102"
+                      : "border-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                   }`}
                 >
-                  <TabIcon className="h-4 w-4 shrink-0" />
+                  <TabIcon className="h-4 w-4" />
                   <span>{t.label}</span>
                 </button>
               );
@@ -408,15 +408,15 @@ function SettingsPage() {
             <form onSubmit={handleProfileSave} className="space-y-6">
               {/* Profile Details Tab */}
               {activeTab === "profile" && (
-                <section className="rounded-2xl border border-border/30 bg-muted/5 p-4 sm:p-6 space-y-6 animate-in-slide">
+                <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                   <div className="flex items-center gap-2.5">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">Profile Details</h3>
+                    <User className="h-5 w-5 text-primary" />
+                    <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Profile Details</h3>
                   </div>
 
                   {/* Avatar Picker Section */}
-                  <div className="flex flex-col sm:flex-row items-center gap-5 bg-muted/10 border border-border/20 p-4 rounded-xl">
-                    <div className="relative group flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-border bg-background shadow-inner">
+                  <div className="flex flex-col sm:flex-row items-center gap-5 bg-background/40 border border-border/20 p-4 rounded-xl">
+                    <div className="relative group flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border-2 border-primary/20 bg-background shadow-inner">
                       {avatarUrl ? (
                         avatarUrl.startsWith("preset:") ? (
                           <PresetAvatarSVG preset={avatarUrl.substring(7)} />
@@ -424,7 +424,7 @@ function SettingsPage() {
                           <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                         )
                       ) : (
-                        <span className="font-serif text-xl font-bold text-foreground">
+                        <span className="font-serif text-xl font-bold text-primary">
                           {(displayName || user?.email || "U").substring(0, 2).toUpperCase()}
                         </span>
                       )}
@@ -436,8 +436,8 @@ function SettingsPage() {
                     </div>
 
                     <div className="flex-1 min-w-0 space-y-2">
-                      <p className="text-[9px] font-mono font-semibold uppercase tracking-wider text-muted-foreground/60">Select Scholar Preset</p>
-                      <div className="flex flex-wrap gap-1.5">
+                      <p className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">Select Scholar Preset</p>
+                      <div className="grid grid-cols-6 gap-1.5">
                         {PRESETS.map((p) => {
                           const isSelected = avatarUrl === `preset:${p.id}`;
                           return (
@@ -445,15 +445,15 @@ function SettingsPage() {
                               key={p.id}
                               type="button"
                               onClick={() => setAvatarUrl(`preset:${p.id}`)}
-                              className={`relative w-8 h-8 rounded-full overflow-hidden border transition-all duration-200 hover:scale-105 ${
-                                isSelected ? "border-foreground ring-1 ring-border" : "border-border/60 hover:border-foreground/50"
+                              className={`relative w-8 h-8 rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
+                                isSelected ? "border-primary scale-102 ring-2 ring-primary/25" : "border-border/40 hover:border-primary/50"
                               }`}
                               title={`${p.label}: ${p.desc}`}
                             >
                               <PresetAvatarSVG preset={p.id} />
                               {isSelected && (
-                                <div className="absolute inset-0 bg-background/20 flex items-center justify-center">
-                                  <CheckCircle className="h-3.5 w-3.5 text-foreground drop-shadow-xs" />
+                                <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                  <CheckCircle className="h-4 w-4 text-white drop-shadow-xs" />
                                 </div>
                               )}
                             </button>
@@ -461,14 +461,14 @@ function SettingsPage() {
                         })}
                       </div>
                       <p className="text-[10px] text-muted-foreground leading-normal mt-1 flex items-center gap-1">
-                        <Info className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/60" /> Hover presets for biographies, or upload a custom image.
+                        <Info className="h-3.5 w-3.5 flex-shrink-0 text-primary" /> Hover presets for biographies, or upload a custom image.
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <div>
-                      <label className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 mb-1.5 block">
+                      <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
                         Display Name
                       </label>
                       <input
@@ -477,16 +477,17 @@ function SettingsPage() {
                         placeholder="e.g. John Doe"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs focus:outline-none focus:border-foreground/40 transition-all text-foreground"
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
                       />
                     </div>
+
                   </div>
 
-                  <div className="flex justify-start pt-2">
+                  <div className="flex justify-center pt-2">
                     <button
                       disabled={busy}
                       type="submit"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-background hover:bg-foreground/90 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
+                      className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/95 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
                     >
                       <Save className="h-4 w-4" /> {busy ? "Saving..." : "Save Profile"}
                     </button>
@@ -496,23 +497,23 @@ function SettingsPage() {
 
               {/* Tutor Preferences Tab */}
               {activeTab === "tutor" && (
-                <section className="rounded-2xl border border-border/30 bg-muted/5 p-4 sm:p-6 space-y-6 animate-in-slide">
+                <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                   <div className="flex items-center gap-2.5">
-                    <Brain className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">Tutor Preferences</h3>
+                    <Brain className="h-5 w-5 text-primary" />
+                    <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Tutor Preferences</h3>
                   </div>
 
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     Personalize how GilaniAI responds to your study questions. Choose styles that match your preferred learning pacing.
                   </p>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {/* Tutor Tone selector */}
-                    <div className="space-y-2">
-                      <label className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 block">
+                    <div>
+                      <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
                         Tutor Tone / Personality
                       </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         {[
                           { id: "encouraging", label: "Encouraging", desc: "Warm & supportive" },
                           { id: "scholarly", label: "Scholarly", desc: "Formal & precise" },
@@ -522,25 +523,25 @@ function SettingsPage() {
                             key={t.id}
                             type="button"
                             onClick={() => setTutorTone(t.id)}
-                            className={`rounded-xl border p-3 text-left transition-all ${
+                            className={`rounded-xl border p-3.5 text-left transition-all ${
                               tutorTone === t.id
-                                ? "border-foreground bg-muted/40 text-foreground"
-                                : "border-border/60 hover:bg-muted/20 hover:border-foreground/20 text-muted-foreground"
+                                ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30"
+                                : "border-border hover:bg-accent hover:border-primary/20"
                             }`}
                           >
                             <p className="text-xs font-bold">{t.label}</p>
-                            <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t.desc}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{t.desc}</p>
                           </button>
                         ))}
                       </div>
                     </div>
 
                     {/* Tutor Style Selector */}
-                    <div className="space-y-2">
-                      <label className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 block">
+                    <div>
+                      <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
                         Teaching Methodology
                       </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         {[
                           { id: "socratic", label: "Socratic Method", desc: "Guides with hints" },
                           { id: "direct", label: "Direct Mentor", desc: "Immediate solutions" },
@@ -550,25 +551,25 @@ function SettingsPage() {
                             key={t.id}
                             type="button"
                             onClick={() => setTutorStyle(t.id)}
-                            className={`rounded-xl border p-3 text-left transition-all ${
+                            className={`rounded-xl border p-3.5 text-left transition-all ${
                               tutorStyle === t.id
-                                ? "border-foreground bg-muted/40 text-foreground"
-                                : "border-border/60 hover:bg-muted/20 hover:border-foreground/20 text-muted-foreground"
+                                ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30"
+                                : "border-border hover:bg-accent hover:border-primary/20"
                             }`}
                           >
                             <p className="text-xs font-bold">{t.label}</p>
-                            <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t.desc}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{t.desc}</p>
                           </button>
                         ))}
                       </div>
                     </div>
 
                     {/* Socratic Depth */}
-                    <div className="space-y-2">
-                      <label className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 block">
+                    <div>
+                      <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
                         Scaffolding Depth Level
                       </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         {[
                           { id: "guided", label: "Highly Scaffolded", desc: "Small incremental hints" },
                           { id: "standard", label: "Standard Paced", desc: "Standard target level" },
@@ -578,25 +579,25 @@ function SettingsPage() {
                             key={t.id}
                             type="button"
                             onClick={() => setTutorDepth(t.id)}
-                            className={`rounded-xl border p-3 text-left transition-all ${
+                            className={`rounded-xl border p-3.5 text-left transition-all ${
                               tutorDepth === t.id
-                                ? "border-foreground bg-muted/40 text-foreground"
-                                : "border-border/60 hover:bg-muted/20 hover:border-foreground/20 text-muted-foreground"
+                                ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30"
+                                : "border-border hover:bg-accent hover:border-primary/20"
                             }`}
                           >
                             <p className="text-xs font-bold">{t.label}</p>
-                            <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t.desc}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{t.desc}</p>
                           </button>
                         ))}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex justify-start pt-2">
+                  <div className="flex justify-center pt-2">
                     <button
                       disabled={busy}
                       type="submit"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-background hover:bg-foreground/90 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
+                      className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/95 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
                     >
                       <Save className="h-4 w-4" /> {busy ? "Saving..." : "Save Preferences"}
                     </button>
@@ -607,10 +608,10 @@ function SettingsPage() {
 
             {/* Display Theme Tab */}
             {activeTab === "theme" && (
-              <section className="rounded-2xl border border-border/30 bg-muted/5 p-4 sm:p-6 space-y-6 animate-in-slide">
+              <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
-                  {isDark ? <Moon className="h-4 w-4 text-muted-foreground" /> : <Sun className="h-4 w-4 text-muted-foreground" />}
-                  <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">Display Theme</h3>
+                  {isDark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+                  <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Display Theme</h3>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Choose between Light mode (scholarly warm parchment layout) and Dark mode (charcoal deep theme).
@@ -623,19 +624,19 @@ function SettingsPage() {
                     onClick={() => toggleTheme("light")}
                     className={`group rounded-xl border p-4 text-left transition-all duration-200 cursor-pointer ${
                       !isDark
-                        ? "border-foreground bg-muted/40"
-                        : "border-border/60 bg-transparent hover:border-foreground/30 hover:bg-muted/10"
+                        ? "border-primary bg-primary/5 shadow-sm scale-101"
+                        : "border-border bg-background hover:border-primary/40 hover:bg-accent/40"
                     }`}
                   >
-                    <div className="aspect-video w-full rounded-lg bg-zinc-100 border border-zinc-200 p-2 flex flex-col justify-between mb-3 shadow-inner">
-                      <div className="h-2.5 w-1/3 rounded-full bg-zinc-300" />
+                    <div className="aspect-video w-full rounded-lg bg-orange-50 border border-amber-900/10 p-2 flex flex-col justify-between mb-3 shadow-inner">
+                      <div className="h-2.5 w-1/3 rounded-full bg-amber-900/20" />
                       <div className="space-y-1">
-                        <div className="h-1.5 w-full rounded-full bg-zinc-300/60" />
-                        <div className="h-1.5 w-5/6 rounded-full bg-zinc-300/60" />
+                        <div className="h-1.5 w-full rounded-full bg-amber-900/15" />
+                        <div className="h-1.5 w-5/6 rounded-full bg-amber-900/15" />
                       </div>
                     </div>
-                    <p className="text-xs font-semibold flex items-center gap-2 text-foreground">
-                      <Sun className="h-3.5 w-3.5" /> Scholarly Parchment
+                    <p className="text-sm font-bold flex items-center gap-2 text-amber-950">
+                      <Sun className="h-4 w-4 text-primary" /> Scholarly Parchment
                     </p>
                   </button>
 
@@ -645,19 +646,19 @@ function SettingsPage() {
                     onClick={() => toggleTheme("dark")}
                     className={`group rounded-xl border p-4 text-left transition-all duration-200 cursor-pointer ${
                       isDark
-                        ? "border-foreground bg-muted/40"
-                        : "border-border/60 bg-transparent hover:border-foreground/30 hover:bg-muted/10"
+                        ? "border-primary bg-primary/5 shadow-sm scale-101"
+                        : "border-border bg-background hover:border-primary/40 hover:bg-accent/40"
                     }`}
                   >
                     <div className="aspect-video w-full rounded-lg bg-zinc-900 border border-zinc-800 p-2 flex flex-col justify-between mb-3 shadow-inner">
                       <div className="h-2.5 w-1/3 rounded-full bg-zinc-800" />
                       <div className="space-y-1">
-                        <div className="h-1.5 w-full rounded-full bg-zinc-850" />
-                        <div className="h-1.5 w-5/6 rounded-full bg-zinc-850" />
+                        <div className="h-1.5 w-full rounded-full bg-zinc-800" />
+                        <div className="h-1.5 w-5/6 rounded-full bg-zinc-800" />
                       </div>
                     </div>
-                    <p className="text-xs font-semibold flex items-center gap-2 text-foreground">
-                      <Moon className="h-3.5 w-3.5" /> Charcoal Dark
+                    <p className="text-sm font-bold flex items-center gap-2 text-zinc-100">
+                      <Moon className="h-4 w-4 text-primary" /> Charcoal Dark
                     </p>
                   </button>
                 </div>
@@ -666,10 +667,10 @@ function SettingsPage() {
 
             {/* Plan & Usage Tab */}
             {activeTab === "plan" && (
-              <section className="rounded-2xl border border-border/30 bg-muted/5 p-4 sm:p-6 space-y-6 animate-in-slide">
+              <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">Subscription Plan</h3>
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Subscription Plan</h3>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
@@ -677,16 +678,16 @@ function SettingsPage() {
                 </p>
 
                 {/* Current plan + usage */}
-                <div className="rounded-xl border border-border/30 bg-muted/10 p-4 space-y-3">
+                <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-foreground" />
-                      <span className="font-bold capitalize text-xs text-foreground">{currentPlan} Plan</span>
-                      <span className="rounded-full bg-muted/40 border border-border px-2 py-0.5 font-mono text-[8px] uppercase tracking-wider text-foreground">Active</span>
+                      <Zap className="h-4 w-4 text-primary" />
+                      <span className="font-bold capitalize text-sm text-foreground">{currentPlan} Plan</span>
+                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary">Active</span>
                     </div>
                     {currentPlan !== "school" && (
                       <button type="button" onClick={() => setShowPlans(true)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-background hover:bg-foreground/90 transition-colors cursor-pointer">
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer">
                         <CreditCard className="h-3 w-3" /> Upgrade
                       </button>
                     )}
@@ -694,13 +695,13 @@ function SettingsPage() {
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Daily messages</span>
-                      <span className="font-mono font-bold text-xs">{dailyMessageCount} / {(dailyLimit as number) >= 999999 ? "∞" : dailyLimit}</span>
+                      <span className="font-mono font-bold">{dailyMessageCount} / {(dailyLimit as number) >= 999999 ? "∞" : dailyLimit}</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden border border-border/20">
-                      <div className="h-full rounded-full bg-foreground transition-all duration-700"
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className={`h-full rounded-full transition-all duration-700 ${usagePercentage > 90 ? "bg-red-500" : usagePercentage > 60 ? "bg-amber-500" : "bg-primary"}`}
                         style={{ width: `${usagePercentage}%` }} />
                     </div>
-                    <p className="text-[9px] text-muted-foreground/60">Resets daily at midnight EAT</p>
+                    <p className="text-[10px] text-muted-foreground">Resets daily at midnight EAT</p>
                   </div>
                 </div>
 
@@ -710,15 +711,15 @@ function SettingsPage() {
                     const p = PLANS[pid];
                     const isActive = currentPlan === pid;
                     return (
-                      <div key={pid} className={`rounded-xl border p-4 space-y-3 transition-all ${isActive ? "border-foreground bg-muted/40" : "border-border/60 bg-transparent"}`}>
+                      <div key={pid} className={`rounded-xl border p-4 space-y-3 transition-all ${isActive ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"}`}>
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-bold text-xs text-foreground">{p.label}</p>
-                            <p className="font-mono text-[9px] text-muted-foreground/60 mt-0.5">
+                            <p className="font-bold text-sm text-foreground">{p.label}</p>
+                            <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
                               {p.price === 0 ? "Free" : `KSh ${p.price.toLocaleString()}/mo`}
                             </p>
                           </div>
-                          {isActive && <span className="rounded-full bg-foreground px-2 py-0.5 font-mono text-[8px] font-bold uppercase text-background">Current</span>}
+                          {isActive && <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-primary-foreground">Current</span>}
                         </div>
                         <ul className="space-y-1">
                           {[
@@ -727,15 +728,15 @@ function SettingsPage() {
                             `${p.dailyPlanners} planners/day`,
                             `${p.dailyNotes} note uploads/day`,
                           ].map((feat) => (
-                            <li key={feat} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                              <span className="w-1 h-1 rounded-full bg-foreground/60 flex-shrink-0" />
+                            <li key={feat} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                              <span className="w-1 h-1 rounded-full bg-primary/60 flex-shrink-0" />
                               {feat}
                             </li>
                           ))}
                         </ul>
                         {!isActive && pid !== "free" && (
                           <button type="button" onClick={() => setShowPlans(true)}
-                            className="w-full rounded-lg border border-border bg-muted/20 px-3 py-1.5 text-[9px] font-bold text-foreground hover:bg-muted/40 transition-colors">
+                            className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary hover:bg-primary/10 transition-colors">
                             Select Plan
                           </button>
                         )}
@@ -748,39 +749,39 @@ function SettingsPage() {
 
             {/* Consent & Security Tab */}
             {activeTab === "consent" && (
-              <section className="rounded-2xl border border-border/30 bg-muted/5 p-4 sm:p-6 space-y-6 animate-in-slide">
+              <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
-                  <Shield className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">Consent & Security</h3>
+                  <Shield className="h-5 w-5 text-primary" />
+                  <h3 className="font-serif text-xl font-bold text-foreground text-center sm:text-left">Consent & Security</h3>
                 </div>
 
                 <div className="space-y-5">
                   {/* AI Disclaimer Consent */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/10 border border-border/20 p-4 rounded-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-background/50 border border-border/20 p-4 rounded-xl">
                     <div className="space-y-1">
-                      <p className="text-xs font-semibold flex items-center gap-2 text-foreground">
-                        <AlertTriangle className="h-4 w-4 text-foreground" /> AI Disclaimer Agreement
+                      <p className="text-sm font-bold flex items-center gap-2 text-foreground">
+                        <AlertTriangle className="h-4 w-4 text-amber-500" /> AI Disclaimer Agreement
                       </p>
-                      <p className="text-[11px] text-muted-foreground leading-normal max-w-md">
+                      <p className="text-xs text-muted-foreground leading-normal max-w-md">
                         Acknowledgment of AI safety rules, limitations, and guidelines for ethical learning assistance.
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       {disclaimerAccepted ? (
                         <>
-                          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2.5 py-0.5 font-mono text-[8px] uppercase tracking-wider text-foreground">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-emerald-700">
                             <CheckCircle className="h-3 w-3" /> Accepted
                           </span>
                           <button
                             onClick={handleDisclaimerRevoke}
                             type="button"
-                            className="rounded-lg border border-border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider hover:bg-muted/40 transition-colors cursor-pointer text-foreground"
+                            className="rounded-lg border border-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider hover:bg-accent hover:text-destructive transition-colors cursor-pointer"
                           >
                             Revoke
                           </button>
                         </>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/20 px-2.5 py-0.5 font-mono text-[8px] uppercase tracking-wider text-muted-foreground">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-amber-700">
                           Pending Read
                         </span>
                       )}
@@ -788,52 +789,52 @@ function SettingsPage() {
                   </div>
 
                   {/* Cookie Consent */}
-                  <div className="flex items-center justify-between bg-muted/10 border border-border/20 p-4 rounded-xl">
+                  <div className="flex items-center justify-between bg-background/50 border border-border/20 p-4 rounded-xl">
                     <div className="space-y-1">
-                      <p className="text-xs font-semibold flex items-center gap-2 text-foreground">
-                        <Cookie className="h-4 w-4 text-foreground" /> Cookie Storage Consent
+                      <p className="text-sm font-bold flex items-center gap-2 text-foreground">
+                        <Cookie className="h-4 w-4 text-primary" /> Cookie Storage Consent
                       </p>
-                      <p className="text-[11px] text-muted-foreground leading-normal max-w-md">
+                      <p className="text-xs text-muted-foreground leading-normal max-w-md">
                         Required to save session details and client application state locally.
                       </p>
                     </div>
                     <button
                       onClick={() => toggleConsent("cookie", !cookieConsent)}
                       type="button"
-                      className={`relative inline-flex h-4.5 w-8 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
-                        cookieConsent ? "bg-foreground" : "bg-muted"
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
+                        cookieConsent ? "bg-primary" : "bg-muted"
                       }`}
                       title="Toggle Cookies"
                     >
                       <span
-                        className={`inline-block h-3 w-3 transform rounded-full transition-transform ${
-                          cookieConsent ? "translate-x-4.5 bg-background" : "translate-x-0.5 bg-muted-foreground"
+                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                          cookieConsent ? "translate-x-4.5" : "translate-x-1"
                         }`}
                       />
                     </button>
                   </div>
 
                   {/* Analytics Consent */}
-                  <div className="flex items-center justify-between bg-muted/10 border border-border/20 p-4 rounded-xl">
+                  <div className="flex items-center justify-between bg-background/50 border border-border/20 p-4 rounded-xl">
                     <div className="space-y-1">
-                      <p className="text-xs font-semibold flex items-center gap-2 text-foreground">
-                        <BarChart className="h-4 w-4 text-foreground" /> Usage Analytics Telemetry
+                      <p className="text-sm font-bold flex items-center gap-2 text-foreground">
+                        <BarChart className="h-4 w-4 text-primary" /> Usage Analytics Telemetry
                       </p>
-                      <p className="text-[11px] text-muted-foreground leading-normal max-w-md">
+                      <p className="text-xs text-muted-foreground leading-normal max-w-md">
                         Allow anonymous performance logging to help improve study resources.
                       </p>
                     </div>
                     <button
                       onClick={() => toggleConsent("analytics", !analyticsConsent)}
                       type="button"
-                      className={`relative inline-flex h-4.5 w-8 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
-                        analyticsConsent ? "bg-foreground" : "bg-muted"
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
+                        analyticsConsent ? "bg-primary" : "bg-muted"
                       }`}
                       title="Toggle Analytics"
                     >
                       <span
-                        className={`inline-block h-3 w-3 transform rounded-full transition-transform ${
-                          analyticsConsent ? "translate-x-4.5 bg-background" : "translate-x-0.5 bg-muted-foreground"
+                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                          analyticsConsent ? "translate-x-4.5" : "translate-x-1"
                         }`}
                       />
                     </button>
@@ -841,38 +842,38 @@ function SettingsPage() {
 
                   {/* Policies Section */}
                   <div className="space-y-2.5">
-                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground/60">Review Policies</p>
+                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Review Policies</p>
                     <div className="flex flex-col gap-2">
                       <Link
                         to="/terms"
-                        className="w-full text-left rounded-xl border border-border/60 hover:bg-muted/15 px-4 py-2.5 text-xs font-semibold text-foreground transition-all flex items-center justify-between"
+                        className="w-full text-left rounded-xl border border-border hover:bg-accent px-4 py-3 text-xs font-semibold text-primary transition-all flex items-center justify-between"
                       >
                         <span>Terms of Service Agreement</span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                       </Link>
                       <Link
                         to="/privacy"
-                        className="w-full text-left rounded-xl border border-border/60 hover:bg-muted/15 px-4 py-2.5 text-xs font-semibold text-foreground transition-all flex items-center justify-between"
+                        className="w-full text-left rounded-xl border border-border hover:bg-accent px-4 py-3 text-xs font-semibold text-primary transition-all flex items-center justify-between"
                       >
                         <span>Privacy Policy Commitments</span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                       </Link>
                       <Link
                         to="/cookies"
-                        className="w-full text-left rounded-xl border border-border/60 hover:bg-muted/15 px-4 py-2.5 text-xs font-semibold text-foreground transition-all flex items-center justify-between"
+                        className="w-full text-left rounded-xl border border-border hover:bg-accent px-4 py-3 text-xs font-semibold text-primary transition-all flex items-center justify-between"
                       >
                         <span>Full Cookie Policy Details</span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                       </Link>
                     </div>
                   </div>
 
                   {/* Danger Zone */}
-                  <div className="border border-destructive/20 bg-destructive/5 rounded-xl p-5 space-y-3">
-                    <p className="text-xs font-bold text-destructive flex items-center gap-1.5">
+                  <div className="border border-destructive/40 bg-destructive/5 rounded-xl p-5 space-y-3">
+                    <p className="text-sm font-bold text-destructive flex items-center gap-1.5">
                       <Trash2 className="h-4 w-4" /> Danger Zone
                     </p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Permanently delete your account and all associated data. This action cannot be undone.
                     </p>
 
@@ -880,13 +881,13 @@ function SettingsPage() {
                       <button
                         onClick={() => setShowDeleteConfirm(true)}
                         type="button"
-                        className="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-2 rounded-lg border border-destructive/50 px-4 py-2 text-xs font-bold uppercase tracking-wider text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer"
                       >
                         <Trash2 className="h-3.5 w-3.5" /> Delete My Account
                       </button>
                     ) : (
-                      <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 space-y-3">
-                        <p className="text-[11px] font-semibold text-destructive">
+                      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 space-y-3">
+                        <p className="text-xs font-semibold text-destructive">
                           Are you sure? This will permanently delete your account, profile, and all chat history.
                         </p>
                         <div className="flex gap-2">
@@ -894,7 +895,7 @@ function SettingsPage() {
                             onClick={handleDeleteAccount}
                             disabled={deleting}
                             type="button"
-                            className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-xs font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors cursor-pointer"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             {deleting ? "Deleting..." : "Yes, Delete Everything"}
@@ -903,7 +904,7 @@ function SettingsPage() {
                             onClick={() => setShowDeleteConfirm(false)}
                             disabled={deleting}
                             type="button"
-                            className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-muted/40 transition-colors cursor-pointer text-foreground"
+                            className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent transition-colors cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -917,9 +918,8 @@ function SettingsPage() {
           </div>
         </div>
       </div>
-      {showPlans && (
-        <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />
-      )}
+
+      {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
     </>
   );
 }
