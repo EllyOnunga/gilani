@@ -46,12 +46,9 @@ type DashboardData = {
   memberSince: string;
   // Stats
   streak: number;
-  quizzesCompleted: number;
   messagesCount: number;
-  notesCount: number;
   // Content
   revisionTopics: RevisionTopic[];
-  plannerTasks: { subject: string; task: string; duration: string }[];
 };
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
@@ -69,13 +66,10 @@ const loadDashboardData = createServerFn({ method: "GET" })
     const userId = authResult.userId;
     const { localDate } = data;
 
-    // 1. Fetch dashboard data in parallel (profile, quiz attempts, messages, notes, study plans, and streak)
+    // 1. Fetch dashboard data in parallel
     const [
       profileRes,
-      attemptsRes,
       messagesRes,
-      notesRes,
-      planRes,
       streakAndStats,
     ] = await Promise.all([
       supabaseAdmin
@@ -84,84 +78,23 @@ const loadDashboardData = createServerFn({ method: "GET" })
         .eq("id", userId)
         .maybeSingle(),
       supabaseAdmin
-        .from("quiz_attempts")
-        .select("id")
-        .eq("user_id", userId),
-      supabaseAdmin
         .from("messages")
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId),
-      supabaseAdmin
-        .from("notes")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId),
-      supabaseAdmin
-        .from("study_plans")
-        .select("items")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
       import("@/lib/analytics-utils.server").then(({ calculateUserStreakAndStats }) =>
         calculateUserStreakAndStats(userId)
       ),
     ]);
 
     const profile = profileRes.data;
-    const attempts = attemptsRes.data;
-    const quizCount = attempts?.length ?? 0;
     const messagesCount = messagesRes.count;
-    const notesCount = notesRes.count;
-    const plan = planRes.data;
     const { streak } = streakAndStats;
 
-    let plannerTasks: { subject: string; task: string; duration: string }[] = [];
-    let revisionTopics: { subject: string; topic: string }[] = [];
-
-    if (plan && plan.items) {
-      const parsedItems = typeof plan.items === "string" ? JSON.parse(plan.items) : plan.items;
-
-      let allTasks: any[] = [];
-      if (parsedItems && typeof parsedItems === "object" && !Array.isArray(parsedItems)) {
-        if (Array.isArray(parsedItems.items)) {
-          allTasks = parsedItems.items;
-        }
-      } else if (Array.isArray(parsedItems)) {
-        allTasks = parsedItems;
-      }
-
-      // Filter tasks for the user's local date
-      const dateFiltered = allTasks.filter((t: any) => t.date === localDate);
-
-      // Fallback: if no tasks match today, take the first 3 tasks of the plan
-      const displayTasks = dateFiltered.length > 0 ? dateFiltered : allTasks;
-
-      plannerTasks = displayTasks.slice(0, 3).map((item: any) => ({
-        subject: item.subject || "Study Session",
-        task: item.task || "Revision",
-        duration: item.duration || "45 min",
-      }));
-
-      // Extract unique subject+topic pairs
-      const topicSources = dateFiltered.length > 0 ? dateFiltered : allTasks;
-      const seen = new Set<string>();
-      for (const item of topicSources) {
-        const subject = (item.subject || "").trim();
-        const topic = (item.topic || item.subtopic || "").trim();
-        if (!subject) continue;
-        const key = `${subject}||${topic}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          revisionTopics.push({ subject, topic: topic || "General Revision" });
-        }
-      }
-      revisionTopics = revisionTopics.slice(0, 5);
-    }
-
-
-    // Format member since date
     const memberSince = profile?.created_at
-      ? new Date(profile.created_at).toLocaleDateString("en-KE", { month: "long", year: "numeric" })
+      ? new Date(profile.created_at).toLocaleDateString("en-KE", {
+          month: "short",
+          year: "numeric",
+        })
       : "";
 
     return {
@@ -172,11 +105,8 @@ const loadDashboardData = createServerFn({ method: "GET" })
       plan: profile?.plan || "Free",
       memberSince,
       streak,
-      quizzesCompleted: quizCount,
       messagesCount: messagesCount ?? 0,
-      notesCount: notesCount ?? 0,
-      revisionTopics,
-      plannerTasks,
+      revisionTopics: [],
     };
   });
 
@@ -310,21 +240,12 @@ function Dashboard() {
   const isLoading = !data;
 
   const streak = data?.streak ?? 0;
-  const quizzesCompleted = data?.quizzesCompleted ?? 0;
   const messagesCount = data?.messagesCount ?? 0;
-  const notesCount = data?.notesCount ?? 0;
-  const revisionTopics = data?.revisionTopics ?? [];
-  const plannerTasks = data?.plannerTasks ?? [];
 
   const displayName = data?.displayName ?? "";
   const curriculum = data?.curriculum ?? "";
   const plan = data?.plan ?? "";
   const memberSince = data?.memberSince ?? "";
-
-  // Curriculum pill colours
-  const curriculumColor = "bg-muted text-foreground border-border";
-
-  const planColor = "bg-muted text-foreground border-border";
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-10">
