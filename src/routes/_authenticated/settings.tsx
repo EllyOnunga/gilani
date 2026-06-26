@@ -76,14 +76,14 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
   switch (preset) {
     case "socrates":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-700 to-zinc-900 p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-indigo-500 to-indigo-800 p-2 text-white">
           <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" strokeWidth="1" />
           <path d="M12 24h8M16 24V14M13 14h6M11 11h10v3H11z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
     case "curie":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-600 to-zinc-800 p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-teal-500 to-teal-800 p-2 text-white">
           <path d="M11 23h10M13 23v-7a3 3 0 0 1-1-2.5v-3.5h8v3.5a3 3 0 0 1-1 2.5v7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
           <circle cx="16" cy="7" r="1" fill="currentColor" />
           <circle cx="12" cy="15" r="1.2" fill="currentColor" />
@@ -92,7 +92,7 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
       );
     case "galileo":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-800 to-black p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-violet-500 to-violet-900 p-2 text-white">
           <path d="M9 23l7-7M23 9l-7 7M16 16l4 4M21 7l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
           <circle cx="24" cy="16" r="0.8" fill="currentColor" />
           <polygon points="12,7 13,9 15,9 13,10 14,12 12,11 10,12 11,10 9,9 11,9" fill="currentColor" />
@@ -100,14 +100,14 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
       );
     case "lovelace":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-500 to-zinc-700 p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-amber-500 to-amber-700 p-2 text-white">
           <circle cx="16" cy="16" r="5" stroke="currentColor" strokeWidth="1.5" fill="none" />
           <path d="M16 8v3M16 21v3M8 16h3M21 16h3M10.5 10.5l2 2M19.5 19.5l2 2M10.5 19.5l2-2M19.5 10.5l2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
       );
     case "hypatia":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-700 to-zinc-800 p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-rose-500 to-rose-800 p-2 text-white">
           <circle cx="16" cy="16" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" />
           <line x1="16" y1="9" x2="16" y2="23" stroke="currentColor" strokeWidth="1" />
           <line x1="9" y1="16" x2="23" y2="16" stroke="currentColor" strokeWidth="1" />
@@ -116,7 +116,7 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
       );
     case "einstein":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-zinc-900 to-zinc-750 p-2 text-white">
+        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-sky-500 to-sky-800 p-2 text-white">
           <path d="M12 15a4 4 0 0 1 8 0c0 2.5-2 3.5-2 5h-4c0-1.5-2-2.5-2-5zM13 23h6M14 26h4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
           <line x1="16" y1="7" x2="16" y2="9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           <line x1="8" y1="11" x2="10" y2="12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -486,7 +486,7 @@ function SettingsPage() {
                     <button
                       disabled={busy}
                       type="submit"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-background hover:bg-foreground/90 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
                     >
                       <Save className="h-4 w-4" /> {busy ? "Saving..." : "Save Profile"}
                     </button>
@@ -596,7 +596,7 @@ function SettingsPage() {
                     <button
                       disabled={busy}
                       type="submit"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-background hover:bg-foreground/90 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
                     >
                       <Save className="h-4 w-4" /> {busy ? "Saving..." : "Save Preferences"}
                     </button>
@@ -686,7 +686,7 @@ function SettingsPage() {
                     </div>
                     {currentPlan !== "school" && (
                       <button type="button" onClick={() => setShowPlans(true)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-background hover:bg-foreground/90 transition-colors cursor-pointer">
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer">
                         <CreditCard className="h-3 w-3" /> Upgrade
                       </button>
                     )}
