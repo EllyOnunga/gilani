@@ -587,15 +587,15 @@ function AuthedShell() {
       {/* Responsive Aside Navigation Panel */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-sidebar p-4 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden rounded-r-2xl ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } ${collapsed ? "w-64 lg:w-[72px] lg:p-3" : "w-64"
+          } ${collapsed ? "w-64 lg:w-[60px] lg:p-2" : "w-64"
           }`}
       >
         {/* Brand logo, Collapse Toggle & Mobile Close Button */}
-        <div className={`flex items-center mb-6 min-w-0 w-full relative ${collapsed ? "justify-center lg:flex-col lg:gap-2" : "justify-between"}`}>
-          <div className={`flex flex-col items-center justify-center text-center min-w-0 ${collapsed ? "" : "flex-1"}`}>
-            <Logo to="/dashboard" onClick={() => setSidebarOpen(false)} size={collapsed ? "sm" : "md"} className="mx-auto" />
+        <div className="flex items-center justify-between mb-6 min-w-0 w-full relative">
+          <div className={`flex flex-col items-start justify-center min-w-0 ${collapsed ? "lg:items-center lg:mx-auto" : "flex-1"}`}>
+            <Logo to="/dashboard" onClick={() => setSidebarOpen(false)} size={collapsed ? "sm" : "md"} className={collapsed ? "mx-auto" : ""} />
             {!collapsed && (
-              <p className="mt-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 pl-0.5">
                 Ethical Learning
               </p>
             )}
@@ -609,7 +609,7 @@ function AuthedShell() {
           </button>
           <button
             onClick={toggleCollapsed}
-            className={`hidden lg:flex rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground flex-shrink-0 transition-colors ${collapsed ? "" : "absolute right-0 top-1/2 -translate-y-1/2"}`}
+            className={`hidden lg:flex rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground flex-shrink-0 transition-colors ${collapsed ? "mx-auto mt-2" : "absolute right-0 top-1/2 -translate-y-1/2"}`}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -624,7 +624,7 @@ function AuthedShell() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={createNewThread}
-                    className={`flex w-full items-center rounded-lg border border-border text-sm font-semibold text-foreground hover:bg-sidebar-accent transition-colors mb-3 ${collapsed ? "lg:justify-center lg:p-2.5 gap-3 px-3 py-2" : "justify-start gap-3 px-3 py-2"}`}
+                    className={`flex w-full items-center rounded-lg border border-dashed border-border/60 text-sm font-semibold text-foreground hover:bg-muted/40 transition-colors mb-3 ${collapsed ? "lg:justify-center lg:p-2 gap-2 px-3 py-2" : "justify-start gap-2 px-3 py-2"}`}
                   >
                     <Plus className="h-4 w-4 flex-shrink-0" />
                     {!collapsed && "New Chat"}
@@ -640,9 +640,9 @@ function AuthedShell() {
                   <Link
                     to="/dashboard"
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center rounded-lg text-sm font-medium transition-colors border-2 ${collapsed ? "lg:justify-center lg:px-2.5 gap-3 px-3 py-2" : "gap-3 px-3 py-2"} ${path === "/dashboard"
-                        ? "border-transparent bg-sidebar-accent text-foreground font-semibold"
-                        : "border-transparent text-muted-foreground hover:bg-sidebar-accent"
+                    className={`flex items-center rounded-lg text-sm font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"} ${path === "/dashboard"
+                        ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r"
+                        : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
                       }`}
                   >
                     <GraduationCap className="h-4 w-4 flex-shrink-0" />
@@ -665,7 +665,7 @@ function AuthedShell() {
                         toast.info("Please select or create a study session first, then use the Escalate button in the chat.");
                       }
                     }}
-                    className={`flex w-full items-center rounded-lg text-sm font-medium transition-colors border-2 border-transparent text-muted-foreground hover:bg-sidebar-accent hover:text-foreground ${collapsed ? "lg:justify-center lg:px-2.5 gap-3 px-3 py-2" : "gap-3 px-3 py-2"}`}
+                    className={`flex w-full items-center rounded-lg text-sm font-medium transition-colors relative text-muted-foreground hover:bg-muted/20 hover:text-foreground ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"}`}
                   >
                     <ShieldAlert className="h-4 w-4 flex-shrink-0" />
                     <span className={collapsed ? "lg:hidden" : ""}>Escalations</span>
@@ -678,7 +678,7 @@ function AuthedShell() {
               <div className={`mt-4 space-y-4 flex-1 overflow-y-auto min-h-0 ${collapsed ? "hidden lg:hidden" : ""}`}>
                 {threadsLoading ? (
                   <div className="text-xs text-muted-foreground/60 py-2 px-3 flex items-center gap-2 animate-pulse">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground/60" />
                     <span>Loading chats...</span>
                   </div>
                 ) : threads.length === 0 ? (
@@ -699,7 +699,7 @@ function AuthedShell() {
 
                     return (
                       <div key={key} className="space-y-1">
-                        <h4 className="px-2.5 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider">
+                        <h4 className="px-2.5 text-[9px] font-semibold text-muted-foreground/50 uppercase tracking-wider border-b border-border/20 pb-1 mb-2">
                           {label}
                         </h4>
                         <div className="space-y-[2px]">
@@ -716,9 +716,9 @@ function AuthedShell() {
                                 onTouchMove={handleThreadTouchEnd}
                                 onContextMenu={(e) => e.preventDefault()}
                                 style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTapHighlightColor: "transparent" }}
-                                className={`group flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition-all relative select-none ${isCurrent
-                                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-xs"
-                                    : "text-muted-foreground hover:bg-sidebar-accent/40 hover:text-foreground"
+                                className={`group flex items-center justify-between rounded-lg px-2.5 py-1 text-xs transition-all relative select-none ${isCurrent
+                                    ? "bg-muted/40 text-foreground font-semibold"
+                                    : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
                                   }`}
                               >
                                 {renamingId === t.id ? (
@@ -731,7 +731,7 @@ function AuthedShell() {
                                       if (e.key === "Enter") { e.preventDefault(); commitRename(t.id); }
                                       if (e.key === "Escape") { e.preventDefault(); setRenamingId(null); }
                                     }}
-                                    className="flex-1 min-w-0 bg-transparent border border-primary/40 rounded-md px-1.5 py-0.5 text-xs outline-hidden focus:border-primary"
+                                    className="flex-1 min-w-0 bg-transparent border border-border/40 rounded-md px-1.5 py-0.5 text-xs outline-hidden focus:border-border"
                                     autoFocus
                                   />
                                 ) : (
@@ -756,9 +756,9 @@ function AuthedShell() {
                                   </Link>
                                 )}
                                 {renamingId !== t.id && (
-                                  <div className={`flex items-center flex-shrink-0 transition-opacity ${revealedThreadId === t.id
-                                      ? "gap-1 opacity-100"
-                                      : "gap-0.5 opacity-0 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100"
+                                  <div className={`flex items-center flex-shrink-0 transition-all duration-200 ${revealedThreadId === t.id
+                                      ? "gap-1 opacity-100 scale-100"
+                                      : "gap-0.5 opacity-0 scale-95 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:scale-100 lg:focus-within:opacity-100"
                                     }`}>
                                     <button
                                       onClick={(e) => {
@@ -767,11 +767,11 @@ function AuthedShell() {
                                         startRename(t.id, t.title || "Untitled Chat");
                                         setRevealedThreadId(null);
                                       }}
-                                      className={`flex items-center gap-1 rounded-md hover:bg-sidebar-accent text-muted-foreground/60 hover:text-foreground cursor-pointer ${revealedThreadId === t.id ? "px-2 py-1 text-[11px] font-semibold" : "p-1"
+                                      className={`flex items-center gap-1 rounded-md hover:bg-muted text-muted-foreground/60 hover:text-foreground cursor-pointer ${revealedThreadId === t.id ? "px-2 py-1 text-[11px] font-semibold" : "p-1"
                                         }`}
                                       title="Rename chat"
                                     >
-                                      <Pencil className="h-3.5 w-3.5" />
+                                      <Pencil className="h-3 w-3" />
                                       {revealedThreadId === t.id && <span>Edit</span>}
                                     </button>
                                     <button
@@ -785,7 +785,7 @@ function AuthedShell() {
                                         }`}
                                       title="Delete chat"
                                     >
-                                      <Trash2 className="h-3.5 w-3.5" />
+                                      <Trash2 className="h-3 w-3" />
                                       {revealedThreadId === t.id && <span>Delete</span>}
                                     </button>
                                   </div>
@@ -804,15 +804,15 @@ function AuthedShell() {
 
           {isTeacher && (
             <>
-              <div className="mt-6 px-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <div className="mt-6 px-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 border-b border-border/20 pb-1 mb-2">
                 Teacher
               </div>
               <Link
                 to={"/teacher/escalations" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path.startsWith("/teacher/escalations")
-                    ? "border-transparent bg-sidebar-accent text-foreground font-semibold"
-                    : "border-transparent text-muted-foreground hover:bg-sidebar-accent"
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${path.startsWith("/teacher/escalations")
+                    ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r"
+                    : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
                   }`}
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
@@ -821,15 +821,15 @@ function AuthedShell() {
           )}
           {isAdmin && (
             <>
-              <div className="mt-6 px-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <div className="mt-6 px-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 border-b border-border/20 pb-1 mb-2">
                 Admin
               </div>
               <Link
                 to={"/admin/users" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors border-2 ${path.startsWith("/admin")
-                    ? "border-transparent bg-sidebar-accent text-foreground font-semibold"
-                    : "border-transparent text-muted-foreground hover:bg-sidebar-accent"
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${path.startsWith("/admin")
+                    ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r"
+                    : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
                   }`}
               >
                 <Users className="h-4 w-4" /> Users & Roles
@@ -842,9 +842,9 @@ function AuthedShell() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className={`flex w-full items-center border border-border/20 rounded-xl bg-card/50 shadow-xs min-w-0 hover:bg-sidebar-accent transition-colors cursor-pointer text-left outline-hidden ${collapsed ? "lg:justify-center lg:p-1.5 gap-2 p-2" : "gap-2 p-2"}`}
+                className={`flex w-full items-center rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer text-left outline-hidden ${collapsed ? "lg:justify-center lg:p-1 gap-2 p-2" : "gap-2 p-2"}`}
               >
-                <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-primary/20 bg-background/50 shadow-inner">
+                <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-border bg-background/50 shadow-inner">
                   {avatarUrl ? (
                     avatarUrl.startsWith("preset:") ? (
                       <PresetAvatarSVG preset={avatarUrl.substring(7)} />
@@ -852,13 +852,13 @@ function AuthedShell() {
                       <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                     )
                   ) : (
-                    <span className="font-serif text-[11px] font-bold text-primary">
+                    <span className="font-serif text-[11px] font-bold text-foreground">
                       {(profileName || user?.email || "U").substring(0, 2).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
-                  <p className="truncate text-xs font-bold leading-tight text-foreground" title={profileName || user?.email || ""}>
+                  <p className="truncate text-xs font-semibold leading-tight text-foreground" title={profileName || user?.email || ""}>
                     {profileName || user?.email?.split("@")[0]}
                   </p>
                 </div>
