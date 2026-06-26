@@ -243,7 +243,6 @@ function Dashboard() {
   const messagesCount = data?.messagesCount ?? 0;
 
   const displayName = data?.displayName ?? "";
-  const curriculum = data?.curriculum ?? "";
   const plan = data?.plan ?? "";
   const memberSince = data?.memberSince ?? "";
 
@@ -350,7 +349,7 @@ function Dashboard() {
       <section className="animate-in-slide [animation-delay:40ms]">
         <div className="mb-4">
           <h3 className="font-serif text-lg font-semibold">Today's Learning Insights</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Personalised for your {curriculum} curriculum</p>
+
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[

@@ -136,7 +136,7 @@ function SettingsPage() {
 
   // State Variables
   const [displayName, setDisplayName] = useState("");
-  const [curriculum, setCurriculum] = useState("KCSE");
+
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [tutorTone, setTutorTone] = useState("encouraging");
   const [tutorStyle, setTutorStyle] = useState("socratic");
@@ -173,7 +173,7 @@ function SettingsPage() {
 
         if (data) {
           setDisplayName(data.display_name || "");
-          setCurriculum(data.curriculum || "KCSE");
+
           setAvatarUrl(data.avatar_url || null);
           setDisclaimerAccepted(!!data.disclaimer_accepted);
           setCookieConsent(data.cookie_consent !== false);
@@ -225,7 +225,6 @@ function SettingsPage() {
         .from("profiles")
         .update({
           display_name: displayName.trim(),
-          curriculum,
           avatar_url: avatarUrl,
           tutor_tone: tutorTone,
           tutor_style: tutorStyle,
