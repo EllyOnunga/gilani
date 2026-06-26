@@ -697,7 +697,7 @@ function SettingsPage() {
                       <span className="font-mono font-bold text-xs">{dailyMessageCount} / {(dailyLimit as number) >= 999999 ? "∞" : dailyLimit}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden border border-border/20">
-                      <div className="h-full rounded-full bg-foreground transition-all duration-700"
+                      <div className="h-full rounded-full bg-primary transition-all duration-700"
                         style={{ width: `${usagePercentage}%` }} />
                     </div>
                     <p className="text-[9px] text-muted-foreground/60">Resets daily at midnight EAT</p>
@@ -718,7 +718,7 @@ function SettingsPage() {
                               {p.price === 0 ? "Free" : `KSh ${p.price.toLocaleString()}/mo`}
                             </p>
                           </div>
-                          {isActive && <span className="rounded-full bg-foreground px-2 py-0.5 font-mono text-[8px] font-bold uppercase text-background">Current</span>}
+                          {isActive && <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[8px] font-bold uppercase text-primary-foreground">Current</span>}
                         </div>
                         <ul className="space-y-1">
                           {[
