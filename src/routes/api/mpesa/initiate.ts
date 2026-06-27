@@ -100,7 +100,7 @@ export const Route = createFileRoute("/api/mpesa/initiate")({
         } catch (err: any) {
           console.error("[M-Pesa Initiate]", err?.message);
           return new Response(
-            JSON.stringify({ error: err?.message ?? "Payment initiation failed" }),
+            JSON.stringify({ error: "Payment initiation failed. Please try again." }),
             {
               status: 500,
               headers: { "Content-Type": "application/json" },

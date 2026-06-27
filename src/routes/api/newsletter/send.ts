@@ -81,7 +81,7 @@ export const Route = createFileRoute("/api/newsletter/send")({
         } catch (err: any) {
           console.error("[Newsletter Send]", err?.message);
           return new Response(
-            JSON.stringify({ error: err?.message ?? "Failed to send newsletter" }),
+            JSON.stringify({ error: "Failed to send newsletter. Please try again." }),
             { status: 500, headers: { "Content-Type": "application/json" } },
           );
         }

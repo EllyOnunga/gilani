@@ -10,14 +10,57 @@ export interface RateLimitOptions {
   windowMs: number;
 }
 
+// ── Circuit breaker ────────────────────────────────────────────────────────────
+// Tracks consecutive DB failures. After 3 failures within 30 s, the rate
+// limiter fails CLOSED (denies all requests) rather than open. This prevents
+// a DB outage from disabling rate limiting entirely.
+const _circuitBreaker = {
+  failures: 0,
+  lastFailureAt: 0,
+};
+const CB_THRESHOLD = 3;
+const CB_WINDOW_MS = 30_000;
+const CB_DENY_WINDOW_MS = 60_000; // deny for 60 s after tripping
+
+function circuitOpen(): boolean {
+  const now = Date.now();
+  // Reset failure count if window has passed
+  if (now - _circuitBreaker.lastFailureAt > CB_WINDOW_MS) {
+    _circuitBreaker.failures = 0;
+  }
+  return (
+    _circuitBreaker.failures >= CB_THRESHOLD &&
+    now - _circuitBreaker.lastFailureAt < CB_DENY_WINDOW_MS
+  );
+}
+
+function recordCircuitFailure() {
+  const now = Date.now();
+  if (now - _circuitBreaker.lastFailureAt > CB_WINDOW_MS) {
+    _circuitBreaker.failures = 0;
+  }
+  _circuitBreaker.failures += 1;
+  _circuitBreaker.lastFailureAt = now;
+  console.error(
+    `[RateLimit] Circuit breaker: ${_circuitBreaker.failures}/${CB_THRESHOLD} failures`,
+  );
+}
+
 /**
  * Supabase-backed atomic rate limiter.
  * Returns { allowed, retryAfterMs } so callers can tell users when to retry.
+ * Fails CLOSED (denies requests) when the DB is repeatedly unreachable.
  */
 export async function checkRateLimit(
   key: string,
   opts: RateLimitOptions,
 ): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  // If the circuit is tripped, deny all requests until the DB recovers
+  if (circuitOpen()) {
+    console.error("[RateLimit] Circuit breaker OPEN — denying request for key:", key);
+    return { allowed: false, retryAfterMs: 30_000 };
+  }
+
   const now = new Date();
   const resetAt = new Date(now.getTime() + opts.windowMs).toISOString();
 
@@ -28,9 +71,14 @@ export async function checkRateLimit(
   });
 
   if (error) {
-    console.error("[RateLimit] DB error, failing open:", error.message);
-    return { allowed: true, retryAfterMs: 0 };
+    recordCircuitFailure();
+    console.error("[RateLimit] DB error — failing CLOSED to protect the system:", error.message);
+    // Fail closed: deny the request rather than allowing unlimited access
+    return { allowed: false, retryAfterMs: 30_000 };
   }
+
+  // Reset circuit breaker on success
+  _circuitBreaker.failures = 0;
 
   if (data === true) return { allowed: true, retryAfterMs: 0 };
 

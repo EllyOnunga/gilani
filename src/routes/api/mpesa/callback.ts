@@ -24,6 +24,18 @@ export const Route = createFileRoute("/api/mpesa/callback")({
             return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
           }
 
+          // Verify Safaricom IP for production deployments (Defense-in-depth)
+          const clientIp =
+            request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "";
+          if (process.env.NODE_ENV === "production" && clientIp) {
+            const cleanIp = clientIp.split(",")[0].trim();
+            const isMpesaIp = /^196\.201\.(212|213|214)\.(20[0-7])$/.test(cleanIp);
+            if (!isMpesaIp) {
+              console.error(`[M-Pesa Callback] Rejected request from unauthorized IP: ${cleanIp}`);
+              return new Response(JSON.stringify({ ResultCode: 1 }), { status: 403 });
+            }
+          }
+
           const body = await request.json().catch(() => ({}));
           const callback = body?.Body?.stkCallback;
 
@@ -42,6 +54,16 @@ export const Route = createFileRoute("/api/mpesa/callback")({
             .maybeSingle();
 
           if (!payment) {
+            return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
+          }
+
+          // ── Idempotency guard ─────────────────────────────────────────────
+          // Safaricom retries failed callbacks. If we already processed this
+          // payment, return 200 immediately without re-applying the plan upgrade.
+          if (payment.status === "completed") {
+            console.warn(
+              `[M-Pesa Callback] Duplicate callback for already-completed payment ${payment.id} — ignoring`,
+            );
             return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
           }
 
