@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useMemo } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { EmptyState } from "./EmptyState";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 type Props = {
   messages: any[];
@@ -21,6 +21,7 @@ type Props = {
   onEscalate?: () => void;
   escalationStatus?: "open" | "in_review" | "resolved" | null;
   escalating?: boolean;
+  chatError?: string | null;
 };
 
 export const MessageList = React.memo(function MessageList({
@@ -40,6 +41,7 @@ export const MessageList = React.memo(function MessageList({
   onEscalate,
   escalationStatus,
   escalating,
+  chatError,
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -272,6 +274,30 @@ export const MessageList = React.memo(function MessageList({
                   aria-hidden="true"
                 />
               ))}
+            </div>
+          </div>
+        )}
+
+        {chatError && !isRateLimited && (
+          <div className="mx-auto my-4 w-full max-w-xl rounded-2xl border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 dark:border-destructive/30 p-4 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive dark:text-red-400 mt-0.5 shrink-0" />
+              <div className="space-y-1">
+                <h4 className="text-xs font-semibold text-destructive dark:text-red-300">
+                  Connection Outage
+                </h4>
+                <p className="text-[11px] text-destructive/80 dark:text-red-400/85 leading-relaxed">
+                  We had trouble receiving the tutor's response. Please check your network
+                  connection or try regenerating the response.
+                </p>
+                <button
+                  onClick={onReload}
+                  className="mt-3 flex items-center gap-1.5 rounded-lg bg-destructive/10 hover:bg-destructive/25 px-3 py-1.5 text-[10px] font-semibold text-destructive dark:text-red-300 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Regenerate Response
+                </button>
+              </div>
             </div>
           </div>
         )}
