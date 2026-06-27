@@ -6,6 +6,7 @@ import {
   Link,
   useRouterState,
   useNavigate,
+  useRouter,
 } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -211,6 +212,18 @@ function AuthedShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { roles, user, loading } = useAuth();
   const navigate = useNavigate();
+  const router = useRouter();
+
+  // Preload critical authenticated routes in the background after boot
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const timer = setTimeout(() => {
+      router.preloadRoute({ to: "/dashboard" }).catch(() => {});
+      router.preloadRoute({ to: "/settings" }).catch(() => {});
+      router.preloadRoute({ to: "/tutor" }).catch(() => {});
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [router]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -898,13 +911,25 @@ function AuthedShell() {
                 </span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => { setSidebarOpen(false); navigate({ to: "/settings" as any }); }}>
-                <Settings className="h-4 w-4" />
-                Settings
+              <DropdownMenuItem asChild>
+                <Link
+                  to="/settings"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex w-full items-center gap-2 cursor-pointer"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setSidebarOpen(false); navigate({ to: "/contact" as any }); }}>
-                <Mail className="h-4 w-4" />
-                Contact
+              <DropdownMenuItem asChild>
+                <Link
+                  to="/contact"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex w-full items-center gap-2 cursor-pointer"
+                >
+                  <Mail className="h-4 w-4" />
+                  <span>Contact</span>
+                </Link>
               </DropdownMenuItem>
               {pwaInstallable && (
                 <DropdownMenuItem

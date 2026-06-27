@@ -84,38 +84,33 @@ function escapeHtml(str: string): string {
 
 // ─── Shared Design Tokens ────────────────────────────────────────────────────
 
+// ─── Shared Design Tokens ────────────────────────────────────────────────────
+
 const BRAND_ORANGE = "#d9531e";
-const BRAND_DARK = "#111111";
-const BG_PAGE = "#f4f4f5";
-const BG_CARD = "#ffffff";
-const TEXT_BODY = "#374151";
-const TEXT_LIGHT = "#9ca3af";
-const BORDER = "#e5e7eb";
+const BG_PAGE = "#0f1117";
+const BG_CARD = "#1a1d27";
+const BORDER = "#2a2d3a";
+const TEXT_BODY = "#9ca3af";
+const TEXT_HEADING = "#f9fafb";
 const APP_URL = process.env.APP_URL || "https://gilaniai.site";
 
 // ─── Shared Header ───────────────────────────────────────────────────────────
 
 function emailHeader(): string {
   return `
-  <!-- Header -->
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr>
-      <td align="center" style="padding:32px 24px 0">
-        <table width="560" cellpadding="0" cellspacing="0" border="0">
-          <tr>
-            <td style="background:${BRAND_DARK};border-radius:12px 12px 0 0;padding:24px 32px;text-align:left">
-              <!-- Logo -->
-              <a href="${APP_URL}" style="text-decoration:none;display:inline-block">
-                <span style="font-size:22px;font-weight:800;color:${BRAND_ORANGE};font-family:Georgia,serif">G</span><span style="font-size:22px;font-weight:800;color:#ffffff;font-family:Georgia,serif">ilaniAI</span>
-              </a>
-              <!-- Tagline -->
-              <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;font-family:system-ui,sans-serif;letter-spacing:0.05em;text-transform:uppercase">Your Curriculum-Aligned AI Study Assistant</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>`;
+  <!-- Logo / Brand -->
+  <tr>
+    <td align="center" style="padding-bottom:32px">
+      <a href="${APP_URL}" style="text-decoration:none;display:inline-block">
+        <p style="margin:0;font-size:22px;font-weight:800;color:${BRAND_ORANGE};letter-spacing:-0.5px;font-family:Georgia,serif">
+          GilaniAI
+        </p>
+      </a>
+      <p style="margin:4px 0 0;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.15em;font-weight:600">
+        Ethical Learning
+      </p>
+    </td>
+  </tr>`;
 }
 
 // ─── Shared Footer ───────────────────────────────────────────────────────────
@@ -123,50 +118,16 @@ function emailHeader(): string {
 function emailFooter(footerNote?: string): string {
   return `
   <!-- Footer -->
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr>
-      <td align="center" style="padding:0 24px 32px">
-        <table width="560" cellpadding="0" cellspacing="0" border="0">
-          <tr>
-            <td style="background:${BRAND_DARK};border-radius:0 0 12px 12px;padding:24px 32px">
-
-              <!-- Nav links -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td align="center" style="padding-bottom:16px">
-                    <a href="${APP_URL}/dashboard" style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Dashboard</a>
-                    <span style="color:#374151">|</span>
-                    <a href="${APP_URL}/tutor"     style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Tutor</a>
-                    <span style="color:#374151">|</span>
-                    <a href="${APP_URL}/contact"   style="color:#9ca3af;font-size:12px;font-family:system-ui,sans-serif;text-decoration:none;margin:0 10px">Contact</a>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Divider -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td style="border-top:1px solid #1f2937;padding-bottom:16px"></td></tr>
-              </table>
-
-              <!-- Footer note -->
-              ${footerNote ? `<p style="margin:0 0 12px;font-size:11px;color:#6b7280;font-family:system-ui,sans-serif;text-align:center;line-height:1.6">${escapeHtml(footerNote)}</p>` : ""}
-
-              <!-- Legal -->
-              <p style="margin:0;font-size:11px;color:#4b5563;font-family:system-ui,sans-serif;text-align:center;line-height:1.8">
-                &copy; ${new Date().getFullYear()} GilaniAI &middot; Nairobi, Kenya
-                <br>
-                <a href="${APP_URL}/privacy" style="color:#6b7280;text-decoration:underline">Privacy Policy</a>
-                &nbsp;&middot;&nbsp;
-                <a href="${APP_URL}/faq"     style="color:#6b7280;text-decoration:underline">Help &amp; FAQ</a>
-                &nbsp;&middot;&nbsp;
-                <a href="mailto:support@gilaniai.site" style="color:#6b7280;text-decoration:underline">Contact Support</a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>`;
+  <tr>
+    <td style="padding-top:28px">
+      ${footerNote ? `<p style="margin:0 0 4px;font-size:11px;color:#4b5563;text-align:center">${escapeHtml(footerNote)}</p>` : ""}
+      <p style="margin:0;font-size:11px;color:#4b5563;text-align:center">
+        &copy; ${new Date().getFullYear()} GilaniAI &middot; Nairobi, Kenya &middot;
+        <a href="${APP_URL}/privacy" style="color:#6b7280;text-decoration:none">Privacy</a> &middot;
+        <a href="${APP_URL}/contact" style="color:#6b7280;text-decoration:none">Contact</a>
+      </p>
+    </td>
+  </tr>`;
 }
 
 // ─── Main Template ───────────────────────────────────────────────────────────
@@ -192,28 +153,27 @@ export function emailTemplate({
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>${heading ? escapeHtml(heading) : "GilaniAI"}</title>
 </head>
-<body style="margin:0;padding:0;background:${BG_PAGE};font-family:system-ui,-apple-system,sans-serif">
-
-  ${emailHeader()}
-
-  <!-- Card body -->
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+<body style="margin:0;padding:0;background-color:${BG_PAGE};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${BG_PAGE};padding:40px 16px">
     <tr>
-      <td align="center" style="padding:0 24px">
-        <table width="560" cellpadding="0" cellspacing="0" border="0">
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px">
+
+          ${emailHeader()}
+
+          <!-- Card -->
           <tr>
-            <td style="background:${BG_CARD};padding:0 32px 32px;border-left:1px solid ${BORDER};border-right:1px solid ${BORDER}">
+            <td style="background:${BG_CARD};border:1px solid ${BORDER};border-radius:16px;padding:36px 32px">
 
               ${alertBanner ? `
               <!-- Alert banner -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
                 <tr>
-                  <td style="background:${alertBanner.color || "#fef3c7"};border-left:4px solid ${alertBanner.color ? "#b45309" : "#d97706"};padding:12px 16px;border-radius:4px;font-size:13px;color:#92400e;font-weight:600">
+                  <td style="background:#1e1a0e;border:1px solid #3d2e00;border-radius:8px;padding:14px 16px;font-size:12px;color:#f59e0b;line-height:1.5">
                     ${escapeHtml(alertBanner.text)}
                   </td>
                 </tr>
@@ -221,44 +181,42 @@ export function emailTemplate({
 
               ${heading ? `
               <!-- Heading -->
-              <h1 style="margin:32px 0 8px;font-size:22px;font-weight:700;color:${BRAND_DARK};line-height:1.3">${escapeHtml(heading)}</h1>
-              <!-- Accent rule -->
-              <table width="40" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px">
-                <tr><td style="height:3px;background:${BRAND_ORANGE};border-radius:2px"></td></tr>
-              </table>` : ""}
+              <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:${TEXT_HEADING};text-align:center;font-family:Georgia,serif">
+                ${escapeHtml(heading)}
+              </p>` : ""}
 
               <!-- Body content -->
-              <div style="font-size:15px;color:${TEXT_BODY};line-height:1.7;margin-bottom:${buttonText ? "28px" : "8px"}">
+              <div style="margin:0 0 28px;font-size:14px;color:${TEXT_BODY};line-height:1.6">
                 ${body}
               </div>
 
               ${buttonText && safeButtonUrl ? `
-              <!-- CTA button -->
-              <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px">
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px">
                 <tr>
-                  <td style="border-radius:8px;background:${BRAND_ORANGE}">
+                  <td align="center">
                     <a href="${safeButtonUrl}"
-                       style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:8px;font-family:system-ui,sans-serif;letter-spacing:0.01em">
-                      ${escapeHtml(buttonText)} &rarr;
+                       style="display:inline-block;background:${BRAND_ORANGE};color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:14px 32px;border-radius:10px;letter-spacing:0.02em">
+                      ${escapeHtml(buttonText)}
                     </a>
                   </td>
                 </tr>
               </table>
               <!-- Fallback URL -->
-              <p style="margin:10px 0 0;font-size:11px;color:${TEXT_LIGHT}">
+              <p style="margin:10px 0 0;font-size:11px;color:#6b7280;text-align:center">
                 Button not working? Copy this link:<br>
                 <a href="${safeButtonUrl}" style="color:${BRAND_ORANGE};word-break:break-all">${safeButtonUrl}</a>
               </p>` : ""}
 
             </td>
           </tr>
+
+          ${emailFooter(footerNote)}
+
         </table>
       </td>
     </tr>
   </table>
-
-  ${emailFooter(footerNote)}
-
 </body>
 </html>`;
 }
@@ -272,41 +230,53 @@ export function emailTemplate({
 export function passwordResetConfirmationEmail(userName?: string): string {
   const name = userName ? escapeHtml(userName) : "there";
   const resetUrl = `${APP_URL}/forgot-password`;
-  const supportUrl = `mailto:support@gilaniai.site?subject=${encodeURIComponent("Unauthorized password reset on my account")}`;
 
   return emailTemplate({
-    heading: "Your Password Was Reset",
-    alertBanner: {
-      text: "🔒 Security Notice — If you did not make this change, act immediately.",
-      color: "#fef3c7",
-    },
+    heading: "Password Changed",
     body: `
-      <p style="margin:0 0 16px">Hi <strong>${name}</strong>,</p>
-      <p style="margin:0 0 16px">Your GilaniAI password was successfully changed. You can now sign in with your new password.</p>
-
-      <!-- Summary card -->
+      <!-- Icon -->
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
         <tr>
-          <td style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px">
-            <p style="margin:0 0 6px;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;font-weight:600">What changed</p>
-            <p style="margin:0;font-size:14px;color:#111111">Account password updated</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#9ca3af">${new Date().toUTCString()}</p>
+          <td align="center">
+            <div style="width:48px;height:48px;background:#16a34a1a;border-radius:50%;display:inline-block;text-align:center;line-height:48px;font-size:22px">
+              ✅
+            </div>
           </td>
         </tr>
       </table>
 
-      <p style="margin:0 0 8px;font-size:13px;color:#6b7280">
-        &check; <strong>This was you?</strong> No action needed &mdash; you&rsquo;re all set.
-      </p>
-      <p style="margin:0;font-size:13px;color:#6b7280">
-        &warning; <strong>Wasn&rsquo;t you?</strong> Your account may be compromised.
-        <a href="${resetUrl}" style="color:${BRAND_ORANGE}">Reset your password</a> immediately and
-        <a href="${supportUrl}" style="color:${BRAND_ORANGE}">contact our support team</a>.
-      </p>
+      <p style="margin:0 0 16px;text-align:center">Hi <strong>${name}</strong>,</p>
+      <p style="margin:0 0 28px;text-align:center;line-height:1.6">The password for your GilaniAI account was successfully updated.</p>
+
+      <!-- Summary card -->
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px">
+        <tr>
+          <td style="background:#0f1117;border:1px solid #2a2d3a;border-radius:10px;padding:16px 18px">
+            <p style="margin:0 0 6px;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.1em;font-weight:600">What changed</p>
+            <p style="margin:0 0 4px;font-size:14px;color:#f9fafb;font-weight:600">Account password updated</p>
+            <p style="margin:0;font-size:11px;color:#6b7280">If this was you, no further action is needed.</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Warning box -->
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="background:#1e1a0e;border:1px solid #3d2e00;border-radius:8px;padding:14px 16px">
+            <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#f59e0b">
+              ⚠️ Didn't make this change?
+            </p>
+            <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.5">
+              Your account may be compromised. Reset your password immediately and contact us at
+              <a href="${resetUrl}" style="color:${BRAND_ORANGE};text-decoration:none">Reset Password</a> or reply to this email.
+            </p>
+          </td>
+        </tr>
+      </table>
     `,
     buttonText: "Sign In to Your Account",
     buttonUrl: `${APP_URL}/login`,
-    footerNote: "You received this because a password reset was completed on your GilaniAI account.",
+    footerNote: "You received this because your GilaniAI account password was recently changed.",
   });
 }
 
@@ -348,45 +318,45 @@ export function mpesaReceiptEmail({
       <!-- Receipt card -->
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
         <tr>
-          <td style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px 24px">
+          <td style="background:#0f1117;border:1px solid #2a2d3a;border-radius:10px;padding:20px 24px">
 
-            <p style="margin:0 0 16px;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;font-weight:600">
+            <p style="margin:0 0 16px;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;font-weight:600">
               Official Receipt
             </p>
 
             <!-- Receipt rows -->
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="font-size:12px;color:#9ca3af;padding-bottom:10px;width:140px">Receipt No.</td>
-                <td style="font-size:13px;color:#111111;font-weight:700;padding-bottom:10px;font-family:monospace,monospace">${escapeHtml(mpesaReceipt)}</td>
+                <td style="font-size:12px;color:#6b7280;padding-bottom:10px;width:140px">Receipt No.</td>
+                <td style="font-size:13px;color:#f9fafb;font-weight:700;padding-bottom:10px;font-family:monospace,monospace">${escapeHtml(mpesaReceipt)}</td>
               </tr>
               <tr>
-                <td style="font-size:12px;color:#9ca3af;padding-bottom:10px">Plan</td>
-                <td style="font-size:13px;color:#111111;font-weight:600;padding-bottom:10px">${escapeHtml(planLabel)}</td>
+                <td style="font-size:12px;color:#6b7280;padding-bottom:10px">Plan</td>
+                <td style="font-size:13px;color:#f9fafb;font-weight:600;padding-bottom:10px">${escapeHtml(planLabel)}</td>
               </tr>
               <tr>
-                <td style="font-size:12px;color:#9ca3af;padding-bottom:10px">Includes</td>
-                <td style="font-size:13px;color:#374151;padding-bottom:10px">${escapeHtml(planDescription)}</td>
+                <td style="font-size:12px;color:#6b7280;padding-bottom:10px">Includes</td>
+                <td style="font-size:13px;color:#9ca3af;padding-bottom:10px">${escapeHtml(planDescription)}</td>
               </tr>
               <tr>
-                <td style="font-size:12px;color:#9ca3af;padding-bottom:10px">Phone</td>
-                <td style="font-size:13px;color:#374151;padding-bottom:10px">${escapeHtml(phone)}</td>
+                <td style="font-size:12px;color:#6b7280;padding-bottom:10px">Phone</td>
+                <td style="font-size:13px;color:#9ca3af;padding-bottom:10px">${escapeHtml(phone)}</td>
               </tr>
               <tr>
-                <td style="font-size:12px;color:#9ca3af;padding-bottom:10px">Date</td>
-                <td style="font-size:13px;color:#374151;padding-bottom:10px">${escapeHtml(now)} (EAT)</td>
+                <td style="font-size:12px;color:#6b7280;padding-bottom:10px">Date</td>
+                <td style="font-size:13px;color:#9ca3af;padding-bottom:10px">${escapeHtml(now)} (EAT)</td>
               </tr>
               <tr>
-                <td style="font-size:12px;color:#9ca3af;padding-bottom:10px">Valid Until</td>
-                <td style="font-size:13px;color:#374151;padding-bottom:10px">${escapeHtml(expiryDate)}</td>
+                <td style="font-size:12px;color:#6b7280;padding-bottom:10px">Valid Until</td>
+                <td style="font-size:13px;color:#9ca3af;padding-bottom:10px">${escapeHtml(expiryDate)}</td>
               </tr>
 
               <!-- Divider -->
-              <tr><td colspan="2" style="border-top:1px solid #e5e7eb;padding:8px 0"></td></tr>
+              <tr><td colspan="2" style="border-top:1px solid #2a2d3a;padding:8px 0"></td></tr>
 
               <!-- Amount row -->
               <tr>
-                <td style="font-size:13px;color:#111111;font-weight:700;padding-top:4px">Total Paid</td>
+                <td style="font-size:13px;color:#f9fafb;font-weight:700;padding-top:4px">Total Paid</td>
                 <td style="font-size:20px;color:${BRAND_ORANGE};font-weight:800;font-family:Georgia,serif;padding-top:4px">
                   KES ${amount.toLocaleString("en-KE")}
                 </td>
