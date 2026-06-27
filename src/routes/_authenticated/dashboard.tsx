@@ -13,6 +13,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { generateText } from "ai";
 import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
+import { PlansModal } from "@/components/PlansModal";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -97,9 +98,9 @@ const loadDashboardData = createServerFn({ method: "GET" })
 
     const memberSince = profile?.created_at
       ? new Date(profile.created_at).toLocaleDateString("en-KE", {
-          month: "short",
-          year: "numeric",
-        })
+        month: "short",
+        year: "numeric",
+      })
       : "";
 
     return {
@@ -296,7 +297,7 @@ function Dashboard() {
             </div>
             {isFree && (
               <button
-                onClick={() => {/* upgrade modal */}}
+                onClick={() => { PlansModal }}
                 className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 <Zap className="h-3 w-3" /> Upgrade Plan
