@@ -85,6 +85,8 @@ function LoginPage() {
         next: safeRedirectPath(search.redirect),
         error: undefined,
         error_description: undefined,
+        code: undefined,
+        type: undefined,
       },
     });
   };
