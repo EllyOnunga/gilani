@@ -18,8 +18,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toaster]:rounded-xl",
             "group-[.toaster]:text-xs group-[.toaster]:font-medium",
             "group-[.toaster]:backdrop-blur-md",
+            "group-[.toaster]:text-center group-[.toaster]:justify-center",
           ].join(" "),
-          description: ["group-[.toast]:text-[#9ca3af]", "group-[.toast]:text-[11px]"].join(" "),
+          title: "group-[.toast]:text-center group-[.toast]:w-full",
+          description: [
+            "group-[.toast]:text-[#9ca3af]",
+            "group-[.toast]:text-[11px]",
+            "group-[.toast]:text-center",
+          ].join(" "),
           // ── Success ─────────────────────────────
           success: [
             "group-[.toaster]:!bg-[#0f2818]",
