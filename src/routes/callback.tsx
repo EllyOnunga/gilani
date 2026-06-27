@@ -10,6 +10,8 @@ export const Route = createFileRoute("/callback")({
     next: (search.next as string) || "/dashboard",
     error: (search.error as string) || undefined,
     error_description: (search.error_description as string) || undefined,
+    code: (search.code as string) || undefined,
+    type: (search.type as string) || undefined,
   }),
 });
 
@@ -37,11 +39,28 @@ function AuthCallback() {
     }
 
     const handleCallback = async () => {
-      // Handle email confirmation / recovery links with token_hash
       const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("code");
       const tokenHash = urlParams.get("token_hash");
       const type = urlParams.get("type") as "email" | "recovery" | null;
 
+      // PKCE flow — exchange code for session
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          setIsError(true);
+          setErrorMessage(exchangeError.message || "The link is invalid or has expired.");
+          return;
+        }
+        // If this was a recovery flow, redirect to reset password
+        if (type === "recovery") {
+          navigate({ to: "/reset-password" });
+          return;
+        }
+        // Fall through to get session below
+      }
+
+      // Legacy token_hash flow fallback
       if (tokenHash && type) {
         const { error: verifyError } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
