@@ -244,7 +244,7 @@ export const MessageList = React.memo(function MessageList({
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
-                  animation: "thinking-converge 1.8s ease-in-out infinite",
+                  animation: "thinking-converge 0.9s ease-in-out infinite",
                   fontWeight: 500,
                   letterSpacing: "0.01em",
                 }}
