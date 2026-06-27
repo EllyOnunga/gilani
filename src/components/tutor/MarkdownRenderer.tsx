@@ -624,8 +624,29 @@ const markdownComponents: any = {
     const lang = (child?.props?.className || "").replace("language-", "");
     if (!lang || ["math", "latex", "tex", "math-inline", "chemistry", "chem"].includes(lang))
       return <>{children}</>;
+    const code = typeof child?.props?.children === "string" ? child.props.children : "";
+    const [copied, setCopied] = React.useState(false);
+    const handleCopy = () => {
+      navigator.clipboard.writeText(code).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    };
     return (
-      <pre className="my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner">{children}</pre>
+      <div className="relative my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner group">
+        <div className="flex items-center justify-between px-4 py-1.5 bg-white/5 border-b border-white/10">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+            {lang}
+          </span>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-white/40 hover:text-white/80 transition-colors"
+          >
+            {copied ? "✓ Copied" : "Copy"}
+          </button>
+        </div>
+        <pre className="overflow-x-auto p-4">{children}</pre>
+      </div>
     );
   },
   hr: () => <hr className="my-3 border-border/60" />,
