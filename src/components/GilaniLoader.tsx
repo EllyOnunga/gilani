@@ -1,53 +1,46 @@
 import { useEffect, useState } from "react";
 
 export function GilaniLoader({ fullScreen = true }: { fullScreen?: boolean } = {}) {
-  const [letterCount, setLetterCount] = useState(0);
-  const WORD = "GilaniAI";
+  const [phase, setPhase] = useState(0); // 0: line grows, 1: pause, 2: shrink, 3: reset
 
   useEffect(() => {
-    if (letterCount < WORD.length) {
-      const t = setTimeout(() => setLetterCount((c) => c + 1), 55);
-      return () => clearTimeout(t);
-    }
-    // Loop: brief pause once fully typed, then restart the typing animation.
-    const resetTimer = setTimeout(() => setLetterCount(0), 900);
-    return () => clearTimeout(resetTimer);
-  }, [letterCount]);
+    const durations = [900, 400, 300, 300];
+    const t = setTimeout(() => setPhase((p) => (p + 1) % 4), durations[phase]);
+    return () => clearTimeout(t);
+  }, [phase]);
 
-  const done = letterCount >= WORD.length;
+  const lineWidth = phase === 0 ? "100%" : phase === 1 ? "100%" : "0%";
+  const opacity = phase === 3 ? 0 : 1;
 
   return (
     <div
-      className={`flex flex-col items-center justify-center bg-background select-none ${fullScreen ? "min-h-screen" : "py-12 sm:py-16"}`}
+      className={`flex flex-col items-center justify-center bg-background select-none gap-6 ${fullScreen ? "min-h-screen" : "py-12 sm:py-16"}`}
     >
-      <div className="flex items-baseline">
-        {WORD.split("").map((letter, i) => (
-          <span
-            key={i}
-            className="font-serif font-black text-3xl sm:text-4xl text-primary"
-            style={{
-              opacity: i < letterCount ? 1 : 0,
-              transform: i < letterCount ? "translateY(0)" : "translateY(6px)",
-              transition: "opacity 0.3s ease, transform 0.3s ease",
-            }}
-          >
-            {letter}
-          </span>
-        ))}
-        <span className="flex items-center ml-1.5 gap-1">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="h-1.5 w-1.5 rounded-full bg-primary"
-              style={{
-                opacity: done ? 1 : 0,
-                transition: "opacity 0.3s ease",
-                transitionDelay: done ? `${i * 150}ms` : "0ms",
-                animation: done ? `bounce 1.2s ease-in-out ${i * 0.2}s infinite` : "none",
-              }}
-            />
-          ))}
+      <div
+        style={{ opacity, transition: "opacity 0.3s ease" }}
+        className="flex items-baseline gap-px"
+      >
+        <span className="font-serif font-black text-3xl sm:text-4xl tracking-tight text-foreground">
+          Gilani
         </span>
+        <span className="font-serif font-black text-3xl sm:text-4xl tracking-tight text-primary">
+          AI
+        </span>
+      </div>
+
+      <div className="w-24 h-px bg-border overflow-hidden rounded-full">
+        <div
+          className="h-full bg-primary rounded-full"
+          style={{
+            width: lineWidth,
+            transition:
+              phase === 0
+                ? "width 0.9s cubic-bezier(0.4,0,0.2,1)"
+                : phase === 2
+                  ? "width 0.3s ease-in"
+                  : "none",
+          }}
+        />
       </div>
     </div>
   );
