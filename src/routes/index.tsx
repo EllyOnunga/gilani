@@ -253,7 +253,7 @@ function Landing() {
                   </Link>
                   <Link
                     to="/about"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3.5 text-sm font-bold uppercase tracking-wider hover:bg-accent transition-all"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-transparent px-6 py-3.5 text-sm font-bold uppercase tracking-wider hover:bg-muted/50 transition-all"
                   >
                     How it works
                   </Link>
@@ -271,7 +271,7 @@ function Landing() {
 
               {/* Right — chat mockup */}
               <div className="lg:col-span-5 animate-in-slide [animation-delay:100ms] w-full max-w-sm mx-auto lg:max-w-none">
-                <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xl ring-1 ring-border/20 space-y-3">
+                <div className="rounded-2xl border border-border/60 bg-muted/30 p-5 shadow-xl ring-1 ring-border/20 space-y-3">
                   <div className="flex items-center gap-2 pb-3 border-b border-border/50">
                     <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                     <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -343,14 +343,14 @@ function Landing() {
 
         {/* ── Features ── */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
-          <div className="text-center mb-12">
+          <div className="mb-12">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               What you get
             </p>
             <h2 className="font-serif text-3xl sm:text-5xl font-black">
               Everything you need to excel
             </h2>
-            <p className="mt-3 text-sm text-muted-foreground max-w-xl mx-auto">
+            <p className="mt-3 text-sm text-muted-foreground max-w-xl">
               Focused, powerful tools — no bloat. Just the AI tutoring and human expertise you need
               to improve.
             </p>
@@ -359,7 +359,7 @@ function Landing() {
             {FEATURES.map(({ icon: Icon, title, description, color, iconColor, badge }) => (
               <div
                 key={title}
-                className="relative rounded-2xl border border-border bg-card p-7 hover:border-primary/40 hover:shadow-md transition-all group border-l-2 border-l-primary"
+                className="relative rounded-2xl border border-border bg-muted/30 p-7 hover:border-primary/40 hover:shadow-md transition-all group border-l-2 border-l-primary"
               >
                 {badge && (
                   <span className="absolute top-4 right-4 rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary font-bold">
@@ -381,7 +381,7 @@ function Landing() {
         {/* ── How It Works ── */}
         <section className="bg-muted/30 border-y border-border/50">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
-            <div className="text-center mb-12">
+            <div className="mb-12">
               <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
                 Simple process
               </p>
@@ -424,7 +424,7 @@ function Landing() {
 
         {/* ── Testimonials ── */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
-          <div className="text-center mb-12">
+          <div className="mb-12">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               Student stories
             </p>
@@ -436,7 +436,7 @@ function Landing() {
             {TESTIMONIALS.map(({ name, school, avatar, text, stars, subject }) => (
               <div
                 key={name}
-                className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-4"
+                className="rounded-2xl border border-border bg-muted/30 p-6 hover:shadow-md transition-shadow flex flex-col gap-4"
               >
                 <div className="flex items-center gap-1">
                   {Array.from({ length: stars }).map((_, i) => (
@@ -466,12 +466,12 @@ function Landing() {
         {/* ── Pricing ── */}
         <section className="border-y border-border/40 bg-muted/10">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
-            <div className="text-center mb-12">
+            <div className="mb-12">
               <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
                 Fair & Transparent Pricing
               </p>
               <h2 className="font-serif text-3xl sm:text-5xl font-black">Choose your plan</h2>
-              <p className="mt-3 text-sm text-muted-foreground max-w-xl mx-auto">
+              <p className="mt-3 text-sm text-muted-foreground max-w-xl">
                 Upgrade easily using M-Pesa to study with no limits and connect with real teachers.
               </p>
             </div>
@@ -484,8 +484,8 @@ function Landing() {
                     key={plan.id}
                     className={`relative rounded-2xl border flex flex-col justify-between w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] min-w-[220px] max-w-[300px] p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
                       isPremium
-                        ? "border-2 border-primary bg-card/65 backdrop-blur-sm"
-                        : "border-border bg-card"
+                        ? "border-2 border-primary bg-muted/40"
+                        : "border-border bg-muted/30"
                     }`}
                   >
                     {isPremium && (
@@ -559,7 +559,7 @@ function Landing() {
 
         {/* ── FAQ ── */}
         <section className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-20">
-          <div className="text-center mb-10">
+          <div className="mb-10">
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               Got questions?
             </p>
@@ -569,7 +569,7 @@ function Landing() {
           </div>
           <div className="space-y-3">
             {FAQS.map(({ q, a }, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
+              <div key={i} className="rounded-xl border border-border bg-muted/20 overflow-hidden">
                 <button
                   className="w-full flex items-center justify-between p-5 text-left gap-4"
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -617,7 +617,7 @@ function Landing() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-border bg-card">
+      <footer className="border-t border-border bg-muted/20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center sm:text-left">
           {/* Brand */}
           <div className="flex flex-col items-center sm:items-start gap-4 min-w-[200px]">
