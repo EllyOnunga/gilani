@@ -17,11 +17,11 @@ export const Route = createFileRoute("/terms")({
 
 function TermsPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-[#0f1117] text-[#e2e4f0] flex flex-col overflow-x-hidden">
       <LegalHeader />
       <LegalHero label="Legal" title="Terms of Service" subtitle="Last updated: June 2025" />
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
-        <div className="space-y-8 text-sm leading-relaxed">
+      <main className="flex-grow mx-auto w-full max-w-3xl px-4 sm:px-8 py-10 sm:py-16">
+        <div className="space-y-8">
           <Section title="1. Acceptance of Terms">
             <p>
               By accessing or using GilaniAI ("the Service"), you agree to be bound by these Terms
@@ -94,7 +94,7 @@ function TermsPage() {
           <Section title="8. Subscription and Payments">
             <p>
               Free accounts have usage limits. Paid Scholar subscriptions are billed monthly in
-              Kenyan Shillings (KSh). Subscriptions auto-renew unless cancelled before the renewal
+              Kenyan Shillings (KES). Subscriptions auto-renew unless cancelled before the renewal
               date. Refunds are provided at our discretion within 7 days of a charge if the Service
               has not been materially used.
             </p>
@@ -115,10 +115,8 @@ function TermsPage() {
           <Section title="11. Contact">
             <p>
               For questions about these Terms, contact us at{" "}
-              <a href="mailto:onungaelly@gmail.com" className="text-primary hover:underline">
-                onungaelly@gmail.com
-              </a>{" "}
-              or write to GilaniAI, Nairobi, Kenya.
+              <a href="mailto:support@gilaniai.site">support@gilaniai.site</a> or write to GilaniAI,
+              Nairobi, Kenya.
             </p>
           </Section>
         </div>

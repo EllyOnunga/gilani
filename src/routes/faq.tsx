@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { LegalHeader, LegalFooter } from "@/components/LegalLayout";
 
 export const Route = createFileRoute("/faq")({
@@ -78,7 +78,7 @@ const FAQS = [
       },
       {
         q: "Can I delete my account and data?",
-        a: "Yes. Contact us at onungaelly@gmail.com and we will delete your account and all associated data within 7 business days.",
+        a: "Yes. Contact us at support@gilaniai.site and we will delete your account and all associated data within 7 business days.",
       },
     ],
   },
@@ -91,7 +91,7 @@ const FAQS = [
       },
       {
         q: "Can schools use GilaniAI?",
-        a: "Yes. We welcome partnerships with schools. Contact us at onungaelly@gmail.com to discuss school-wide access and teacher onboarding.",
+        a: "Yes. We welcome partnerships with schools. Contact us at support@gilaniai.site to discuss school-wide access and teacher onboarding.",
       },
       {
         q: "How do teachers get notified of escalations?",
@@ -112,7 +112,7 @@ const FAQS = [
       },
       {
         q: "I'm not receiving the confirmation email. What should I do?",
-        a: "Check your spam or junk folder first. If it's not there, wait 5 minutes and try again. If the problem persists, contact us at onungaelly@gmail.com.",
+        a: "Check your spam or junk folder first. If it's not there, wait 5 minutes and try again. If the problem persists, contact us at support@gilaniai.site.",
       },
       {
         q: "How do I reset my password?",
@@ -126,21 +126,23 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div
-      className={`border rounded-xl overflow-hidden transition-colors ${open ? "border-primary/30 bg-card" : "border-border bg-card"}`}
+      className={`border rounded-2xl overflow-hidden transition-all duration-200 ${
+        open ? "border-[#d9531e]/30 bg-[#1a1d27]" : "border-white/8 bg-[#1a1d27]"
+      }`}
     >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-accent/50 transition-colors gap-4"
+        className="w-full flex items-center justify-between px-5 py-4.5 text-left hover:bg-white/2 transition-colors gap-4"
       >
-        <span className="font-medium text-sm">{q}</span>
+        <span className="font-semibold text-sm text-white">{q}</span>
         {open ? (
-          <ChevronUp className="h-4 w-4 text-primary flex-shrink-0" />
+          <ChevronUp className="h-4 w-4 text-[#d9531e] flex-shrink-0" />
         ) : (
-          <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <ChevronDown className="h-4 w-4 text-[#6b7280] flex-shrink-0" />
         )}
       </button>
       {open && (
-        <div className="px-5 pb-5 pt-1 text-sm text-muted-foreground leading-relaxed border-t border-border bg-muted/20">
+        <div className="px-5 pb-5 pt-3 text-sm text-[#9ca3af] leading-relaxed border-t border-white/6 bg-[#0f1117]/30">
           {a}
         </div>
       )}
@@ -153,37 +155,53 @@ function FAQPage() {
   const filtered = activeCategory ? FAQS.filter((f) => f.category === activeCategory) : FAQS;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-[#0f1117] text-[#e2e4f0] flex flex-col overflow-x-hidden">
       <LegalHeader backTo={"/register" as any} backLabel="Get started" />
 
       {/* Hero */}
-      <div className="border-b border-border bg-sidebar px-4 py-8 sm:py-12 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-primary font-bold mb-4">
-          Support
+      <div className="relative overflow-hidden border-b border-white/5 py-12 sm:py-20 text-center">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,rgba(217,83,30,0.08),transparent_60%)]" />
         </div>
-        <h1 className="font-serif text-2xl sm:text-4xl font-bold">Frequently Asked Questions</h1>
-        <p className="mt-3 text-sm text-muted-foreground max-w-lg mx-auto">
-          Everything you need to know about GilaniAI. Can't find your answer?{" "}
-          <Link to={"/contact" as any} className="text-primary hover:underline">
-            Contact us.
-          </Link>
-        </p>
+        <div className="relative max-w-xl mx-auto px-4 sm:px-6 space-y-4">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#d9531e]/30 bg-[#d9531e]/8 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#d9531e] mb-1">
+            <Sparkles className="h-3.5 w-3.5" />
+            Support Center
+          </div>
+          <h1 className="font-serif text-3xl sm:text-5xl font-black text-white">
+            Frequently Asked Questions
+          </h1>
+          <p className="text-sm text-[#9ca3af] leading-relaxed">
+            Everything you need to know about GilaniAI. Can't find your answer?{" "}
+            <Link to={"/contact" as any} className="text-[#d9531e] font-semibold hover:underline">
+              Contact us.
+            </Link>
+          </p>
+        </div>
       </div>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12">
+      <main className="flex-grow max-w-4xl mx-auto w-full px-4 sm:px-8 py-10 sm:py-16 space-y-10">
         {/* Category filter */}
-        <div className="flex flex-wrap gap-2 mb-8 justify-center">
+        <div className="flex flex-wrap gap-2 justify-center">
           <button
             onClick={() => setActiveCategory(null)}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${!activeCategory ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:text-foreground hover:bg-accent"}`}
+            className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
+              !activeCategory
+                ? "bg-[#d9531e] text-white shadow-md shadow-[#d9531e]/20"
+                : "border border-white/8 text-[#9ca3af] hover:text-white hover:bg-white/4"
+            }`}
           >
-            All
+            All Questions
           </button>
           {FAQS.map(({ category }) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category === activeCategory ? null : category)}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${activeCategory === category ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:text-foreground hover:bg-accent"}`}
+              className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
+                activeCategory === category
+                  ? "bg-[#d9531e] text-white shadow-md shadow-[#d9531e]/20"
+                  : "border border-white/8 text-[#9ca3af] hover:text-white hover:bg-white/4"
+              }`}
             >
               {category}
             </button>
@@ -192,11 +210,11 @@ function FAQPage() {
 
         <div className="space-y-8">
           {filtered.map(({ category, items }) => (
-            <div key={category}>
-              <h2 className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold mb-3">
+            <div key={category} className="space-y-4">
+              <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#d9531e] font-bold">
                 {category}
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {items.map(({ q, a }) => (
                   <FAQItem key={q} q={q} a={a} />
                 ))}
@@ -205,14 +223,15 @@ function FAQPage() {
           ))}
         </div>
 
-        <div className="mt-12 rounded-xl border border-primary/20 bg-primary/5 p-6 text-center">
-          <h3 className="font-serif text-xl font-bold mb-2">Still have questions?</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Our team is happy to help. Reach out and we'll get back to you within 24 hours.
+        <div className="rounded-2xl border border-white/8 bg-[#1a1d27] p-8 text-center space-y-4">
+          <h3 className="font-serif text-xl font-bold text-white">Still have questions?</h3>
+          <p className="text-sm text-[#9ca3af] max-w-md mx-auto">
+            Our support team is happy to help. Reach out and we will get back to you within 24
+            hours.
           </p>
           <Link
             to={"/contact" as any}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#d9531e] px-6 py-3 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#c44819] transition-all shadow-lg shadow-[#d9531e]/25"
           >
             Contact support
           </Link>

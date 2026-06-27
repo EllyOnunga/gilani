@@ -17,11 +17,11 @@ export const Route = createFileRoute("/privacy")({
 
 function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-[#0f1117] text-[#e2e4f0] flex flex-col overflow-x-hidden">
       <LegalHeader />
       <LegalHero label="Legal" title="Privacy Policy" subtitle="Last updated: June 2025" />
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
-        <div className="space-y-8 text-sm leading-relaxed">
+      <main className="flex-grow mx-auto w-full max-w-3xl px-4 sm:px-8 py-10 sm:py-16">
+        <div className="space-y-8">
           <Section title="1. Introduction">
             <p>
               GilaniAI ("we", "our", "us") is committed to protecting your privacy and complying
@@ -125,8 +125,8 @@ function PrivacyPage() {
             <p>
               Under the Kenya Data Protection Act 2019, you have the right to access, correct,
               delete, and port your data. To exercise these rights, email us at{" "}
-              <a href="mailto:onungaelly@gmail.com">onungaelly@gmail.com</a>. We will respond within
-              30 days.
+              <a href="mailto:support@gilaniai.site">support@gilaniai.site</a>. We will respond
+              within 30 days.
             </p>
           </Section>
           <Section title="10. Cookies">
@@ -149,7 +149,7 @@ function PrivacyPage() {
           <Section title="12. Contact">
             <p>
               For privacy questions or data requests, contact us at{" "}
-              <a href="mailto:onungaelly@gmail.com">onungaelly@gmail.com</a> or GilaniAI, Nairobi,
+              <a href="mailto:support@gilaniai.site">support@gilaniai.site</a> or GilaniAI, Nairobi,
               Kenya.
             </p>
           </Section>

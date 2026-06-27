@@ -46,19 +46,19 @@ const COOKIE_TABLE = [
 ];
 
 const TYPE_COLOR: Record<string, string> = {
-  Essential: "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400",
-  Preference: "bg-muted text-muted-foreground",
-  Functional: "bg-muted text-muted-foreground",
-  Analytics: "bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400",
+  Essential: "bg-red-500/10 text-red-400 border border-red-500/20",
+  Preference: "bg-white/4 text-[#9ca3af] border border-white/8",
+  Functional: "bg-white/4 text-[#9ca3af] border border-white/8",
+  Analytics: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
 };
 
 function CookiesPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-[#0f1117] text-[#e2e4f0] flex flex-col overflow-x-hidden">
       <LegalHeader />
       <LegalHero label="Legal" title="Cookie Policy" subtitle="Last updated: June 2025" />
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 sm:px-6 py-12">
-        <div className="space-y-8 text-sm leading-relaxed">
+      <main className="flex-grow mx-auto w-full max-w-3xl px-4 sm:px-8 py-10 sm:py-16">
+        <div className="space-y-8">
           <Section title="1. What Are Cookies?">
             <p>
               Cookies are small text files placed on your device when you visit a website. GilaniAI
@@ -88,14 +88,14 @@ function CookiesPage() {
           </Section>
           <Section title="3. Cookie Details">
             <p>The table below lists the specific cookies GilaniAI currently sets:</p>
-            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mt-3">
-              <table className="w-full min-w-[500px] border-collapse text-[11px]">
+            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mt-3 rounded-2xl border border-white/8 bg-[#1a1d27]">
+              <table className="w-full min-w-[500px] border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-border bg-muted/30">
+                  <tr className="border-b border-white/6 bg-[#0c0e14]/50">
                     {["Cookie", "Type", "Purpose", "Duration", "Opt-out?"].map((h) => (
                       <th
                         key={h}
-                        className="text-left font-mono font-bold p-3 text-muted-foreground uppercase tracking-wider"
+                        className="text-left font-mono font-bold p-4 text-[#6b7280] uppercase tracking-wider"
                       >
                         {h}
                       </th>
@@ -106,21 +106,21 @@ function CookiesPage() {
                   {COOKIE_TABLE.map((row) => (
                     <tr
                       key={row.name}
-                      className="border-b border-border/50 hover:bg-muted/20 transition-colors"
+                      className="border-b border-white/4 last:border-0 hover:bg-white/2 transition-colors"
                     >
-                      <td className="p-3 font-mono text-primary">{row.name}</td>
-                      <td className="p-3">
+                      <td className="p-4 font-mono text-[#d9531e] font-semibold">{row.name}</td>
+                      <td className="p-4">
                         <span
-                          className={`rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${TYPE_COLOR[row.type] ?? "bg-muted text-muted-foreground"}`}
+                          className={`rounded-full px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold ${
+                            TYPE_COLOR[row.type] ?? "bg-white/4 text-[#9ca3af]"
+                          }`}
                         >
                           {row.type}
                         </span>
                       </td>
-                      <td className="p-3 text-muted-foreground">{row.purpose}</td>
-                      <td className="p-3 text-muted-foreground whitespace-nowrap">
-                        {row.duration}
-                      </td>
-                      <td className="p-3 text-muted-foreground">{row.canOpt}</td>
+                      <td className="p-4 text-[#9ca3af]">{row.purpose}</td>
+                      <td className="p-4 text-[#9ca3af] whitespace-nowrap">{row.duration}</td>
+                      <td className="p-4 text-[#9ca3af]">{row.canOpt}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -174,10 +174,7 @@ function CookiesPage() {
           <Section title="9. Contact">
             <p>
               Questions about our use of cookies? Contact us at{" "}
-              <a href="mailto:onungaelly@gmail.com" className="text-primary hover:underline">
-                onungaelly@gmail.com
-              </a>
-              .
+              <a href="mailto:support@gilaniai.site">support@gilaniai.site</a>.
             </p>
           </Section>
         </div>
