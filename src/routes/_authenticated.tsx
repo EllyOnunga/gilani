@@ -608,10 +608,15 @@ function AuthedShell() {
     const reset = () => {
       clearTimeout(timer);
       timer = setTimeout(async () => {
-        sessionStorage.removeItem("__gilani_role");
-        await supabase.auth.signOut();
-        toast.error("You were signed out due to inactivity.");
-        window.location.href = "/login";
+        try {
+          sessionStorage.removeItem("__gilani_role");
+          await supabase.auth.signOut();
+          toast.error("You were signed out due to inactivity.");
+        } catch {
+          // ignore
+        } finally {
+          window.location.href = "/login";
+        }
       }, TIMEOUT_MS);
     };
 
@@ -662,10 +667,15 @@ function AuthedShell() {
   }
 
   const signOut = async () => {
-    sessionStorage.removeItem("__gilani_role");
-    await supabase.auth.signOut();
-    toast.success("Signed out");
-    navigate({ to: "/" });
+    try {
+      sessionStorage.removeItem("__gilani_role");
+      await supabase.auth.signOut();
+      toast.success("Signed out");
+      navigate({ to: "/" });
+    } catch {
+      sessionStorage.removeItem("__gilani_role");
+      navigate({ to: "/" });
+    }
   };
 
   return (
