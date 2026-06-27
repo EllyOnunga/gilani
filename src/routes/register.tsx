@@ -4,9 +4,10 @@ import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, User, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { friendlyError } from "@/lib/async";
+import { PasswordRequirements } from "@/components/auth/PasswordRequirements";
 
 export const Route = createFileRoute("/register")({
   beforeLoad: async () => {
@@ -83,6 +84,12 @@ function RegisterPage() {
       return;
     }
 
+    // Validate password requirements
+    if (password.length < 8 || !/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
+      toast.error("Password does not meet the minimum security requirements.");
+      return;
+    }
+
     setBusy(true);
 
     try {
@@ -102,12 +109,6 @@ function RegisterPage() {
 
     // Persist pending role to local storage for use after redirect/session check
     localStorage.setItem("pending_role", role);
-
-    // 1. Sign up user
-    if (password.length < 8) {
-      setBusy(false);
-      return toast.error("Password must be at least 8 characters.");
-    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -150,37 +151,43 @@ function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen grid place-items-center bg-background px-4 py-8">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-md">
-        <div className="w-full flex items-center justify-between mb-2">
+    <div className="min-h-screen flex items-center justify-center bg-[#0f1117] text-[#e2e4f0] px-4 py-12 relative overflow-hidden">
+      {/* Glow */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_30%,rgba(217,83,30,0.08),transparent_60%)]" />
+      </div>
+
+      <div className="w-full max-w-md rounded-3xl border border-white/8 bg-[#1a1d27] shadow-2xl p-8 sm:p-10 space-y-6">
+        <div className="flex items-center justify-between">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#9ca3af] hover:text-white transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to home
           </Link>
         </div>
-        <Logo to="/" size="md" className="mx-auto" />
-        <h1 className="mt-6 font-serif text-3xl font-bold text-center">Create your account</h1>
-        <p className="mt-1 text-sm text-muted-foreground text-center">
-          Free for students. Powerful tools for teachers.
-        </p>
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
+        <div className="text-center space-y-2">
+          <Logo to="/" size="md" className="mx-auto" />
+          <h1 className="font-serif text-3xl font-black text-white pt-2">Create account</h1>
+          <p className="text-xs text-[#9ca3af]">Free for students. Powerful tools for teachers.</p>
+        </div>
+
+        <form onSubmit={onSubmit} className="space-y-4 pt-2">
           <div>
-            <label className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
+            <label className="font-mono text-[9px] uppercase tracking-widest text-[#6b7280] font-bold mb-2 block">
               I am registering as:
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               {(["student", "teacher"] as const).map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${
+                  className={`rounded-xl border py-3 text-center capitalize transition-all text-xs font-bold ${
                     role === r
-                      ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
-                      : "border-border bg-card text-muted-foreground hover:bg-accent"
+                      ? "border-[#d9531e] bg-[#d9531e]/15 text-[#d9531e] shadow-md shadow-[#d9531e]/10"
+                      : "border-white/8 bg-[#0f1117] text-[#9ca3af] hover:text-white hover:bg-white/4"
                   }`}
                 >
                   {r}
@@ -189,70 +196,87 @@ function RegisterPage() {
             </div>
           </div>
 
-          <input
-            required
-            placeholder="Your name"
-            value={displayName}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={80}
-            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 animate-in-slide"
-          />
-
-          <input
-            type="email"
-            required
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            maxLength={254}
-            className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 animate-in-slide"
-          />
-
-          <div className="relative animate-in-slide">
-            <input
-              type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
-              required
-              minLength={8}
-              placeholder="Password (min 8 chars)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              maxLength={128}
-              className="w-full rounded-md border border-border bg-background px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary/40"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              title={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-[#9ca3af]">Full Name</label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b7280]" />
+              <input
+                required
+                placeholder="e.g. Amina Wanjiku"
+                value={displayName}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={80}
+                className="w-full rounded-xl border border-white/8 bg-[#0f1117] pl-10 pr-4 py-3 text-sm text-white placeholder-[#6b7280] focus:border-[#d9531e]/50 focus:outline-none focus:ring-1 focus:ring-[#d9531e]/50 transition-colors"
+              />
+            </div>
           </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-[#9ca3af]">Email Address</label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b7280]" />
+              <input
+                type="email"
+                required
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                maxLength={254}
+                className="w-full rounded-xl border border-white/8 bg-[#0f1117] pl-10 pr-4 py-3 text-sm text-white placeholder-[#6b7280] focus:border-[#d9531e]/50 focus:outline-none focus:ring-1 focus:ring-[#d9531e]/50 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-[#9ca3af]">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b7280]" />
+              <input
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                placeholder="Create a password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                maxLength={128}
+                className="w-full rounded-xl border border-white/8 bg-[#0f1117] pl-10 pr-10 py-3 text-sm text-white placeholder-[#6b7280] focus:border-[#d9531e]/50 focus:outline-none focus:ring-1 focus:ring-[#d9531e]/50 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-white"
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          <PasswordRequirements password={password} />
 
           <button
             disabled={busy}
-            className="w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 animate-in-slide"
+            className="w-full rounded-xl bg-[#d9531e] py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#c44819] disabled:opacity-50 transition-all shadow-lg shadow-[#d9531e]/25"
           >
-            {busy ? "Creating…" : "Create account"}
+            {busy ? "Creating account…" : "Create account"}
           </button>
         </form>
 
-        <div className="my-4 flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-          <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+        <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest text-[#6b7280]">
+          <div className="h-px flex-1 bg-white/6" /> OR <div className="h-px flex-1 bg-white/6" />
         </div>
 
         <button
           onClick={onGoogle}
-          className="w-full flex items-center justify-center gap-3 rounded-md border border-border bg-white dark:bg-zinc-900 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-sm"
+          className="w-full flex items-center justify-center gap-3 rounded-xl border border-white/8 bg-[#0f1117] py-3.5 text-sm font-semibold text-white hover:bg-white/4 transition-colors"
         >
           <FcGoogle className="h-5 w-5" />
           Continue with Google
         </button>
 
-        <p className="mt-6 text-sm text-muted-foreground text-center">
+        <p className="text-xs text-[#9ca3af] text-center">
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-primary hover:underline">
+          <Link to="/login" className="font-semibold text-[#d9531e] hover:underline">
             Sign in
           </Link>
         </p>
