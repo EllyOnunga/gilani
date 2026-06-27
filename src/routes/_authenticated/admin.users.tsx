@@ -274,6 +274,18 @@ const updateUserPlan = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
   });
 
+
+const resetUserRateLimit = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ userId: z.string() }))
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    await verifyAdmin(request);
+    const { error } = await supabaseAdmin
+      .from("rate_limits")
+      .delete()
+      .like("key", `${data.userId}:%`);
+    if (error) throw new Error(error.message);
+  });
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
@@ -364,6 +376,7 @@ function AdminUsersPage() {
 
   const [planSearch, setPlanSearch] = useState("");
   const [updatingPlan, setUpdatingPlan] = useState<string | null>(null);
+  const [resettingLimit, setResettingLimit] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [updatingMsg, setUpdatingMsg] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -486,6 +499,20 @@ function AdminUsersPage() {
       toast.error(friendlyError(err, "Failed to update plan."));
     } finally {
       setUpdatingPlan(null);
+    }
+  };
+
+
+  const handleResetLimit = async (userId: string) => {
+    if (!confirm("Reset this user's rate limit counters? They will immediately get their full daily quota back.")) return;
+    setResettingLimit(userId);
+    try {
+      await resetUserRateLimit({ data: { userId } });
+      toast.success("Rate limit reset — user can send messages again.");
+    } catch (err: any) {
+      toast.error(friendlyError(err, "Failed to reset rate limit."));
+    } finally {
+      setResettingLimit(null);
     }
   };
 
@@ -1100,14 +1127,20 @@ function AdminUsersPage() {
                         ) : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="px-2 py-2 sm:px-5 sm:py-3">
-                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
-                          <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
-                            className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
-                            {(Object.keys(PLANS) as PlanId[]).map((pid) => (
-                              <option key={pid} value={pid}>{PLANS[pid].label}</option>
-                            ))}
-                          </select>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
+                            <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
+                              className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
+                              {(Object.keys(PLANS) as PlanId[]).map((pid) => (
+                                <option key={pid} value={pid}>{PLANS[pid].label}</option>
+                              ))}
+                            </select>
+                          )}
+                          {resettingLimit === p.id
+                            ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                            : <button onClick={() => handleResetLimit(p.id)} title="Reset rate limit" className="rounded px-1.5 py-0.5 text-[10px] font-mono text-destructive border border-destructive/30 hover:bg-destructive/10 transition-colors">Reset</button>
+                          }
+                        </div>
                       </td>
                     </tr>
                   );
