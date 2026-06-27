@@ -114,7 +114,7 @@ function RegisterPage() {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin + "/callback",
+        emailRedirectTo: window.location.origin + "/callback?type=email&next=/login",
         data: { display_name: displayName, role: role },
       },
     });
