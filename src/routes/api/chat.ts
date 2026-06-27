@@ -333,7 +333,11 @@ ${finalContent}`;
             },
             onFinish: async ({ text: assistantText, providerMetadata, finishReason }) => {
               clearTimeout(streamTimeoutId);
-              console.log(`[API Chat] google finished. Length: ${assistantText.length}. FinishReason: ${finishReason}`);
+              const usage = (providerMetadata as any)?.google?.usageMetadata;
+              const cachedTokens = usage?.cachedContentTokenCount ?? 0;
+              const totalTokens = usage?.totalTokenCount ?? 0;
+              const cacheHit = cachedTokens > 0;
+              console.log(`[API Chat] google finished. Length: ${assistantText.length}. FinishReason: ${finishReason}. Tokens: ${totalTokens} (cached: ${cachedTokens}) Cache: ${cacheHit ? "✅ HIT" : "❌ MISS"}`);;
 
               const safeText = assistantText.trim() || "Sorry, I could not generate a response right now. Please try again.";
               try {
