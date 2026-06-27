@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/")(  {
+export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "GilaniAI — AI Study Assistant for Students" },
@@ -60,7 +60,8 @@ export const Route = createFileRoute("/")(  {
       { name: "twitter:title", content: "GilaniAI — AI Study Assistant" },
       {
         name: "twitter:description",
-        content: "Your AI study assistant. Socratic tutoring and real teacher review — free to start.",
+        content:
+          "Your AI study assistant. Socratic tutoring and real teacher review — free to start.",
       },
       { name: "twitter:image", content: "https://gilaniai.site/icon-512.png" },
     ],
@@ -221,7 +222,6 @@ function Landing() {
 
   return (
     <div className="min-h-screen bg-[#0f1117] text-[#e2e4f0] flex flex-col overflow-x-hidden">
-
       {/* ── Sticky Header ── */}
       <header className="border-b border-white/5 sticky top-0 bg-[#0f1117]/80 backdrop-blur-xl z-30">
         <div className="flex w-full items-center justify-between px-4 sm:px-8 py-3.5 max-w-7xl mx-auto">
@@ -244,7 +244,6 @@ function Landing() {
       </header>
 
       <main className="flex-1">
-
         {/* ── Hero ── */}
         <section className="relative overflow-hidden min-h-[90vh] flex items-center">
           {/* Animated gradient mesh */}
@@ -269,7 +268,6 @@ function Landing() {
 
           <div className="mx-auto max-w-7xl w-full px-4 sm:px-8 py-16 sm:py-24 lg:py-32">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
-
               {/* Left */}
               <div className="lg:col-span-6 text-center lg:text-left space-y-8">
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#d9531e]/30 bg-[#d9531e]/8 px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-[#d9531e]">
@@ -283,7 +281,8 @@ function Landing() {
                     <span
                       className="italic"
                       style={{
-                        background: "linear-gradient(135deg, #d9531e 0%, #f97316 50%, #fbbf24 100%)",
+                        background:
+                          "linear-gradient(135deg, #d9531e 0%, #f97316 50%, #fbbf24 100%)",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
                         backgroundClip: "text",
@@ -440,33 +439,47 @@ function Landing() {
               Everything you need to excel
             </h2>
             <p className="mt-3 text-sm text-[#9ca3af] max-w-xl lg:mx-0 mx-auto">
-              Focused, powerful tools — no bloat. Just the AI tutoring and human expertise you need to improve.
+              Focused, powerful tools — no bloat. Just the AI tutoring and human expertise you need
+              to improve.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {FEATURES.map(({ icon: Icon, title, description, iconBg, iconColor, badge, accentColor, gradient }) => (
-              <div
-                key={title}
-                className={`relative rounded-2xl border border-white/8 bg-gradient-to-br ${gradient} p-7 hover:border-white/16 hover:shadow-xl hover:shadow-black/40 transition-all duration-300 group overflow-hidden border-l-2 ${accentColor}`}
-              >
-                {/* Subtle inner glow on hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/2 to-transparent rounded-2xl" />
+            {FEATURES.map(
+              ({
+                icon: Icon,
+                title,
+                description,
+                iconBg,
+                iconColor,
+                badge,
+                accentColor,
+                gradient,
+              }) => (
+                <div
+                  key={title}
+                  className={`relative rounded-2xl border border-white/8 bg-gradient-to-br ${gradient} p-7 hover:border-white/16 hover:shadow-xl hover:shadow-black/40 transition-all duration-300 group overflow-hidden border-l-2 ${accentColor}`}
+                >
+                  {/* Subtle inner glow on hover */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/2 to-transparent rounded-2xl" />
 
-                {badge && (
-                  <span className="absolute top-4 right-4 rounded-full bg-white/8 border border-white/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[#9ca3af] font-bold">
-                    {badge}
-                  </span>
-                )}
-                <div className={`rounded-xl border ${iconBg} p-3 w-fit mb-5 group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className={`h-5 w-5 ${iconColor}`} />
+                  {badge && (
+                    <span className="absolute top-4 right-4 rounded-full bg-white/8 border border-white/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-[#9ca3af] font-bold">
+                      {badge}
+                    </span>
+                  )}
+                  <div
+                    className={`rounded-xl border ${iconBg} p-3 w-fit mb-5 group-hover:scale-110 transition-transform duration-300`}
+                  >
+                    <Icon className={`h-5 w-5 ${iconColor}`} />
+                  </div>
+                  <h3 className="font-serif text-lg font-bold mb-2.5 text-white group-hover:text-white transition-colors">
+                    {title}
+                  </h3>
+                  <p className="text-sm text-[#9ca3af] leading-relaxed">{description}</p>
                 </div>
-                <h3 className="font-serif text-lg font-bold mb-2.5 text-white group-hover:text-white transition-colors">
-                  {title}
-                </h3>
-                <p className="text-sm text-[#9ca3af] leading-relaxed">{description}</p>
-              </div>
-            ))}
+              ),
+            )}
           </div>
         </section>
 
@@ -642,7 +655,9 @@ function Landing() {
                                     : "text-emerald-500"
                               }`}
                             />
-                            <span className={isPremium ? "text-white/90 font-medium" : ""}>{feat}</span>
+                            <span className={isPremium ? "text-white/90 font-medium" : ""}>
+                              {feat}
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -676,7 +691,10 @@ function Landing() {
           </div>
           <div className="space-y-3">
             {FAQS.map(({ q, a }, i) => (
-              <div key={i} className="rounded-2xl border border-white/8 bg-[#1a1d27] overflow-hidden">
+              <div
+                key={i}
+                className="rounded-2xl border border-white/8 bg-[#1a1d27] overflow-hidden"
+              >
                 <button
                   className="w-full flex items-center justify-between p-5 text-left gap-4 hover:bg-white/2 transition-colors"
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -700,7 +718,8 @@ function Landing() {
 
         {/* ── CTA Banner ── */}
         <section className="mx-auto max-w-7xl px-4 sm:px-8 pb-16 sm:pb-24">
-          <div className="relative overflow-hidden rounded-3xl p-10 sm:p-20 text-center"
+          <div
+            className="relative overflow-hidden rounded-3xl p-10 sm:p-20 text-center"
             style={{
               background: "linear-gradient(135deg, #d9531e 0%, #c44819 40%, #1a1d27 100%)",
             }}
@@ -725,7 +744,8 @@ function Landing() {
                 Ready to ace your exams?
               </h2>
               <p className="text-white/70 text-base max-w-md mx-auto mb-10 leading-relaxed">
-                Join thousands of students using GilaniAI to study smarter, score higher, and build real understanding.
+                Join thousands of students using GilaniAI to study smarter, score higher, and build
+                real understanding.
               </p>
               <Link
                 to="/register"
@@ -745,7 +765,8 @@ function Landing() {
           <div className="flex flex-col items-center sm:items-start gap-4">
             <Logo to="/" size="md" />
             <p className="text-xs text-[#6b7280] leading-relaxed max-w-[220px]">
-              Your AI-powered study assistant. Socratic tutoring and real teacher escalation — all in one place.
+              Your AI-powered study assistant. Socratic tutoring and real teacher escalation — all
+              in one place.
             </p>
             <div className="flex gap-4 text-[#6b7280]">
               {[Facebook, Twitter, Instagram, Github].map((Icon, i) => (
@@ -770,7 +791,10 @@ function Landing() {
                 { label: "Contact us", to: "/contact" },
               ].map(({ label, to }) => (
                 <li key={label}>
-                  <Link to={to as any} className="text-[#9ca3af] hover:text-white transition-colors">
+                  <Link
+                    to={to as any}
+                    className="text-[#9ca3af] hover:text-white transition-colors"
+                  >
                     {label}
                   </Link>
                 </li>
@@ -790,7 +814,10 @@ function Landing() {
                 { label: "Cookie policy", to: "/cookies" },
               ].map(({ label, to }) => (
                 <li key={label}>
-                  <Link to={to as any} className="text-[#9ca3af] hover:text-white transition-colors">
+                  <Link
+                    to={to as any}
+                    className="text-[#9ca3af] hover:text-white transition-colors"
+                  >
                     {label}
                   </Link>
                 </li>
@@ -828,7 +855,7 @@ function Landing() {
             <div className="flex flex-col gap-2 text-xs text-[#6b7280]">
               <p className="flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 text-[#d9531e] flex-shrink-0" />
-                onungaelly@gmail.com
+                support@gilaniai.site
               </p>
               <p className="flex items-center gap-2">
                 <Phone className="h-3.5 w-3.5 text-[#d9531e] flex-shrink-0" />
