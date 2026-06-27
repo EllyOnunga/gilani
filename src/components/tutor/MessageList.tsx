@@ -227,27 +227,33 @@ export const MessageList = React.memo(function MessageList({
           >
             <div className="flex flex-col gap-2.5 px-1 py-3">
               <style dangerouslySetInnerHTML={{ __html: `
-                @keyframes thinking-shimmer {
-                  0% { background-position: 200% center; }
-                  100% { background-position: -200% center; }
+                @keyframes thinking-converge {
+                  0%   { background-position: 0% center; }
+                  100% { background-position: 100% center; }
+                }
+                @keyframes bar-pulse {
+                  0%, 100% { opacity: 0.3; }
+                  50% { opacity: 0.85; }
                 }
               ` }} />
               <span
-                className="text-xs font-medium mb-1 select-none"
+                className="text-xs select-none mb-3 inline-block"
                 style={{
-                  background: "linear-gradient(90deg, var(--muted-foreground,#888) 25%, var(--foreground,#eee) 50%, var(--muted-foreground,#888) 75%)",
-                  backgroundSize: "200% 100%",
+                  background: "linear-gradient(90deg, var(--muted-foreground,#777) 0%, var(--muted-foreground,#777) 30%, rgba(255,255,255,1) 50%, var(--muted-foreground,#777) 65%, var(--muted-foreground,#777) 80%, rgba(255,255,255,1) 92%, var(--muted-foreground,#777) 100%)",
+                  backgroundSize: "400% 100%",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
-                  animation: "thinking-shimmer 2s linear infinite",
+                  animation: "thinking-converge 1.8s ease-in-out infinite",
+                  fontWeight: 500,
+                  letterSpacing: "0.01em",
                 }}
-              >Thinking…</span>
-              {["w-[72%]", "w-[88%]", "w-[55%]"].map((width, i) => (
+              >{"Thinking...   >"}</span>
+              {[["w-[88%]", 0], ["w-[55%]", 120]].map(([width, delay], i) => (
                 <div
                   key={i}
-                  className={`h-3 rounded-full bg-muted animate-pulse ${width}`}
-                  style={{ animationDelay: `${i * 120}ms` }}
+                  className={`h-3 rounded-full bg-muted ${String(width)}`}
+                  style={{ animation: `bar-pulse 1.6s ease-in-out ${delay}ms infinite` }}
                   aria-hidden="true"
                 />
               ))}
