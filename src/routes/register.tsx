@@ -56,7 +56,6 @@ function RegisterPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (submittingRef.current) return;
-    submittingRef.current = true;
 
     // Validate email format
     const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
@@ -94,6 +93,7 @@ function RegisterPage() {
       return;
     }
 
+    submittingRef.current = true;
     setBusy(true);
 
     try {
@@ -136,6 +136,7 @@ function RegisterPage() {
   };
 
   const onGoogle = async () => {
+    submittingRef.current = true;
     setBusy(true);
     localStorage.setItem("pending_role", role);
     const { error } = await supabase.auth.signInWithOAuth({
