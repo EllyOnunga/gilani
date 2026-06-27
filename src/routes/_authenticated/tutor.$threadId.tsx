@@ -254,7 +254,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         if (prev) console.warn("[TutorThread] Safety timeout: forcing messagesLoading off");
         return false;
       });
-    }, 10000);
+    }, 25000);
     return () => clearTimeout(safety);
   }, []);
 
@@ -527,7 +527,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       timeoutId = setTimeout(() => {
         setMessagesLoading(false);
         setMessagesLoadError("Loading timed out.");
-      }, 5000);
+      }, 20000);
     }
 
     try {

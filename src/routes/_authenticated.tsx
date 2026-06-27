@@ -510,6 +510,30 @@ function AuthedShell() {
     return () => document.removeEventListener("mousedown", handler);
   }, [userMenuOpen]);
 
+
+  // ─── 30-minute inactivity logout ─────────────────────────────────────────
+  useEffect(() => {
+    const TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+    let timer: ReturnType<typeof setTimeout>;
+
+    const reset = () => {
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        await supabase.auth.signOut();
+        toast.error('You were signed out due to inactivity.');
+        window.location.href = '/login';
+      }, TIMEOUT_MS);
+    };
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'visibilitychange'];
+    events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
+    reset(); // start timer on mount
+
+    return () => {
+      clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, reset));
+    };
+  }, []);
   const toggleTheme = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
