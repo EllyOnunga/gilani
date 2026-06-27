@@ -143,7 +143,8 @@ export const Route = createFileRoute("/api/chat")({
           };
 
           if (lastMessage?.role === "user" && !isRetry) {
-            const userText = sanitizeUntrustedInput(extractText(lastMessage));
+            const rawText = extractText(lastMessage);
+            const userText = sanitizeUntrustedInput(rawText.slice(0, 10_000));
             await supabaseAdmin.from("messages").insert({
               conversation_id: threadId,
               role: "user",

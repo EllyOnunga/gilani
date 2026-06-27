@@ -41,6 +41,10 @@ export const Route = createFileRoute("/api/newsletter/send")({
             });
           }
 
+          const safeSubject = subject.slice(0, 200);
+          const safeHtml = html.slice(0, 100_000);
+          const safeText = text ? text.slice(0, 50_000) : undefined;
+
           // Get all active subscribers
           const { data: subscribers, error } = await supabaseAdmin
             .from("newsletter_subscribers")
@@ -64,9 +68,9 @@ export const Route = createFileRoute("/api/newsletter/send")({
               batch.map((sub) =>
                 sendTransactionalEmail({
                   to: sub.email,
-                  subject,
-                  html,
-                  text,
+                  subject: safeSubject,
+                  html: safeHtml,
+                  text: safeText,
                   fromName: "GilaniAI",
                 }),
               ),
