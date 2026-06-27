@@ -595,8 +595,8 @@ function Landing() {
         <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-16 sm:pb-24">
           <div className="relative overflow-hidden rounded-2xl bg-foreground p-8 sm:p-16 text-center">
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-white/5 blur-2xl" />
-              <div className="absolute -bottom-20 right-0 h-60 w-60 rounded-full bg-white/5 blur-2xl" />
+              <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-primary/5 blur-2xl" />
+              <div className="absolute -bottom-20 right-0 h-60 w-60 rounded-full bg-primary/5 blur-2xl" />
             </div>
             <Trophy className="mx-auto h-10 w-10 text-background/40 mb-6" />
             <h2 className="font-serif text-3xl sm:text-5xl font-black text-background mb-4">
