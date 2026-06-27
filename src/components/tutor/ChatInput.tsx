@@ -115,7 +115,7 @@ export function ChatInput({
   onUpgrade,
   onStop,
   messagesUsed = 0,
-  messagesMax = 10,
+  messagesMax = undefined,
   inputRef: externalInputRef,
 }: Props) {
   const internalRef = useRef<HTMLTextAreaElement | null>(null);
@@ -148,9 +148,9 @@ export function ChatInput({
   }, [chatError]);
 
   // Warn when approaching limit (80–99%)
-  const usagePct = messagesMax > 0 ? messagesUsed / messagesMax : 0;
-  const isApproachingLimit = !isRateLimited && usagePct >= 0.8 && messagesMax < 999_999;
-  const remaining = Math.max(0, messagesMax - messagesUsed);
+  const usagePct = (messagesMax ?? 0) > 0 ? messagesUsed / (messagesMax ?? 1) : 0;
+  const isApproachingLimit = (messagesMax ?? 999_999) < 999_999 && usagePct >= 0.8 && !isRateLimited;
+  const remaining = Math.max(0, (messagesMax ?? 0) - messagesUsed);
 
   const { secondsLeft, isDaily, maxSeconds, customMessage } = useRateLimitCountdown(isRateLimited ? chatError : null);
   const isDisabled = isPending || parsingFile || isRateLimited;

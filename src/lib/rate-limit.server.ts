@@ -262,7 +262,7 @@ export const getRateLimitStatus = createServerFn({ method: "POST" })
     try {
       authResult = await authenticateRequest(request);
     } catch {
-      return { isRateLimited: false as const, retryAfterMs: 0 as const, isDaily: false as const, messagesUsed: 0, messagesMax: 10, plan: "free" };
+      const freeLimits = getPlanLimits("free"); return { isRateLimited: false as const, retryAfterMs: 0 as const, isDaily: false as const, messagesUsed: 0, messagesMax: freeLimits.dailyMessages, plan: "free" };
     }
     return getPlanRateLimitStatus(authResult.userId, action);
   });
