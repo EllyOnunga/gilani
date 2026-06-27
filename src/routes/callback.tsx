@@ -44,23 +44,7 @@ function AuthCallback() {
       const tokenHash = urlParams.get("token_hash");
       const type = urlParams.get("type") as "email" | "recovery" | null;
 
-      // PKCE flow — exchange code for session
-      if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (exchangeError) {
-          setIsError(true);
-          setErrorMessage(exchangeError.message || "The link is invalid or has expired.");
-          return;
-        }
-        // If this was a recovery flow, redirect to reset password
-        if (type === "recovery") {
-          navigate({ to: "/reset-password" });
-          return;
-        }
-        // Fall through to get session below
-      }
-
-      // Legacy token_hash flow fallback
+      // token_hash flow
       if (tokenHash && type) {
         const { error: verifyError } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
