@@ -801,6 +801,7 @@ function TutorThreadInner({
             messagesLoadError={messagesLoadError}
             isPending={isPending}
             isRateLimited={isRateLimited}
+            chatError={chatError}
             onReload={handleReload}
             onEditRequest={handleEditRequest}
             onDelete={handleDeleteMessage}
