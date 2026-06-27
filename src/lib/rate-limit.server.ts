@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getPlanLimits } from "@/lib/plans";
+import { getPlanLimits, getPlanMinuteLimit } from "@/lib/plans";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
@@ -58,25 +58,25 @@ export async function decrementRateLimit(key: string): Promise<void> {
 // ─── Per-action rate limits ──────────────────────────────────────────────────
 
 /** Chat: 20 messages per minute */
-export const CHAT_RATE_LIMIT: RateLimitOptions      = { max: 20,  windowMs: 60_000 };
+export const CHAT_RATE_LIMIT: RateLimitOptions = { max: 20, windowMs: 60_000 };
 
 /** Chat: 200 messages per day */
-export const CHAT_DAILY_LIMIT: RateLimitOptions     = { max: 200, windowMs: 86_400_000 };
+export const CHAT_DAILY_LIMIT: RateLimitOptions = { max: 200, windowMs: 86_400_000 };
 
 /** Quiz generation: 10 per minute, 50 per day */
-export const QUIZ_RATE_LIMIT: RateLimitOptions      = { max: 10,  windowMs: 60_000 };
-export const QUIZ_DAILY_LIMIT: RateLimitOptions     = { max: 50,  windowMs: 86_400_000 };
+export const QUIZ_RATE_LIMIT: RateLimitOptions = { max: 10, windowMs: 60_000 };
+export const QUIZ_DAILY_LIMIT: RateLimitOptions = { max: 50, windowMs: 86_400_000 };
 
 /** Planner: 10 per minute, 30 per day */
-export const PLANNER_RATE_LIMIT: RateLimitOptions   = { max: 10,  windowMs: 60_000 };
-export const PLANNER_DAILY_LIMIT: RateLimitOptions  = { max: 30,  windowMs: 86_400_000 };
+export const PLANNER_RATE_LIMIT: RateLimitOptions = { max: 10, windowMs: 60_000 };
+export const PLANNER_DAILY_LIMIT: RateLimitOptions = { max: 30, windowMs: 86_400_000 };
 
 /** Notes ingest: 10 per minute, 50 per day */
-export const NOTES_RATE_LIMIT: RateLimitOptions     = { max: 10,  windowMs: 60_000 };
-export const NOTES_DAILY_LIMIT: RateLimitOptions    = { max: 50,  windowMs: 86_400_000 };
+export const NOTES_RATE_LIMIT: RateLimitOptions = { max: 10, windowMs: 60_000 };
+export const NOTES_DAILY_LIMIT: RateLimitOptions = { max: 50, windowMs: 86_400_000 };
 
 /** Legacy alias used by old imports */
-export const AI_RATE_LIMIT: RateLimitOptions        = CHAT_RATE_LIMIT;
+export const AI_RATE_LIMIT: RateLimitOptions = CHAT_RATE_LIMIT;
 
 /**
  * Check both per-minute and daily limits.
@@ -94,7 +94,7 @@ export async function checkDualRateLimit(
   ]);
 
   if (!minute.allowed) return { ...minute, isDaily: false };
-  if (!daily.allowed)  return { ...daily,  isDaily: true  };
+  if (!daily.allowed) return { ...daily, isDaily: true };
   return { allowed: true, retryAfterMs: 0, isDaily: false };
 }
 
@@ -151,20 +151,20 @@ export async function checkPlanRateLimit(
   }
 
   const now = new Date();
-  
+
   // Convert now to EAT (UTC+3)
   const eatOffsetMs = 3 * 60 * 60 * 1000;
   const nowEat = new Date(now.getTime() + eatOffsetMs);
-  
+
   // Find next midnight in EAT
   const nextMidnightEat = new Date(nowEat);
-  nextMidnightEat.setUTCHours(24, 0, 0, 0); 
-  
+  nextMidnightEat.setUTCHours(24, 0, 0, 0);
+
   // The difference in MS is identical regardless of timezone base
   const msUntilMidnight = nextMidnightEat.getTime() - nowEat.getTime();
 
   const minuteLimit: RateLimitOptions = { max: minuteMax, windowMs: 60_000 };
-  const dailyLimit: RateLimitOptions  = { max: dailyMax, windowMs: msUntilMidnight };
+  const dailyLimit: RateLimitOptions = { max: dailyMax, windowMs: msUntilMidnight };
 
   const result = await checkDualRateLimit(userId, action, minuteLimit, dailyLimit);
   return { ...result, plan };
@@ -190,26 +190,15 @@ export async function getPlanRateLimitStatus(
   }
 
   const limits = getPlanLimits(plan);
-  let minuteMax = 20;
-  let dailyMax = 10;
-
+  const planMinute = getPlanMinuteLimit(plan);
+  let minuteMax: number;
+  let dailyMax: number;
   switch (action) {
-    case "chat":
-      minuteMax = plan === "free" ? 5 : plan === "basic" ? 10 : 20;
-      dailyMax = limits.dailyMessages;
-      break;
-    case "quiz":
-      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
-      dailyMax = limits.dailyQuizzes;
-      break;
-    case "planner":
-      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
-      dailyMax = limits.dailyPlanners;
-      break;
-    case "notes":
-      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
-      dailyMax = limits.dailyNotes;
-      break;
+    case "chat": minuteMax = planMinute; dailyMax = limits.dailyMessages; break;
+    case "quiz": minuteMax = Math.max(2, planMinute - 3); dailyMax = limits.dailyQuizzes; break;
+    case "planner": minuteMax = Math.max(2, planMinute - 3); dailyMax = limits.dailyPlanners; break;
+    case "notes": minuteMax = Math.max(2, planMinute - 3); dailyMax = limits.dailyNotes; break;
+    default: minuteMax = planMinute; dailyMax = limits.dailyMessages;
   }
 
   const now = new Date();

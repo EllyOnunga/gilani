@@ -63,6 +63,17 @@ export const PLANS: Record<PlanId, Plan> = {
 export const TOPUP_TOKENS_PER_KES = 1_000;
 export const TOPUP_MIN_KES = 10;
 
+export const PLAN_MINUTE_LIMITS: Record<PlanId, number> = {
+  free:    5,
+  basic:   10,
+  premium: 20,
+  school:  20,
+};
+
+export function getPlanMinuteLimit(plan: string): number {
+  return PLAN_MINUTE_LIMITS[plan as PlanId] ?? PLAN_MINUTE_LIMITS.free;
+}
+
 export function getPlanLimits(plan: string): Plan {
   return PLANS[plan as PlanId] ?? PLANS.free;
 }
