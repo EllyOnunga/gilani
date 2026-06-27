@@ -375,8 +375,6 @@ export function AdminGlobalNotes() {
                 >
                     {uploading ? <><Loader2 className="h-4 w-4 animate-spin" />Processing…</> : <><Upload className="h-4 w-4" />Upload Global Note</>}
                 </button>
-                {uploading && (
-                )}
             </div>
 
             {/* ── Existing global notes ── */}
