@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,12 +21,51 @@ export const Route = createFileRoute("/reset-password")({
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
-  const { user, roles, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [verifyingToken, setVerifyingToken] = useState(true);
+  const [tokenError, setTokenError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  useEffect(() => {
+    const verifyRecoveryToken = async () => {
+      // 1. Check if Supabase sent error in URL fragment or search params
+      const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.replace("#", ""));
+      const urlParams = new URLSearchParams(window.location.search);
+
+      const errorDesc =
+        hashParams.get("error_description") || urlParams.get("error_description");
+      if (errorDesc) {
+        setTokenError(errorDesc.replace(/\+/g, " "));
+        setVerifyingToken(false);
+        return;
+      }
+
+      // 2. Handle token_hash verification directly on reset-password page
+      const tokenHash = urlParams.get("token_hash") || hashParams.get("token_hash");
+      const type = (urlParams.get("type") || hashParams.get("type")) as
+        | "recovery"
+        | "email"
+        | null;
+
+      if (tokenHash && type === "recovery") {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "recovery",
+        });
+        if (error) {
+          setTokenError(error.message || "The password reset link is invalid or has expired.");
+        }
+      }
+      setVerifyingToken(false);
+    };
+
+    verifyRecoveryToken();
+  }, []);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -64,7 +103,7 @@ function ResetPasswordPage() {
     }, 1500);
   };
 
-  if (loading) {
+  if (authLoading || verifyingToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0f1117] text-[#e2e4f0]">
         <p className="text-xs text-[#9ca3af] font-medium">Authenticating reset session…</p>
