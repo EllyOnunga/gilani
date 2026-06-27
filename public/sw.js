@@ -6,7 +6,7 @@
 //  - PWA files (icons, manifest) → cache-first with network fallback
 //  - Everything else → network-only (pass through)
 
-const CACHE_NAME = "gilaniai-v1.0.0";
+const CACHE_NAME = "gilaniai-v1.1.0";
 
 const STATIC_ASSETS = [
   "/favicon.png", // was /favicon.svg

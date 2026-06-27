@@ -1,9 +1,7 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
-
-import { MarkdownRenderer } from "@/components/tutor/MarkdownRenderer";
 
 import { NewsletterSubscribe } from "@/components/NewsletterSubscribe";
 import { supabase } from "@/integrations/supabase/client";

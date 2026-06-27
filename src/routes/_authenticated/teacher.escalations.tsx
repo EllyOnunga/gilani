@@ -1,5 +1,5 @@
 import { GilaniLoader } from "@/components/GilaniLoader";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { createServerFn } from "@tanstack/react-start";
@@ -31,7 +31,9 @@ import { friendlyError } from "@/lib/async";
 import { z } from "zod";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { MarkdownRenderer } from "@/components/tutor/MarkdownRenderer"; // Adjust path as needed
+const MarkdownRenderer = lazy(() =>
+  import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer }))
+);
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -378,14 +380,16 @@ function MessageBubble({ msg }: { msg: any }) {
           }`}
       >
         {/* Use MarkdownRenderer for formatted content */}
-        <MarkdownRenderer
-          content={
-            isTeacherReview
-              ? msg.content.replace(/^👨‍🏫 \*\*Teacher Review:\*\*\n?/, "")
-              : msg.content
-          }
-          className="text-xs"
-        />
+        <Suspense fallback={<span className="text-xs text-muted-foreground">{isTeacherReview ? msg.content.replace(/^👨‍🏫 \*\*Teacher Review:\*\*\n?/, "") : msg.content}</span>}>
+          <MarkdownRenderer
+            content={
+              isTeacherReview
+                ? msg.content.replace(/^👨‍🏫 \*\*Teacher Review:\*\*\n?/, "")
+                : msg.content
+            }
+            className="text-xs"
+          />
+        </Suspense>
       </div>
     </div>
   );
@@ -611,7 +615,9 @@ function EscalationCard({
             {showPreview ? (
               <div className="min-h-[140px] rounded-xl border border-border bg-background px-4 py-3 text-sm leading-relaxed">
                 {answer.trim() ? (
-                  <MarkdownRenderer content={answer} className="text-sm" />
+                  <Suspense fallback={<p className="text-sm text-muted-foreground">{answer}</p>}>
+                    <MarkdownRenderer content={answer} className="text-sm" />
+                  </Suspense>
                 ) : (
                   <p className="text-xs text-muted-foreground italic">
                     Nothing to preview yet. Start writing to see the formatted output.
@@ -998,7 +1004,9 @@ function EscalationsPage() {
                     </div>
                     {esc.detail && (
                       <div className="mt-2 rounded-lg border border-green-200/40 dark:border-green-800/40 bg-background/50 px-3 py-2 text-xs text-foreground leading-relaxed">
-                        <MarkdownRenderer content={esc.detail} className="text-xs" />
+                        <Suspense fallback={<p className="text-xs text-muted-foreground">{esc.detail}</p>}>
+                          <MarkdownRenderer content={esc.detail} className="text-xs" />
+                        </Suspense>
                       </div>
                     )}
                   </div>
