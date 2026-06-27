@@ -216,54 +216,26 @@ export function ChatInput({
         </div>
       )}
 
-      {/* Rate limit banner with countdown */}
+      {/* Rate limit banner */}
       {isRateLimited && (
-        <div className="mb-2.5 rounded-2xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start gap-2.5 px-3.5 py-3">
-            <div className="flex-shrink-0 mt-0.5">
-              {secondsLeft > 0
-                ? <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                : <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-              }
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
-                {isDaily ? "Daily limit reached" : "Slow down a little…"}
-              </p>
-              <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-0.5 font-medium leading-relaxed">
-                {customMessage || (isDaily
-                  ? `You've hit your daily AI message cap.${secondsLeft > 0 ? ` Resets in ${formatTime(secondsLeft)}.` : " Resets at midnight (EAT)."}`
-                  : `You're sending messages too fast. Take a short break.${secondsLeft > 0 ? ` Try again in ${formatTime(secondsLeft)}.` : ""}`)}
-              </p>
-            </div>
-            <div className="flex-shrink-0 flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              {secondsLeft > 0 && (
-                <div className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/20 px-3 py-1.5 text-[11px] font-bold text-amber-900 dark:text-amber-300 tabular-nums border border-amber-500/30">
-                  <Clock className="h-3 w-3" /> {formatTime(secondsLeft)}
-                </div>
-              )}
-              {isDaily && onUpgrade && (
-                <button
-                  onClick={onUpgrade}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200"
-                >
-                  <CreditCard className="h-3 w-3" /> Upgrade
-                </button>
-              )}
-            </div>
-          </div>
-          {/* Progress bar draining down */}
-          {secondsLeft > 0 && (
-            <div className="h-0.5 bg-amber-200/50 dark:bg-amber-800/50">
-              <div
-                className="h-full bg-amber-400 dark:bg-amber-500 transition-all duration-1000 ease-linear"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
+        <div className="mb-2 flex items-center gap-2.5 rounded-xl border border-border/60 bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+          <Clock className="h-3.5 w-3.5 flex-shrink-0 text-foreground/50" />
+          <span className="flex-1">
+            {isDaily
+              ? <>Daily limit reached.{secondsLeft > 0 ? <> Resets in <span className="font-semibold tabular-nums text-foreground">{formatTime(secondsLeft)}</span>.</> : " Resets at midnight (EAT)."}</>
+              : <>Too many messages.{secondsLeft > 0 ? <> Try in <span className="font-semibold tabular-nums text-foreground">{formatTime(secondsLeft)}</span>.</> : ""}</>
+            }
+          </span>
+          {onUpgrade && (
+            <button
+              onClick={onUpgrade}
+              className="flex-shrink-0 rounded-lg bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Upgrade
+            </button>
           )}
         </div>
       )}
-
       {/* General AI/Server Error Banner */}
       {chatError && !isRateLimited && (
         <div className="mb-2.5 rounded-2xl border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 dark:border-destructive/30 backdrop-blur-sm shadow-sm animate-in-slide">
