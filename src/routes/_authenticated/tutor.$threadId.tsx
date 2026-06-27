@@ -23,15 +23,6 @@ const exportAsPDF = async (...args: Parameters<typeof import("@/lib/export-utils
     toast.error("Export failed — try again or use a different browser");
   }
 };
-const exportAsWord = async (...args: Parameters<typeof import("@/lib/export-utils").exportAsWord>) => {
-  try {
-    const { exportAsWord: fn } = await import("@/lib/export-utils");
-    return fn(...args);
-  } catch {
-    const { toast } = await import("sonner");
-    toast.error("Export failed — try again or use a different browser");
-  }
-};
 import { withTimeout, friendlyError } from "@/lib/async";
 import { toast } from "sonner";
 import { ChatHeader } from "@/components/tutor/ChatHeader";
@@ -757,86 +748,83 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     exportAsPDF(messages, title);
   };
 
-  const handleExportWord = async () => {
-    const title = threads.find((t) => t.id === threadId)?.title || "study-session";
-    await exportAsWord(messages, title);
-  };
+return (
+  <div className="flex h-full bg-background text-foreground overflow-hidden">
+    {/* Main chat area */}
+    <main className="flex flex-col min-w-0 overflow-hidden w-full h-full" style={{ flex: 1, minHeight: 0 }}>
+      {/* Chat header */}
+      <ChatHeader
+        title={threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
+        threadId={threadId}
+      />
+      {/* Messages area */}
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <MessageList
+          messages={messages}
+          messagesLoading={messagesLoading}
+          messagesLoadError={messagesLoadError}
+          isPending={isPending}
+          isRateLimited={isRateLimited}
+          onReload={handleReload}
+          onEditRequest={handleEditRequest}
+          onDelete={handleDeleteMessage}
+          onPromptClick={handlePromptClick}
+          userId={userId}
+          userVotes={userVotes}
+          onVote={handleVote}
+          onExportPDF={handleExportPDF}
+          onEscalate={() => setEscalateModalOpen(true)}
+          escalationStatus={escalationStatus}
+          escalating={escalating}
+        />
+      </div>
+      {/* Input area */}
+      <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">
+        <ChatInput
+          input={input}
+          isPending={isPending}
+          parsingFile={parsingFile}
+          attachedFile={attachedFile}
+          chatError={chatError}
+          docUploadError={docUploadError}
+          onClearDocError={() => setDocUploadError(null)}
+          onInputChange={handleInputChange}
+          onSubmit={submit}
+          onStop={stop}
+          onFileChange={handleFileChange}
+          inputRef={chatInputRef}
+          onRemoveFile={() => {
+            setAttachedFile(null);
+            setDocUploadError(null);
+          }}
+          onUpgrade={() => setShowPlans(true)}
+          messagesUsed={messagesUsed}
+          messagesMax={messagesMax}
+        />
+      </div>
+    </main>
+    {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
 
-  return (
-    <div className="flex h-full bg-background text-foreground overflow-hidden">
-      {/* Main chat area */}
-      <main className="flex flex-col min-w-0 overflow-hidden w-full h-full" style={{ flex: 1, minHeight: 0 }}>
-        {/* Chat header */}
-        <ChatHeader
-          title={threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
-          threadId={threadId}
-        />
-        {/* Messages area */}
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <MessageList
-            messages={messages}
-            messagesLoading={messagesLoading}
-            messagesLoadError={messagesLoadError}
-            isPending={isPending}
-            isRateLimited={isRateLimited}
-            onReload={handleReload}
-            onEditRequest={handleEditRequest}
-            onDelete={handleDeleteMessage}
-            onPromptClick={handlePromptClick}
-            userId={userId}
-            userVotes={userVotes}
-            onVote={handleVote}
-            onExportPDF={handleExportPDF}
-            onExportWord={handleExportWord}
-            onEscalate={() => setEscalateModalOpen(true)}
-            escalationStatus={escalationStatus}
-            escalating={escalating}
-          />
-        </div>
-        {/* Input area */}
-        <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">
-          <ChatInput
-            input={input}
-            isPending={isPending}
-            parsingFile={parsingFile}
-            attachedFile={attachedFile}
-            chatError={chatError}
-            docUploadError={docUploadError}
-            onClearDocError={() => setDocUploadError(null)}
-            onInputChange={handleInputChange}
-            onSubmit={submit}
-            onStop={stop}
-            onFileChange={handleFileChange}
-            inputRef={chatInputRef}
-            onRemoveFile={() => {
-              setAttachedFile(null);
-              setDocUploadError(null);
-            }}
-            onUpgrade={() => setShowPlans(true)}
-            messagesUsed={messagesUsed}
-            messagesMax={messagesMax}
-          />
-        </div>
-      </main>
-      {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
-      {/* Escalate Modal */}
-      {escalateModalOpen && (
-        <EscalateModal
-          teacherEmail={teacherEmail}
-          onEmailChange={(val) => {
-            setTeacherEmail(val);
-            setEscalateEmailError("");
-          }}
-          onConfirm={() => handleEscalate(teacherEmail || undefined)}
-          onCancel={() => {
-            setEscalateModalOpen(false);
-            setTeacherEmail("");
-            setEscalateEmailError("");
-          }}
-          isEscalating={escalating}
-          error={escalateEmailError}
-        />
-      )}
-    </div>
-  );
+    {/* Escalate Modal */}
+    {escalateModalOpen && (
+      <EscalateModal
+        teacherEmail={teacherEmail}
+        onEmailChange={(val) => {
+          setTeacherEmail(val);
+          setEscalateEmailError("");
+        }}
+        onConfirm={() => handleEscalate(teacherEmail || undefined)}
+        onCancel={() => {
+          setEscalateModalOpen(false);
+          setTeacherEmail("");
+          setEscalateEmailError("");
+        }}
+        isEscalating={escalating}
+        error={escalateEmailError}
+      />
+    )}
+  </div>
+
+);
+
 }

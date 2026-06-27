@@ -19,7 +19,7 @@ type Props = {
   onDelete?: (messageId: string) => void;
   // Session action props (only shown on last assistant bubble)
   onExportPDF?: () => void;
-  onExportWord?: () => void;
+
   onEscalate?: () => void;
   escalationStatus?: "open" | "in_review" | "resolved" | null;
   escalating?: boolean;
@@ -40,7 +40,6 @@ export const MessageBubble = memo(function MessageBubble({
   onVote,
   onDelete,
   onExportPDF,
-  onExportWord,
   onEscalate,
   escalationStatus,
   escalating,
@@ -160,158 +159,145 @@ export const MessageBubble = memo(function MessageBubble({
       >
         {!isUser ? (
           <>
-          <div className="flex flex-col w-full">
-            {showBubbleCard ? (
-              <div className="prose-ai relative">
-                {/* Use SmoothMarkdownRenderer for word-by-word streaming */}
-                <SmoothMarkdownRenderer
-                  content={displayText}
-                  isStreaming={isStreamActive}
-                  className={
-                    isStreamActive
-                      ? "transition-opacity duration-200 streaming-cursor"
-                      : "transition-opacity duration-200"
-                  }
-                />
-              </div>
-            ) : (
-              !isStreamActive && (
-                <span className="text-xs text-muted-foreground italic mt-1">
-                  No response generated. Please resend your question.
-                </span>
-              )
-            )}
+            <div className="flex flex-col w-full">
+              {showBubbleCard ? (
+                <div className="prose-ai relative">
+                  {/* Use SmoothMarkdownRenderer for word-by-word streaming */}
+                  <SmoothMarkdownRenderer
+                    content={displayText}
+                    isStreaming={isStreamActive}
+                    className={
+                      isStreamActive
+                        ? "transition-opacity duration-200 streaming-cursor"
+                        : "transition-opacity duration-200"
+                    }
+                  />
+                </div>
+              ) : (
+                !isStreamActive && (
+                  <span className="text-xs text-muted-foreground italic mt-1">
+                    No response generated. Please resend your question.
+                  </span>
+                )
+              )}
 
-            {showBubbleCard && !isStreamActive && (
-              <div className="flex items-center gap-1 mt-2 transition-opacity duration-200">
-                {/* Copy */}
-                <button
-                  onClick={handleCopy}
-                  className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded hover:bg-muted"
-                  title="Copy"
-                  aria-label="Copy message"
-                >
-                  {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                </button>
-
-                {/* Retry */}
-                {isLast && (
+              {showBubbleCard && !isStreamActive && (
+                <div className="flex items-center gap-1 mt-2 transition-opacity duration-200">
+                  {/* Copy */}
                   <button
-                    onClick={isRateLimited ? undefined : onReload}
-                    disabled={isRateLimited}
-                    className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2.5 py-1.5 rounded ${isRateLimited
-                      ? "opacity-40 cursor-not-allowed text-muted-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
-                    title={isRateLimited ? "Rate limit reached" : "Retry"}
-                    aria-label="Retry message"
+                    onClick={handleCopy}
+                    className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded hover:bg-muted"
+                    title="Copy"
+                    aria-label="Copy message"
                   >
-                    <RefreshCw className="h-3.5 w-3.5" />
+                    {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
                   </button>
-                )}
 
-                {/* Divider */}
-                <span className="w-px h-3 bg-border/60 mx-0.5" />
-
-                {/* Thumbs up */}
-                <button
-                  onClick={() => handleVote(1)}
-                  disabled={voting}
-                  className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${vote === 1 ? "text-green-500" : "text-muted-foreground hover:text-green-500"
-                    }`}
-                  title="Good response"
-                  aria-label="Vote up"
-                >
-                  <ThumbsUp className="h-3.5 w-3.5" />
-                </button>
-
-                {/* Thumbs down */}
-                <button
-                  onClick={() => handleVote(-1)}
-                  disabled={voting}
-                  className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${vote === -1 ? "text-destructive" : "text-muted-foreground hover:text-destructive"
-                    }`}
-                  title="Bad response"
-                  aria-label="Vote down"
-                >
-                  <ThumbsDown className="h-3.5 w-3.5" />
-                </button>
-
-                {/* Session actions — only on last assistant bubble */}
-                {isLast && (onExportPDF || onExportWord || onEscalate) && (
-                  <>
-                    <span className="w-px h-3 bg-border/60 mx-0.5" />
-
-                    {/* Study Timer */}
+                  {/* Retry */}
+                  {isLast && (
                     <button
-                      onClick={() => setTimerOpen(true)}
-                      className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
-                      title="Study Timer"
-                      aria-label="Open study timer"
+                      onClick={isRateLimited ? undefined : onReload}
+                      disabled={isRateLimited}
+                      className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2.5 py-1.5 rounded ${isRateLimited
+                        ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        }`}
+                      title={isRateLimited ? "Rate limit reached" : "Retry"}
+                      aria-label="Retry message"
                     >
-                      <Timer className="h-3.5 w-3.5" />
+                      <RefreshCw className="h-3.5 w-3.5" />
                     </button>
+                  )}
 
-                    {/* Export PDF */}
-                    {onExportPDF && (
+                  {/* Divider */}
+                  <span className="w-px h-3 bg-border/60 mx-0.5" />
+
+                  {/* Thumbs up */}
+                  <button
+                    onClick={() => handleVote(1)}
+                    disabled={voting}
+                    className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${vote === 1 ? "text-green-500" : "text-muted-foreground hover:text-green-500"
+                      }`}
+                    title="Good response"
+                    aria-label="Vote up"
+                  >
+                    <ThumbsUp className="h-3.5 w-3.5" />
+                  </button>
+
+                  {/* Thumbs down */}
+                  <button
+                    onClick={() => handleVote(-1)}
+                    disabled={voting}
+                    className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${vote === -1 ? "text-destructive" : "text-muted-foreground hover:text-destructive"
+                      }`}
+                    title="Bad response"
+                    aria-label="Vote down"
+                  >
+                    <ThumbsDown className="h-3.5 w-3.5" />
+                  </button>
+
+                  {/* Session actions — only on last assistant bubble */}
+                  {isLast && (onExportPDF || onEscalate) && (
+                    <>
+                      <span className="w-px h-3 bg-border/60 mx-0.5" />
+
+                      {/* Study Timer */}
                       <button
-                        onClick={onExportPDF}
+                        onClick={() => setTimerOpen(true)}
                         className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
-                        title="Export PDF"
-                        aria-label="Export as PDF"
+                        title="Study Timer"
+                        aria-label="Open study timer"
                       >
-                        <Download className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">PDF</span>
+                        <Timer className="h-3.5 w-3.5" />
                       </button>
-                    )}
 
-                    {/* Export Word */}
-                    {onExportWord && (
-                      <button
-                        onClick={onExportWord}
-                        className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
-                        title="Export Word"
-                        aria-label="Export as Word"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">DOC</span>
-                      </button>
-                    )}
-
-                    {/* Escalate */}
-                    {onEscalate && (
-                      escalationStatus ? (
-                        <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
-                          escalationStatus === "resolved" ? "text-green-600" :
-                          escalationStatus === "in_review" ? "text-blue-600" : "text-amber-600"
-                        }`}>
-                          {escalationStatus === "resolved"
-                            ? <><CheckCircle2 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Reviewed</span></>
-                            : <><Clock className="h-3.5 w-3.5 animate-pulse" /><span className="hidden sm:inline">{escalationStatus === "in_review" ? "Reviewing" : "Pending"}</span></>
-                          }
-                        </span>
-                      ) : (
+                      {/* Export PDF */}
+                      {onExportPDF && (
                         <button
-                          onClick={onEscalate}
-                          disabled={escalating || messagesLoading}
-                          className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-600 hover:text-amber-700 transition-colors px-2 py-1 rounded hover:bg-amber-50 disabled:opacity-50"
-                          title="Escalate to teacher"
-                          aria-label="Escalate to teacher"
+                          onClick={onExportPDF}
+                          className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
+                          title="Export PDF"
+                          aria-label="Export as PDF"
                         >
-                          {escalating
-                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            : <ShieldAlert className="h-3.5 w-3.5" />
-                          }
-                          <span className="hidden sm:inline">{escalating ? "Escalating…" : "Escalate"}</span>
+                          <Download className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">PDF</span>
                         </button>
-                      ) as React.ReactNode
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-          <PomodoroTimer open={timerOpen} onOpenChange={setTimerOpen} showTrigger={false} />
+                      )}
+
+
+                      {/* Escalate */}
+                      {onEscalate && (
+                        escalationStatus ? (
+                          <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded ${escalationStatus === "resolved" ? "text-green-600" :
+                              escalationStatus === "in_review" ? "text-blue-600" : "text-amber-600"
+                            }`}>
+                            {escalationStatus === "resolved"
+                              ? <><CheckCircle2 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Reviewed</span></>
+                              : <><Clock className="h-3.5 w-3.5 animate-pulse" /><span className="hidden sm:inline">{escalationStatus === "in_review" ? "Reviewing" : "Pending"}</span></>
+                            }
+                          </span>
+                        ) : (
+                          <button
+                            onClick={onEscalate}
+                            disabled={escalating || messagesLoading}
+                            className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-600 hover:text-amber-700 transition-colors px-2 py-1 rounded hover:bg-amber-50 disabled:opacity-50"
+                            title="Escalate to teacher"
+                            aria-label="Escalate to teacher"
+                          >
+                            {escalating
+                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              : <ShieldAlert className="h-3.5 w-3.5" />
+                            }
+                            <span className="hidden sm:inline">{escalating ? "Escalating…" : "Escalate"}</span>
+                          </button>
+                        ) as React.ReactNode
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            <PomodoroTimer open={timerOpen} onOpenChange={setTimerOpen} showTrigger={false} />
           </>
         ) : (
           /* User message */

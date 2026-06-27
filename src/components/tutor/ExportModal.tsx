@@ -3,10 +3,9 @@ import { Download, FileDown } from "lucide-react";
 
 type Props = {
   onExportPDF: () => void;
-  onExportWord: () => void;
 };
 
-export function ExportMenu({ onExportPDF, onExportWord }: Props) {
+export function ExportMenu({ onExportPDF }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,12 +34,10 @@ export function ExportMenu({ onExportPDF, onExportWord }: Props) {
             </button>
             <button
               onClick={() => {
-                onExportWord();
                 setOpen(false);
               }}
               className="flex items-center gap-2 px-3 py-2.5 text-xs hover:bg-accent transition-colors"
             >
-              <Download className="h-3.5 w-3.5" /> Export as Word
             </button>
           </div>
         </>

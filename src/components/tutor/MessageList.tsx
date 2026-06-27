@@ -17,7 +17,7 @@ type Props = {
   userVotes?: Record<string, 1 | -1>;
   onVote?: (messageId: string, vote: 1 | -1 | null) => void;
   onExportPDF?: () => void;
-  onExportWord?: () => void;
+
   onEscalate?: () => void;
   escalationStatus?: "open" | "in_review" | "resolved" | null;
   escalating?: boolean;
@@ -37,7 +37,6 @@ export const MessageList = React.memo(function MessageList({
   userVotes,
   onVote,
   onExportPDF,
-  onExportWord,
   onEscalate,
   escalationStatus,
   escalating,
@@ -210,7 +209,6 @@ export const MessageList = React.memo(function MessageList({
               initialVote={userVotes?.[m.id] ?? null}
               onVote={onVote}
               onExportPDF={onExportPDF}
-              onExportWord={onExportWord}
               onEscalate={onEscalate}
               escalationStatus={escalationStatus}
               escalating={escalating}
@@ -226,7 +224,8 @@ export const MessageList = React.memo(function MessageList({
             aria-label="AI is thinking"
           >
             <div className="flex flex-col gap-2.5 px-1 py-3">
-              <style dangerouslySetInnerHTML={{ __html: `
+              <style dangerouslySetInnerHTML={{
+                __html: `
                 @keyframes thinking-converge {
                   0%   { background-position: 0% center; }
                   100% { background-position: 100% center; }
@@ -248,7 +247,7 @@ export const MessageList = React.memo(function MessageList({
                   fontWeight: 500,
                   letterSpacing: "0.01em",
                 }}
-              >{"Thinking...   >"}</span>
+              >{"Thinking... >"}</span>
               {[["w-[88%]", 0], ["w-[55%]", 120]].map(([width, delay], i) => (
                 <div
                   key={i}
