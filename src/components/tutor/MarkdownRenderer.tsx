@@ -596,24 +596,12 @@ const markdownComponents: any = {
       )}
     </figure>
   ),
-  ul: ({ children }: any) => <ul className="list-none pl-0 my-2 space-y-1">{children}</ul>,
-  ol: ({ children }: any) => (
-    <ol className="list-none pl-0 my-2 space-y-1 [counter-reset:step]">{children}</ol>
-  ),
-  li: ({ children, node, ...props }: any) => {
-    const isOrdered = node?.parent?.type === "element" && node?.parent?.tagName === "ol";
+  ul: ({ children }: any) => <ul className="list-disc pl-5 my-2 space-y-2">{children}</ul>,
+  ol: ({ children }: any) => <ol className="list-decimal pl-5 my-2 space-y-2">{children}</ol>,
+  li: ({ children }: any) => {
     return (
-      <li
-        className={`text-sm leading-relaxed flex items-start gap-2 ${
-          isOrdered ? "[counter-increment:step]" : ""
-        }`}
-      >
-        {isOrdered ? (
-          <span className="mt-0.5 flex-shrink-0 flex items-center justify-center h-5 w-5 rounded-full bg-primary/10 text-primary font-bold text-[10px] before:content-[counter(step)]" />
-        ) : (
-          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary/60" />
-        )}
-        <span className="flex-1">{children}</span>
+      <li className="text-sm leading-relaxed block">
+        <span className="block">{children}</span>
       </li>
     );
   },
