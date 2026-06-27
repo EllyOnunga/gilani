@@ -29,8 +29,8 @@ try {
 
   // Replace CACHE_NAME
   swContent = swContent.replace(
-    /const CACHE_NAME = 'gilaniai-v\d+\.\d+\.\d+';/,
-    `const CACHE_NAME = 'gilaniai-v${version}';`,
+    /const CACHE_NAME = ["']gilaniai-v\d+\.\d+\.\d+["'];/,
+    `const CACHE_NAME = "gilaniai-v${version}";`,
   );
 
   fs.writeFileSync(swPath, swContent, "utf8");
