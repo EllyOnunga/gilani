@@ -43,6 +43,8 @@ type Escalation = {
   detail: string | null;
   created_at: string;
   user_id: string;
+  student_name?: string;
+  student_avatar?: string;
 };
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
@@ -74,7 +76,27 @@ const listEscalations = createServerFn({ method: "POST" }).handler(async () => {
     .eq("reviewer_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return (escalationsData ?? []) as any[];
+
+  const userIds = [...new Set((escalationsData ?? []).map((e: any) => e.user_id).filter(Boolean))];
+  let profileMap: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
+  if (userIds.length > 0) {
+    const { data: pd } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, avatar_url")
+      .in("id", userIds);
+    profileMap = Object.fromEntries(
+      (pd ?? []).map((p: any) => [
+        p.id,
+        { display_name: p.display_name, avatar_url: p.avatar_url },
+      ])
+    );
+  }
+
+  return (escalationsData ?? []).map((e: any) => ({
+    ...e,
+    student_name: profileMap[e.user_id]?.display_name || "Student",
+    student_avatar: profileMap[e.user_id]?.avatar_url || null,
+  })) as any[];
 });
 
 const resolveEscalation = createServerFn({ method: "POST" })
@@ -424,18 +446,27 @@ function EscalationCard({
         onClick={onOpen}
         className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-left hover:bg-muted/30 transition-colors"
       >
-        <div className="flex items-start gap-3 min-w-0">
-          <div
-            className={`flex-shrink-0 mt-0.5 h-8 w-8 rounded-full flex items-center justify-center ${urgent ? "bg-red-100 dark:bg-red-950/40" : "bg-muted/60"
-              }`}
-          >
-            <User
-              className={`h-4 w-4 ${urgent ? "text-red-600 dark:text-red-400" : "text-muted-foreground"
-                }`}
-            />
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex-shrink-0 h-9 w-9 rounded-full overflow-hidden border border-border bg-background flex items-center justify-center shadow-inner">
+            {esc.student_avatar ? (
+              esc.student_avatar.startsWith("preset:") ? (
+                <span className="font-serif text-xs font-bold text-primary capitalize">
+                  {esc.student_name ? esc.student_name.substring(0, 2) : "ST"}
+                </span>
+              ) : (
+                <img src={esc.student_avatar} alt="Avatar" className="h-full w-full object-cover" />
+              )
+            ) : (
+              <span className="font-serif text-xs font-bold text-primary capitalize">
+                {esc.student_name ? esc.student_name.substring(0, 2) : "ST"}
+              </span>
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className="font-sans text-sm font-bold text-foreground">
+                {esc.student_name || "Student"}
+              </span>
               <span
                 className={`rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${reasonMeta.color}`}
               >
@@ -595,7 +626,7 @@ function EscalationCard({
                 onKeyDown={handleKeyDown}
                 rows={6}
                 placeholder="Write a clear, helpful response. You can use markdown, $math$, and \ce{chemistry}…"
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none leading-relaxed placeholder:text-muted-foreground/60 font-mono"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 resize-none leading-relaxed placeholder:text-muted-foreground/60 font-sans"
               />
             )}
 
@@ -769,36 +800,38 @@ function EscalationsPage() {
       </header>
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           {
-            label: "Total",
+            label: "Total Escalations",
             value: escalations.length,
             icon: MessageSquare,
             color: "text-primary",
-            bg: "border-primary/20",
+            bg: "border-primary/20 bg-primary/[0.02]",
           },
           {
-            label: "Pending",
+            label: "Pending Review",
             value: pending.length,
             icon: Clock,
             color: "text-amber-600 dark:text-amber-400",
-            bg: "border-amber-200/60 dark:border-amber-800/60",
+            bg: "border-amber-200/60 dark:border-amber-800/60 bg-amber-500/[0.02]",
           },
           {
             label: "Resolved",
             value: resolved.length,
             icon: CheckCircle2,
             color: "text-green-600 dark:text-green-400",
-            bg: "border-green-200/60 dark:border-green-800/60",
+            bg: "border-green-200/60 dark:border-green-800/60 bg-green-500/[0.02]",
           },
         ].map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className={`rounded-xl border p-4 sm:p-5 ${bg}`}>
-            <div className={`flex items-center gap-2 mb-2 ${color}`}>
-              <Icon className="h-4 w-4" />
-              <p className="font-mono text-[10px] uppercase tracking-widest">{label}</p>
+          <div key={label} className={`rounded-xl border p-4 sm:p-5 shadow-xs flex items-center justify-between ${bg}`}>
+            <div className="space-y-1">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{label}</p>
+              <p className={`font-serif text-3xl font-black ${color}`}>{value}</p>
             </div>
-            <p className={`font-serif text-2xl sm:text-4xl font-bold ${color}`}>{value}</p>
+            <div className={`rounded-full p-2.5 bg-background/50 border border-border/20 shadow-inner flex items-center justify-center ${color}`}>
+              <Icon className="h-5 w-5" />
+            </div>
           </div>
         ))}
       </div>
@@ -917,38 +950,58 @@ function EscalationsPage() {
               return (
                 <div
                   key={esc.id}
-                  className="rounded-xl border border-green-200/60 dark:border-green-900/60 bg-green-50/40 dark:bg-green-950/20 p-4"
+                  className="rounded-xl border border-green-200/60 dark:border-green-900/60 bg-green-50/40 dark:bg-green-950/20 p-4 flex gap-3 items-start"
                 >
-                  <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${reasonMeta.color}`}
-                      >
-                        {reasonMeta.label}
+                  <div className="flex-shrink-0 h-9 w-9 rounded-full overflow-hidden border border-border bg-background flex items-center justify-center shadow-inner mt-0.5">
+                    {esc.student_avatar ? (
+                      esc.student_avatar.startsWith("preset:") ? (
+                        <span className="font-serif text-xs font-bold text-primary capitalize">
+                          {esc.student_name ? esc.student_name.substring(0, 2) : "ST"}
+                        </span>
+                      ) : (
+                        <img src={esc.student_avatar} alt="Avatar" className="h-full w-full object-cover" />
+                      )
+                    ) : (
+                      <span className="font-serif text-xs font-bold text-primary capitalize">
+                        {esc.student_name ? esc.student_name.substring(0, 2) : "ST"}
                       </span>
-                      <span className="font-mono text-[10px] text-muted-foreground">
-                        #{esc.conversation_id ? esc.conversation_id.slice(0, 8) : "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-muted-foreground">
-                        {esc.created_at
-                          ? new Date(esc.created_at).toLocaleDateString("en-KE", {
-                            day: "numeric",
-                            month: "short",
-                          })
-                          : "—"}
-                      </span>
-                      <span className="rounded-full border border-green-300 dark:border-green-700 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1">
-                        <CheckCircle2 className="h-2.5 w-2.5" /> Resolved
-                      </span>
-                    </div>
+                    )}
                   </div>
-                  {esc.detail && (
-                    <div className="mt-2 rounded-lg border border-green-200/40 dark:border-green-800/40 bg-background/50 px-3 py-2 text-xs text-foreground leading-relaxed">
-                      <MarkdownRenderer content={esc.detail} className="text-xs" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-sans text-sm font-bold text-foreground">
+                          {esc.student_name || "Student"}
+                        </span>
+                        <span
+                          className={`rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider ${reasonMeta.color}`}
+                        >
+                          {reasonMeta.label}
+                        </span>
+                        <span className="font-mono text-[10px] text-muted-foreground">
+                          #{esc.conversation_id ? esc.conversation_id.slice(0, 8) : "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-muted-foreground">
+                          {esc.created_at
+                            ? new Date(esc.created_at).toLocaleDateString("en-KE", {
+                              day: "numeric",
+                              month: "short",
+                            })
+                            : "—"}
+                        </span>
+                        <span className="rounded-full border border-green-300 dark:border-green-700 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1">
+                          <CheckCircle2 className="h-2.5 w-2.5" /> Resolved
+                        </span>
+                      </div>
                     </div>
-                  )}
+                    {esc.detail && (
+                      <div className="mt-2 rounded-lg border border-green-200/40 dark:border-green-800/40 bg-background/50 px-3 py-2 text-xs text-foreground leading-relaxed">
+                        <MarkdownRenderer content={esc.detail} className="text-xs" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
