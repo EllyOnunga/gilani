@@ -24,15 +24,14 @@ export const Route = createFileRoute("/api/newsletter/subscribe")({
         try {
           const request = getRequest();
 
-          // SECURITY: Require authentication — prevents anonymous spam subscriptions
-          let authResult: { userId: string } | null = null;
+          // Auth is OPTIONAL on subscribe — allows landing-page visitors to subscribe
+          // without being logged in. user_id is attached when a session is present.
+          let optionalUserId: string | null = null;
           try {
-            authResult = await authenticateRequest(request);
+            const authResult = await authenticateRequest(request);
+            optionalUserId = authResult.userId;
           } catch {
-            return new Response(JSON.stringify({ error: "Unauthorized" }), {
-              status: 401,
-              headers: { "Content-Type": "application/json" },
-            });
+            // Unauthenticated is fine for subscribe
           }
 
           const body = await request.json().catch(() => ({}));
@@ -75,10 +74,10 @@ export const Route = createFileRoute("/api/newsletter/subscribe")({
             );
           }
 
-          // Insert new subscriber — tie to authenticated user_id only
+          // Insert new subscriber — user_id is optional (null for public sign-ups)
           const { error } = await supabaseAdmin
             .from("newsletter_subscribers")
-            .insert({ email: safeEmail, name: safeName, user_id: authResult.userId });
+            .insert({ email: safeEmail, name: safeName, user_id: optionalUserId });
 
           if (error) throw new Error(error.message);
 
@@ -100,7 +99,7 @@ export const Route = createFileRoute("/api/newsletter/subscribe")({
                 <p>Start studying smarter today at <a href="${process.env.APP_URL}">${esc(process.env.APP_URL || "gilaniai.site")}</a></p>
                 <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb;" />
                 <p style="font-size:12px;color:#6b7280;">
-                  To unsubscribe, visit your account settings.
+                  To unsubscribe, reply to this email or visit your account settings.
                 </p>
               </div>
             `,
