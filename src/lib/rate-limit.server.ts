@@ -250,7 +250,7 @@ export async function getPlanRateLimitStatus(
     };
   }
 
-  return { isRateLimited: false as const, retryAfterMs: 0, isDaily: false as const, messagesUsed: 0, messagesMax: 10, plan: "free" };
+  return { isRateLimited: false as const, retryAfterMs: 0, isDaily: false as const, messagesUsed: dailyRow?.count ?? 0, messagesMax: dailyMax, plan };
 }
 
 export const getRateLimitStatus = createServerFn({ method: "POST" })
