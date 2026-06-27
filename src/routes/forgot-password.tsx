@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent, useEffect } from "react";
+import React, { useState, type FormEvent, useEffect } from "react";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const submittingRef = React.useRef(false);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -38,6 +39,8 @@ function ForgotPasswordPage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     if (!email) return;
 
     setBusy(true);
@@ -48,10 +51,12 @@ function ForgotPasswordPage() {
     setBusy(false);
 
     if (error) {
+      submittingRef.current = false;
       toast.error(friendlyError(error, "Failed to send reset email. Please try again."));
       return;
     }
 
+    submittingRef.current = false;
     setSuccess(true);
     toast.success("Password reset email sent! Check your inbox.");
   };

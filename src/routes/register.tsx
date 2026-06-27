@@ -1,3 +1,4 @@
+import React from "react";
 import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
 import { useState, type FormEvent, useEffect } from "react";
 import { Logo } from "@/components/ui/logo";
@@ -36,6 +37,7 @@ function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const submittingRef = React.useRef(false);
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<"student" | "teacher">("student");
 
@@ -53,6 +55,8 @@ function RegisterPage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
 
     // Validate email format
     const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
@@ -126,6 +130,7 @@ function RegisterPage() {
     }
 
     setBusy(false);
+    submittingRef.current = false;
     toast.success("Account created! Check your inbox to verify your email.");
     navigate({ to: "/login" });
   };
