@@ -19,10 +19,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toaster]:text-xs group-[.toaster]:font-medium",
             "group-[.toaster]:backdrop-blur-md",
           ].join(" "),
-          description: [
-            "group-[.toast]:text-[#9ca3af]",
-            "group-[.toast]:text-[11px]",
-          ].join(" "),
+          description: ["group-[.toast]:text-[#9ca3af]", "group-[.toast]:text-[11px]"].join(" "),
           // ── Success ─────────────────────────────
           success: [
             "group-[.toaster]:!bg-[#0f2818]",

@@ -7,7 +7,17 @@ import { NewsletterSubscribe } from "@/components/NewsletterSubscribe";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
-import { MessageCircle, BookOpenText, Flame, Target, Zap, ChevronRight, ArrowRight, TrendingUp, Calendar } from "lucide-react";
+import {
+  MessageCircle,
+  BookOpenText,
+  Flame,
+  Target,
+  Zap,
+  ChevronRight,
+  ArrowRight,
+  TrendingUp,
+  Calendar,
+} from "lucide-react";
 import { getPlanLimits } from "@/lib/plans";
 import { getRequest } from "@tanstack/react-start/server";
 import { generateText } from "ai";
@@ -64,33 +74,34 @@ const loadDashboardData = createServerFn({ method: "GET" })
     const { localDate } = data;
 
     // 1. Fetch dashboard data in parallel
-    const [profileRes, messagesRes, streakAndStats, lastSessionRes, rateLimitRes] = await Promise.all([
-      supabaseAdmin
-        .from("profiles")
-        .select("display_name, plan, curriculum, created_at")
-        .eq("id", userId)
-        .maybeSingle(),
-      supabaseAdmin
-        .from("messages")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId),
-      import("@/lib/analytics-utils.server").then(({ calculateUserStreakAndStats }) =>
-        calculateUserStreakAndStats(userId),
-      ),
-      supabaseAdmin
-        .from("conversations")
-        .select("id, title")
-        .eq("user_id", userId)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabaseAdmin
-        .from("rate_limits")
-        .select("count, max_count")
-        .eq("key", `${userId}:chat:day`)
-        .gt("reset_at", new Date().toISOString())
-        .maybeSingle(),
-    ]);
+    const [profileRes, messagesRes, streakAndStats, lastSessionRes, rateLimitRes] =
+      await Promise.all([
+        supabaseAdmin
+          .from("profiles")
+          .select("display_name, plan, curriculum, created_at")
+          .eq("id", userId)
+          .maybeSingle(),
+        supabaseAdmin
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", userId),
+        import("@/lib/analytics-utils.server").then(({ calculateUserStreakAndStats }) =>
+          calculateUserStreakAndStats(userId),
+        ),
+        supabaseAdmin
+          .from("conversations")
+          .select("id, title")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabaseAdmin
+          .from("rate_limits")
+          .select("count, max_count")
+          .eq("key", `${userId}:chat:day`)
+          .gt("reset_at", new Date().toISOString())
+          .maybeSingle(),
+      ]);
 
     const profile = profileRes.data;
     const messagesCount = messagesRes.count;
@@ -98,9 +109,9 @@ const loadDashboardData = createServerFn({ method: "GET" })
 
     const memberSince = profile?.created_at
       ? new Date(profile.created_at).toLocaleDateString("en-KE", {
-        month: "short",
-        year: "numeric",
-      })
+          month: "short",
+          year: "numeric",
+        })
       : "";
 
     return {
@@ -113,7 +124,13 @@ const loadDashboardData = createServerFn({ method: "GET" })
       streak,
       messagesCount: messagesCount ?? 0,
       dailyUsed: (rateLimitRes.data as any)?.count ?? 0,
-      dailyMax: (rateLimitRes.data as any)?.max_count ?? (profile?.plan === "basic" ? 50 : profile?.plan === "premium" || profile?.plan === "school" ? 999_999 : 10),
+      dailyMax:
+        (rateLimitRes.data as any)?.max_count ??
+        (profile?.plan === "basic"
+          ? 50
+          : profile?.plan === "premium" || profile?.plan === "school"
+            ? 999_999
+            : 10),
       lastSessionId: lastSessionRes.data?.id ?? null,
       lastSessionTitle: lastSessionRes.data?.title ?? null,
       revisionTopics: [],
@@ -156,7 +173,10 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
       const clean = text.replace(/```json|```/g, "").trim();
       return JSON.parse(clean) as DailyInsights;
     } catch (err) {
-      console.error("[Dashboard Server] Gemini insights fetch failed, returning static fallback:", err);
+      console.error(
+        "[Dashboard Server] Gemini insights fetch failed, returning static fallback:",
+        err,
+      );
       return fallback;
     }
   });
@@ -260,7 +280,8 @@ function Dashboard() {
   const streak = data?.streak ?? 0;
   const messagesCount = data?.messagesCount ?? 0;
   const dailyUsed = data?.dailyUsed ?? 0;
-  const dailyMax = data?.dailyMax ?? getPlanLimits(data?.plan?.toLowerCase() ?? "free").dailyMessages;
+  const dailyMax =
+    data?.dailyMax ?? getPlanLimits(data?.plan?.toLowerCase() ?? "free").dailyMessages;
   const usagePct = dailyMax > 0 ? Math.min(100, Math.round((dailyUsed / dailyMax) * 100)) : 0;
 
   const displayName = data?.displayName ?? "";
@@ -268,14 +289,18 @@ function Dashboard() {
   const memberSince = data?.memberSince ?? "";
   const planLabel = plan === "free" || plan === "Free" ? "Free Plan" : `${plan} Plan`;
   const isFree = plan === "free" || plan === "Free";
+  const [showPlans, setShowPlans] = useState(false);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4 sm:p-6 lg:p-8">
-
       {/* ── Header ── */}
       <header className="flex flex-col gap-1">
         <p className="font-mono text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-          {new Date().toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long" })}
+          {new Date().toLocaleDateString("en-KE", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          })}
         </p>
         {isLoading ? (
           <div className="space-y-2 mt-1">
@@ -289,15 +314,21 @@ function Dashboard() {
                 {getGreeting()}, <span className="capitalize">{displayName}</span>.
               </h1>
               <div className="flex items-center gap-2 mt-1.5">
-                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold font-mono tracking-wide border ${isFree ? "bg-muted/40 border-border/40 text-muted-foreground" : "bg-primary/10 border-primary/20 text-primary"}`}>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold font-mono tracking-wide border ${isFree ? "bg-muted/40 border-border/40 text-muted-foreground" : "bg-primary/10 border-primary/20 text-primary"}`}
+                >
                   {planLabel}
                 </span>
-                {memberSince && <span className="text-[10px] text-muted-foreground/50 font-mono">since {memberSince}</span>}
+                {memberSince && (
+                  <span className="text-[10px] text-muted-foreground/50 font-mono">
+                    since {memberSince}
+                  </span>
+                )}
               </div>
             </div>
             {isFree && (
               <button
-                onClick={() => { PlansModal }}
+                onClick={() => setShowPlans(true)}
                 className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 <Zap className="h-3 w-3" /> Upgrade Plan
@@ -310,19 +341,46 @@ function Dashboard() {
       {/* ── Stats row ── */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Study Streak", value: isLoading ? null : `${streak}`, unit: "days", icon: Flame, color: streak > 0 ? "text-orange-500" : "text-muted-foreground/40" },
-          { label: "Total Messages", value: isLoading ? null : `${messagesCount}`, unit: "sent", icon: MessageCircle, color: "text-blue-500" },
-          { label: "Today's Usage", value: isLoading ? null : `${dailyUsed}/${dailyMax}`, unit: "msgs", icon: TrendingUp, color: usagePct >= 80 ? "text-red-500" : "text-green-500" },
+          {
+            label: "Study Streak",
+            value: isLoading ? null : `${streak}`,
+            unit: "days",
+            icon: Flame,
+            color: streak > 0 ? "text-orange-500" : "text-muted-foreground/40",
+          },
+          {
+            label: "Total Messages",
+            value: isLoading ? null : `${messagesCount}`,
+            unit: "sent",
+            icon: MessageCircle,
+            color: "text-blue-500",
+          },
+          {
+            label: "Today's Usage",
+            value: isLoading ? null : `${dailyUsed}/${dailyMax}`,
+            unit: "msgs",
+            icon: TrendingUp,
+            color: usagePct >= 80 ? "text-red-500" : "text-green-500",
+          },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-border/40 bg-card p-3 sm:p-4 flex flex-col gap-1">
+          <div
+            key={s.label}
+            className="rounded-xl border border-border/40 bg-card p-3 sm:p-4 flex flex-col gap-1"
+          >
             <div className="flex items-center gap-1.5">
               <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
-              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 font-semibold">{s.label}</p>
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 font-semibold">
+                {s.label}
+              </p>
             </div>
-            {s.value === null
-              ? <div className="h-6 w-16 rounded bg-muted/60 animate-pulse mt-1" />
-              : <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">{s.value} <span className="text-xs font-normal text-muted-foreground/50">{s.unit}</span></p>
-            }
+            {s.value === null ? (
+              <div className="h-6 w-16 rounded bg-muted/60 animate-pulse mt-1" />
+            ) : (
+              <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+                {s.value}{" "}
+                <span className="text-xs font-normal text-muted-foreground/50">{s.unit}</span>
+              </p>
+            )}
           </div>
         ))}
       </div>
@@ -331,8 +389,12 @@ function Dashboard() {
       {!isLoading && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60 font-semibold">Daily message quota</p>
-            <p className="text-[10px] font-mono text-muted-foreground/60">{dailyUsed} / {dailyMax}</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60 font-semibold">
+              Daily message quota
+            </p>
+            <p className="text-[10px] font-mono text-muted-foreground/60">
+              {dailyUsed} / {dailyMax}
+            </p>
           </div>
           <div className="h-1.5 w-full rounded-full bg-muted/40 overflow-hidden">
             <div
@@ -345,7 +407,9 @@ function Dashboard() {
 
       {/* ── Quick actions ── */}
       <section className="space-y-3">
-        <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Study Suite</p>
+        <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 font-semibold">
+          Study Suite
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Link
             to="/tutor"
@@ -357,7 +421,9 @@ function Dashboard() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">New AI Session</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Start a fresh tutoring session</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Start a fresh tutoring session
+                </p>
               </div>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
@@ -374,7 +440,9 @@ function Dashboard() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">Continue Session</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-[160px]">{data.lastSessionTitle ?? "Last session"}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-[160px]">
+                    {data.lastSessionTitle ?? "Last session"}
+                  </p>
                 </div>
               </div>
               <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
@@ -386,7 +454,9 @@ function Dashboard() {
       {/* ── Daily Insights ── */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Daily Learning Insights</p>
+          <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 font-semibold">
+            Daily Learning Insights
+          </p>
           <span className="font-mono text-[9px] text-muted-foreground/40">
             {new Date().toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
           </span>
@@ -394,14 +464,34 @@ function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
             { label: "Study Tip", icon: Zap, content: insights?.tip, accent: "border-l-blue-500" },
-            { label: "Topic of the Day", icon: Target, content: insights?.topicOfDay, accent: "border-l-purple-500" },
-            { label: "Did You Know?", icon: BookOpenText, content: insights?.didYouKnow, accent: "border-l-green-500" },
-            { label: streak > 0 ? `${streak}-Day Streak` : "Start Your Streak", icon: Flame, content: insights?.streakMotivation, accent: "border-l-orange-500" },
+            {
+              label: "Topic of the Day",
+              icon: Target,
+              content: insights?.topicOfDay,
+              accent: "border-l-purple-500",
+            },
+            {
+              label: "Did You Know?",
+              icon: BookOpenText,
+              content: insights?.didYouKnow,
+              accent: "border-l-green-500",
+            },
+            {
+              label: streak > 0 ? `${streak}-Day Streak` : "Start Your Streak",
+              icon: Flame,
+              content: insights?.streakMotivation,
+              accent: "border-l-orange-500",
+            },
           ].map((card) => (
-            <div key={card.label} className={`rounded-xl border border-border/30 border-l-2 ${card.accent} bg-card p-4 flex flex-col gap-2`}>
+            <div
+              key={card.label}
+              className={`rounded-xl border border-border/30 border-l-2 ${card.accent} bg-card p-4 flex flex-col gap-2`}
+            >
               <div className="flex items-center gap-1.5">
                 <card.icon className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-                <p className="font-mono text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/60">{card.label}</p>
+                <p className="font-mono text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/60">
+                  {card.label}
+                </p>
               </div>
               {insightsLoading ? (
                 <div className="space-y-1.5">
@@ -423,6 +513,7 @@ function Dashboard() {
         userEmail={data?.email}
         userName={data?.displayName}
       />
+      {showPlans && <PlansModal onClose={() => setShowPlans(false)} />}
     </div>
   );
 }
