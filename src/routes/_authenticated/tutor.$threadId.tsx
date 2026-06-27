@@ -303,7 +303,22 @@ function TutorThreadInner({
     // smoothStream with word chunking + 10ms delay gives smooth word-by-word reveals.
     experimental_throttle: 700,
 
-    onError: (err) => setChatError(err instanceof Error ? err.message : String(err)),
+    onError: async (err) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      const isAuthError =
+        msg.includes("401") ||
+        msg.toLowerCase().includes("expired") ||
+        msg.toLowerCase().includes("jwt") ||
+        msg.toLowerCase().includes("unauthorized");
+      if (isAuthError) {
+        await supabase.auth.refreshSession();
+        toast.error("Your session expired. Please send your message again.", { duration: 5000 });
+        setChatError(null);
+        return;
+      }
+      setChatError(msg);
+      toast.error("Something went wrong. Please try again.", { duration: 4000 });
+    },
     onFinish: (message: any) => {
       setChatError(null);
       let dbMessageId: string | null = null;
