@@ -602,3 +602,13 @@
   -ms-overflow-style: auto;
   scrollbar-width: auto;
 }
+
+/* Thinking indicator animations */
+@keyframes thinking-converge {
+  0%   { background-position: 0% center; }
+  100% { background-position: 100% center; }
+}
+@keyframes bar-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.85; }
+}

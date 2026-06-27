@@ -233,35 +233,11 @@ export const MessageList = React.memo(function MessageList({
             aria-label="AI is thinking"
           >
             <div className="flex flex-col gap-2.5 px-1 py-3">
-              <style
-                dangerouslySetInnerHTML={{
-                  __html: `
-                @keyframes thinking-converge {
-                  0%   { background-position: 0% center; }
-                  100% { background-position: 100% center; }
-                }
-                @keyframes bar-pulse {
-                  0%, 100% { opacity: 0.3; }
-                  50% { opacity: 0.85; }
-                }
-              `,
-                }}
-              />
               <span
-                className="text-xs select-none mb-3 inline-block"
-                style={{
-                  background:
-                    "linear-gradient(90deg, var(--muted-foreground,#777) 0%, var(--muted-foreground,#777) 30%, rgba(255,255,255,1) 50%, var(--muted-foreground,#777) 65%, var(--muted-foreground,#777) 80%, rgba(255,255,255,1) 92%, var(--muted-foreground,#777) 100%)",
-                  backgroundSize: "400% 100%",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  animation: "thinking-converge 0.9s ease-in-out infinite",
-                  fontWeight: 500,
-                  letterSpacing: "0.01em",
-                }}
+                className="text-xs select-none mb-3 inline-block text-muted-foreground animate-pulse"
+                style={{ fontWeight: 500, letterSpacing: "0.01em" }}
               >
-                {"Thinking... >"}
+                Thinking... <span style={{ fontSize: '16px', fontWeight: 700 }}>›</span>
               </span>
               {[
                 ["w-[88%]", 0],
