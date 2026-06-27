@@ -225,12 +225,12 @@ function Landing() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
               {/* Left */}
               <div className="lg:col-span-7 animate-in-slide text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-primary mb-6">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-8">
                   <Sparkles className="h-3 w-3" />
                   Your AI-Powered Study Assistant
                 </div>
 
-                <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight text-pretty">
+                <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight text-pretty">
                   Study smarter.{" "}
                   <span className="relative">
                     <span className="italic text-primary">Score higher.</span>
@@ -239,7 +239,7 @@ function Landing() {
                   Reach your potential.
                 </h1>
 
-                <p className="mt-6 max-w-xl mx-auto lg:mx-0 text-base sm:text-lg leading-relaxed text-muted-foreground">
+                <p className="mt-6 max-w-lg mx-auto lg:mx-0 text-base sm:text-lg leading-relaxed text-muted-foreground/80">
                   GilaniAI is your personal AI study assistant — Socratic step-by-step tutoring
                   across every subject, with real teacher escalation when you need a human expert.
                 </p>
@@ -271,7 +271,7 @@ function Landing() {
 
               {/* Right — chat mockup */}
               <div className="lg:col-span-5 animate-in-slide [animation-delay:100ms] w-full max-w-sm mx-auto lg:max-w-none">
-                <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-5 shadow-lg space-y-3">
+                <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xl ring-1 ring-border/20 space-y-3">
                   <div className="flex items-center gap-2 pb-3 border-b border-border/50">
                     <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                     <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -323,17 +323,19 @@ function Landing() {
         </section>
 
         {/* ── Stats Bar ── */}
-        <section className="border-y border-border/40 bg-muted/20">
+        <section className="border-y border-border/60 bg-foreground text-background">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
             {STATS.map(({ value, label, icon: Icon }) => (
-              <div key={label} className="flex flex-col items-center text-center gap-2">
+              <div key={label} className="flex flex-col items-center text-center gap-1">
                 <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4 text-primary" />
-                  <p className="font-serif text-xl sm:text-3xl font-black text-foreground">
+                  <p className="font-serif text-2xl sm:text-4xl font-black text-background">
                     {value}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground">{label}</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-background/50">
+                  {label}
+                </p>
               </div>
             ))}
           </div>
@@ -345,7 +347,7 @@ function Landing() {
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               What you get
             </p>
-            <h2 className="font-serif text-2xl sm:text-4xl font-black">
+            <h2 className="font-serif text-3xl sm:text-5xl font-black">
               Everything you need to excel
             </h2>
             <p className="mt-3 text-sm text-muted-foreground max-w-xl mx-auto">
@@ -353,20 +355,18 @@ function Landing() {
               to improve.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
             {FEATURES.map(({ icon: Icon, title, description, color, iconColor, badge }) => (
               <div
                 key={title}
-                className={`relative rounded-2xl border border-border bg-gradient-to-br ${color} p-6 hover:border-primary/40 hover:shadow-lg transition-all group`}
+                className="relative rounded-2xl border border-border bg-card p-7 hover:border-primary/40 hover:shadow-md transition-all group border-l-2 border-l-primary"
               >
                 {badge && (
                   <span className="absolute top-4 right-4 rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary font-bold">
                     {badge}
                   </span>
                 )}
-                <div
-                  className={`rounded-xl bg-background/60 backdrop-blur-sm p-3 w-fit ${iconColor} mb-4 group-hover:scale-110 transition-transform`}
-                >
+                <div className="rounded-xl border border-border bg-background p-3 w-fit text-primary mb-5 group-hover:scale-105 transition-transform">
                   <Icon className="h-5 w-5" />
                 </div>
                 <h3 className="font-serif text-lg font-bold mb-2 group-hover:text-primary transition-colors">
@@ -379,13 +379,13 @@ function Landing() {
         </section>
 
         {/* ── How It Works ── */}
-        <section className="bg-muted/20 border-y border-border/40">
+        <section className="bg-muted/30 border-y border-border/50">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
             <div className="text-center mb-12">
               <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
                 Simple process
               </p>
-              <h2 className="font-serif text-2xl sm:text-4xl font-black">
+              <h2 className="font-serif text-3xl sm:text-5xl font-black">
                 Start improving in 3 steps
               </h2>
             </div>
@@ -428,7 +428,7 @@ function Landing() {
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               Student stories
             </p>
-            <h2 className="font-serif text-2xl sm:text-4xl font-black">
+            <h2 className="font-serif text-3xl sm:text-5xl font-black">
               Students are scoring higher
             </h2>
           </div>
@@ -470,7 +470,7 @@ function Landing() {
               <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
                 Fair & Transparent Pricing
               </p>
-              <h2 className="font-serif text-2xl sm:text-4xl font-black">Choose your plan</h2>
+              <h2 className="font-serif text-3xl sm:text-5xl font-black">Choose your plan</h2>
               <p className="mt-3 text-sm text-muted-foreground max-w-xl mx-auto">
                 Upgrade easily using M-Pesa to study with no limits and connect with real teachers.
               </p>
@@ -563,7 +563,7 @@ function Landing() {
             <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
               Got questions?
             </p>
-            <h2 className="font-serif text-2xl sm:text-4xl font-black">
+            <h2 className="font-serif text-3xl sm:text-5xl font-black">
               Frequently asked questions
             </h2>
           </div>
@@ -593,22 +593,22 @@ function Landing() {
 
         {/* ── CTA Banner ── */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-16 sm:pb-24">
-          <div className="relative overflow-hidden rounded-3xl bg-primary p-6 sm:p-14 text-center">
+          <div className="relative overflow-hidden rounded-2xl bg-foreground p-8 sm:p-16 text-center">
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
               <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-white/5 blur-2xl" />
               <div className="absolute -bottom-20 right-0 h-60 w-60 rounded-full bg-white/5 blur-2xl" />
             </div>
-            <Trophy className="mx-auto h-10 w-10 text-primary-foreground/80 mb-4" />
-            <h2 className="font-serif text-2xl sm:text-4xl font-black text-primary-foreground mb-3">
+            <Trophy className="mx-auto h-10 w-10 text-background/40 mb-6" />
+            <h2 className="font-serif text-3xl sm:text-5xl font-black text-background mb-4">
               Ready to ace your exams?
             </h2>
-            <p className="text-primary-foreground/80 text-sm sm:text-base max-w-md mx-auto mb-8">
+            <p className="text-background/60 text-base max-w-md mx-auto mb-10">
               Join thousands of students using GilaniAI to study smarter, score higher, and build
               real understanding.
             </p>
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary-foreground px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-primary hover:opacity-95 transition-all shadow-lg hover:scale-[1.02]"
+              className="inline-flex items-center gap-2 rounded-xl bg-background px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-foreground hover:opacity-90 transition-all shadow-lg hover:scale-[1.02]"
             >
               Create free account <ArrowRight className="h-4 w-4" />
             </Link>
