@@ -722,12 +722,7 @@ function SettingsPage() {
                           {isActive && <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-primary-foreground">Current</span>}
                         </div>
                         <ul className="space-y-1">
-                          {[
-                            `${p.dailyMessages >= 999999 ? "Unlimited" : p.dailyMessages} messages/day`,
-                            `${p.dailyQuizzes} quizzes/day`,
-                            `${p.dailyPlanners} planners/day`,
-                            `${p.dailyNotes} note uploads/day`,
-                          ].map((feat) => (
+                          {p.features.map((feat) => (
                             <li key={feat} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                               <span className="w-1 h-1 rounded-full bg-primary/60 flex-shrink-0" />
                               {feat}

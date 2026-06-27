@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { PLANS, PlanId } from "@/lib/plans";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Zap, GraduationCap, Star, School, X, Loader2, Wallet } from "lucide-react";
+import { Zap, GraduationCap, Star, School, X, Loader2, Wallet, Check } from "lucide-react";
 import { friendlyError } from "@/lib/async";
 import { TOPUP_TOKENS_PER_KES, TOPUP_MIN_KES } from "@/lib/plans";
 
@@ -152,6 +152,20 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
                   );
                 })}
               </div>
+
+              {/* Selected Plan Features */}
+              <div className="rounded-xl bg-accent/25 border border-border/30 p-3.5 space-y-2">
+                <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Included in {PLANS[selected].label}:</p>
+                <ul className="space-y-2 text-xs text-muted-foreground">
+                  {PLANS[selected].features.map((feat, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5">
+                      <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               {!sent ? (
                 <>
                   <div>

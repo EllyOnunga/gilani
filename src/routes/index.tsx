@@ -464,10 +464,7 @@ function Landing() {
                         </span>
                       </div>
                       <ul className="space-y-3 text-xs text-muted-foreground mb-8">
-                        {[
-                          `${plan.dailyMessages === 999999 ? "Unlimited" : plan.dailyMessages} AI tutor messages/day`,
-                          isPremium || isSchool ? "Priority Teacher Escalation" : "Community support",
-                        ].map((feat) => (
+                        {plan.features.map((feat) => (
                           <li key={feat} className="flex gap-2.5 items-start">
                             <Check className={`h-4 w-4 flex-shrink-0 ${isPremium ? "text-primary" : isSchool ? "text-violet-500" : "text-emerald-500"}`} />
                             <span className={isPremium ? "text-foreground/90 font-medium" : ""}>{feat}</span>
