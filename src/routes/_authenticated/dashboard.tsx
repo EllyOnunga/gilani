@@ -189,6 +189,9 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   }),
   beforeLoad: async () => {
     if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem("__gilani_role");
+      if (cached === "admin") throw redirect({ to: "/admin/users" as any });
+      if (cached === "teacher") throw redirect({ to: "/teacher/escalations" as any });
       const { data } = await supabase.auth.getSession();
       if (!data.session) return;
       const { data: roleRow } = await supabase
@@ -196,6 +199,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
         .select("role")
         .eq("user_id", data.session.user.id)
         .maybeSingle();
+      if (roleRow?.role) sessionStorage.setItem("__gilani_role", roleRow.role);
       if (roleRow?.role === "admin") throw redirect({ to: "/admin/users" as any });
       if (roleRow?.role === "teacher") throw redirect({ to: "/teacher/escalations" as any });
     }
