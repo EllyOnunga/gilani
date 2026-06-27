@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mail, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   userId?: string;
@@ -23,9 +24,20 @@ export function NewsletterSubscribe({ userId, userEmail, userName, variant = "ca
 
     setLoading(true);
     try {
+      // Attach the auth token if the user is logged in so the server
+      // can associate the subscription with their account
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch("/api/newsletter/subscribe", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ email, name, user_id: userId }),
       });
 
