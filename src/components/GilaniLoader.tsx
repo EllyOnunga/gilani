@@ -17,7 +17,9 @@ export function GilaniLoader({ fullScreen = true }: { fullScreen?: boolean } = {
   const done = letterCount >= WORD.length;
 
   return (
-    <div className={`flex flex-col items-center justify-center bg-background select-none ${fullScreen ? "min-h-screen" : "py-12 sm:py-16"}`}>
+    <div
+      className={`flex flex-col items-center justify-center bg-background select-none ${fullScreen ? "min-h-screen" : "py-12 sm:py-16"}`}
+    >
       <div className="flex items-baseline">
         {WORD.split("").map((letter, i) => (
           <span

@@ -11,38 +11,52 @@ export const submitContactFn = createServerFn({ method: "POST" })
       email: z.string().email().max(200),
       subject: z.string().max(200).optional(),
       category: z.enum([
-        "general", "bug", "billing", "account",
-        "curriculum", "partnership", "press", "other",
+        "general",
+        "bug",
+        "billing",
+        "account",
+        "curriculum",
+        "partnership",
+        "press",
+        "other",
       ]),
       message: z.string().min(1).max(5000),
-    })
+    }),
   )
   .handler(async ({ data }) => {
     // SECURITY: Rate limit contact form — max 3 submissions per hour per IP
     const { getRequest } = await import("@tanstack/react-start/server");
     const request = getRequest();
-    const ip = request.headers.get("cf-connecting-ip") ||
+    const ip =
+      request.headers.get("cf-connecting-ip") ||
       request.headers.get("x-forwarded-for")?.split(",")[0] ||
       "unknown";
     const rlKey = `contact:${ip}`;
-    const { data: rlData } = await supabaseAdmin.rpc("upsert_rate_limit", {
-      p_key: rlKey, p_max: 3, p_reset_at: new Date(Date.now() + 3600000).toISOString()
-    }).single();
+    const { data: rlData } = await supabaseAdmin
+      .rpc("upsert_rate_limit", {
+        p_key: rlKey,
+        p_max: 3,
+        p_reset_at: new Date(Date.now() + 3600000).toISOString(),
+      })
+      .single();
     if (!rlData) throw new Error("Rate limit exceeded. Please wait before submitting again.");
     // CS-XSS-002: Escape all user-supplied values before inserting into HTML emails
     const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      s
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
     // 1. Save to DB
-    const { error } = await supabaseAdmin
-      .from("contact_messages")
-      .insert({
-        name: data.name,
-        email: data.email,
-        subject: data.subject ?? null,
-        category: data.category,
-        message: data.message,
-      });
+    const { error } = await supabaseAdmin.from("contact_messages").insert({
+      name: data.name,
+      email: data.email,
+      subject: data.subject ?? null,
+      category: data.category,
+      message: data.message,
+    });
 
     if (error) {
       console.error("[Contact] DB insert failed:", error.message);
@@ -104,10 +118,14 @@ export const submitContactFn = createServerFn({ method: "POST" })
                     <td style="font-size:12px;color:#9ca3af;padding-bottom:8px;width:90px;vertical-align:top">Category</td>
                     <td style="font-size:13px;color:#111111;font-weight:600;padding-bottom:8px">${esc(categoryLabels[data.category] ?? data.category)}</td>
                   </tr>
-                  ${data.subject ? `<tr>
+                  ${
+                    data.subject
+                      ? `<tr>
                     <td style="font-size:12px;color:#9ca3af;padding-bottom:8px;vertical-align:top">Subject</td>
                     <td style="font-size:13px;color:#111111;padding-bottom:8px">${esc(data.subject)}</td>
-                  </tr>` : ""}
+                  </tr>`
+                      : ""
+                  }
                   <tr>
                     <td style="font-size:12px;color:#9ca3af;vertical-align:top;padding-top:2px">Message</td>
                     <td style="font-size:13px;color:#374151;line-height:1.6;padding-top:2px">${esc(data.message).replace(/\n/g, "<br/>")}</td>
@@ -232,7 +250,8 @@ export const submitContactFn = createServerFn({ method: "POST" })
         `,
         buttonText: "Open GilaniAI",
         buttonUrl: "https://gilaniai.site",
-        footerNote: "You received this because you submitted a contact form on GilaniAI. If this wasn't you, please ignore this email or contact support@gilaniai.site.",
+        footerNote:
+          "You received this because you submitted a contact form on GilaniAI. If this wasn't you, please ignore this email or contact support@gilaniai.site.",
       }),
       text: `Hi ${data.name},\n\nThanks for reaching out! We've received your message (${categoryLabels[data.category] ?? data.category}) and will get back to you within 24 hours (Mon–Fri).\n\nGilaniAI Features:\n• Socratic AI Tutor — maths, sciences, languages with LaTeX support\n• Teacher Escalation — direct expert review\n• Learning Analytics — track study streaks & progress\n• Export Sessions — PDF & Word downloads\n\nPlans: Free (10 msgs/day) · Basic KES 150 · Premium KES 300 · School KES 5,000\n\nDirect contact:\n  support@gilaniai.site — technical support & billing\n  contact@gilaniai.site — general enquiries\n\nOpen the app: https://gilaniai.site\n\n— The GilaniAI Team`,
     });

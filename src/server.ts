@@ -55,12 +55,12 @@ export default {
       return new Response(renderErrorPage(), {
         status: 500,
         headers: {
-      "content-type": "text/html; charset=utf-8",
-      "x-frame-options": "DENY",
-      "x-content-type-options": "nosniff",
-      "referrer-policy": "strict-origin-when-cross-origin",
-      "permissions-policy": "camera=(self), microphone=(), geolocation=()",
-    },
+          "content-type": "text/html; charset=utf-8",
+          "x-frame-options": "DENY",
+          "x-content-type-options": "nosniff",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "permissions-policy": "camera=(self), microphone=(), geolocation=()",
+        },
       });
     }
   },

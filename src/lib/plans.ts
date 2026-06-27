@@ -92,10 +92,10 @@ export const TOPUP_TOKENS_PER_KES = 1_000;
 export const TOPUP_MIN_KES = 10;
 
 export const PLAN_MINUTE_LIMITS: Record<PlanId, number> = {
-  free:    5,
-  basic:   10,
+  free: 5,
+  basic: 10,
   premium: 20,
-  school:  20,
+  school: 20,
 };
 
 export function getPlanMinuteLimit(plan: string): number {

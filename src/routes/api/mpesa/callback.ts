@@ -56,7 +56,8 @@ export const Route = createFileRoute("/api/mpesa/callback")({
 
           // Get M-Pesa receipt number
           const items: any[] = callback.CallbackMetadata?.Item ?? [];
-          const receipt = items.find((i: any) => i.Name === "MpesaReceiptNumber")?.Value ?? "UNKNOWN";
+          const receipt =
+            items.find((i: any) => i.Name === "MpesaReceiptNumber")?.Value ?? "UNKNOWN";
 
           // Mark payment complete
           await supabaseAdmin
@@ -71,9 +72,18 @@ export const Route = createFileRoute("/api/mpesa/callback")({
           const TOPUP_TOKENS_PER_KES = 1_000;
           const getPlanLimits = (plan: string) => {
             const PLANS: Record<string, { label: string; description: string }> = {
-              basic:   { label: "Student Basic",   description: "50 msgs, 10 quizzes, 10 planners, 15 uploads/day" },
-              premium: { label: "Student Premium", description: "Unlimited messages, 50 quizzes, 30 planners, 50 uploads/day" },
-              school:  { label: "School License",  description: "Unlimited messages, 100 quizzes, 100 planners, 150 uploads/day" },
+              basic: {
+                label: "Student Basic",
+                description: "50 msgs, 10 quizzes, 10 planners, 15 uploads/day",
+              },
+              premium: {
+                label: "Student Premium",
+                description: "Unlimited messages, 50 quizzes, 30 planners, 50 uploads/day",
+              },
+              school: {
+                label: "School License",
+                description: "Unlimited messages, 100 quizzes, 100 planners, 150 uploads/day",
+              },
             };
             return PLANS[plan] ?? { label: plan, description: "" };
           };
@@ -96,11 +106,16 @@ export const Route = createFileRoute("/api/mpesa/callback")({
             if (profile?.email) {
               const tokensAdded = isTopup ? payment.amount * TOPUP_TOKENS_PER_KES : null;
               const plan = isTopup ? null : getPlanLimits(payment.plan);
-              const expiryDate = isTopup ? null : (() => {
-                const d = new Date();
-                d.setDate(d.getDate() + 30);
-                return d.toLocaleDateString("en-KE", { timeZone: "Africa/Nairobi", dateStyle: "long" });
-              })();
+              const expiryDate = isTopup
+                ? null
+                : (() => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + 30);
+                    return d.toLocaleDateString("en-KE", {
+                      timeZone: "Africa/Nairobi",
+                      dateStyle: "long",
+                    });
+                  })();
 
               const planLabel = isTopup
                 ? `Top-Up — ${tokensAdded!.toLocaleString("en-KE")} tokens`
@@ -150,7 +165,6 @@ export const Route = createFileRoute("/api/mpesa/callback")({
 
           console.log(`[M-Pesa Callback] ✅ ${payment.user_id} → ${payment.plan} (${receipt})`);
           return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
-
         } catch (err: any) {
           console.error("[M-Pesa Callback Error]", err?.message);
           // Always return 200 to Safaricom or they will retry

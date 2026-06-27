@@ -33,7 +33,9 @@ export function stripThoughtProcessTransform<TOOLS extends ToolSet>() {
           return;
         }
 
-        console.log(`[STRIP-DEBUG] raw delta in (len=${chunk.text.length}): ${JSON.stringify(chunk.text.slice(0, 200))}`);
+        console.log(
+          `[STRIP-DEBUG] raw delta in (len=${chunk.text.length}): ${JSON.stringify(chunk.text.slice(0, 200))}`,
+        );
         buffer += chunk.text;
         let outText = "";
 
@@ -96,7 +98,9 @@ export function stripThoughtProcessTransform<TOOLS extends ToolSet>() {
           // original bug). Instead, assume reasoning is done and release
           // everything we were holding, split into word-sized deltas so the
           // client doesn't get one giant paint.
-          console.warn("[stripThoughtProcess] stream ended without a closing tag — releasing buffered text instead of discarding it");
+          console.warn(
+            "[stripThoughtProcess] stream ended without a closing tag — releasing buffered text instead of discarding it",
+          );
         }
         const words = buffer.match(/\S+\s*/g) || [buffer];
         for (const w of words) {

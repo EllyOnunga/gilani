@@ -299,7 +299,6 @@ function About() {
         </section>
       </main>
       <LegalFooter />
-
     </div>
   );
 }

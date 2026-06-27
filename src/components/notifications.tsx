@@ -180,19 +180,24 @@ export function NotificationBell({ userId }: { userId: string }) {
                           >
                             {n.type}
                           </span>
-                          {!n.read && (
-                            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                          )}
+                          {!n.read && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className={`text-xs font-semibold leading-snug ${!n.read ? "text-foreground" : "text-muted-foreground"}`}>
+                          <p
+                            className={`text-xs font-semibold leading-snug ${!n.read ? "text-foreground" : "text-muted-foreground"}`}
+                          >
                             {n.title}
                           </p>
                           <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">
                             {n.message}
                           </p>
                           <p className="font-mono text-[9px] text-muted-foreground/50 mt-1.5">
-                            {new Date(n.created_at).toLocaleString("en-KE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            {new Date(n.created_at).toLocaleString("en-KE", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </p>
                         </div>
                       </div>

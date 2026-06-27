@@ -20,7 +20,6 @@ export function EscalateModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-2xl mb-safe overflow-hidden">
-
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-amber-50 dark:bg-amber-950/30">
           <div className="flex items-center gap-2.5">
@@ -48,8 +47,8 @@ export function EscalateModal({
         {/* Body */}
         <div className="px-4 py-3 space-y-3">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Enter your teacher's email to send this conversation for review.
-            They must be registered on GilaniAI.
+            Enter your teacher's email to send this conversation for review. They must be registered
+            on GilaniAI.
           </p>
 
           <div className="space-y-1.5">
@@ -92,13 +91,16 @@ export function EscalateModal({
             className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white disabled:opacity-60 transition-colors"
           >
             {isEscalating ? (
-              <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Sending…</>
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Sending…
+              </>
             ) : (
-              <><ShieldAlert className="h-3.5 w-3.5" /> Escalate</>
+              <>
+                <ShieldAlert className="h-3.5 w-3.5" /> Escalate
+              </>
             )}
           </button>
         </div>
-
       </div>
     </div>
   );

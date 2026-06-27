@@ -18,13 +18,18 @@ function loadExternalScript(src: string): Promise<void> {
     const existing = document.querySelector(`script[src="${src}"]`) as HTMLScriptElement | null;
     if (existing) {
       // Already fully loaded (readyState = 'complete' for classic scripts)
-      if ((existing as any).readyState === "complete" || existing.getAttribute("data-loaded") === "1") {
+      if (
+        (existing as any).readyState === "complete" ||
+        existing.getAttribute("data-loaded") === "1"
+      ) {
         resolve();
         return;
       }
       // Still loading — wait for its load event
       existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error(`Script failed to load: ${src}`)), { once: true });
+      existing.addEventListener("error", () => reject(new Error(`Script failed to load: ${src}`)), {
+        once: true,
+      });
       return;
     }
 
@@ -33,20 +38,28 @@ function loadExternalScript(src: string): Promise<void> {
     script.async = true;
 
     const timeout = setTimeout(() => {
-      reject(new Error(
-        `Timed out loading required library from ${new URL(src).hostname}. ` +
-        `Your connection may be too slow or blocking this resource. Please check your internet connection and try again.`
-      ));
+      reject(
+        new Error(
+          `Timed out loading required library from ${new URL(src).hostname}. ` +
+            `Your connection may be too slow or blocking this resource. Please check your internet connection and try again.`,
+        ),
+      );
     }, 20000);
 
-    script.onload = () => { clearTimeout(timeout); script.setAttribute("data-loaded", "1"); resolve(); };
+    script.onload = () => {
+      clearTimeout(timeout);
+      script.setAttribute("data-loaded", "1");
+      resolve();
+    };
     script.onerror = () => {
       clearTimeout(timeout);
-      reject(new Error(
-        `Could not load required library from ${new URL(src).hostname}. ` +
-        `This is usually caused by a network error or a Content Security Policy restriction. ` +
-        `Please check your internet connection and try again.`
-      ));
+      reject(
+        new Error(
+          `Could not load required library from ${new URL(src).hostname}. ` +
+            `This is usually caused by a network error or a Content Security Policy restriction. ` +
+            `Please check your internet connection and try again.`,
+        ),
+      );
     };
     document.head.appendChild(script);
   });
@@ -79,7 +92,7 @@ async function getMammoth(): Promise<any> {
   if (window.mammoth) return window.mammoth;
 
   await loadExternalScript(
-    "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"
+    "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js",
   );
 
   const mammoth = window.mammoth;
@@ -182,10 +195,10 @@ export async function parseDocument(file: File): Promise<ExtractedDocument> {
           const MAX_OCR_PAGES = 5;
           if (pdf.numPages > MAX_OCR_PAGES) {
             throw new Error(
-              `This PDF appears to be a scanned document and contains ${pdf.numPages} pages. To prevent browser memory exhaustion and tab crashes, client-side OCR is limited to a maximum of ${MAX_OCR_PAGES} pages. Please upload a text-searchable PDF or split the file.`
+              `This PDF appears to be a scanned document and contains ${pdf.numPages} pages. To prevent browser memory exhaustion and tab crashes, client-side OCR is limited to a maximum of ${MAX_OCR_PAGES} pages. Please upload a text-searchable PDF or split the file.`,
             );
           }
-          
+
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const blob = await pdfPageToBlob(page);

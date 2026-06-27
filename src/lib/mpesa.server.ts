@@ -1,13 +1,14 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getPlanLimits, TOPUP_TOKENS_PER_KES } from "@/lib/plans";
 
-const MPESA_BASE = process.env.MPESA_ENV === "production"
-  ? "https://api.safaricom.co.ke"
-  : "https://sandbox.safaricom.co.ke";
+const MPESA_BASE =
+  process.env.MPESA_ENV === "production"
+    ? "https://api.safaricom.co.ke"
+    : "https://sandbox.safaricom.co.ke";
 
 export async function getMpesaToken(): Promise<string> {
   const auth = Buffer.from(
-    `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
+    `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`,
   ).toString("base64");
 
   const res = await fetch(`${MPESA_BASE}/oauth/v1/generate?grant_type=client_credentials`, {
@@ -33,15 +34,15 @@ export async function initiateSTKPush(
     .slice(0, 14);
 
   const password = Buffer.from(
-    `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
+    `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`,
   ).toString("base64");
 
   // Normalize phone: 0712345678 → 254712345678
   const normalized = phone.startsWith("0")
     ? `254${phone.slice(1)}`
     : phone.startsWith("+")
-    ? phone.slice(1)
-    : phone;
+      ? phone.slice(1)
+      : phone;
 
   const body = {
     BusinessShortCode: process.env.MPESA_SHORTCODE,
@@ -99,10 +100,12 @@ export async function creditTopupTokens(userId: string, amount: number): Promise
   const tokensToAdd = amount * TOPUP_TOKENS_PER_KES;
 
   // Atomically increment topup_tokens
-  const { data, error } = await (supabaseAdmin as any).rpc("increment_topup_tokens", {
-    p_user_id: userId,
-    p_tokens: tokensToAdd,
-  }).single();
+  const { data, error } = await (supabaseAdmin as any)
+    .rpc("increment_topup_tokens", {
+      p_user_id: userId,
+      p_tokens: tokensToAdd,
+    })
+    .single();
 
   if (error) throw new Error(`Failed to credit tokens: ${error.message}`);
 

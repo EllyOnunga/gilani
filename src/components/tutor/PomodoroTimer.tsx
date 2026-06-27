@@ -23,7 +23,9 @@ export function PomodoroTimer({ open, onOpenChange, showTrigger = true }: Props)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const dispatchTick = (minutes: number, seconds: number, running: boolean) => {
-    window.dispatchEvent(new CustomEvent("pomodoro:tick", { detail: { minutes, seconds, running } }));
+    window.dispatchEvent(
+      new CustomEvent("pomodoro:tick", { detail: { minutes, seconds, running } }),
+    );
   };
 
   const startTimer = () => {
@@ -33,7 +35,10 @@ export function PomodoroTimer({ open, onOpenChange, showTrigger = true }: Props)
       setTimerSeconds((s) => {
         if (s > 0) {
           const newS = s - 1;
-          setTimerMinutes((m) => { dispatchTick(m, newS, true); return m; });
+          setTimerMinutes((m) => {
+            dispatchTick(m, newS, true);
+            return m;
+          });
           return newS;
         }
         setTimerMinutes((m) => {

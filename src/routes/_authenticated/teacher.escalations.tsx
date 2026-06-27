@@ -32,7 +32,7 @@ import { z } from "zod";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 const MarkdownRenderer = lazy(() =>
-  import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer }))
+  import("@/components/tutor/MarkdownRenderer").then((m) => ({ default: m.MarkdownRenderer })),
 );
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ const listEscalations = createServerFn({ method: "POST" }).handler(async () => {
       (pd ?? []).map((p: any) => [
         p.id,
         { display_name: p.display_name, avatar_url: p.avatar_url },
-      ])
+      ]),
     );
   }
 
@@ -162,7 +162,8 @@ const resolveEscalation = createServerFn({ method: "POST" })
               body: `Your escalated study session has been reviewed by a teacher. Their response has been added to your conversation. Log in to GilaniAI to continue learning.`,
               buttonText: "View Response",
               buttonUrl: `${appUrl}/login?redirect=/tutor/${esc.conversation_id}`,
-              footerNote: "You are receiving this because you requested a teacher review on GilaniAI.",
+              footerNote:
+                "You are receiving this because you requested a teacher review on GilaniAI.",
             }),
           }).catch((err: any) => console.error("[Student Email] Failed:", err));
         }
@@ -297,7 +298,7 @@ function saveDraft(escalationId: string, value: string) {
       delete drafts[escalationId];
     }
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(drafts));
-  } catch { }
+  } catch {}
 }
 
 function clearDraft(escalationId: string) {
@@ -308,7 +309,7 @@ function clearDraft(escalationId: string) {
     const drafts = JSON.parse(raw);
     delete drafts[escalationId];
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(drafts));
-  } catch { }
+  } catch {}
 }
 
 // ─── Copy Button Component ────────────────────────────────────────────────────
@@ -353,12 +354,13 @@ function MessageBubble({ msg }: { msg: any }) {
   return (
     <div className={`flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}>
       <span
-        className={`font-mono text-[9px] uppercase tracking-wider flex items-center gap-1 ${isUser
+        className={`font-mono text-[9px] uppercase tracking-wider flex items-center gap-1 ${
+          isUser
             ? "text-primary/70"
             : isTeacherReview
               ? "text-green-600 dark:text-green-400"
               : "text-muted-foreground"
-          }`}
+        }`}
       >
         <User className="h-2.5 w-2.5" />
         {isUser ? "Student" : isTeacherReview ? "Teacher Review" : "GilaniAI"}
@@ -372,15 +374,24 @@ function MessageBubble({ msg }: { msg: any }) {
         )}
       </span>
       <div
-        className={`rounded-xl px-3 py-2 text-xs max-w-[85%] leading-relaxed prose-compact ${isUser
+        className={`rounded-xl px-3 py-2 text-xs max-w-[85%] leading-relaxed prose-compact ${
+          isUser
             ? "bg-primary/10 text-foreground rounded-tr-sm"
             : isTeacherReview
               ? "bg-green-50/60 dark:bg-green-950/30 border border-green-200/60 dark:border-green-800/60 text-foreground rounded-tl-sm"
               : "bg-card border border-border text-foreground rounded-tl-sm"
-          }`}
+        }`}
       >
         {/* Use MarkdownRenderer for formatted content */}
-        <Suspense fallback={<span className="text-xs text-muted-foreground">{isTeacherReview ? msg.content.replace(/^👨‍🏫 \*\*Teacher Review:\*\*\n?/, "") : msg.content}</span>}>
+        <Suspense
+          fallback={
+            <span className="text-xs text-muted-foreground">
+              {isTeacherReview
+                ? msg.content.replace(/^👨‍🏫 \*\*Teacher Review:\*\*\n?/, "")
+                : msg.content}
+            </span>
+          }
+        >
           <MarkdownRenderer
             content={
               isTeacherReview
@@ -442,8 +453,9 @@ function EscalationCard({
 
   return (
     <div
-      className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-shadow ${urgent ? "border-red-300 dark:border-red-800" : "border-border"
-        } ${isOpen ? "shadow-md" : ""}`}
+      className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-shadow ${
+        urgent ? "border-red-300 dark:border-red-800" : "border-border"
+      } ${isOpen ? "shadow-md" : ""}`}
     >
       {/* Card header */}
       <button
@@ -488,21 +500,22 @@ function EscalationCard({
             <p className="text-xs text-muted-foreground">
               {esc.created_at
                 ? new Date(esc.created_at).toLocaleString("en-KE", {
-                  day: "numeric",
-                  month: "short",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                 : "—"}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span
-            className={`hidden sm:inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${isOpen
+            className={`hidden sm:inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              isOpen
                 ? "border-border bg-muted text-muted-foreground"
                 : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20"
-              }`}
+            }`}
           >
             {isOpen ? "Collapse" : "Respond"}
           </span>
@@ -570,20 +583,22 @@ function EscalationCard({
                   <button
                     type="button"
                     onClick={() => setShowPreview(false)}
-                    className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium transition-colors ${!showPreview
+                    className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                      !showPreview
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-accent"
-                      }`}
+                    }`}
                   >
                     <Edit3 className="h-3 w-3" /> Write
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowPreview(true)}
-                    className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium transition-colors border-l border-border ${showPreview
+                    className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium transition-colors border-l border-border ${
+                      showPreview
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-accent"
-                      }`}
+                    }`}
                   >
                     <Eye className="h-3 w-3" /> Preview
                   </button>
@@ -604,8 +619,7 @@ function EscalationCard({
                   — Submit response
                 </p>
                 <p>
-                  Supports markdown:{" "}
-                  <code className="text-primary">**bold**</code>,{" "}
+                  Supports markdown: <code className="text-primary">**bold**</code>,{" "}
                   <code className="text-primary">$math$</code>,{" "}
                   <code className="text-primary">```code```</code>
                 </p>
@@ -830,12 +844,19 @@ function EscalationsPage() {
             bg: "border-green-200/60 dark:border-green-800/60 bg-green-500/[0.02]",
           },
         ].map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className={`rounded-xl border p-4 sm:p-5 shadow-xs flex items-center justify-between ${bg}`}>
+          <div
+            key={label}
+            className={`rounded-xl border p-4 sm:p-5 shadow-xs flex items-center justify-between ${bg}`}
+          >
             <div className="space-y-1">
-              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{label}</p>
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                {label}
+              </p>
               <p className={`font-serif text-3xl font-black ${color}`}>{value}</p>
             </div>
-            <div className={`rounded-full p-2.5 bg-background/50 border border-border/20 shadow-inner flex items-center justify-center ${color}`}>
+            <div
+              className={`rounded-full p-2.5 bg-background/50 border border-border/20 shadow-inner flex items-center justify-center ${color}`}
+            >
               <Icon className="h-5 w-5" />
             </div>
           </div>
@@ -849,14 +870,21 @@ function EscalationsPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors ${filter === f
+              className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
+                filter === f
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-                }`}
+              }`}
             >
               {f}{" "}
               <span className="text-[10px] opacity-60">
-                ({f === "all" ? escalations.length : f === "pending" ? pending.length : resolved.length})
+                (
+                {f === "all"
+                  ? escalations.length
+                  : f === "pending"
+                    ? pending.length
+                    : resolved.length}
+                )
               </span>
             </button>
           ))}
@@ -965,7 +993,11 @@ function EscalationsPage() {
                           {esc.student_name ? esc.student_name.substring(0, 2) : "ST"}
                         </span>
                       ) : (
-                        <img src={esc.student_avatar} alt="Avatar" className="h-full w-full object-cover" />
+                        <img
+                          src={esc.student_avatar}
+                          alt="Avatar"
+                          className="h-full w-full object-cover"
+                        />
                       )
                     ) : (
                       <span className="font-serif text-xs font-bold text-primary capitalize">
@@ -992,9 +1024,9 @@ function EscalationsPage() {
                         <span className="text-[10px] text-muted-foreground">
                           {esc.created_at
                             ? new Date(esc.created_at).toLocaleDateString("en-KE", {
-                              day: "numeric",
-                              month: "short",
-                            })
+                                day: "numeric",
+                                month: "short",
+                              })
                             : "—"}
                         </span>
                         <span className="rounded-full border border-green-300 dark:border-green-700 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1">
@@ -1004,7 +1036,9 @@ function EscalationsPage() {
                     </div>
                     {esc.detail && (
                       <div className="mt-2 rounded-lg border border-green-200/40 dark:border-green-800/40 bg-background/50 px-3 py-2 text-xs text-foreground leading-relaxed">
-                        <Suspense fallback={<p className="text-xs text-muted-foreground">{esc.detail}</p>}>
+                        <Suspense
+                          fallback={<p className="text-xs text-muted-foreground">{esc.detail}</p>}
+                        >
                           <MarkdownRenderer content={esc.detail} className="text-xs" />
                         </Suspense>
                       </div>

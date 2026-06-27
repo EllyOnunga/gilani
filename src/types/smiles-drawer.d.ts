@@ -1,1 +1,1 @@
-declare module 'smiles-drawer';
+declare module "smiles-drawer";

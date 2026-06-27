@@ -37,8 +37,7 @@ export function ExportMenu({ onExportPDF }: Props) {
                 setOpen(false);
               }}
               className="flex items-center gap-2 px-3 py-2.5 text-xs hover:bg-accent transition-colors"
-            >
-            </button>
+            ></button>
           </div>
         </>
       )}

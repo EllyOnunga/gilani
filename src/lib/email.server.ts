@@ -169,7 +169,9 @@ export function emailTemplate({
           <tr>
             <td style="background:${BG_CARD};border:1px solid ${BORDER};border-radius:16px;padding:36px 32px">
 
-              ${alertBanner ? `
+              ${
+                alertBanner
+                  ? `
               <!-- Alert banner -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
                 <tr>
@@ -177,20 +179,28 @@ export function emailTemplate({
                     ${escapeHtml(alertBanner.text)}
                   </td>
                 </tr>
-              </table>` : ""}
+              </table>`
+                  : ""
+              }
 
-              ${heading ? `
+              ${
+                heading
+                  ? `
               <!-- Heading -->
               <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:${TEXT_HEADING};text-align:center;font-family:Georgia,serif">
                 ${escapeHtml(heading)}
-              </p>` : ""}
+              </p>`
+                  : ""
+              }
 
               <!-- Body content -->
               <div style="margin:0 0 28px;font-size:14px;color:${TEXT_BODY};line-height:1.6">
                 ${body}
               </div>
 
-              ${buttonText && safeButtonUrl ? `
+              ${
+                buttonText && safeButtonUrl
+                  ? `
               <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px">
                 <tr>
@@ -206,7 +216,9 @@ export function emailTemplate({
               <p style="margin:10px 0 0;font-size:11px;color:#6b7280;text-align:center">
                 Button not working? Copy this link:<br>
                 <a href="${safeButtonUrl}" style="color:${BRAND_ORANGE};word-break:break-all">${safeButtonUrl}</a>
-              </p>` : ""}
+              </p>`
+                  : ""
+              }
 
             </td>
           </tr>
@@ -378,6 +390,7 @@ export function mpesaReceiptEmail({
     `,
     buttonText: "Go to Dashboard",
     buttonUrl: `${APP_URL}/dashboard`,
-    footerNote: "You received this receipt because a payment was successfully processed on your GilaniAI account. Please retain it for your records.",
+    footerNote:
+      "You received this receipt because a payment was successfully processed on your GilaniAI account. Please retain it for your records.",
   });
 }

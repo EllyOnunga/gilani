@@ -10,13 +10,22 @@ import { checkPlanRateLimit } from "@/lib/rate-limit.server";
 import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
 
 // ─── Profile cache (per-user, 60s TTL) ──────────────────────────────────────
-const _profileCache = new Map<string, { data: { curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string }; expiresAt: number }>();
+const _profileCache = new Map<
+  string,
+  {
+    data: { curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string };
+    expiresAt: number;
+  }
+>();
 function getCachedProfile(userId: string) {
   const entry = _profileCache.get(userId);
   if (entry && Date.now() < entry.expiresAt) return entry.data;
   return null;
 }
-function setCachedProfile(userId: string, data: { curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string }) {
+function setCachedProfile(
+  userId: string,
+  data: { curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string },
+) {
   _profileCache.set(userId, { data, expiresAt: Date.now() + 60_000 });
 }
 
@@ -55,7 +64,11 @@ export const Route = createFileRoute("/api/chat")({
           const { userId } = authResult;
 
           const body = await request.json().catch(() => ({}));
-          const { threadId, messages, isRetry } = body as { threadId?: string; messages?: any[]; isRetry?: boolean };
+          const { threadId, messages, isRetry } = body as {
+            threadId?: string;
+            messages?: any[];
+            isRetry?: boolean;
+          };
 
           const rlResult = await checkPlanRateLimit(userId, "chat", !!isRetry);
           if (!rlResult.allowed) {
@@ -64,8 +77,18 @@ export const Route = createFileRoute("/api/chat")({
               ? `Daily message limit reached. Resets in ${seconds}s.`
               : `Rate limit exceeded. Try again in ${seconds}s.`;
             return new Response(
-              JSON.stringify({ error: msg, retryAfterMs: rlResult.retryAfterMs, isDaily: rlResult.isDaily }),
-              { status: 429, headers: { "Content-Type": "application/json", "Retry-After": String(Math.ceil(rlResult.retryAfterMs / 1000)) } },
+              JSON.stringify({
+                error: msg,
+                retryAfterMs: rlResult.retryAfterMs,
+                isDaily: rlResult.isDaily,
+              }),
+              {
+                status: 429,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Retry-After": String(Math.ceil(rlResult.retryAfterMs / 1000)),
+                },
+              },
             );
           }
 
@@ -82,10 +105,10 @@ export const Route = createFileRoute("/api/chat")({
           const chatModel = gateway.chatModel("gemini-2.5-flash");
 
           if (!chatModel) {
-            return new Response(
-              JSON.stringify({ error: "No AI provider configured." }),
-              { status: 500, headers: { "Content-Type": "application/json" } },
-            );
+            return new Response(JSON.stringify({ error: "No AI provider configured." }), {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            });
           }
 
           console.log(`[API Chat] Using provider: google (gemini), with fallback`);
@@ -168,7 +191,12 @@ export const Route = createFileRoute("/api/chat")({
                 const embModel = createGoogleAiProvider().textEmbeddingModel();
                 console.log(`[RAG] Using gemini for embeddings`);
                 const { embedding } = await withTimeout(
-                  embed({ model: embModel, value: latestMessageContent, maxRetries: 0, providerOptions: { google: { outputDimensionality: 768 } } }),
+                  embed({
+                    model: embModel,
+                    value: latestMessageContent,
+                    maxRetries: 0,
+                    providerOptions: { google: { outputDimensionality: 768 } },
+                  }),
                   15000,
                   "Embedding generation timed out",
                 );
@@ -198,7 +226,9 @@ export const Route = createFileRoute("/api/chat")({
                     ? globalResult.value.data.map((c: any) => c.content)
                     : [];
 
-                console.log(`[RAG] Personal: ${personalChunks.length} chunks, Global: ${globalChunks.length} chunks`);
+                console.log(
+                  `[RAG] Personal: ${personalChunks.length} chunks, Global: ${globalChunks.length} chunks`,
+                );
 
                 // ── Personal notes first, then global ─────────────────────────
                 const allChunks: string[] = [];
@@ -264,7 +294,6 @@ ${finalContent}`;
             };
           });
 
-
           // ─── Stream with Gemini (auto-fallback to Groq/OpenAI/Mistral) ───
           console.log(`[API Chat] Streaming with provider: google (gemini)`);
 
@@ -302,7 +331,9 @@ ${finalContent}`;
                   language: z.enum(["javascript", "python"]),
                 }) as any,
                 execute: (async ({ code, language }: any) => {
-                  console.log(`[API Chat] evaluateCode tool invoked. Language: ${language}, Code: ${code}`);
+                  console.log(
+                    `[API Chat] evaluateCode tool invoked. Language: ${language}, Code: ${code}`,
+                  );
                   return { output: "SyntaxError: Unexpected token" };
                 }) as any,
               }) as any,
@@ -337,39 +368,70 @@ ${finalContent}`;
               const cachedTokens = usage?.cachedContentTokenCount ?? 0;
               const totalTokens = usage?.totalTokenCount ?? 0;
               const cacheHit = cachedTokens > 0;
-              console.log(`[API Chat] google finished. Length: ${assistantText.length}. FinishReason: ${finishReason}. Tokens: ${totalTokens} (cached: ${cachedTokens}) Cache: ${cacheHit ? "✅ HIT" : "❌ MISS"}`);;
+              console.log(
+                `[API Chat] google finished. Length: ${assistantText.length}. FinishReason: ${finishReason}. Tokens: ${totalTokens} (cached: ${cachedTokens}) Cache: ${cacheHit ? "✅ HIT" : "❌ MISS"}`,
+              );
 
-              const safeText = assistantText.trim() || "Sorry, I could not generate a response right now. Please try again.";
+              const safeText =
+                assistantText.trim() ||
+                "Sorry, I could not generate a response right now. Please try again.";
               try {
                 const assistantParts = [{ type: "text" as const, text: safeText }];
-                const thoughtSignature = (providerMetadata as any)?.google?.thoughtSignature || null;
-                const { data: insertedMsg } = await supabaseAdmin.from("messages").insert({
-                  conversation_id: threadId,
-                  role: "assistant",
-                  content: safeText,
-                  parts: JSON.stringify(assistantParts),
-                  confidence: 0.9,
-                  user_id: userId,
-                  thought_signature: thoughtSignature,
-                } as any).select("id").single();
+                const thoughtSignature =
+                  (providerMetadata as any)?.google?.thoughtSignature || null;
+                const { data: insertedMsg } = await supabaseAdmin
+                  .from("messages")
+                  .insert({
+                    conversation_id: threadId,
+                    role: "assistant",
+                    content: safeText,
+                    parts: JSON.stringify(assistantParts),
+                    confidence: 0.9,
+                    user_id: userId,
+                    thought_signature: thoughtSignature,
+                  } as any)
+                  .select("id")
+                  .single();
                 if (insertedMsg?.id) {
                   insertedMessageId = insertedMsg.id;
-                  (result as any).experimental_sendMessageAnnotations?.([{ messageId: insertedMsg.id }]);
+                  (result as any).experimental_sendMessageAnnotations?.([
+                    { messageId: insertedMsg.id },
+                  ]);
                 }
                 await supabaseAdmin.from("audit_logs").insert({
                   action: "tutor.message",
                   payload: { threadId, confidence: 0.9, provider: "google" },
                 });
                 const safety = (providerMetadata as any)?.google?.safetyRatings;
-                if (Array.isArray(safety) && safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")) {
+                if (
+                  Array.isArray(safety) &&
+                  safety.some((s: any) => s.probability === "HIGH" || s.probability === "MEDIUM")
+                ) {
                   const { data: escData, error: escErr } = await supabaseAdmin
                     .from("escalations")
-                    .insert({ conversation_id: threadId, reason: "Safety probability threshold exceeded", status: "pending", user_id: userId })
-                    .select("id").single();
+                    .insert({
+                      conversation_id: threadId,
+                      reason: "Safety probability threshold exceeded",
+                      status: "pending",
+                      user_id: userId,
+                    })
+                    .select("id")
+                    .single();
                   if (!escErr && escData) {
-                    import("@/lib/zapier.server").then(({ triggerZapierEscalation }) => {
-                      triggerZapierEscalation({ escalationId: escData.id, userId, threadId, reason: "Safety probability threshold exceeded", detail: "Automatically escalated due to model safety ratings threshold breach." });
-                    }).catch((err) => console.error("[Zapier] Failed to load safety trigger:", err));
+                    import("@/lib/zapier.server")
+                      .then(({ triggerZapierEscalation }) => {
+                        triggerZapierEscalation({
+                          escalationId: escData.id,
+                          userId,
+                          threadId,
+                          reason: "Safety probability threshold exceeded",
+                          detail:
+                            "Automatically escalated due to model safety ratings threshold breach.",
+                        });
+                      })
+                      .catch((err) =>
+                        console.error("[Zapier] Failed to load safety trigger:", err),
+                      );
                   }
                 }
               } catch (persistError) {
@@ -382,7 +444,7 @@ ${finalContent}`;
             headers: {
               "Cache-Control": "no-cache, no-transform",
               "Content-Type": "text/event-stream",
-              "Connection": "keep-alive",
+              Connection: "keep-alive",
               "X-Accel-Buffering": "no",
             },
             // Without this, a mid-stream provider failure (bad key, quota,
@@ -402,14 +464,22 @@ ${finalContent}`;
             },
           });
         } catch (error: unknown) {
-          console.error("[API Chat] Error:", error instanceof Error ? error.message : String(error));
+          console.error(
+            "[API Chat] Error:",
+            error instanceof Error ? error.message : String(error),
+          );
           return new Response(
             JSON.stringify({
               error: isRateLimitError(error)
                 ? "AI quota exceeded. Please try again later."
-                : error instanceof Error ? error.message : "Failed to process chat request",
+                : error instanceof Error
+                  ? error.message
+                  : "Failed to process chat request",
             }),
-            { status: isRateLimitError(error) ? 429 : 500, headers: { "Content-Type": "application/json" } },
+            {
+              status: isRateLimitError(error) ? 429 : 500,
+              headers: { "Content-Type": "application/json" },
+            },
           );
         }
       },

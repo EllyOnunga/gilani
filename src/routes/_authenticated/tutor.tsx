@@ -181,10 +181,10 @@ function TutorIndex() {
     const safeError = isServiceRoleError
       ? "Server configuration error. Please contact support."
       : isLovableKeyError
-      ? "AI service configuration error. Please contact support."
-      : isUnauthorizedError
-      ? "Your session has expired. Please sign in again."
-      : "An unexpected error occurred. Please try again.";
+        ? "AI service configuration error. Please contact support."
+        : isUnauthorizedError
+          ? "Your session has expired. Please sign in again."
+          : "An unexpected error occurred. Please try again.";
 
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center p-5 sm:p-8 text-center animate-in-slide">

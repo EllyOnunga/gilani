@@ -32,7 +32,10 @@ export function useAuth(): AuthState {
             typeof window !== "undefined" ? localStorage.getItem("pending_role") : null;
           if (pendingRole && ["student", "teacher"].includes(pendingRole)) {
             // Check if role already assigned before trying to assign
-            const { data: existing } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+            const { data: existing } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", userId);
             if (!existing || existing.length === 0) {
               try {
                 localStorage.removeItem("pending_role");
@@ -68,7 +71,7 @@ export function useAuth(): AuthState {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, s) => {
       if (!active) return;
-      
+
       const hasExistingUser = !!userRef.current;
 
       setSession(s);

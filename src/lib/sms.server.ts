@@ -6,10 +6,11 @@
  */
 
 const AT_USERNAME = process.env.AT_USERNAME ?? "sandbox";
-const AT_API_KEY  = process.env.AT_API_KEY ?? "";
-const AT_BASE     = AT_USERNAME === "sandbox"
-  ? "https://api.sandbox.africastalking.com/version1"
-  : "https://api.africastalking.com/version1";
+const AT_API_KEY = process.env.AT_API_KEY ?? "";
+const AT_BASE =
+  AT_USERNAME === "sandbox"
+    ? "https://api.sandbox.africastalking.com/version1"
+    : "https://api.africastalking.com/version1";
 
 export async function sendSMS(phone: string, message: string): Promise<boolean> {
   if (!AT_API_KEY) {
@@ -21,8 +22,8 @@ export async function sendSMS(phone: string, message: string): Promise<boolean> 
   const normalized = phone.startsWith("0")
     ? `+254${phone.slice(1)}`
     : phone.startsWith("254")
-    ? `+${phone}`
-    : phone;
+      ? `+${phone}`
+      : phone;
 
   try {
     const res = await fetch(`${AT_BASE}/messaging`, {

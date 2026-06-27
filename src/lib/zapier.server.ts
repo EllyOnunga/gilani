@@ -1,6 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-
 /**
  * Triggers a Zapier workflow via a secure server-side webhook POST request.
  * Fetches relevant student, conversation, and message details before posting.
@@ -89,10 +88,16 @@ export async function triggerZapierEscalation({
     if (webhookSecret) {
       const enc = new TextEncoder();
       const key = await crypto.subtle.importKey(
-        "raw", enc.encode(webhookSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+        "raw",
+        enc.encode(webhookSecret),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"],
       );
       const buf = await crypto.subtle.sign("HMAC", key, enc.encode(body));
-      sig = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+      sig = Array.from(new Uint8Array(buf))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
     }
 
     const controller = new AbortController();

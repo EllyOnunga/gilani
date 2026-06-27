@@ -240,7 +240,8 @@ function Landing() {
                 </h1>
 
                 <p className="mt-6 max-w-xl mx-auto lg:mx-0 text-base sm:text-lg leading-relaxed text-muted-foreground">
-                  GilaniAI is your personal AI study assistant — Socratic step-by-step tutoring across every subject, with real teacher escalation when you need a human expert.
+                  GilaniAI is your personal AI study assistant — Socratic step-by-step tutoring
+                  across every subject, with real teacher escalation when you need a human expert.
                 </p>
 
                 <div className="mt-8 flex flex-col sm:flex-row justify-center lg:justify-start gap-3 sm:gap-4">
@@ -273,20 +274,36 @@ function Landing() {
                 <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-5 shadow-lg space-y-3">
                   <div className="flex items-center gap-2 pb-3 border-b border-border/50">
                     <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">AI Tutor — Active Session</p>
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      AI Tutor — Active Session
+                    </p>
                   </div>
                   {[
-                    { role: "student", text: "I don't understand how to solve quadratic equations by completing the square." },
-                    { role: "ai", text: "Good question. Before I show you, tell me — what does it mean to 'complete' a square geometrically?" },
+                    {
+                      role: "student",
+                      text: "I don't understand how to solve quadratic equations by completing the square.",
+                    },
+                    {
+                      role: "ai",
+                      text: "Good question. Before I show you, tell me — what does it mean to 'complete' a square geometrically?",
+                    },
                     { role: "student", text: "Umm… making it a perfect square trinomial?" },
-                    { role: "ai", text: "Exactly. So if we have x² + 6x, what term would we add to make it a perfect square?" },
+                    {
+                      role: "ai",
+                      text: "Exactly. So if we have x² + 6x, what term would we add to make it a perfect square?",
+                    },
                   ].map((msg, i) => (
-                    <div key={i} className={`flex ${msg.role === "student" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-xs leading-relaxed ${
-                        msg.role === "student"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground border border-border/50"
-                      }`}>
+                    <div
+                      key={i}
+                      className={`flex ${msg.role === "student" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-xs leading-relaxed ${
+                          msg.role === "student"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-foreground border border-border/50"
+                        }`}
+                      >
                         {msg.text}
                       </div>
                     </div>
@@ -312,7 +329,9 @@ function Landing() {
               <div key={label} className="flex flex-col items-center text-center gap-2">
                 <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4 text-primary" />
-                  <p className="font-serif text-xl sm:text-3xl font-black text-foreground">{value}</p>
+                  <p className="font-serif text-xl sm:text-3xl font-black text-foreground">
+                    {value}
+                  </p>
                 </div>
                 <p className="text-xs text-muted-foreground">{label}</p>
               </div>
@@ -323,10 +342,15 @@ function Landing() {
         {/* ── Features ── */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
           <div className="text-center mb-12">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">What you get</p>
-            <h2 className="font-serif text-2xl sm:text-4xl font-black">Everything you need to excel</h2>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
+              What you get
+            </p>
+            <h2 className="font-serif text-2xl sm:text-4xl font-black">
+              Everything you need to excel
+            </h2>
             <p className="mt-3 text-sm text-muted-foreground max-w-xl mx-auto">
-              Focused, powerful tools — no bloat. Just the AI tutoring and human expertise you need to improve.
+              Focused, powerful tools — no bloat. Just the AI tutoring and human expertise you need
+              to improve.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
@@ -340,10 +364,14 @@ function Landing() {
                     {badge}
                   </span>
                 )}
-                <div className={`rounded-xl bg-background/60 backdrop-blur-sm p-3 w-fit ${iconColor} mb-4 group-hover:scale-110 transition-transform`}>
+                <div
+                  className={`rounded-xl bg-background/60 backdrop-blur-sm p-3 w-fit ${iconColor} mb-4 group-hover:scale-110 transition-transform`}
+                >
                   <Icon className="h-5 w-5" />
                 </div>
-                <h3 className="font-serif text-lg font-bold mb-2 group-hover:text-primary transition-colors">{title}</h3>
+                <h3 className="font-serif text-lg font-bold mb-2 group-hover:text-primary transition-colors">
+                  {title}
+                </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
               </div>
             ))}
@@ -354,8 +382,12 @@ function Landing() {
         <section className="bg-muted/20 border-y border-border/40">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
             <div className="text-center mb-12">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">Simple process</p>
-              <h2 className="font-serif text-2xl sm:text-4xl font-black">Start improving in 3 steps</h2>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
+                Simple process
+              </p>
+              <h2 className="font-serif text-2xl sm:text-4xl font-black">
+                Start improving in 3 steps
+              </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
@@ -375,7 +407,10 @@ function Landing() {
                   desc: "If the AI isn't enough, escalate to a real verified teacher who will review your question and respond with expert feedback.",
                 },
               ].map(({ step, title, desc }) => (
-                <div key={step} className="flex flex-col items-center text-center sm:items-start sm:text-left">
+                <div
+                  key={step}
+                  className="flex flex-col items-center text-center sm:items-start sm:text-left"
+                >
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-4 flex-shrink-0">
                     <span className="font-mono text-xl font-black text-primary">{step}</span>
                   </div>
@@ -390,18 +425,27 @@ function Landing() {
         {/* ── Testimonials ── */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
           <div className="text-center mb-12">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">Student stories</p>
-            <h2 className="font-serif text-2xl sm:text-4xl font-black">Students are scoring higher</h2>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
+              Student stories
+            </p>
+            <h2 className="font-serif text-2xl sm:text-4xl font-black">
+              Students are scoring higher
+            </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {TESTIMONIALS.map(({ name, school, avatar, text, stars, subject }) => (
-              <div key={name} className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-4">
+              <div
+                key={name}
+                className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-4"
+              >
                 <div className="flex items-center gap-1">
                   {Array.from({ length: stars }).map((_, i) => (
                     <Star key={i} className="h-3.5 w-3.5 fill-primary text-primary" />
                   ))}
                 </div>
-                <p className="text-sm leading-relaxed text-foreground/90 flex-1">&ldquo;{text}&rdquo;</p>
+                <p className="text-sm leading-relaxed text-foreground/90 flex-1">
+                  &ldquo;{text}&rdquo;
+                </p>
                 <div className="flex items-center gap-3 pt-2 border-t border-border/50">
                   <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <span className="font-mono text-xs font-bold text-primary">{avatar}</span>
@@ -423,7 +467,9 @@ function Landing() {
         <section className="border-y border-border/40 bg-muted/10">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-20">
             <div className="text-center mb-12">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">Fair & Transparent Pricing</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
+                Fair & Transparent Pricing
+              </p>
               <h2 className="font-serif text-2xl sm:text-4xl font-black">Choose your plan</h2>
               <p className="mt-3 text-sm text-muted-foreground max-w-xl mx-auto">
                 Upgrade easily using M-Pesa to study with no limits and connect with real teachers.
@@ -437,7 +483,9 @@ function Landing() {
                   <div
                     key={plan.id}
                     className={`relative rounded-2xl border flex flex-col justify-between w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] min-w-[220px] max-w-[300px] p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
-                      isPremium ? "border-2 border-primary bg-card/65 backdrop-blur-sm" : "border-border bg-card"
+                      isPremium
+                        ? "border-2 border-primary bg-card/65 backdrop-blur-sm"
+                        : "border-border bg-card"
                     }`}
                   >
                     {isPremium && (
@@ -447,27 +495,47 @@ function Landing() {
                     )}
                     <div>
                       <div className="mb-4 mt-1">
-                        <span className={`rounded-full px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold ${
-                          isPremium ? "bg-primary/10 text-primary" :
-                          isSchool ? "bg-violet-500/10 text-violet-500" :
-                          "bg-muted/60 text-muted-foreground"
-                        }`}>
-                          {plan.id === "free" ? "Starter" : plan.id === "basic" ? "Basic" : plan.id === "premium" ? "Monthly Saver" : "Institutional"}
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold ${
+                            isPremium
+                              ? "bg-primary/10 text-primary"
+                              : isSchool
+                                ? "bg-violet-500/10 text-violet-500"
+                                : "bg-muted/60 text-muted-foreground"
+                          }`}
+                        >
+                          {plan.id === "free"
+                            ? "Starter"
+                            : plan.id === "basic"
+                              ? "Basic"
+                              : plan.id === "premium"
+                                ? "Monthly Saver"
+                                : "Institutional"}
                         </span>
                       </div>
                       <h3 className="font-serif text-xl font-bold mb-1">{plan.label}</h3>
                       <p className="text-xs text-muted-foreground mb-6">{plan.description}</p>
                       <div className="flex items-baseline gap-1 mb-6">
-                        <span className="font-serif text-3xl font-black text-foreground">KES{plan.price.toLocaleString()}</span>
+                        <span className="font-serif text-3xl font-black text-foreground">
+                          KES{plan.price.toLocaleString()}
+                        </span>
                         <span className="text-xs text-muted-foreground">
-                          {plan.id === "free" ? "/ forever" : plan.id === "school" ? "/ term" : "/ month"}
+                          {plan.id === "free"
+                            ? "/ forever"
+                            : plan.id === "school"
+                              ? "/ term"
+                              : "/ month"}
                         </span>
                       </div>
                       <ul className="space-y-3 text-xs text-muted-foreground mb-8">
                         {plan.features.map((feat) => (
                           <li key={feat} className="flex gap-2.5 items-start">
-                            <Check className={`h-4 w-4 flex-shrink-0 ${isPremium ? "text-primary" : isSchool ? "text-violet-500" : "text-emerald-500"}`} />
-                            <span className={isPremium ? "text-foreground/90 font-medium" : ""}>{feat}</span>
+                            <Check
+                              className={`h-4 w-4 flex-shrink-0 ${isPremium ? "text-primary" : isSchool ? "text-violet-500" : "text-emerald-500"}`}
+                            />
+                            <span className={isPremium ? "text-foreground/90 font-medium" : ""}>
+                              {feat}
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -492,8 +560,12 @@ function Landing() {
         {/* ── FAQ ── */}
         <section className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-20">
           <div className="text-center mb-10">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">Got questions?</p>
-            <h2 className="font-serif text-2xl sm:text-4xl font-black">Frequently asked questions</h2>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-primary mb-3">
+              Got questions?
+            </p>
+            <h2 className="font-serif text-2xl sm:text-4xl font-black">
+              Frequently asked questions
+            </h2>
           </div>
           <div className="space-y-3">
             {FAQS.map(({ q, a }, i) => (
@@ -531,7 +603,8 @@ function Landing() {
               Ready to ace your exams?
             </h2>
             <p className="text-primary-foreground/80 text-sm sm:text-base max-w-md mx-auto mb-8">
-              Join thousands of students using GilaniAI to study smarter, score higher, and build real understanding.
+              Join thousands of students using GilaniAI to study smarter, score higher, and build
+              real understanding.
             </p>
             <Link
               to="/register"
@@ -550,7 +623,8 @@ function Landing() {
           <div className="flex flex-col items-center sm:items-start gap-4 min-w-[200px]">
             <Logo to="/" size="md" />
             <p className="text-xs text-muted-foreground leading-relaxed max-w-[220px]">
-              Your AI-powered study assistant. Socratic tutoring and real teacher escalation — all in one place.
+              Your AI-powered study assistant. Socratic tutoring and real teacher escalation — all
+              in one place.
             </p>
             <div className="flex gap-4 text-muted-foreground">
               {[Facebook, Twitter, Instagram, Github].map((Icon, i) => (
@@ -563,29 +637,67 @@ function Landing() {
 
           {/* Platform links */}
           <div className="flex flex-col items-center sm:items-start gap-3">
-            <h4 className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Platform</h4>
+            <h4 className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold">
+              Platform
+            </h4>
             <ul className="text-xs space-y-2">
-              <li><Link to="/register" className="hover:text-primary transition-colors">Student signup</Link></li>
-              <li><Link to="/register" className="hover:text-primary transition-colors">Teacher portal</Link></li>
-              <li><Link to="/about" className="hover:text-primary transition-colors">About us</Link></li>
-              <li><Link to="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
-              <li><Link to={"/contact" as any} className="hover:text-primary transition-colors">Contact us</Link></li>
+              <li>
+                <Link to="/register" className="hover:text-primary transition-colors">
+                  Student signup
+                </Link>
+              </li>
+              <li>
+                <Link to="/register" className="hover:text-primary transition-colors">
+                  Teacher portal
+                </Link>
+              </li>
+              <li>
+                <Link to="/about" className="hover:text-primary transition-colors">
+                  About us
+                </Link>
+              </li>
+              <li>
+                <Link to="/faq" className="hover:text-primary transition-colors">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link to={"/contact" as any} className="hover:text-primary transition-colors">
+                  Contact us
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Legal */}
           <div className="flex flex-col items-center sm:items-start gap-3">
-            <h4 className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Legal</h4>
+            <h4 className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold">
+              Legal
+            </h4>
             <ul className="text-xs space-y-2">
-              <li><Link to="/terms" className="hover:text-primary transition-colors">Terms of service</Link></li>
-              <li><Link to="/privacy" className="hover:text-primary transition-colors">Privacy policy</Link></li>
-              <li><Link to="/cookies" className="hover:text-primary transition-colors">Cookie policy</Link></li>
+              <li>
+                <Link to="/terms" className="hover:text-primary transition-colors">
+                  Terms of service
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="hover:text-primary transition-colors">
+                  Privacy policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/cookies" className="hover:text-primary transition-colors">
+                  Cookie policy
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Newsletter + contact */}
           <div className="flex flex-col items-center sm:items-start gap-4 min-w-[240px]">
-            <h4 className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Stay updated</h4>
+            <h4 className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground font-bold">
+              Stay updated
+            </h4>
             {subscribed ? (
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 flex items-center gap-2 text-xs text-primary font-semibold">
                 <Check className="h-4 w-4" /> Subscribed successfully!
@@ -609,9 +721,15 @@ function Landing() {
               </form>
             )}
             <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
-              <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-primary flex-shrink-0" /> onungaelly@gmail.com</p>
-              <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-primary flex-shrink-0" /> 0102880577</p>
-              <p className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" /> Nairobi, Kenya</p>
+              <p className="flex items-center gap-2">
+                <Mail className="h-3.5 w-3.5 text-primary flex-shrink-0" /> onungaelly@gmail.com
+              </p>
+              <p className="flex items-center gap-2">
+                <Phone className="h-3.5 w-3.5 text-primary flex-shrink-0" /> 0102880577
+              </p>
+              <p className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" /> Nairobi, Kenya
+              </p>
             </div>
           </div>
         </div>

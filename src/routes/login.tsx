@@ -14,9 +14,10 @@ function safeRedirectPath(url: string | undefined): string {
   return "/dashboard";
 }
 
-
 export const Route = createFileRoute("/login")({
-  validateSearch: (s: Record<string, unknown>): { redirect?: string; email?: string; signout?: boolean } => ({
+  validateSearch: (
+    s: Record<string, unknown>,
+  ): { redirect?: string; email?: string; signout?: boolean } => ({
     redirect: (s.redirect as string) || undefined,
     email: (s.email as string) || undefined,
     signout: s.signout === "true" || s.signout === true || undefined,
@@ -118,7 +119,9 @@ function LoginPage() {
         </div>
         <Logo to="/" size="md" className="mx-auto" />
         <h1 className="mt-6 text-2xl font-bold tracking-tight text-center">Welcome back</h1>
-        <p className="mt-1 text-sm text-muted-foreground text-center">Sign in to continue to your portal.</p>
+        <p className="mt-1 text-sm text-muted-foreground text-center">
+          Sign in to continue to your portal.
+        </p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           {search.email && (
             <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-200">

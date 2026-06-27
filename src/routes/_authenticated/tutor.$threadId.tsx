@@ -14,7 +14,9 @@ import {
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 // Export utils loaded lazily — jspdf + html2canvas are ~700kB combined
-const exportAsPDF = async (...args: Parameters<typeof import("@/lib/export-utils").exportAsPDF>) => {
+const exportAsPDF = async (
+  ...args: Parameters<typeof import("@/lib/export-utils").exportAsPDF>
+) => {
   try {
     const { exportAsPDF: fn } = await import("@/lib/export-utils");
     return fn(...args);
@@ -80,9 +82,15 @@ function TutorThread() {
   return <TutorThreadInner key={threadId} authToken={authToken} userId={userId} />;
 }
 
-function TutorThreadInner({ authToken, userId }: { authToken: string | null; userId: string | null }) {
+function TutorThreadInner({
+  authToken,
+  userId,
+}: {
+  authToken: string | null;
+  userId: string | null;
+}) {
   const { threadId } = Route.useParams();
-  const navigate = useNavigate({ from: '/tutor/$threadId' });
+  const navigate = useNavigate({ from: "/tutor/$threadId" });
 
   const queryClient = useQueryClient();
   const threadsQuery = useQuery({
@@ -110,7 +118,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const threadsLoadError = threadsQuery.error ? (threadsQuery.error as Error).message : null;
   const setThreads = (updater: Thread[] | ((prev: Thread[]) => Thread[])) => {
     queryClient.setQueryData(["threads", userId], (prev: Thread[] = []) =>
-      typeof updater === "function" ? (updater as (p: Thread[]) => Thread[])(prev) : updater
+      typeof updater === "function" ? (updater as (p: Thread[]) => Thread[])(prev) : updater,
     );
   };
   const [chatError, setChatError] = useState<string | null>(null);
@@ -157,7 +165,9 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
     const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
     if (file.size > MAX_FILE_SIZE) {
-      setDocUploadError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 2MB. Please split large documents into smaller sections.`);
+      setDocUploadError(
+        `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 2MB. Please split large documents into smaller sections.`,
+      );
       return;
     }
 
@@ -209,15 +219,19 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       setMessagesMax((status as any).messagesMax ?? 10);
       if (status.isRateLimited) {
         const secs = Math.ceil(status.retryAfterMs / 1000);
-        setChatError(JSON.stringify({
-          retryAfterMs: status.retryAfterMs,
-          isDaily: status.isDaily,
-          message: status.isDaily
-            ? `Daily message limit reached. Resets in ${secs}s.`
-            : `Rate limit exceeded. Try again in ${secs}s.`,
-        }));
+        setChatError(
+          JSON.stringify({
+            retryAfterMs: status.retryAfterMs,
+            isDaily: status.isDaily,
+            message: status.isDaily
+              ? `Daily message limit reached. Resets in ${secs}s.`
+              : `Rate limit exceeded. Try again in ${secs}s.`,
+          }),
+        );
       }
-    } catch { /* ignore – not signed in */ }
+    } catch {
+      /* ignore – not signed in */
+    }
   }, []);
 
   // Check rate limit status on page load so warning persists after refresh
@@ -246,7 +260,9 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         },
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId, refreshRateLimitStatus]);
   useEffect(() => {
     const safety = setTimeout(() => {
@@ -305,11 +321,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       }
       if (dbMessageId) {
         setMessages((prev: any[]) =>
-          prev.map((m: any) =>
-            m.id === message.id
-              ? { ...m, id: dbMessageId }
-              : m
-          )
+          prev.map((m: any) => (m.id === message.id ? { ...m, id: dbMessageId } : m)),
         );
       }
       // Refresh rate limit counter after each completed AI response
@@ -320,70 +332,88 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const { messages: messagesRaw, setMessages, sendMessage, stop, status, regenerate } = chatHelpers;
   const handleReload = useCallback(() => regenerate({ body: { isRetry: true } }), [regenerate]);
   const handlePromptClick = useCallback((prompt: string) => setInput(prompt), [setInput]);
-  const handleVote = useCallback((msgId: string, vote: 1 | -1 | null) => {
-    setUserVotes((prev) => {
-      if (vote === null) {
-        const next = { ...prev };
-        delete next[msgId];
-        return next;
-      }
-      return { ...prev, [msgId]: vote };
-    });
-  }, [setUserVotes]);
+  const handleVote = useCallback(
+    (msgId: string, vote: 1 | -1 | null) => {
+      setUserVotes((prev) => {
+        if (vote === null) {
+          const next = { ...prev };
+          delete next[msgId];
+          return next;
+        }
+        return { ...prev, [msgId]: vote };
+      });
+    },
+    [setUserVotes],
+  );
   /** When user clicks Edit on a bubble, load its text into ChatInput and focus it */
-  const handleEditRequest = useCallback((text: string) => {
-    setInput(text);
-    setTimeout(() => {
-      chatInputRef.current?.focus();
-      chatInputRef.current?.setSelectionRange(
-        chatInputRef.current.value.length,
-        chatInputRef.current.value.length
-      );
-    }, 50);
-  }, [setInput]);
+  const handleEditRequest = useCallback(
+    (text: string) => {
+      setInput(text);
+      setTimeout(() => {
+        chatInputRef.current?.focus();
+        chatInputRef.current?.setSelectionRange(
+          chatInputRef.current.value.length,
+          chatInputRef.current.value.length,
+        );
+      }, 50);
+    },
+    [setInput],
+  );
   const messages = messagesRaw as UIMessage[];
   const messagesRef = useRef<UIMessage[]>(messages);
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
-  const handleEdit = useCallback(async (messageId: string, newText: string) => {
-    const { data: editedMsg } = await supabase
-      .from("messages")
-      .select("created_at")
-      .eq("id", messageId)
-      .maybeSingle();
-    if (!editedMsg) { toast.error("Message not found"); return; }
-    setMessages((prev: UIMessage[]) =>
-      prev.map((m: UIMessage) =>
-        m.id === messageId
-          ? { ...m, content: newText, parts: [{ type: "text" as const, text: newText }] }
-          : m
-      )
-    );
-    const { error: updateError } = await supabase
-      .from("messages")
-      .update({ content: newText, parts: JSON.stringify([{ type: "text", text: newText }]) })
-      .eq("id", messageId);
-    if (updateError) { toast.error("Failed to save edit"); return; }
-    const { error: deleteError } = await supabase
-      .from("messages")
-      .delete()
-      .eq("conversation_id", threadId)
-      .gt("created_at", editedMsg.created_at);
-    if (deleteError) { console.error("Failed to clean up subsequent messages:", deleteError); }
-    const msgs = (messagesRaw as any[]);
-    const editedIdx = msgs.findIndex((m: any) => m.id === messageId);
-    if (editedIdx === -1) return;
-    const baseMessages = msgs.slice(0, editedIdx + 1).map((m: any) =>
-      m.id === messageId
-        ? { ...m, content: newText, parts: [{ type: "text", text: newText }] }
-        : m
-    );
-    setMessages(baseMessages);
-    regenerate({ body: { isRetry: true } });
-  }, [threadId, messagesRaw, setMessages, regenerate]);
+  const handleEdit = useCallback(
+    async (messageId: string, newText: string) => {
+      const { data: editedMsg } = await supabase
+        .from("messages")
+        .select("created_at")
+        .eq("id", messageId)
+        .maybeSingle();
+      if (!editedMsg) {
+        toast.error("Message not found");
+        return;
+      }
+      setMessages((prev: UIMessage[]) =>
+        prev.map((m: UIMessage) =>
+          m.id === messageId
+            ? { ...m, content: newText, parts: [{ type: "text" as const, text: newText }] }
+            : m,
+        ),
+      );
+      const { error: updateError } = await supabase
+        .from("messages")
+        .update({ content: newText, parts: JSON.stringify([{ type: "text", text: newText }]) })
+        .eq("id", messageId);
+      if (updateError) {
+        toast.error("Failed to save edit");
+        return;
+      }
+      const { error: deleteError } = await supabase
+        .from("messages")
+        .delete()
+        .eq("conversation_id", threadId)
+        .gt("created_at", editedMsg.created_at);
+      if (deleteError) {
+        console.error("Failed to clean up subsequent messages:", deleteError);
+      }
+      const msgs = messagesRaw as any[];
+      const editedIdx = msgs.findIndex((m: any) => m.id === messageId);
+      if (editedIdx === -1) return;
+      const baseMessages = msgs
+        .slice(0, editedIdx + 1)
+        .map((m: any) =>
+          m.id === messageId
+            ? { ...m, content: newText, parts: [{ type: "text", text: newText }] }
+            : m,
+        );
+      setMessages(baseMessages);
+      regenerate({ body: { isRetry: true } });
+    },
+    [threadId, messagesRaw, setMessages, regenerate],
+  );
   const isPending = status === "submitted" || status === "streaming";
-
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(event.target.value);
@@ -400,7 +430,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         const docText =
           attachedFile.text.length > MAX_DOC_CHARS
             ? attachedFile.text.slice(0, MAX_DOC_CHARS) +
-            "\n\n[Document truncated to 8000 characters due to size limits]"
+              "\n\n[Document truncated to 8000 characters due to size limits]"
             : attachedFile.text;
         finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${docText}\n</DocumentContent>\n\nStudent Query: ${trimmedInput || "(See attached document)"}`;
       }
@@ -487,7 +517,9 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       }
 
       // Send email notification to teacher
-      await createEscalationNotification({ data: { conversationId: threadId, reviewerId: reviewerId ?? null } });
+      await createEscalationNotification({
+        data: { conversationId: threadId, reviewerId: reviewerId ?? null },
+      });
 
       setEscalationStatus("open");
       setEscalateModalOpen(false);
@@ -510,126 +542,127 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     return () => window.removeEventListener("custom:trigger-escalation", handleGlobalEscalate);
   }, [handleEscalate, escalationStatus, escalating, messagesLoading]);
 
-
-  const loadMessages = useCallback(async (silent = false) => {
-    if (!threadId) {
-      setMessagesLoading(false);
-      return;
-    }
-
-    if (!silent) {
-      setMessagesLoading(true);
-      setMessagesLoadError(null);
-    }
-
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    if (!silent) {
-      timeoutId = setTimeout(() => {
-        setMessagesLoading(false);
-        setMessagesLoadError("Loading timed out.");
-      }, 20000);
-    }
-
-    try {
-      const [messagesRes, escalationRes, feedbackRes] = await Promise.all([
-        supabase
-          .from("messages")
-          .select("*")
-          .eq("conversation_id", threadId)
-          .order("created_at", { ascending: true }),
-        (async () => {
-          try {
-            const { data: { user } } = await supabase.auth.getUser();
-            return await supabase
-              .from("escalations")
-              .select("status")
-              .eq("conversation_id", threadId)
-              .eq("user_id", user?.id ?? "")
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-          } catch {
-            return { data: null, error: null };
-          }
-        })(),
-        userId
-          ? supabase
-            .from("message_feedback")
-            .select("message_id, vote")
-            .eq("user_id", userId)
-          : Promise.resolve({ data: null, error: null }),
-      ]);
-
-      if (timeoutId) clearTimeout(timeoutId);
-
-      // Component remounts per-thread (key={threadId}), so no need to re-read params here.
-
-      if (messagesRes.error) {
-        if (!silent) setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
+  const loadMessages = useCallback(
+    async (silent = false) => {
+      if (!threadId) {
         setMessagesLoading(false);
         return;
       }
 
-      if (messagesRes.data && messagesRes.data.length > 0) {
-        if (!silent || messagesRes.data.length >= messagesRef.current.length) {
-          setMessages(
-            messagesRes.data.map((m) => ({
-              id: m.id ?? crypto.randomUUID(),
-              role: m.role as "user" | "assistant",
-              content: m.content || "",
-              parts: [{ type: "text" as const, text: m.content || "" }],
-              createdAt: m.created_at ? new Date(m.created_at) : new Date(),
-            })),
-          );
-        }
-      } else {
-        if (!silent) {
-          setMessages([]);
-        }
+      if (!silent) {
+        setMessagesLoading(true);
+        setMessagesLoadError(null);
       }
 
-      if (escalationRes.error) {
-        console.error("[Escalation] Failed to fetch status:", escalationRes.error.message);
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      if (!silent) {
+        timeoutId = setTimeout(() => {
+          setMessagesLoading(false);
+          setMessagesLoadError("Loading timed out.");
+        }, 20000);
       }
-      setEscalationStatus((escalationRes.data?.status as any) || null);
 
-      if (feedbackRes.data && feedbackRes.data.length > 0) {
-        const votesMap: Record<string, 1 | -1> = {};
-        for (const row of feedbackRes.data as any[]) {
-          if (row.message_id && row.vote != null) {
-            votesMap[row.message_id] = row.vote as 1 | -1;
+      try {
+        const [messagesRes, escalationRes, feedbackRes] = await Promise.all([
+          supabase
+            .from("messages")
+            .select("*")
+            .eq("conversation_id", threadId)
+            .order("created_at", { ascending: true }),
+          (async () => {
+            try {
+              const {
+                data: { user },
+              } = await supabase.auth.getUser();
+              return await supabase
+                .from("escalations")
+                .select("status")
+                .eq("conversation_id", threadId)
+                .eq("user_id", user?.id ?? "")
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            } catch {
+              return { data: null, error: null };
+            }
+          })(),
+          userId
+            ? supabase.from("message_feedback").select("message_id, vote").eq("user_id", userId)
+            : Promise.resolve({ data: null, error: null }),
+        ]);
+
+        if (timeoutId) clearTimeout(timeoutId);
+
+        // Component remounts per-thread (key={threadId}), so no need to re-read params here.
+
+        if (messagesRes.error) {
+          if (!silent) setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
+          setMessagesLoading(false);
+          return;
+        }
+
+        if (messagesRes.data && messagesRes.data.length > 0) {
+          if (!silent || messagesRes.data.length >= messagesRef.current.length) {
+            setMessages(
+              messagesRes.data.map((m) => ({
+                id: m.id ?? crypto.randomUUID(),
+                role: m.role as "user" | "assistant",
+                content: m.content || "",
+                parts: [{ type: "text" as const, text: m.content || "" }],
+                createdAt: m.created_at ? new Date(m.created_at) : new Date(),
+              })),
+            );
+          }
+        } else {
+          if (!silent) {
+            setMessages([]);
           }
         }
-        setUserVotes(votesMap);
-      } else {
-        setUserVotes({});
-      }
-    } catch (e) {
-      if (timeoutId) clearTimeout(timeoutId);
-      if (!silent) {
-        setMessagesLoadError("Connection failed. Try refreshing.");
-      }
-    } finally {
-      setMessagesLoading(false);
-    }
-  }, [threadId, userId, setMessages]);
 
-  const handleDeleteMessage = useCallback(async (messageId: string) => {
-    // Optimistically remove from UI immediately
-    setMessages((prev: UIMessage[]) => prev.filter((m: UIMessage) => m.id !== messageId));
-    try {
-      const { error } = await supabase
-        .from("messages")
-        .delete()
-        .eq("id", messageId);
-      if (error) throw error;
-      toast.success("Message deleted");
-    } catch {
-      // Revert on failure by reloading
-      loadMessages(true);
-      toast.error("Failed to delete message");
-    }
-  }, [setMessages, loadMessages]);
+        if (escalationRes.error) {
+          console.error("[Escalation] Failed to fetch status:", escalationRes.error.message);
+        }
+        setEscalationStatus((escalationRes.data?.status as any) || null);
+
+        if (feedbackRes.data && feedbackRes.data.length > 0) {
+          const votesMap: Record<string, 1 | -1> = {};
+          for (const row of feedbackRes.data as any[]) {
+            if (row.message_id && row.vote != null) {
+              votesMap[row.message_id] = row.vote as 1 | -1;
+            }
+          }
+          setUserVotes(votesMap);
+        } else {
+          setUserVotes({});
+        }
+      } catch (e) {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!silent) {
+          setMessagesLoadError("Connection failed. Try refreshing.");
+        }
+      } finally {
+        setMessagesLoading(false);
+      }
+    },
+    [threadId, userId, setMessages],
+  );
+
+  const handleDeleteMessage = useCallback(
+    async (messageId: string) => {
+      // Optimistically remove from UI immediately
+      setMessages((prev: UIMessage[]) => prev.filter((m: UIMessage) => m.id !== messageId));
+      try {
+        const { error } = await supabase.from("messages").delete().eq("id", messageId);
+        if (error) throw error;
+        toast.success("Message deleted");
+      } catch {
+        // Revert on failure by reloading
+        loadMessages(true);
+        toast.error("Failed to delete message");
+      }
+    },
+    [setMessages, loadMessages],
+  );
 
   // Load messages on mount/thread switch
   useEffect(() => {
@@ -748,83 +781,84 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     exportAsPDF(messages, title);
   };
 
-return (
-  <div className="flex h-full bg-background text-foreground overflow-hidden">
-    {/* Main chat area */}
-    <main className="flex flex-col min-w-0 overflow-hidden w-full h-full" style={{ flex: 1, minHeight: 0 }}>
-      {/* Chat header */}
-      <ChatHeader
-        title={threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
-        threadId={threadId}
-      />
-      {/* Messages area */}
-      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-        <MessageList
-          messages={messages}
-          messagesLoading={messagesLoading}
-          messagesLoadError={messagesLoadError}
-          isPending={isPending}
-          isRateLimited={isRateLimited}
-          onReload={handleReload}
-          onEditRequest={handleEditRequest}
-          onDelete={handleDeleteMessage}
-          onPromptClick={handlePromptClick}
-          userId={userId}
-          userVotes={userVotes}
-          onVote={handleVote}
-          onExportPDF={handleExportPDF}
-          onEscalate={() => setEscalateModalOpen(true)}
-          escalationStatus={escalationStatus}
-          escalating={escalating}
+  return (
+    <div className="flex h-full bg-background text-foreground overflow-hidden">
+      {/* Main chat area */}
+      <main
+        className="flex flex-col min-w-0 overflow-hidden w-full h-full"
+        style={{ flex: 1, minHeight: 0 }}
+      >
+        {/* Chat header */}
+        <ChatHeader
+          title={threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
+          threadId={threadId}
         />
-      </div>
-      {/* Input area */}
-      <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">
-        <ChatInput
-          input={input}
-          isPending={isPending}
-          parsingFile={parsingFile}
-          attachedFile={attachedFile}
-          chatError={chatError}
-          docUploadError={docUploadError}
-          onClearDocError={() => setDocUploadError(null)}
-          onInputChange={handleInputChange}
-          onSubmit={submit}
-          onStop={stop}
-          onFileChange={handleFileChange}
-          inputRef={chatInputRef}
-          onRemoveFile={() => {
-            setAttachedFile(null);
-            setDocUploadError(null);
+        {/* Messages area */}
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <MessageList
+            messages={messages}
+            messagesLoading={messagesLoading}
+            messagesLoadError={messagesLoadError}
+            isPending={isPending}
+            isRateLimited={isRateLimited}
+            onReload={handleReload}
+            onEditRequest={handleEditRequest}
+            onDelete={handleDeleteMessage}
+            onPromptClick={handlePromptClick}
+            userId={userId}
+            userVotes={userVotes}
+            onVote={handleVote}
+            onExportPDF={handleExportPDF}
+            onEscalate={() => setEscalateModalOpen(true)}
+            escalationStatus={escalationStatus}
+            escalating={escalating}
+          />
+        </div>
+        {/* Input area */}
+        <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">
+          <ChatInput
+            input={input}
+            isPending={isPending}
+            parsingFile={parsingFile}
+            attachedFile={attachedFile}
+            chatError={chatError}
+            docUploadError={docUploadError}
+            onClearDocError={() => setDocUploadError(null)}
+            onInputChange={handleInputChange}
+            onSubmit={submit}
+            onStop={stop}
+            onFileChange={handleFileChange}
+            inputRef={chatInputRef}
+            onRemoveFile={() => {
+              setAttachedFile(null);
+              setDocUploadError(null);
+            }}
+            onUpgrade={() => setShowPlans(true)}
+            messagesUsed={messagesUsed}
+            messagesMax={messagesMax}
+          />
+        </div>
+      </main>
+      {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
+
+      {/* Escalate Modal */}
+      {escalateModalOpen && (
+        <EscalateModal
+          teacherEmail={teacherEmail}
+          onEmailChange={(val) => {
+            setTeacherEmail(val);
+            setEscalateEmailError("");
           }}
-          onUpgrade={() => setShowPlans(true)}
-          messagesUsed={messagesUsed}
-          messagesMax={messagesMax}
+          onConfirm={() => handleEscalate(teacherEmail || undefined)}
+          onCancel={() => {
+            setEscalateModalOpen(false);
+            setTeacherEmail("");
+            setEscalateEmailError("");
+          }}
+          isEscalating={escalating}
+          error={escalateEmailError}
         />
-      </div>
-    </main>
-    {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
-
-    {/* Escalate Modal */}
-    {escalateModalOpen && (
-      <EscalateModal
-        teacherEmail={teacherEmail}
-        onEmailChange={(val) => {
-          setTeacherEmail(val);
-          setEscalateEmailError("");
-        }}
-        onConfirm={() => handleEscalate(teacherEmail || undefined)}
-        onCancel={() => {
-          setEscalateModalOpen(false);
-          setTeacherEmail("");
-          setEscalateEmailError("");
-        }}
-        isEscalating={escalating}
-        error={escalateEmailError}
-      />
-    )}
-  </div>
-
-);
-
+      )}
+    </div>
+  );
 }

@@ -51,7 +51,7 @@ function ResetPasswordPage() {
 
     // Fire confirmation email (don't await — non-blocking)
     sendPasswordResetConfirmationFn().catch((err) =>
-      console.error("[ResetPassword] Confirmation email failed:", err)
+      console.error("[ResetPassword] Confirmation email failed:", err),
     );
 
     toast.success("Password updated successfully! Please sign in with your new password.");

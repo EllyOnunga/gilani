@@ -4,12 +4,14 @@ import { z } from "zod";
 import { sendTransactionalEmail, emailTemplate } from "./email.server";
 
 export const createEscalationFn = createServerFn({ method: "POST" })
-  .inputValidator(z.object({
-    conversationId: z.string().uuid(),
-    reason: z.string().default("student_request"),
-    detail: z.string().default("Student manually requested teacher review."),
-    reviewerId: z.string().uuid().nullable(),
-  }))
+  .inputValidator(
+    z.object({
+      conversationId: z.string().uuid(),
+      reason: z.string().default("student_request"),
+      detail: z.string().default("Student manually requested teacher review."),
+      reviewerId: z.string().uuid().nullable(),
+    }),
+  )
   .handler(async ({ data }) => {
     const request = (await import("@tanstack/react-start/server")).getRequest();
     const { authenticateRequest } = await import("@/lib/api-auth.server");
@@ -334,7 +336,9 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
   });
 
 export const renameThreadFn = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ threadId: z.string().uuid(), title: z.string().trim().min(1).max(120) }))
+  .inputValidator(
+    z.object({ threadId: z.string().uuid(), title: z.string().trim().min(1).max(120) }),
+  )
   .handler(async ({ data }) => {
     const request = (await import("@tanstack/react-start/server")).getRequest();
     const { authenticateRequest } = await import("@/lib/api-auth.server");

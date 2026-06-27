@@ -22,7 +22,8 @@ export const Route = createFileRoute("/api/newsletter/send")({
 
           if (!roleCheck) {
             return new Response(JSON.stringify({ error: "Forbidden" }), {
-              status: 403, headers: { "Content-Type": "application/json" },
+              status: 403,
+              headers: { "Content-Type": "application/json" },
             });
           }
 
@@ -34,10 +35,10 @@ export const Route = createFileRoute("/api/newsletter/send")({
           };
 
           if (!subject || !html) {
-            return new Response(
-              JSON.stringify({ error: "subject and html are required" }),
-              { status: 400, headers: { "Content-Type": "application/json" } }
-            );
+            return new Response(JSON.stringify({ error: "subject and html are required" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            });
           }
 
           // Get all active subscribers
@@ -48,10 +49,10 @@ export const Route = createFileRoute("/api/newsletter/send")({
 
           if (error) throw new Error(error.message);
           if (!subscribers?.length) {
-            return new Response(
-              JSON.stringify({ message: "No active subscribers found" }),
-              { status: 200, headers: { "Content-Type": "application/json" } }
-            );
+            return new Response(JSON.stringify({ message: "No active subscribers found" }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
           }
 
           // Send in batches of 10
@@ -67,22 +68,21 @@ export const Route = createFileRoute("/api/newsletter/send")({
                   html,
                   text,
                   fromName: "GilaniAI",
-                })
-              )
+                }),
+              ),
             );
             sent += batch.length;
           }
 
-          return new Response(
-            JSON.stringify({ success: true, sent, total: subscribers.length }),
-            { status: 200, headers: { "Content-Type": "application/json" } }
-          );
-
+          return new Response(JSON.stringify({ success: true, sent, total: subscribers.length }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
         } catch (err: any) {
           console.error("[Newsletter Send]", err?.message);
           return new Response(
             JSON.stringify({ error: err?.message ?? "Failed to send newsletter" }),
-            { status: 500, headers: { "Content-Type": "application/json" } }
+            { status: 500, headers: { "Content-Type": "application/json" } },
           );
         }
       },

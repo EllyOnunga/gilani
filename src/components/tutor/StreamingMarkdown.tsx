@@ -28,9 +28,11 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
           style={{ animation: "streaming-cursor-blink 0.65s infinite step-start" }}
         />
       )}
-      <style dangerouslySetInnerHTML={{
-        __html: `@keyframes streaming-cursor-blink { 0%, 100% { opacity: 0.9; } 50% { opacity: 0; } }`
-      }} />
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `@keyframes streaming-cursor-blink { 0%, 100% { opacity: 0.9; } 50% { opacity: 0; } }`,
+        }}
+      />
     </div>
   );
 });

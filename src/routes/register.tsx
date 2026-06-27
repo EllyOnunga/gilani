@@ -61,7 +61,16 @@ function RegisterPage() {
     }
 
     // Block disposable email domains
-    const blockedDomains = ["mailinator.com", "guerrillamail.com", "tempmail.com", "throwam.com", "sharklasers.com", "trashmail.com", "yopmail.com", "maildrop.cc"];
+    const blockedDomains = [
+      "mailinator.com",
+      "guerrillamail.com",
+      "tempmail.com",
+      "throwam.com",
+      "sharklasers.com",
+      "trashmail.com",
+      "yopmail.com",
+      "maildrop.cc",
+    ];
     const emailDomain = email.split("@")[1]?.toLowerCase();
     if (blockedDomains.includes(emailDomain)) {
       toast.error("Please use a valid email address. Disposable emails are not allowed.");
@@ -168,10 +177,11 @@ function RegisterPage() {
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${role === r
+                  className={`rounded-lg border py-2 text-center capitalize transition-all text-xs font-semibold ${
+                    role === r
                       ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
                       : "border-border bg-card text-muted-foreground hover:bg-accent"
-                    }`}
+                  }`}
                 >
                   {r}
                 </button>

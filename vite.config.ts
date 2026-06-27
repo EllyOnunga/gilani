@@ -31,8 +31,10 @@ export default defineConfig({
         output: {
           manualChunks(id) {
             if (id.includes("katex")) return "vendor-katex";
-            if (id.includes("mermaid") || id.includes("cytoscape") || id.includes("dagre")) return "vendor-mermaid";
-            if (id.includes("jspdf") || id.includes("html2canvas") || id.includes("canvg")) return "vendor-pdf";
+            if (id.includes("mermaid") || id.includes("cytoscape") || id.includes("dagre"))
+              return "vendor-mermaid";
+            if (id.includes("jspdf") || id.includes("html2canvas") || id.includes("canvg"))
+              return "vendor-pdf";
             if (id.includes("docx")) return "vendor-docx";
             if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
             if (id.includes("node_modules/@sentry")) return "vendor-sentry";
@@ -48,17 +50,18 @@ export default defineConfig({
     },
   },
   nitro: {
-    ...(nitroPreset ? {
-      preset: nitroPreset,
-      output:
-        nitroPreset === "vercel"
-          ? {
-              dir: ".vercel/output",
-              serverDir: ".vercel/output/functions/__server.func",
-              publicDir: ".vercel/output/static",
-            }
-          : undefined,
-    } : {}),
-
+    ...(nitroPreset
+      ? {
+          preset: nitroPreset,
+          output:
+            nitroPreset === "vercel"
+              ? {
+                  dir: ".vercel/output",
+                  serverDir: ".vercel/output/functions/__server.func",
+                  publicDir: ".vercel/output/static",
+                }
+              : undefined,
+        }
+      : {}),
   },
 });

@@ -43,7 +43,10 @@ function AuthCallback() {
       const type = urlParams.get("type") as "email" | "recovery" | null;
 
       if (tokenHash && type) {
-        const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type,
+        });
         if (verifyError) {
           setIsError(true);
           setErrorMessage(verifyError.message || "The link is invalid or has expired.");

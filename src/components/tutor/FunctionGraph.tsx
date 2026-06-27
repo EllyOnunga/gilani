@@ -3,13 +3,29 @@ import React from "react";
 // ─── Safe expression compiler ──────────────────────────────────────────────
 // Whitelists identifiers to Math.* equivalents; rejects anything else.
 const FUNC_MAP: Record<string, string> = {
-  sin: "Math.sin", cos: "Math.cos", tan: "Math.tan",
-  asin: "Math.asin", acos: "Math.acos", atan: "Math.atan",
-  sinh: "Math.sinh", cosh: "Math.cosh", tanh: "Math.tanh",
-  sqrt: "Math.sqrt", abs: "Math.abs", exp: "Math.exp",
-  ln: "Math.log", log: "Math.log10", log10: "Math.log10", log2: "Math.log2",
-  floor: "Math.floor", ceil: "Math.ceil", round: "Math.round",
-  min: "Math.min", max: "Math.max", pow: "Math.pow", sign: "Math.sign",
+  sin: "Math.sin",
+  cos: "Math.cos",
+  tan: "Math.tan",
+  asin: "Math.asin",
+  acos: "Math.acos",
+  atan: "Math.atan",
+  sinh: "Math.sinh",
+  cosh: "Math.cosh",
+  tanh: "Math.tanh",
+  sqrt: "Math.sqrt",
+  abs: "Math.abs",
+  exp: "Math.exp",
+  ln: "Math.log",
+  log: "Math.log10",
+  log10: "Math.log10",
+  log2: "Math.log2",
+  floor: "Math.floor",
+  ceil: "Math.ceil",
+  round: "Math.round",
+  min: "Math.min",
+  max: "Math.max",
+  pow: "Math.pow",
+  sign: "Math.sign",
 };
 const CONST_MAP: Record<string, string> = { pi: "Math.PI", e: "Math.E" };
 
@@ -31,7 +47,7 @@ export function compileExpression(expr: string): ((x: number) => number) | null 
     // eslint-disable-next-line no-new-func
     const fn = new Function(
       "x",
-      `"use strict"; const r = (${safe}); return (typeof r === "number" && isFinite(r)) ? r : NaN;`
+      `"use strict"; const r = (${safe}); return (typeof r === "number" && isFinite(r)) ? r : NaN;`,
     );
     fn(1);
     return fn as (x: number) => number;
@@ -60,7 +76,10 @@ export type GraphFn = { expr: string; label?: string; color?: string };
 export type GraphSpec = {
   title?: string;
   functions: GraphFn[];
-  xMin?: number; xMax?: number; yMin?: number; yMax?: number;
+  xMin?: number;
+  xMax?: number;
+  yMin?: number;
+  yMax?: number;
   points?: { x: number; y: number; label?: string }[];
 };
 
@@ -72,8 +91,11 @@ export function FunctionGraph({ spec }: { spec: GraphSpec }) {
   const yMin = spec.yMin ?? -10;
   const yMax = spec.yMax ?? 10;
 
-  const W = 600, H = 400, PAD = 32;
-  const plotW = W - PAD * 2, plotH = H - PAD * 2;
+  const W = 600,
+    H = 400,
+    PAD = 32;
+  const plotW = W - PAD * 2,
+    plotH = H - PAD * 2;
   const sx = (x: number) => PAD + ((x - xMin) / (xMax - xMin)) * plotW;
   const sy = (y: number) => PAD + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
 
@@ -112,7 +134,9 @@ export function FunctionGraph({ spec }: { spec: GraphSpec }) {
         if (jump || big) {
           path += ` M ${sx(x).toFixed(2)},${sy(clamp(cy, yMin, yMax)).toFixed(2)}`;
         } else {
-          path += (prevValid ? " L " : " M ") + `${sx(x).toFixed(2)},${sy(clamp(cy, yMin, yMax)).toFixed(2)}`;
+          path +=
+            (prevValid ? " L " : " M ") +
+            `${sx(x).toFixed(2)},${sy(clamp(cy, yMin, yMax)).toFixed(2)}`;
         }
         prevValid = !big;
         prevY = y;
@@ -131,42 +155,124 @@ export function FunctionGraph({ spec }: { spec: GraphSpec }) {
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" style={{ maxHeight: 340 }}>
         {/* Grid */}
         {xTicks.map((t) => (
-          <line key={`gx${t}`} x1={sx(t)} x2={sx(t)} y1={PAD} y2={H - PAD}
-            stroke="currentColor" className="text-border" strokeWidth="1" opacity="0.4" />
+          <line
+            key={`gx${t}`}
+            x1={sx(t)}
+            x2={sx(t)}
+            y1={PAD}
+            y2={H - PAD}
+            stroke="currentColor"
+            className="text-border"
+            strokeWidth="1"
+            opacity="0.4"
+          />
         ))}
         {yTicks.map((t) => (
-          <line key={`gy${t}`} x1={PAD} x2={W - PAD} y1={sy(t)} y2={sy(t)}
-            stroke="currentColor" className="text-border" strokeWidth="1" opacity="0.4" />
+          <line
+            key={`gy${t}`}
+            x1={PAD}
+            x2={W - PAD}
+            y1={sy(t)}
+            y2={sy(t)}
+            stroke="currentColor"
+            className="text-border"
+            strokeWidth="1"
+            opacity="0.4"
+          />
         ))}
 
         {/* Axes */}
-        <line x1={PAD} x2={W - PAD} y1={xAxisY} y2={xAxisY} stroke="currentColor" className="text-muted-foreground" strokeWidth="1.5" />
-        <line x1={yAxisX} x2={yAxisX} y1={PAD} y2={H - PAD} stroke="currentColor" className="text-muted-foreground" strokeWidth="1.5" />
+        <line
+          x1={PAD}
+          x2={W - PAD}
+          y1={xAxisY}
+          y2={xAxisY}
+          stroke="currentColor"
+          className="text-muted-foreground"
+          strokeWidth="1.5"
+        />
+        <line
+          x1={yAxisX}
+          x2={yAxisX}
+          y1={PAD}
+          y2={H - PAD}
+          stroke="currentColor"
+          className="text-muted-foreground"
+          strokeWidth="1.5"
+        />
 
         {/* Tick labels */}
         {xTicks.map((t) => (
-          <text key={`xl${t}`} x={sx(t)} y={xAxisY + 14} textAnchor="middle"
-            className="fill-muted-foreground" fontSize="9" fontFamily="monospace">{t}</text>
+          <text
+            key={`xl${t}`}
+            x={sx(t)}
+            y={xAxisY + 14}
+            textAnchor="middle"
+            className="fill-muted-foreground"
+            fontSize="9"
+            fontFamily="monospace"
+          >
+            {t}
+          </text>
         ))}
         {yTicks.map((t) => (
-          <text key={`yl${t}`} x={yAxisX - 6} y={sy(t) + 3} textAnchor="end"
-            className="fill-muted-foreground" fontSize="9" fontFamily="monospace">{t}</text>
+          <text
+            key={`yl${t}`}
+            x={yAxisX - 6}
+            y={sy(t) + 3}
+            textAnchor="end"
+            className="fill-muted-foreground"
+            fontSize="9"
+            fontFamily="monospace"
+          >
+            {t}
+          </text>
         ))}
-        <text x={yAxisX + 4} y={xAxisY - 4} className="fill-muted-foreground" fontSize="9" fontFamily="monospace">0</text>
+        <text
+          x={yAxisX + 4}
+          y={xAxisY - 4}
+          className="fill-muted-foreground"
+          fontSize="9"
+          fontFamily="monospace"
+        >
+          0
+        </text>
 
         {/* Curves */}
         {curves.map((c, i) =>
           c.error ? null : (
-            <path key={i} d={c.path} fill="none" stroke={c.color} strokeWidth="2.25" strokeLinejoin="round" strokeLinecap="round" />
-          )
+            <path
+              key={i}
+              d={c.path}
+              fill="none"
+              stroke={c.color}
+              strokeWidth="2.25"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          ),
         )}
 
         {/* Points */}
         {(spec.points || []).map((p, i) => (
           <g key={`pt${i}`}>
-            <circle cx={sx(p.x)} cy={sy(p.y)} r="3.5" fill="currentColor" className="text-foreground" />
+            <circle
+              cx={sx(p.x)}
+              cy={sy(p.y)}
+              r="3.5"
+              fill="currentColor"
+              className="text-foreground"
+            />
             {p.label && (
-              <text x={sx(p.x) + 6} y={sy(p.y) - 6} fontSize="10" fontFamily="monospace" className="fill-foreground">{p.label}</text>
+              <text
+                x={sx(p.x) + 6}
+                y={sy(p.y) - 6}
+                fontSize="10"
+                fontFamily="monospace"
+                className="fill-foreground"
+              >
+                {p.label}
+              </text>
             )}
           </g>
         ))}
@@ -175,9 +281,15 @@ export function FunctionGraph({ spec }: { spec: GraphSpec }) {
       {/* Legend */}
       <div className="flex flex-wrap gap-3 mt-2 px-1">
         {curves.map((c, i) => (
-          <div key={i} className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground">
-            <span className="h-2.5 w-2.5 rounded-full inline-block flex-shrink-0" style={{ background: c.error ? "#999" : c.color }} />
-            {c.error ? `${c.label || c.expr} (invalid expression)` : (c.label || `y = ${c.expr}`)}
+          <div
+            key={i}
+            className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground"
+          >
+            <span
+              className="h-2.5 w-2.5 rounded-full inline-block flex-shrink-0"
+              style={{ background: c.error ? "#999" : c.color }}
+            />
+            {c.error ? `${c.label || c.expr} (invalid expression)` : c.label || `y = ${c.expr}`}
           </div>
         ))}
       </div>

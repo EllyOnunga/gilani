@@ -6,7 +6,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { GilaniLoader } from "@/components/GilaniLoader";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { Settings, UserCheck, Loader2, Shield, GraduationCap, User, MessageSquare, Mail, Clock, CheckCircle, CheckCircle2, Inbox, ThumbsUp, ThumbsDown, Search, BarChart3, AlertTriangle, RefreshCw, CreditCard, DollarSign, TrendingUp, Calendar, Crown, BookOpen, Activity, Send, Users } from "lucide-react";
+import {
+  Settings,
+  UserCheck,
+  Loader2,
+  Shield,
+  GraduationCap,
+  User,
+  MessageSquare,
+  Mail,
+  Clock,
+  CheckCircle,
+  CheckCircle2,
+  Inbox,
+  ThumbsUp,
+  ThumbsDown,
+  Search,
+  BarChart3,
+  AlertTriangle,
+  RefreshCw,
+  CreditCard,
+  DollarSign,
+  TrendingUp,
+  Calendar,
+  Crown,
+  BookOpen,
+  Activity,
+  Send,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/async";
 import { z } from "zod";
@@ -77,7 +105,9 @@ type NewsletterSubscriber = {
 };
 
 type RateLimitRow = {
-  key: string; count: number; reset_at: string;
+  key: string;
+  count: number;
+  reset_at: string;
 };
 
 type Payment = {
@@ -98,16 +128,27 @@ async function verifyAdmin(request: Request): Promise<string> {
   if (!authHeader?.startsWith("Bearer ")) throw new Error("Unauthorized");
   const authResult = await authenticateRequest(request);
   const { data: roleCheck } = await supabaseAdmin
-    .from("user_roles").select("role").eq("user_id", authResult.userId).eq("role", "admin").single();
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", authResult.userId)
+    .eq("role", "admin")
+    .single();
   if (!roleCheck) throw new Error("Forbidden");
   return authResult.userId;
 }
 
 const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
-  try { await verifyAdmin(request); } catch { return []; }
+  try {
+    await verifyAdmin(request);
+  } catch {
+    return [];
+  }
   const [profilesRes, rolesRes, convoRes] = await Promise.all([
-    supabaseAdmin.from("profiles").select("id, display_name, email, curriculum, created_at, plan, plan_expiry").order("created_at", { ascending: false }),
+    supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, email, curriculum, created_at, plan, plan_expiry")
+      .order("created_at", { ascending: false }),
     supabaseAdmin.from("user_roles").select("user_id, role"),
     supabaseAdmin.from("conversations").select("user_id"),
   ]);
@@ -125,7 +166,11 @@ const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
 
 const listEscalations = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
-  try { await verifyAdmin(request); } catch { return []; }
+  try {
+    await verifyAdmin(request);
+  } catch {
+    return [];
+  }
   const { data, error } = await supabaseAdmin
     .from("escalations")
     .select("id, conversation_id, user_id, reason, status, detail, reviewer_id, created_at")
@@ -136,15 +181,33 @@ const listEscalations = createServerFn({ method: "GET" }).handler(async () => {
   const userIds = [...new Set((data ?? []).map((e: any) => e.user_id).filter(Boolean))];
   let profileMap: Record<string, { display_name: string | null; email: string | null }> = {};
   if (userIds.length > 0) {
-    const { data: pd } = await supabaseAdmin.from("profiles").select("id, display_name, email").in("id", userIds);
-    profileMap = Object.fromEntries((pd ?? []).map((p: any) => [p.id, { display_name: p.display_name, email: p.email }]));
+    const { data: pd } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, email")
+      .in("id", userIds);
+    profileMap = Object.fromEntries(
+      (pd ?? []).map((p: any) => [p.id, { display_name: p.display_name, email: p.email }]),
+    );
   }
-  return (data ?? []).map((e: any) => ({ ...e, profiles: profileMap[e.user_id] ?? null })) as Escalation[];
+  return (data ?? []).map((e: any) => ({
+    ...e,
+    profiles: profileMap[e.user_id] ?? null,
+  })) as Escalation[];
 });
 
 const listPlatformStats = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
-  try { await verifyAdmin(request); } catch { return { totalConversations: 0, totalMessages: 0, totalNotes: 0, totalEscalations: 0, openEscalations: 0 }; }
+  try {
+    await verifyAdmin(request);
+  } catch {
+    return {
+      totalConversations: 0,
+      totalMessages: 0,
+      totalNotes: 0,
+      totalEscalations: 0,
+      openEscalations: 0,
+    };
+  }
   const [convos, msgs, notes, escs] = await Promise.all([
     supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }),
     supabaseAdmin.from("messages").select("id", { count: "exact", head: true }),
@@ -157,25 +220,37 @@ const listPlatformStats = createServerFn({ method: "GET" }).handler(async () => 
     totalMessages: msgs.count ?? 0,
     totalNotes: notes.count ?? 0,
     totalEscalations: escalations.length,
-    openEscalations: escalations.filter((e: any) => e.status === "open" || e.status === "pending").length,
+    openEscalations: escalations.filter((e: any) => e.status === "open" || e.status === "pending")
+      .length,
   } as PlatformStats;
 });
 
 const listContactMessages = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
-  try { await verifyAdmin(request); } catch { return []; }
+  try {
+    await verifyAdmin(request);
+  } catch {
+    return [];
+  }
   const { data, error } = await supabaseAdmin
-    .from("contact_messages").select("*").order("created_at", { ascending: false });
+    .from("contact_messages")
+    .select("*")
+    .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as ContactMessage[];
 });
 
 const updateMessageStatus = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id: z.string().uuid(), status: z.enum(["unread", "read", "resolved"]) }))
+  .inputValidator(
+    z.object({ id: z.string().uuid(), status: z.enum(["unread", "read", "resolved"]) }),
+  )
   .handler(async ({ data }) => {
     const request = getRequest();
     await verifyAdmin(request);
-    const { error } = await supabaseAdmin.from("contact_messages").update({ status: data.status }).eq("id", data.id);
+    const { error } = await supabaseAdmin
+      .from("contact_messages")
+      .update({ status: data.status })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
   });
 
@@ -184,10 +259,13 @@ const updateRole = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const request = getRequest();
     const adminId = await verifyAdmin(request);
-    if (adminId === data.userId && data.role !== "admin") throw new Error("Cannot remove your own admin role");
+    if (adminId === data.userId && data.role !== "admin")
+      throw new Error("Cannot remove your own admin role");
 
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
-    const { error } = await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: data.role as any });
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: data.userId, role: data.role as any });
     if (error) throw new Error(error.message);
   });
 
@@ -196,9 +274,17 @@ const listFeedback = createServerFn({ method: "GET" }).handler(async () => {
   const authHeader = request.headers.get("authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) return [];
   let authResult;
-  try { authResult = await authenticateRequest(request); } catch { return []; }
+  try {
+    authResult = await authenticateRequest(request);
+  } catch {
+    return [];
+  }
   const { data: roleCheck } = await supabaseAdmin
-    .from("user_roles").select("role").eq("user_id", authResult.userId).eq("role", "admin").single();
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", authResult.userId)
+    .eq("role", "admin")
+    .single();
   if (!roleCheck) throw new Error("Forbidden");
   const { data, error } = await supabaseAdmin
     .from("message_feedback")
@@ -224,7 +310,11 @@ const listFeedback = createServerFn({ method: "GET" }).handler(async () => {
 
 const listNewsletterSubscribers = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
-  try { await verifyAdmin(request); } catch { return []; }
+  try {
+    await verifyAdmin(request);
+  } catch {
+    return [];
+  }
   const { data, error } = await supabaseAdmin
     .from("newsletter_subscribers")
     .select("id, email, name, status, subscribed_at, unsubscribed_at")
@@ -235,35 +325,58 @@ const listNewsletterSubscribers = createServerFn({ method: "GET" }).handler(asyn
 
 const listRateLimits = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
-  try { await verifyAdmin(request); } catch { return []; }
+  try {
+    await verifyAdmin(request);
+  } catch {
+    return [];
+  }
   const { data, error } = await supabaseAdmin
-    .from("rate_limits").select("key, count, reset_at").order("count", { ascending: false }).limit(100);
+    .from("rate_limits")
+    .select("key, count, reset_at")
+    .order("count", { ascending: false })
+    .limit(100);
   if (error) return [];
   return (data ?? []) as RateLimitRow[];
 });
 
 const listPayments = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
-  try { await verifyAdmin(request); } catch { return []; }
+  try {
+    await verifyAdmin(request);
+  } catch {
+    return [];
+  }
   const { data, error } = await supabaseAdmin
-    .from("payments").select("*").order("created_at", { ascending: false }).limit(200);
+    .from("payments")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
   if (error) return [];
   const userIds = [...new Set((data ?? []).map((p: any) => p.user_id).filter(Boolean))];
   let profileMap: Record<string, { display_name: string | null; email: string | null }> = {};
   if (userIds.length > 0) {
     const { data: profileData } = await supabaseAdmin
-      .from("profiles").select("id, display_name, email").in("id", userIds);
-    profileMap = Object.fromEntries((profileData ?? []).map((p: any) => [p.id, { display_name: p.display_name, email: p.email }]));
+      .from("profiles")
+      .select("id, display_name, email")
+      .in("id", userIds);
+    profileMap = Object.fromEntries(
+      (profileData ?? []).map((p: any) => [p.id, { display_name: p.display_name, email: p.email }]),
+    );
   }
-  return (data ?? []).map((p: any) => ({ ...p, profiles: profileMap[p.user_id] ?? null })) as unknown as Payment[];
+  return (data ?? []).map((p: any) => ({
+    ...p,
+    profiles: profileMap[p.user_id] ?? null,
+  })) as unknown as Payment[];
 });
 
 const updateUserPlan = createServerFn({ method: "POST" })
-  .inputValidator(z.object({
-    userId: z.string(),
-    plan: z.enum(["free", "basic", "premium", "school"]),
-    planExpiry: z.string().nullable().optional(),
-  }))
+  .inputValidator(
+    z.object({
+      userId: z.string(),
+      plan: z.enum(["free", "basic", "premium", "school"]),
+      planExpiry: z.string().nullable().optional(),
+    }),
+  )
   .handler(async ({ data }) => {
     const request = getRequest();
     await verifyAdmin(request);
@@ -273,7 +386,6 @@ const updateUserPlan = createServerFn({ method: "POST" })
       .eq("id", data.userId);
     if (error) throw new Error(error.message);
   });
-
 
 const resetUserRateLimit = createServerFn({ method: "POST" })
   .inputValidator(z.object({ userId: z.string() }))
@@ -349,9 +461,13 @@ const formatDateTime = (dateStr: string | null | undefined) => {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-KE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString("en-KE", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
-
 
 function AdminUsersPage() {
   const [loadingData, setLoadingData] = useState(true);
@@ -381,8 +497,19 @@ function AdminUsersPage() {
   const [updatingMsg, setUpdatingMsg] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [rlSearch, setRlSearch] = useState("");
-  const [tab, setTab] = useState<"users" | "feedback" | "messages" | "ratelimits" | "subscriptions" | "escalations" | "newsletter" | "globalnotes">("users");
-  const [escalationFilter, setEscalationFilter] = useState<"all" | "open" | "resolved" | "pending">("all");
+  const [tab, setTab] = useState<
+    | "users"
+    | "feedback"
+    | "messages"
+    | "ratelimits"
+    | "subscriptions"
+    | "escalations"
+    | "newsletter"
+    | "globalnotes"
+  >("users");
+  const [escalationFilter, setEscalationFilter] = useState<"all" | "open" | "resolved" | "pending">(
+    "all",
+  );
   const [expandedMsg, setExpandedMsg] = useState<string | null>(null);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -426,19 +553,25 @@ function AdminUsersPage() {
   const unreadCount = messages.filter((m) => m.status === "unread").length;
   const positiveCount = feedback.filter((f) => f.vote === 1).length;
   const negativeCount = feedback.filter((f) => f.vote === -1).length;
-  const satisfactionPct = feedback.length > 0 ? Math.round((positiveCount / feedback.length) * 100) : 0;
+  const satisfactionPct =
+    feedback.length > 0 ? Math.round((positiveCount / feedback.length) * 100) : 0;
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return !q ? profileState : profileState.filter((p) =>
-      p.display_name?.toLowerCase().includes(q) ||
-      p.email?.toLowerCase().includes(q) ||
-      p.role.toLowerCase().includes(q)
-    );
+    return !q
+      ? profileState
+      : profileState.filter(
+          (p) =>
+            p.display_name?.toLowerCase().includes(q) ||
+            p.email?.toLowerCase().includes(q) ||
+            p.role.toLowerCase().includes(q),
+        );
   }, [profileState, search]);
 
   const filteredEscalations = useMemo(() => {
-    return escalationFilter === "all" ? escalations : escalations.filter((e) => e.status === escalationFilter);
+    return escalationFilter === "all"
+      ? escalations
+      : escalations.filter((e) => e.status === escalationFilter);
   }, [escalations, escalationFilter]);
 
   const filteredRateLimits = useMemo(() => {
@@ -448,11 +581,14 @@ function AdminUsersPage() {
 
   const filteredForPlans = useMemo(() => {
     const q = planSearch.toLowerCase();
-    return !q ? profileState : profileState.filter((p) =>
-      p.display_name?.toLowerCase().includes(q) ||
-      p.email?.toLowerCase().includes(q) ||
-      (p.plan ?? "free").toLowerCase().includes(q)
-    );
+    return !q
+      ? profileState
+      : profileState.filter(
+          (p) =>
+            p.display_name?.toLowerCase().includes(q) ||
+            p.email?.toLowerCase().includes(q) ||
+            (p.plan ?? "free").toLowerCase().includes(q),
+        );
   }, [profileState, planSearch]);
 
   if (loadingData) {
@@ -490,9 +626,12 @@ function AdminUsersPage() {
   const handlePlanChange = async (userId: string, plan: string) => {
     setUpdatingPlan(userId);
     try {
-      const expiry = plan === "free" ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const expiry =
+        plan === "free" ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       await updateUserPlan({ data: { userId, plan: plan as any, planExpiry: expiry } });
-      setProfileState((prev) => prev.map((p) => (p.id === userId ? { ...p, plan, plan_expiry: expiry } : p)));
+      setProfileState((prev) =>
+        prev.map((p) => (p.id === userId ? { ...p, plan, plan_expiry: expiry } : p)),
+      );
       toast.success(`Plan updated to ${PLANS[plan as PlanId]?.label ?? plan}`);
       loadDashboardData(true);
     } catch (err: any) {
@@ -502,9 +641,13 @@ function AdminUsersPage() {
     }
   };
 
-
   const handleResetLimit = async (userId: string) => {
-    if (!confirm("Reset this user's rate limit counters? They will immediately get their full daily quota back.")) return;
+    if (
+      !confirm(
+        "Reset this user's rate limit counters? They will immediately get their full daily quota back.",
+      )
+    )
+      return;
     setResettingLimit(userId);
     try {
       await resetUserRateLimit({ data: { userId } });
@@ -517,18 +660,29 @@ function AdminUsersPage() {
   };
 
   const counts = ROLES.reduce(
-    (acc, r) => { acc[r] = profileState.filter((p) => p.role === r).length; return acc; },
+    (acc, r) => {
+      acc[r] = profileState.filter((p) => p.role === r).length;
+      return acc;
+    },
     {} as Record<Role, number>,
   );
 
-  const planCounts = (Object.keys(PLANS) as PlanId[]).reduce((acc, pid) => {
-    acc[pid] = profileState.filter((u) => (u.plan ?? "free") === pid).length;
-    return acc;
-  }, {} as Record<PlanId, number>);
+  const planCounts = (Object.keys(PLANS) as PlanId[]).reduce(
+    (acc, pid) => {
+      acc[pid] = profileState.filter((u) => (u.plan ?? "free") === pid).length;
+      return acc;
+    },
+    {} as Record<PlanId, number>,
+  );
 
-  const mrr = (Object.keys(PLANS) as PlanId[]).reduce((sum, pid) => sum + PLANS[pid].price * planCounts[pid], 0);
+  const mrr = (Object.keys(PLANS) as PlanId[]).reduce(
+    (sum, pid) => sum + PLANS[pid].price * planCounts[pid],
+    0,
+  );
 
-  const totalRevenue = payments.filter((p) => p.status === "completed").reduce((sum, p) => sum + p.amount, 0);
+  const totalRevenue = payments
+    .filter((p) => p.status === "completed")
+    .reduce((sum, p) => sum + p.amount, 0);
 
   const activeSubs = profileState.filter((u) => {
     if (u.plan === "free" || !u.plan_expiry) return false;
@@ -549,9 +703,14 @@ function AdminUsersPage() {
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-5 border-b border-border/60 gap-4 text-center sm:text-left">
         <div>
-          <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Admin Panel</p>
+          <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">
+            Admin Panel
+          </p>
           <h1 className="mt-1 font-serif text-2xl sm:text-4xl text-foreground">Dashboard</h1>
-          <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{profileState.length} users · {platformStats.totalConversations.toLocaleString()} convos · {platformStats.openEscalations} escalations</p>
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+            {profileState.length} users · {platformStats.totalConversations.toLocaleString()} convos
+            · {platformStats.openEscalations} escalations
+          </p>
         </div>
         <div className="flex items-center justify-center sm:justify-end gap-2.5 mt-1 sm:mt-0">
           <button
@@ -572,31 +731,47 @@ function AdminUsersPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Total Users</p>
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">
+              Total Users
+            </p>
             <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
           </div>
-          <p className="font-serif text-xl sm:text-3xl font-bold text-primary">{profileState.length}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-primary">
+            {profileState.length}
+          </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Conversations</p>
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">
+              Conversations
+            </p>
             <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0" />
           </div>
-          <p className="font-serif text-xl sm:text-3xl font-bold text-blue-600">{platformStats.totalConversations.toLocaleString()}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-blue-600">
+            {platformStats.totalConversations.toLocaleString()}
+          </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Notes</p>
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">
+              Notes
+            </p>
             <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600 flex-shrink-0" />
           </div>
-          <p className="font-serif text-xl sm:text-3xl font-bold text-purple-600">{platformStats.totalNotes.toLocaleString()}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-purple-600">
+            {platformStats.totalNotes.toLocaleString()}
+          </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Escalations</p>
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">
+              Escalations
+            </p>
             <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
           </div>
-          <p className="font-serif text-xl sm:text-3xl font-bold text-red-500">{platformStats.openEscalations}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-red-500">
+            {platformStats.openEscalations}
+          </p>
         </div>
       </div>
 
@@ -604,54 +779,80 @@ function AdminUsersPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Satisfaction</p>
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">
+              Satisfaction
+            </p>
             <ThumbsUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600 flex-shrink-0" />
           </div>
-          <p className="font-serif text-xl sm:text-3xl font-bold text-green-600">{satisfactionPct}%</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-green-600">
+            {satisfactionPct}%
+          </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Unread</p>
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">
+              Unread
+            </p>
             <Inbox className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 flex-shrink-0" />
           </div>
           <p className="font-serif text-xl sm:text-3xl font-bold text-amber-600">{unreadCount}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Rate Limits</p>
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">
+              Rate Limits
+            </p>
             <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-500 flex-shrink-0" />
           </div>
-          <p className="font-serif text-xl sm:text-3xl font-bold text-orange-500">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-orange-500">
+            {rateLimits.reduce((a, r) => a + r.count, 0)}
+          </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Messages</p>
+            <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">
+              Messages
+            </p>
             <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-teal-600 flex-shrink-0" />
           </div>
-          <p className="font-serif text-xl sm:text-3xl font-bold text-teal-600">{platformStats.totalMessages.toLocaleString()}</p>
+          <p className="font-serif text-xl sm:text-3xl font-bold text-teal-600">
+            {platformStats.totalMessages.toLocaleString()}
+          </p>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1.5 sm:gap-2 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory">
-        {([
-          { id: "users", label: "Users", icon: User },
-          { id: "escalations", label: "Escalations", icon: AlertTriangle, badge: platformStats.openEscalations },
-          { id: "feedback", label: "Feedback", icon: ThumbsUp },
-          { id: "messages", label: "Messages", icon: MessageSquare, badge: unreadCount },
-          { id: "ratelimits", label: "Limits", icon: BarChart3 },
-          { id: "subscriptions", label: "Subs", icon: CreditCard },
-          { id: "newsletter", label: "Newsletter", icon: Mail },
-          { id: "globalnotes", label: "Notes", icon: BookOpen },
-        ] as const).map((t) => {
+        {(
+          [
+            { id: "users", label: "Users", icon: User },
+            {
+              id: "escalations",
+              label: "Escalations",
+              icon: AlertTriangle,
+              badge: platformStats.openEscalations,
+            },
+            { id: "feedback", label: "Feedback", icon: ThumbsUp },
+            { id: "messages", label: "Messages", icon: MessageSquare, badge: unreadCount },
+            { id: "ratelimits", label: "Limits", icon: BarChart3 },
+            { id: "subscriptions", label: "Subs", icon: CreditCard },
+            { id: "newsletter", label: "Newsletter", icon: Mail },
+            { id: "globalnotes", label: "Notes", icon: BookOpen },
+          ] as const
+        ).map((t) => {
           const Icon = t.icon;
           return (
-            <button key={t.id} onClick={() => setTab(t.id as any)}
-              className={`snap-start flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 text-[10px] sm:text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 min-h-[36px] sm:min-h-[40px] ${tab === t.id ? "border-primary text-primary bg-primary/5 font-extrabold shadow-sm" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border hover:bg-accent/30"}`}>
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id as any)}
+              className={`snap-start flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 text-[10px] sm:text-xs font-bold font-mono uppercase tracking-wider rounded-xl border transition-all whitespace-nowrap flex-shrink-0 min-h-[36px] sm:min-h-[40px] ${tab === t.id ? "border-primary text-primary bg-primary/5 font-extrabold shadow-sm" : "border-border/60 text-muted-foreground bg-transparent hover:text-foreground hover:border-border hover:bg-accent/30"}`}
+            >
               <Icon className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="inline">{t.label}</span>
               {"badge" in t && t.badge > 0 && (
-                <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground leading-none">{t.badge}</span>
+                <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground leading-none">
+                  {t.badge}
+                </span>
               )}
             </button>
           );
@@ -665,10 +866,15 @@ function AdminUsersPage() {
             {ROLES.map((r) => {
               const { icon: Icon, color } = ROLE_META[r];
               return (
-                <div key={r} className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm text-center">
+                <div
+                  key={r}
+                  className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm text-center"
+                >
                   <Icon className={`mx-auto h-5 w-5 mb-2 ${color.split(" ")[0]}`} />
                   <p className="font-serif text-2xl sm:text-3xl font-bold">{counts[r]}</p>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">{r}s</p>
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">
+                    {r}s
+                  </p>
                 </div>
               );
             })}
@@ -676,9 +882,12 @@ function AdminUsersPage() {
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)}
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, email, or role…"
-              className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
@@ -687,40 +896,74 @@ function AdminUsersPage() {
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     {["User", "Email", "Conversations", "Curriculum", "Joined", "Role"].map((h) => (
-                      <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                      <th
+                        key={h}
+                        className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+                      >
+                        {h}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 && (
-                    <tr><td colSpan={6} className="py-12 text-center font-serif text-muted-foreground">No users found</td></tr>
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="py-12 text-center font-serif text-muted-foreground"
+                      >
+                        No users found
+                      </td>
+                    </tr>
                   )}
                   {filtered.map((p) => {
                     const meta = ROLE_META[p.role as Role] ?? ROLE_META.student;
                     const isUpdating = updating === p.id;
                     return (
-                      <tr key={p.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                      <tr
+                        key={p.id}
+                        className="border-b border-border/50 hover:bg-accent/30 transition-colors"
+                      >
                         <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <p className="font-semibold">{p.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">
+                            ID: {p.id?.slice(0, 8)}…
+                          </p>
                         </td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
+                          {p.email ?? "—"}
+                        </td>
                         <td className="px-5 py-3 font-mono text-xs text-center">
                           <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 px-2 py-0.5 text-blue-700 text-[10px] font-mono">
                             {p.conversation_count ?? 0}
                           </span>
                         </td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{p.plan ?? "—"}</td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
+                          {p.plan ?? "—"}
+                        </td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
                           {formatDate(p.created_at)}
                         </td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <div className="flex items-center gap-2">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${meta.color}`}>{p.role}</span>
-                            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
-                              <select value={p.role} onChange={(e) => handleRoleChange(p.id, e.target.value)}
-                                className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
-                                {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${meta.color}`}
+                            >
+                              {p.role}
+                            </span>
+                            {isUpdating ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            ) : (
+                              <select
+                                value={p.role}
+                                onChange={(e) => handleRoleChange(p.id, e.target.value)}
+                                className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                              >
+                                {ROLES.map((r) => (
+                                  <option key={r} value={r}>
+                                    {r}
+                                  </option>
+                                ))}
                               </select>
                             )}
                           </div>
@@ -732,16 +975,18 @@ function AdminUsersPage() {
               </table>
             </div>
 
-
             <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
-              <p className="font-mono text-[10px] text-muted-foreground">{filtered.length} of {profileState.length} users</p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                {filtered.length} of {profileState.length} users
+              </p>
             </div>
           </div>
 
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
             <Settings className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-amber-800 leading-relaxed">
-              <strong>Admin note:</strong> Role changes take effect immediately. Teachers gain access to the Escalations panel. Admins have full platform access.
+              <strong>Admin note:</strong> Role changes take effect immediately. Teachers gain
+              access to the Escalations panel. Admins have full platform access.
             </p>
           </div>
         </>
@@ -753,13 +998,21 @@ function AdminUsersPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <ThumbsUp className="mx-auto h-5 w-5 mb-2 text-green-500" />
-              <p className="font-serif text-2xl sm:text-3xl font-bold">{feedback.filter((f) => f.vote === 1).length}</p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Positive</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold">
+                {feedback.filter((f) => f.vote === 1).length}
+              </p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                Positive
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <ThumbsDown className="mx-auto h-5 w-5 mb-2 text-destructive" />
-              <p className="font-serif text-2xl sm:text-3xl font-bold">{feedback.filter((f) => f.vote === -1).length}</p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Negative</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold">
+                {feedback.filter((f) => f.vote === -1).length}
+              </p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                Negative
+              </p>
             </div>
           </div>
 
@@ -777,24 +1030,41 @@ function AdminUsersPage() {
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["User", "Vote", "Message ID", "Date"].map((h) => (
-                        <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                        <th
+                          key={h}
+                          className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+                        >
+                          {h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {feedback.map((f) => (
-                      <tr key={f.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                      <tr
+                        key={f.id}
+                        className="border-b border-border/50 hover:bg-accent/30 transition-colors"
+                      >
                         <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <p className="font-semibold">{f.profiles?.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">{f.user_id?.slice(0, 8)}…</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">
+                            {f.user_id?.slice(0, 8)}…
+                          </p>
                         </td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3">
-                          {f.vote === 1
-                            ? <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-1.5 py-px font-mono text-[9px] text-green-700"><ThumbsUp className="h-3 w-3" /> Good</span>
-                            : <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-1.5 py-px font-mono text-[9px] text-red-700"><ThumbsDown className="h-3 w-3" /> Bad</span>
-                          }
+                          {f.vote === 1 ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-1.5 py-px font-mono text-[9px] text-green-700">
+                              <ThumbsUp className="h-3 w-3" /> Good
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-1.5 py-px font-mono text-[9px] text-red-700">
+                              <ThumbsDown className="h-3 w-3" /> Bad
+                            </span>
+                          )}
                         </td>
-                        <td className="px-5 py-3 font-mono text-[10px] text-muted-foreground">{f.message_id?.slice(0, 12)}…</td>
+                        <td className="px-5 py-3 font-mono text-[10px] text-muted-foreground">
+                          {f.message_id?.slice(0, 12)}…
+                        </td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
                           {formatDate(f.created_at)}
                         </td>
@@ -804,9 +1074,10 @@ function AdminUsersPage() {
                 </table>
               </div>
 
-
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
-                <p className="font-mono text-[10px] text-muted-foreground">{feedback.length} total responses</p>
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  {feedback.length} total responses
+                </p>
               </div>
             </div>
           )}
@@ -818,9 +1089,16 @@ function AdminUsersPage() {
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
             {(["unread", "read", "resolved"] as const).map((s) => (
-              <div key={s} className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
-                <p className="font-serif text-2xl sm:text-3xl font-bold">{messages.filter((m) => m.status === s).length}</p>
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">{s}</p>
+              <div
+                key={s}
+                className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm"
+              >
+                <p className="font-serif text-2xl sm:text-3xl font-bold">
+                  {messages.filter((m) => m.status === s).length}
+                </p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1 capitalize">
+                  {s}
+                </p>
               </div>
             ))}
           </div>
@@ -837,7 +1115,10 @@ function AdminUsersPage() {
             const isExpanded = expandedMsg === m.id;
             const isUpdating = updatingMsg === m.id;
             return (
-              <div key={m.id} className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-colors ${m.status === "unread" ? "border-primary/30" : "border-border"}`}>
+              <div
+                key={m.id}
+                className={`rounded-xl border bg-card shadow-sm overflow-hidden transition-colors ${m.status === "unread" ? "border-primary/30" : "border-border"}`}
+              >
                 <div
                   className="flex items-start gap-3 px-3 py-3 sm:px-5 sm:py-4 cursor-pointer hover:bg-accent/20 transition-colors"
                   onClick={() => setExpandedMsg(isExpanded ? null : m.id)}
@@ -845,12 +1126,22 @@ function AdminUsersPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-sm">{m.name}</p>
-                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${statusMeta.color}`}>{statusMeta.label}</span>
-                      <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">{m.category}</span>
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider ${statusMeta.color}`}
+                      >
+                        {statusMeta.label}
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                        {m.category}
+                      </span>
                     </div>
                     <p className="font-mono text-[11px] text-muted-foreground mt-0.5">{m.email}</p>
-                    {m.subject && <p className="text-xs text-foreground mt-1 font-medium">{m.subject}</p>}
-                    {!isExpanded && <p className="text-xs text-muted-foreground mt-1 truncate">{m.message}</p>}
+                    {m.subject && (
+                      <p className="text-xs text-foreground mt-1 font-medium">{m.subject}</p>
+                    )}
+                    {!isExpanded && (
+                      <p className="text-xs text-muted-foreground mt-1 truncate">{m.message}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground">
@@ -863,9 +1154,13 @@ function AdminUsersPage() {
 
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-border/50 space-y-3">
-                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap pt-4">{m.message}</p>
+                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap pt-4">
+                      {m.message}
+                    </p>
                     <div className="flex items-center gap-2 flex-wrap pt-2">
-                      <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mr-2">Mark as:</p>
+                      <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mr-2">
+                        Mark as:
+                      </p>
                       {(["unread", "read", "resolved"] as const).map((s) => (
                         <button
                           key={s}
@@ -873,16 +1168,22 @@ function AdminUsersPage() {
                           onClick={() => handleStatusChange(m.id, s)}
                           className={`rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${STATUS_META[s].color} hover:opacity-80`}
                         >
-                          {isUpdating && m.status !== s ? <Loader2 className="h-3 w-3 animate-spin inline" /> : s}
+                          {isUpdating && m.status !== s ? (
+                            <Loader2 className="h-3 w-3 animate-spin inline" />
+                          ) : (
+                            s
+                          )}
                         </button>
                       ))}
-                      <a href={`mailto:${m.email}`} className="ml-auto flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 transition-colors">
+                      <a
+                        href={`mailto:${m.email}`}
+                        className="ml-auto flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
                         <Mail className="h-3 w-3" /> Reply
                       </a>
                     </div>
                   </div>
                 )}
-
               </div>
             );
           })}
@@ -896,26 +1197,42 @@ function AdminUsersPage() {
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <BarChart3 className="mx-auto h-5 w-5 mb-2 text-primary" />
               <p className="font-serif text-2xl sm:text-3xl font-bold">{rateLimits.length}</p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Active Keys</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                Active Keys
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <AlertTriangle className="mx-auto h-5 w-5 mb-2 text-amber-500" />
-              <p className="font-serif text-2xl sm:text-3xl font-bold">{rateLimits.reduce((a, r) => a + r.count, 0)}</p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Total Hits</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold">
+                {rateLimits.reduce((a, r) => a + r.count, 0)}
+              </p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                Total Hits
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <RefreshCw className="mx-auto h-5 w-5 mb-2 text-blue-500" />
               <p className="font-serif text-2xl sm:text-3xl font-bold">
-                {rateLimits.filter((r) => { const d = new Date(r.reset_at); return !isNaN(d.getTime()) && d > new Date(); }).length}
+                {
+                  rateLimits.filter((r) => {
+                    const d = new Date(r.reset_at);
+                    return !isNaN(d.getTime()) && d > new Date();
+                  }).length
+                }
               </p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Active Now</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                Active Now
+              </p>
             </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input value={rlSearch} onChange={(e) => setRlSearch(e.target.value)}
+            <input
+              value={rlSearch}
+              onChange={(e) => setRlSearch(e.target.value)}
               placeholder="Filter by key…"
-              className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
           {rateLimits.length === 0 ? (
             <div className="rounded-lg border border-border bg-card py-6 sm:py-14 text-center">
@@ -929,7 +1246,12 @@ function AdminUsersPage() {
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["Key", "Hits", "Resets At", "Status"].map((h) => (
-                        <th key={h} className="px-2 py-2 sm:px-4 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                        <th
+                          key={h}
+                          className="px-2 py-2 sm:px-4 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+                        >
+                          {h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -938,19 +1260,36 @@ function AdminUsersPage() {
                       const resetDate = new Date(r.reset_at);
                       const isActive = !isNaN(resetDate.getTime()) && resetDate > new Date();
                       return (
-                        <tr key={r.key} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                          <td className="px-4 py-3 font-mono text-xs max-w-[200px] truncate" title={r.key}>{r.key}</td>
+                        <tr
+                          key={r.key}
+                          className="border-b border-border/50 hover:bg-accent/30 transition-colors"
+                        >
+                          <td
+                            className="px-4 py-3 font-mono text-xs max-w-[200px] truncate"
+                            title={r.key}
+                          >
+                            {r.key}
+                          </td>
                           <td className="px-4 py-3">
-                            <span className={`font-bold text-sm ${r.count > 10 ? "text-destructive" : r.count > 5 ? "text-amber-600" : "text-foreground"}`}>{r.count}</span>
+                            <span
+                              className={`font-bold text-sm ${r.count > 10 ? "text-destructive" : r.count > 5 ? "text-amber-600" : "text-foreground"}`}
+                            >
+                              {r.count}
+                            </span>
                           </td>
                           <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">
                             {formatDateTime(r.reset_at)}
                           </td>
                           <td className="px-4 py-3">
-                            {isActive
-                              ? <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-1.5 py-px font-mono text-[9px] text-red-700">Active</span>
-                              : <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-1.5 py-px font-mono text-[9px] text-green-700">Expired</span>
-                            }
+                            {isActive ? (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-red-200 px-1.5 py-px font-mono text-[9px] text-red-700">
+                                Active
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-green-200 px-1.5 py-px font-mono text-[9px] text-green-700">
+                                Expired
+                              </span>
+                            )}
                           </td>
                         </tr>
                       );
@@ -959,9 +1298,10 @@ function AdminUsersPage() {
                 </table>
               </div>
 
-
               <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
-                <p className="font-mono text-[10px] text-muted-foreground">{filteredRateLimits.length} keys</p>
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  {filteredRateLimits.length} keys
+                </p>
               </div>
             </div>
           )}
@@ -973,11 +1313,21 @@ function AdminUsersPage() {
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-3">
             {(["open", "pending", "resolved"] as const).map((s) => (
-              <button key={s} onClick={() => setEscalationFilter(s === escalationFilter ? "all" : s)}
-                className={`rounded-lg border-2 p-2.5 sm:p-4 text-center shadow-sm transition-all duration-200 ${escalationFilter === s ? "border-primary text-primary bg-transparent font-bold scale-102" : "border-border/60 bg-transparent text-muted-foreground hover:text-foreground hover:border-border"
-                  }`}>
-                <p className="font-serif text-2xl sm:text-3xl font-bold">{escalations.filter((e) => e.status === s).length}</p>
-                <p className="font-mono text-[10px] uppercase tracking-widest mt-1 capitalize">{s}</p>
+              <button
+                key={s}
+                onClick={() => setEscalationFilter(s === escalationFilter ? "all" : s)}
+                className={`rounded-lg border-2 p-2.5 sm:p-4 text-center shadow-sm transition-all duration-200 ${
+                  escalationFilter === s
+                    ? "border-primary text-primary bg-transparent font-bold scale-102"
+                    : "border-border/60 bg-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                }`}
+              >
+                <p className="font-serif text-2xl sm:text-3xl font-bold">
+                  {escalations.filter((e) => e.status === s).length}
+                </p>
+                <p className="font-mono text-[10px] uppercase tracking-widest mt-1 capitalize">
+                  {s}
+                </p>
               </button>
             ))}
           </div>
@@ -985,7 +1335,10 @@ function AdminUsersPage() {
           {filteredEscalations.length === 0 ? (
             <div className="rounded-lg border border-border bg-card py-6 sm:py-14 text-center">
               <CheckCircle2 className="mx-auto h-8 w-8 text-green-400/60 mb-3" />
-              <p className="font-serif text-muted-foreground">No escalations{escalationFilter !== "all" ? ` with status "${escalationFilter}"` : ""}</p>
+              <p className="font-serif text-muted-foreground">
+                No escalations
+                {escalationFilter !== "all" ? ` with status "${escalationFilter}"` : ""}
+              </p>
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
@@ -994,27 +1347,49 @@ function AdminUsersPage() {
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["Student", "Reason", "Status", "Reviewer", "Date"].map((h) => (
-                        <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                        <th
+                          key={h}
+                          className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+                        >
+                          {h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {filteredEscalations.map((esc) => (
-                      <tr key={esc.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                      <tr
+                        key={esc.id}
+                        className="border-b border-border/50 hover:bg-accent/30 transition-colors"
+                      >
                         <td className="px-2 py-2 sm:px-5 sm:py-3">
                           <p className="font-semibold">{esc.profiles?.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">{esc.profiles?.email ?? (esc.user_id ? esc.user_id.slice(0, 8) + "…" : "—")}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">
+                            {esc.profiles?.email ??
+                              (esc.user_id ? esc.user_id.slice(0, 8) + "…" : "—")}
+                          </p>
                         </td>
                         <td className="px-5 py-3 text-xs max-w-[200px]">
-                          <p className="truncate" title={esc.detail ?? esc.reason}>{esc.detail || esc.reason}</p>
+                          <p className="truncate" title={esc.detail ?? esc.reason}>
+                            {esc.detail || esc.reason}
+                          </p>
                         </td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3">
-                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${esc.status === "resolved" ? "text-green-600 bg-green-50 border-green-200" :
-                            esc.status === "open" ? "text-red-600 bg-red-50 border-red-200" :
-                              "text-amber-600 bg-amber-50 border-amber-200"
-                            }`}>{esc.status}</span>
+                          <span
+                            className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${
+                              esc.status === "resolved"
+                                ? "text-green-600 bg-green-50 border-green-200"
+                                : esc.status === "open"
+                                  ? "text-red-600 bg-red-50 border-red-200"
+                                  : "text-amber-600 bg-amber-50 border-amber-200"
+                            }`}
+                          >
+                            {esc.status}
+                          </span>
                         </td>
-                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}</td>
+                        <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
+                          {esc.reviewer_id ? esc.reviewer_id?.slice(0, 8) + "…" : "Unassigned"}
+                        </td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
                           {formatDate(esc.created_at)}
                         </td>
@@ -1024,9 +1399,10 @@ function AdminUsersPage() {
                 </table>
               </div>
 
-
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
-                <p className="font-mono text-[10px] text-muted-foreground">{filteredEscalations.length} escalations shown</p>
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  {filteredEscalations.length} escalations shown
+                </p>
               </div>
             </div>
           )}
@@ -1040,41 +1416,64 @@ function AdminUsersPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">MRR Estimate</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  MRR Estimate
+                </p>
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </div>
-              <p className="font-serif text-2xl sm:text-3xl font-bold text-green-600">KES {mrr.toLocaleString()}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-green-600">
+                KES {mrr.toLocaleString()}
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Total Revenue</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Total Revenue
+                </p>
                 <DollarSign className="h-4 w-4 text-primary" />
               </div>
-              <p className="font-serif text-2xl sm:text-3xl font-bold text-primary">KES {totalRevenue.toLocaleString()}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-primary">
+                KES {totalRevenue.toLocaleString()}
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Active Subscriptions</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Active Subscriptions
+                </p>
                 <Crown className="h-4 w-4 text-amber-500" />
               </div>
-              <p className="font-serif text-2xl sm:text-3xl font-bold text-amber-500">{activeSubs}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-amber-500">
+                {activeSubs}
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Expiring ≤7 Days</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Expiring ≤7 Days
+                </p>
                 <Calendar className="h-4 w-4 text-red-500" />
               </div>
-              <p className="font-serif text-2xl sm:text-3xl font-bold text-red-500">{expiringSoon}</p>
+              <p className="font-serif text-2xl sm:text-3xl font-bold text-red-500">
+                {expiringSoon}
+              </p>
             </div>
           </div>
 
           {/* Plan distribution */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
             {(Object.keys(PLANS) as PlanId[]).map((pid) => (
-              <div key={pid} className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm text-center">
+              <div
+                key={pid}
+                className="rounded-lg border border-border bg-card p-2.5 sm:p-4 shadow-sm text-center"
+              >
                 <p className="font-serif text-2xl sm:text-3xl font-bold">{planCounts[pid]}</p>
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{PLANS[pid].label}</p>
-                <p className="font-mono text-[10px] text-muted-foreground mt-0.5">KES {PLANS[pid].price.toLocaleString()}/mo</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                  {PLANS[pid].label}
+                </p>
+                <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
+                  KES {PLANS[pid].price.toLocaleString()}/mo
+                </p>
               </div>
             ))}
           </div>
@@ -1082,9 +1481,12 @@ function AdminUsersPage() {
           {/* User plan management */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input value={planSearch} onChange={(e) => setPlanSearch(e.target.value)}
+            <input
+              value={planSearch}
+              onChange={(e) => setPlanSearch(e.target.value)}
               placeholder="Search by name, email, or plan…"
-              className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
 
           <div className="overflow-x-auto scrollbar-none">
@@ -1092,13 +1494,22 @@ function AdminUsersPage() {
               <thead>
                 <tr className="border-b border-border bg-muted/40">
                   {["User", "Email", "Plan", "Expires", "Action"].map((h) => (
-                    <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                    <th
+                      key={h}
+                      className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filteredForPlans.length === 0 && (
-                  <tr><td colSpan={5} className="py-12 text-center font-serif text-muted-foreground">No users found</td></tr>
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center font-serif text-muted-foreground">
+                      No users found
+                    </td>
+                  </tr>
                 )}
                 {filteredForPlans.map((p) => {
                   const plan = (p.plan ?? "free") as PlanId;
@@ -1107,12 +1518,19 @@ function AdminUsersPage() {
                   const isValidExpiry = expiry && !isNaN(expiry.getTime());
                   const isExpired = isValidExpiry ? expiry < new Date() : false;
                   return (
-                    <tr key={p.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                    <tr
+                      key={p.id}
+                      className="border-b border-border/50 hover:bg-accent/30 transition-colors"
+                    >
                       <td className="px-2 py-2 sm:px-5 sm:py-3">
                         <p className="font-semibold">{p.display_name ?? "—"}</p>
-                        <p className="font-mono text-[10px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
+                        <p className="font-mono text-[10px] text-muted-foreground">
+                          ID: {p.id?.slice(0, 8)}…
+                        </p>
                       </td>
-                      <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{p.email ?? "—"}</td>
+                      <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
+                        {p.email ?? "—"}
+                      </td>
                       <td className="px-2 py-2 sm:px-5 sm:py-3">
                         <span className="inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider text-primary border-primary/20">
                           {PLANS[plan]?.label ?? plan}
@@ -1120,26 +1538,48 @@ function AdminUsersPage() {
                       </td>
                       <td className="px-5 py-3 font-mono text-xs">
                         {isValidExpiry ? (
-                          <span className={isExpired ? "text-destructive" : "text-muted-foreground"}>
-                            {expiry.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                          <span
+                            className={isExpired ? "text-destructive" : "text-muted-foreground"}
+                          >
+                            {expiry.toLocaleDateString("en-KE", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
                             {isExpired ? " (expired)" : ""}
                           </span>
-                        ) : <span className="text-muted-foreground">—</span>}
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
                       <td className="px-2 py-2 sm:px-5 sm:py-3">
                         <div className="flex items-center gap-1.5">
-                          {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
-                            <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
-                              className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
+                          {isUpdating ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          ) : (
+                            <select
+                              value={plan}
+                              onChange={(e) => handlePlanChange(p.id, e.target.value)}
+                              className="rounded border border-border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                            >
                               {(Object.keys(PLANS) as PlanId[]).map((pid) => (
-                                <option key={pid} value={pid}>{PLANS[pid].label}</option>
+                                <option key={pid} value={pid}>
+                                  {PLANS[pid].label}
+                                </option>
                               ))}
                             </select>
                           )}
-                          {resettingLimit === p.id
-                            ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                            : <button onClick={() => handleResetLimit(p.id)} title="Reset rate limit" className="rounded px-1.5 py-0.5 text-[10px] font-mono text-destructive border border-destructive/30 hover:bg-destructive/10 transition-colors">Reset</button>
-                          }
+                          {resettingLimit === p.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                          ) : (
+                            <button
+                              onClick={() => handleResetLimit(p.id)}
+                              title="Reset rate limit"
+                              className="rounded px-1.5 py-0.5 text-[10px] font-mono text-destructive border border-destructive/30 hover:bg-destructive/10 transition-colors"
+                            >
+                              Reset
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1151,7 +1591,9 @@ function AdminUsersPage() {
 
           <div className="hidden">
             {filteredForPlans.length === 0 && (
-              <div className="py-12 text-center font-serif text-muted-foreground">No users found</div>
+              <div className="py-12 text-center font-serif text-muted-foreground">
+                No users found
+              </div>
             )}
             <div className="divide-y divide-border/50">
               {filteredForPlans.map((p) => {
@@ -1165,7 +1607,9 @@ function AdminUsersPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-semibold text-sm">{p.display_name ?? "—"}</p>
-                        <p className="font-mono text-[9px] text-muted-foreground">ID: {p.id?.slice(0, 8)}…</p>
+                        <p className="font-mono text-[9px] text-muted-foreground">
+                          ID: {p.id?.slice(0, 8)}…
+                        </p>
                       </div>
                       <span className="inline-flex items-center gap-1 rounded-full border px-1.5 py-px font-mono text-[8px] uppercase tracking-wider text-primary border-primary/20">
                         {PLANS[plan]?.label ?? plan}
@@ -1174,30 +1618,49 @@ function AdminUsersPage() {
 
                     <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border/40 font-mono text-muted-foreground">
                       <div className="col-span-2">
-                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">Email</span>
+                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">
+                          Email
+                        </span>
                         <span className="break-all">{p.email ?? "—"}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">Expires</span>
+                        <span className="text-[9px] font-mono block uppercase text-muted-foreground">
+                          Expires
+                        </span>
                         <span>
                           {isValidExpiry ? (
                             <span className={isExpired ? "text-destructive font-bold" : ""}>
-                              {expiry.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                              {expiry.toLocaleDateString("en-KE", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
                               {isExpired ? " (expired)" : ""}
                             </span>
-                          ) : "—"}
+                          ) : (
+                            "—"
+                          )}
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                      <span className="font-mono text-[9px] uppercase text-muted-foreground">Change Plan</span>
+                      <span className="font-mono text-[9px] uppercase text-muted-foreground">
+                        Change Plan
+                      </span>
                       <div className="flex items-center gap-2">
-                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
-                          <select value={plan} onChange={(e) => handlePlanChange(p.id, e.target.value)}
-                            className="rounded border border-border bg-background px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer">
+                        {isUpdating ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : (
+                          <select
+                            value={plan}
+                            onChange={(e) => handlePlanChange(p.id, e.target.value)}
+                            className="rounded border border-border bg-background px-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
+                          >
                             {(Object.keys(PLANS) as PlanId[]).map((pid) => (
-                              <option key={pid} value={pid}>{PLANS[pid].label}</option>
+                              <option key={pid} value={pid}>
+                                {PLANS[pid].label}
+                              </option>
                             ))}
                           </select>
                         )}
@@ -1208,7 +1671,9 @@ function AdminUsersPage() {
               })}
             </div>
             <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
-              <p className="font-mono text-[10px] text-muted-foreground">{filteredForPlans.length} of {profileState.length} users</p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                {filteredForPlans.length} of {profileState.length} users
+              </p>
             </div>
           </div>
 
@@ -1226,26 +1691,50 @@ function AdminUsersPage() {
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
                       {["User", "Plan", "Amount", "Phone", "Receipt", "Status", "Date"].map((h) => (
-                        <th key={h} className="px-2 py-2 sm:px-4 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                        <th
+                          key={h}
+                          className="px-2 py-2 sm:px-4 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+                        >
+                          {h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {payments.map((pay) => (
-                      <tr key={pay.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                      <tr
+                        key={pay.id}
+                        className="border-b border-border/50 hover:bg-accent/30 transition-colors"
+                      >
                         <td className="px-4 py-3">
                           <p className="font-semibold">{pay.profiles?.display_name ?? "—"}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">{pay.profiles?.email ?? (pay.user_id ? `${pay.user_id.slice(0, 8)}…` : "—")}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">
+                            {pay.profiles?.email ??
+                              (pay.user_id ? `${pay.user_id.slice(0, 8)}…` : "—")}
+                          </p>
                         </td>
                         <td className="px-4 py-3 font-mono text-xs capitalize">{pay.plan}</td>
-                        <td className="px-4 py-3 font-semibold">KES {pay.amount.toLocaleString()}</td>
-                        <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">{pay.phone_number}</td>
-                        <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">{pay.mpesa_receipt ?? "—"}</td>
+                        <td className="px-4 py-3 font-semibold">
+                          KES {pay.amount.toLocaleString()}
+                        </td>
+                        <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">
+                          {pay.phone_number}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-[10px] text-muted-foreground">
+                          {pay.mpesa_receipt ?? "—"}
+                        </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${pay.status === "completed" ? "text-green-600 bg-green-50 border-green-200" :
-                            pay.status === "failed" ? "text-red-600 bg-red-50 border-red-200" :
-                              "text-amber-600 bg-amber-50 border-amber-200"
-                            }`}>{pay.status}</span>
+                          <span
+                            className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${
+                              pay.status === "completed"
+                                ? "text-green-600 bg-green-50 border-green-200"
+                                : pay.status === "failed"
+                                  ? "text-red-600 bg-red-50 border-red-200"
+                                  : "text-amber-600 bg-amber-50 border-amber-200"
+                            }`}
+                          >
+                            {pay.status}
+                          </span>
                         </td>
                         <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-xs text-muted-foreground">
                           {formatDate(pay.created_at)}
@@ -1256,9 +1745,10 @@ function AdminUsersPage() {
                 </table>
               </div>
 
-
               <div className="px-4 py-2.5 border-t border-border/50 bg-muted/20">
-                <p className="font-mono text-[10px] text-muted-foreground">{payments.length} payments · KES {totalRevenue.toLocaleString()} completed</p>
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  {payments.length} payments · KES {totalRevenue.toLocaleString()} completed
+                </p>
               </div>
             </div>
           )}
@@ -1273,25 +1763,33 @@ function AdminUsersPage() {
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <Users className="mx-auto h-5 w-5 mb-2 text-primary" />
               <p className="font-serif text-2xl sm:text-3xl font-bold">{newsletter.length}</p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Total</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                Total
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <CheckCircle className="mx-auto h-5 w-5 mb-2 text-green-500" />
               <p className="font-serif text-2xl sm:text-3xl font-bold text-green-600">
-                {newsletter.filter(s => s.status === "active").length}
+                {newsletter.filter((s) => s.status === "active").length}
               </p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Active</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                Active
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
               <TrendingUp className="mx-auto h-5 w-5 mb-2 text-blue-500" />
               <p className="font-serif text-2xl sm:text-3xl font-bold text-blue-600">
-                {newsletter.filter(s => {
-                  const d = new Date(s.subscribed_at);
-                  const now = new Date();
-                  return now.getTime() - d.getTime() < 7 * 24 * 60 * 60 * 1000;
-                }).length}
+                {
+                  newsletter.filter((s) => {
+                    const d = new Date(s.subscribed_at);
+                    const now = new Date();
+                    return now.getTime() - d.getTime() < 7 * 24 * 60 * 60 * 1000;
+                  }).length
+                }
               </p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">This Week</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+                This Week
+              </p>
             </div>
           </div>
 
@@ -1304,31 +1802,43 @@ function AdminUsersPage() {
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-center">
                 <CheckCircle className="mx-auto h-6 w-6 text-emerald-600 mb-2" />
                 <p className="font-bold text-emerald-700">Newsletter sent!</p>
-                <p className="text-sm text-emerald-600">{nlSent.sent} of {nlSent.total} subscribers received it.</p>
-                <button onClick={() => { setNlSent(null); setNlSubject(""); setNlBody(""); }}
-                  className="mt-3 text-xs font-mono underline text-muted-foreground">
+                <p className="text-sm text-emerald-600">
+                  {nlSent.sent} of {nlSent.total} subscribers received it.
+                </p>
+                <button
+                  onClick={() => {
+                    setNlSent(null);
+                    setNlSubject("");
+                    setNlBody("");
+                  }}
+                  className="mt-3 text-xs font-mono underline text-muted-foreground"
+                >
                   Send another
                 </button>
               </div>
             ) : (
               <div className="space-y-3">
                 <div>
-                  <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">Subject</label>
+                  <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    Subject
+                  </label>
                   <input
                     type="text"
                     placeholder="e.g. 2026 Exam Revision Tips"
                     value={nlSubject}
-                    onChange={e => setNlSubject(e.target.value)}
+                    onChange={(e) => setNlSubject(e.target.value)}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                   />
                 </div>
                 <div>
-                  <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">Message (HTML supported)</label>
+                  <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    Message (HTML supported)
+                  </label>
                   <textarea
                     rows={6}
                     placeholder="Write your newsletter content here..."
                     value={nlBody}
-                    onChange={e => setNlBody(e.target.value)}
+                    onChange={(e) => setNlBody(e.target.value)}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
                   />
                 </div>
@@ -1337,11 +1847,20 @@ function AdminUsersPage() {
                   onClick={async () => {
                     setNlSending(true);
                     try {
-                      const { data: { session } } = await supabase.auth.getSession();
+                      const {
+                        data: { session },
+                      } = await supabase.auth.getSession();
                       const res = await fetch("/api/newsletter/send", {
                         method: "POST",
-                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
-                        body: JSON.stringify({ subject: nlSubject, html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">${nlBody}</div>`, text: nlBody }),
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${session?.access_token}`,
+                        },
+                        body: JSON.stringify({
+                          subject: nlSubject,
+                          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">${nlBody}</div>`,
+                          text: nlBody,
+                        }),
                       });
                       const data = await res.json();
                       if (!res.ok) throw new Error(data.error);
@@ -1355,7 +1874,16 @@ function AdminUsersPage() {
                   }}
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
                 >
-                  {nlSending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending...</> : <><Send className="h-4 w-4" /> Send to {newsletter.filter(s => s.status === "active").length} subscribers</>}
+                  {nlSending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" /> Send to{" "}
+                      {newsletter.filter((s) => s.status === "active").length} subscribers
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -1373,23 +1901,37 @@ function AdminUsersPage() {
                 <table className="w-full text-sm min-w-[440px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/40">
-                      {["Email", "Name", "Status", "Subscribed"].map(h => (
-                        <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                      {["Email", "Name", "Status", "Subscribed"].map((h) => (
+                        <th
+                          key={h}
+                          className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+                        >
+                          {h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {newsletter.map(s => (
-                      <tr key={s.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                    {newsletter.map((s) => (
+                      <tr
+                        key={s.id}
+                        className="border-b border-border/50 hover:bg-accent/30 transition-colors"
+                      >
                         <td className="px-5 py-3 font-mono text-xs">{s.email}</td>
                         <td className="px-5 py-3 text-sm">{s.name ?? "—"}</td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3">
-                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
+                          <span
+                            className={`inline-flex items-center rounded-full border px-1.5 py-px font-mono text-[9px] uppercase tracking-wider ${s.status === "active" ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}
+                          >
                             {s.status}
                           </span>
                         </td>
                         <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
-                          {new Date(s.subscribed_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                          {new Date(s.subscribed_at).toLocaleDateString("en-KE", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
                         </td>
                       </tr>
                     ))}
@@ -1397,18 +1939,17 @@ function AdminUsersPage() {
                 </table>
               </div>
 
-
               <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
-                <p className="font-mono text-[10px] text-muted-foreground">{newsletter.length} total subscribers</p>
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  {newsletter.length} total subscribers
+                </p>
               </div>
             </div>
           )}
-
         </div>
       )}
       {/* ── Global Notes tab ── */}
       {tab === "globalnotes" && <AdminGlobalNotes />}
-
     </div>
   );
 }

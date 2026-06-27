@@ -54,7 +54,10 @@ export const MessageList = React.memo(function MessageList({
     if (!last) return true;
     if (last.role === "user") return true;
     const text =
-      last.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") ||
+      last.parts
+        ?.filter((p: any) => p.type === "text")
+        .map((p: any) => p.text || "")
+        .join("") ||
       last.content ||
       "";
     return text.trim().length === 0;
@@ -66,7 +69,8 @@ export const MessageList = React.memo(function MessageList({
     if (!container) return;
 
     // Check if user is near the bottom (within 200px)
-    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
     const shouldScroll = distanceFromBottom < 200 || isAutoScrollingRef.current;
 
     if (shouldScroll) {
@@ -114,7 +118,8 @@ export const MessageList = React.memo(function MessageList({
 
       if (newHeight > lastHeight) {
         // Check if user is near bottom
-        const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        const distanceFromBottom =
+          container.scrollHeight - container.scrollTop - container.clientHeight;
 
         if (distanceFromBottom < 200) {
           // Use rAF for smooth scrolling during streaming
@@ -143,7 +148,8 @@ export const MessageList = React.memo(function MessageList({
     if (!container) return;
 
     const handleScroll = () => {
-      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      const distanceFromBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight;
       isAutoScrollingRef.current = distanceFromBottom < 100;
     };
 
@@ -157,8 +163,9 @@ export const MessageList = React.memo(function MessageList({
       role="log"
       aria-label="Chat messages"
       aria-live="polite"
-      className={`flex-1 min-h-0 overflow-y-auto px-2 py-2 sm:px-5 sm:py-5 ${isRateLimited ? "pb-80" : "pb-56"
-        }`}
+      className={`flex-1 min-h-0 overflow-y-auto px-2 py-2 sm:px-5 sm:py-5 ${
+        isRateLimited ? "pb-80" : "pb-56"
+      }`}
       style={{ scrollBehavior: "smooth" }}
     >
       <div ref={innerRef} className="space-y-3 flex flex-col pb-4">
@@ -224,8 +231,9 @@ export const MessageList = React.memo(function MessageList({
             aria-label="AI is thinking"
           >
             <div className="flex flex-col gap-2.5 px-1 py-3">
-              <style dangerouslySetInnerHTML={{
-                __html: `
+              <style
+                dangerouslySetInnerHTML={{
+                  __html: `
                 @keyframes thinking-converge {
                   0%   { background-position: 0% center; }
                   100% { background-position: 100% center; }
@@ -234,11 +242,14 @@ export const MessageList = React.memo(function MessageList({
                   0%, 100% { opacity: 0.3; }
                   50% { opacity: 0.85; }
                 }
-              ` }} />
+              `,
+                }}
+              />
               <span
                 className="text-xs select-none mb-3 inline-block"
                 style={{
-                  background: "linear-gradient(90deg, var(--muted-foreground,#777) 0%, var(--muted-foreground,#777) 30%, rgba(255,255,255,1) 50%, var(--muted-foreground,#777) 65%, var(--muted-foreground,#777) 80%, rgba(255,255,255,1) 92%, var(--muted-foreground,#777) 100%)",
+                  background:
+                    "linear-gradient(90deg, var(--muted-foreground,#777) 0%, var(--muted-foreground,#777) 30%, rgba(255,255,255,1) 50%, var(--muted-foreground,#777) 65%, var(--muted-foreground,#777) 80%, rgba(255,255,255,1) 92%, var(--muted-foreground,#777) 100%)",
                   backgroundSize: "400% 100%",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
@@ -247,8 +258,13 @@ export const MessageList = React.memo(function MessageList({
                   fontWeight: 500,
                   letterSpacing: "0.01em",
                 }}
-              >{"Thinking... >"}</span>
-              {[["w-[88%]", 0], ["w-[55%]", 120]].map(([width, delay], i) => (
+              >
+                {"Thinking... >"}
+              </span>
+              {[
+                ["w-[88%]", 0],
+                ["w-[55%]", 120],
+              ].map(([width, delay], i) => (
                 <div
                   key={i}
                   className={`h-3 rounded-full bg-muted ${String(width)}`}

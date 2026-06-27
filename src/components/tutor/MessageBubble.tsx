@@ -1,5 +1,20 @@
 import React, { useEffect, useRef, useState, useMemo, memo } from "react";
-import { Copy, RefreshCw, Check, ThumbsUp, ThumbsDown, Pencil, FileText, Trash2, Download, ShieldAlert, Timer, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import {
+  Copy,
+  RefreshCw,
+  Check,
+  ThumbsUp,
+  ThumbsDown,
+  Pencil,
+  FileText,
+  Trash2,
+  Download,
+  ShieldAlert,
+  Timer,
+  CheckCircle2,
+  Clock,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SmoothMarkdownRenderer } from "@/components/tutor/SmoothMarkdownRenderer";
@@ -75,7 +90,10 @@ export const MessageBubble = memo(function MessageBubble({
   const attachmentName = useMemo(() => {
     if (m.role !== "user") return null;
     const partsText =
-      m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || "";
+      m.parts
+        ?.filter((p: any) => p.type === "text")
+        .map((p: any) => p.text || "")
+        .join("") || "";
     const rawText = partsText || m.content || "";
     const match = rawText.match(/\[Document Attached:\s*([^\]\n]+)\]/);
     return match ? match[1].trim() : null;
@@ -83,14 +101,17 @@ export const MessageBubble = memo(function MessageBubble({
 
   const displayText = useMemo(() => {
     const partsText =
-      m.parts?.filter((p: any) => p.type === "text").map((p: any) => p.text || "").join("") || "";
+      m.parts
+        ?.filter((p: any) => p.type === "text")
+        .map((p: any) => p.text || "")
+        .join("") || "";
     const rawText = partsText || m.content || "";
     return m.role === "user"
       ? rawText
-        .replace(/<DocumentContent[^>]*>[\s\S]*?<\/DocumentContent>\n*/g, "")
-        .replace(/\[Document Attached:[^\]]+\]\n*/g, "")
-        .replace(/^Student Query:\s*(\(See attached document\))?\s*/m, "")
-        .trim()
+          .replace(/<DocumentContent[^>]*>[\s\S]*?<\/DocumentContent>\n*/g, "")
+          .replace(/\[Document Attached:[^\]]+\]\n*/g, "")
+          .replace(/^Student Query:\s*(\(See attached document\))?\s*/m, "")
+          .trim()
       : rawText;
   }, [m.id, m.role, m.parts, m.content]);
 
@@ -108,7 +129,9 @@ export const MessageBubble = memo(function MessageBubble({
   };
 
   const handleVote = async (v: 1 | -1) => {
-    const isValidId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m.id || "");
+    const isValidId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      m.id || "",
+    );
     if (!userId || !m.id || !isValidId || voting) return;
 
     const newVote = vote === v ? null : v;
@@ -125,13 +148,18 @@ export const MessageBubble = memo(function MessageBubble({
     setVoting(true);
     try {
       if (newVote === null) {
-        await supabase.from("message_feedback").delete()
-          .eq("message_id", m.id).eq("user_id", userId);
+        await supabase
+          .from("message_feedback")
+          .delete()
+          .eq("message_id", m.id)
+          .eq("user_id", userId);
       } else {
-        await supabase.from("message_feedback").upsert(
-          { message_id: m.id, user_id: userId, vote: newVote },
-          { onConflict: "message_id,user_id" }
-        );
+        await supabase
+          .from("message_feedback")
+          .upsert(
+            { message_id: m.id, user_id: userId, vote: newVote },
+            { onConflict: "message_id,user_id" },
+          );
       }
     } catch {
       // Revert on failure
@@ -149,13 +177,15 @@ export const MessageBubble = memo(function MessageBubble({
       style={{ justifyContent: isUser ? "flex-end" : "flex-start" }}
     >
       <div
-        className={`${isUser ? "max-w-[88%] sm:max-w-[72%]" : "w-full max-w-[96%] sm:max-w-full"
-          } px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${isUser
+        className={`${
+          isUser ? "max-w-[88%] sm:max-w-[72%]" : "w-full max-w-[96%] sm:max-w-full"
+        } px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${
+          isUser
             ? "bg-card border border-border text-foreground rounded-2xl rounded-tr-sm shadow-sm"
             : isStreamActive && !showBubbleCard
               ? "opacity-0 pointer-events-none"
               : "bg-transparent text-foreground"
-          }`}
+        }`}
       >
         {!isUser ? (
           <>
@@ -190,7 +220,11 @@ export const MessageBubble = memo(function MessageBubble({
                     title="Copy"
                     aria-label="Copy message"
                   >
-                    {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied ? (
+                      <Check className="h-3.5 w-3.5 text-green-500" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                   </button>
 
                   {/* Retry */}
@@ -198,10 +232,11 @@ export const MessageBubble = memo(function MessageBubble({
                     <button
                       onClick={isRateLimited ? undefined : onReload}
                       disabled={isRateLimited}
-                      className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2.5 py-1.5 rounded ${isRateLimited
-                        ? "opacity-40 cursor-not-allowed text-muted-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                        }`}
+                      className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2.5 py-1.5 rounded ${
+                        isRateLimited
+                          ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      }`}
                       title={isRateLimited ? "Rate limit reached" : "Retry"}
                       aria-label="Retry message"
                     >
@@ -216,8 +251,9 @@ export const MessageBubble = memo(function MessageBubble({
                   <button
                     onClick={() => handleVote(1)}
                     disabled={voting}
-                    className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${vote === 1 ? "text-green-500" : "text-muted-foreground hover:text-green-500"
-                      }`}
+                    className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${
+                      vote === 1 ? "text-green-500" : "text-muted-foreground hover:text-green-500"
+                    }`}
                     title="Good response"
                     aria-label="Vote up"
                   >
@@ -228,8 +264,11 @@ export const MessageBubble = memo(function MessageBubble({
                   <button
                     onClick={() => handleVote(-1)}
                     disabled={voting}
-                    className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${vote === -1 ? "text-destructive" : "text-muted-foreground hover:text-destructive"
-                      }`}
+                    className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${
+                      vote === -1
+                        ? "text-destructive"
+                        : "text-muted-foreground hover:text-destructive"
+                    }`}
                     title="Bad response"
                     aria-label="Vote down"
                   >
@@ -264,34 +303,52 @@ export const MessageBubble = memo(function MessageBubble({
                         </button>
                       )}
 
-
                       {/* Escalate */}
-                      {onEscalate && (
-                        escalationStatus ? (
-                          <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded ${escalationStatus === "resolved" ? "text-green-600" :
-                              escalationStatus === "in_review" ? "text-blue-600" : "text-amber-600"
-                            }`}>
-                            {escalationStatus === "resolved"
-                              ? <><CheckCircle2 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Reviewed</span></>
-                              : <><Clock className="h-3.5 w-3.5 animate-pulse" /><span className="hidden sm:inline">{escalationStatus === "in_review" ? "Reviewing" : "Pending"}</span></>
-                            }
+                      {onEscalate &&
+                        (escalationStatus ? (
+                          <span
+                            className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
+                              escalationStatus === "resolved"
+                                ? "text-green-600"
+                                : escalationStatus === "in_review"
+                                  ? "text-blue-600"
+                                  : "text-amber-600"
+                            }`}
+                          >
+                            {escalationStatus === "resolved" ? (
+                              <>
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                <span className="hidden sm:inline">Reviewed</span>
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="h-3.5 w-3.5 animate-pulse" />
+                                <span className="hidden sm:inline">
+                                  {escalationStatus === "in_review" ? "Reviewing" : "Pending"}
+                                </span>
+                              </>
+                            )}
                           </span>
                         ) : (
-                          <button
-                            onClick={onEscalate}
-                            disabled={escalating || messagesLoading}
-                            className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-600 hover:text-amber-700 transition-colors px-2 py-1 rounded hover:bg-amber-50 disabled:opacity-50"
-                            title="Escalate to teacher"
-                            aria-label="Escalate to teacher"
-                          >
-                            {escalating
-                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              : <ShieldAlert className="h-3.5 w-3.5" />
-                            }
-                            <span className="hidden sm:inline">{escalating ? "Escalating…" : "Escalate"}</span>
-                          </button>
-                        ) as React.ReactNode
-                      )}
+                          ((
+                            <button
+                              onClick={onEscalate}
+                              disabled={escalating || messagesLoading}
+                              className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-600 hover:text-amber-700 transition-colors px-2 py-1 rounded hover:bg-amber-50 disabled:opacity-50"
+                              title="Escalate to teacher"
+                              aria-label="Escalate to teacher"
+                            >
+                              {escalating ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <ShieldAlert className="h-3.5 w-3.5" />
+                              )}
+                              <span className="hidden sm:inline">
+                                {escalating ? "Escalating…" : "Escalate"}
+                              </span>
+                            </button>
+                          ) as React.ReactNode)
+                        ))}
                     </>
                   )}
                 </div>
@@ -333,16 +390,21 @@ export const MessageBubble = memo(function MessageBubble({
                   title="Copy"
                   aria-label="Copy message"
                 >
-                  {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5 text-green-500" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
                 </button>
                 {onEditRequest && (
                   <button
                     onClick={isRateLimited ? undefined : () => onEditRequest(displayText)}
                     disabled={isRateLimited}
-                    className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded ${isRateLimited
-                      ? "opacity-40 cursor-not-allowed text-muted-foreground/50"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
+                    className={`inline-flex items-center text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded ${
+                      isRateLimited
+                        ? "opacity-40 cursor-not-allowed text-muted-foreground/50"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
                     title={isRateLimited ? "Rate limit reached" : "Edit message"}
                     aria-label="Edit message"
                   >
@@ -367,8 +429,9 @@ export const MessageBubble = memo(function MessageBubble({
 
       {/* Timestamp */}
       <div
-        className={`absolute -bottom-6 ${isUser ? "right-2" : "left-8"
-          } opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[9px] text-muted-foreground font-mono bg-background border border-border/60 px-1.5 py-0.5 rounded shadow-sm pointer-events-none z-10`}
+        className={`absolute -bottom-6 ${
+          isUser ? "right-2" : "left-8"
+        } opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[9px] text-muted-foreground font-mono bg-background border border-border/60 px-1.5 py-0.5 rounded shadow-sm pointer-events-none z-10`}
       >
         {m.createdAt
           ? new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })

@@ -9,12 +9,7 @@ interface Props {
   variant?: "banner" | "inline" | "card";
 }
 
-export function NewsletterSubscribe({
-  userId,
-  userEmail,
-  userName,
-  variant = "card",
-}: Props) {
+export function NewsletterSubscribe({ userId, userEmail, userName, variant = "card" }: Props) {
   const [email, setEmail] = useState(userEmail || "");
   const [name, setName] = useState(userName || "");
   const [loading, setLoading] = useState(false);
@@ -48,7 +43,9 @@ export function NewsletterSubscribe({
 
   if (subscribed) {
     return (
-      <div className={`flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 ${variant === "banner" ? "w-full" : ""}`}>
+      <div
+        className={`flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 ${variant === "banner" ? "w-full" : ""}`}
+      >
         <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0" />
         <div>
           <p className="text-sm font-bold text-emerald-700">You're subscribed!</p>
@@ -66,7 +63,9 @@ export function NewsletterSubscribe({
             <Mail className="h-4 w-4 text-primary flex-shrink-0" />
             <div>
               <p className="text-sm font-bold text-foreground">Stay updated with GilaniAI</p>
-              <p className="text-xs text-muted-foreground">Study tips, new features and exam guides.</p>
+              <p className="text-xs text-muted-foreground">
+                Study tips, new features and exam guides.
+              </p>
             </div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
@@ -105,7 +104,13 @@ export function NewsletterSubscribe({
           disabled={loading}
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Mail className="h-4 w-4" /> Subscribe</>}
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <Mail className="h-4 w-4" /> Subscribe
+            </>
+          )}
         </button>
       </div>
     );
@@ -142,10 +147,15 @@ export function NewsletterSubscribe({
         disabled={loading}
         className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
       >
-        {loading
-          ? <><Loader2 className="h-4 w-4 animate-spin" /> Subscribing...</>
-          : <><Mail className="h-4 w-4" /> Subscribe to Newsletter</>
-        }
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" /> Subscribing...
+          </>
+        ) : (
+          <>
+            <Mail className="h-4 w-4" /> Subscribe to Newsletter
+          </>
+        )}
       </button>
       <p className="text-center font-mono text-[9px] text-muted-foreground">
         No spam. Unsubscribe anytime.

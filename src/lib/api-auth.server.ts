@@ -73,7 +73,10 @@ export async function authenticateRequest(request: Request) {
         continue;
       }
       throw new Response(
-        JSON.stringify({ error: "Unable to reach authentication service. Please check your connection and try again." }),
+        JSON.stringify({
+          error:
+            "Unable to reach authentication service. Please check your connection and try again.",
+        }),
         { status: 503, headers: { "Content-Type": "application/json" } },
       );
     }

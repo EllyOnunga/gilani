@@ -8,10 +8,10 @@ import { friendlyError } from "@/lib/async";
 import { TOPUP_TOKENS_PER_KES, TOPUP_MIN_KES } from "@/lib/plans";
 
 const PLAN_ICONS: Record<PlanId, typeof Zap> = {
-  free:    Zap,
-  basic:   GraduationCap,
+  free: Zap,
+  basic: GraduationCap,
   premium: Star,
-  school:  School,
+  school: School,
 };
 
 interface Props {
@@ -29,22 +29,38 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
   const [topupAmount, setTopupAmount] = useState<string>("");
 
   const handleTopup = async () => {
-    if (!user?.id) { toast.error("Please log in first"); return; }
-    if (!phone || phone.length < 9) { toast.error("Enter a valid Safaricom number"); return; }
+    if (!user?.id) {
+      toast.error("Please log in first");
+      return;
+    }
+    if (!phone || phone.length < 9) {
+      toast.error("Enter a valid Safaricom number");
+      return;
+    }
     const parsed = Math.floor(Number(topupAmount));
-    if (!parsed || parsed < TOPUP_MIN_KES) { toast.error(`Minimum top-up is KES ${TOPUP_MIN_KES}`); return; }
+    if (!parsed || parsed < TOPUP_MIN_KES) {
+      toast.error(`Minimum top-up is KES ${TOPUP_MIN_KES}`);
+      return;
+    }
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const res = await fetch("/api/mpesa/initiate", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({ phone, plan: "topup", amount: parsed }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setSent(true);
-      toast.success(`📱 M-Pesa prompt sent! You'll receive ${(parsed * TOPUP_TOKENS_PER_KES).toLocaleString()} tokens.`);
+      toast.success(
+        `📱 M-Pesa prompt sent! You'll receive ${(parsed * TOPUP_TOKENS_PER_KES).toLocaleString()} tokens.`,
+      );
     } catch (err: any) {
       toast.error(friendlyError(err, "Top-up failed. Please try again."));
     } finally {
@@ -52,17 +68,25 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
     }
   };
 
-  const paidPlans = (Object.values(PLANS) as typeof PLANS[PlanId][]).filter(
-    (p) => p.id !== "free"
+  const paidPlans = (Object.values(PLANS) as (typeof PLANS)[PlanId][]).filter(
+    (p) => p.id !== "free",
   );
 
   const handlePay = async () => {
-    if (!user?.id) { toast.error("Please log in first"); return; }
-    if (!phone || phone.length < 9) { toast.error("Enter a valid Safaricom number"); return; }
+    if (!user?.id) {
+      toast.error("Please log in first");
+      return;
+    }
+    if (!phone || phone.length < 9) {
+      toast.error("Enter a valid Safaricom number");
+      return;
+    }
 
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const res = await fetch("/api/mpesa/initiate", {
         method: "POST",
         headers: {
@@ -87,7 +111,6 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="relative w-full max-w-md rounded-2xl border border-border bg-card shadow-xl">
-
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>
@@ -107,13 +130,19 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
           {currentPlan === "free" && (
             <div className="flex rounded-lg border border-border overflow-hidden text-xs font-mono">
               <button
-                onClick={() => { setTab("plans"); setSent(false); }}
+                onClick={() => {
+                  setTab("plans");
+                  setSent(false);
+                }}
                 className={`flex-1 py-2 transition-colors ${tab === "plans" ? "bg-primary text-primary-foreground font-bold" : "hover:bg-accent"}`}
               >
                 Monthly Plans
               </button>
               <button
-                onClick={() => { setTab("topup"); setSent(false); }}
+                onClick={() => {
+                  setTab("topup");
+                  setSent(false);
+                }}
                 className={`flex-1 py-2 transition-colors flex items-center justify-center gap-1.5 ${tab === "topup" ? "bg-primary text-primary-foreground font-bold" : "hover:bg-accent"}`}
               >
                 <Wallet className="h-3 w-3" /> Top Up
@@ -138,10 +167,14 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Icon className={`h-4 w-4 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                        <Icon
+                          className={`h-4 w-4 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                        />
                         <div>
                           <p className="text-sm font-semibold">{plan.label}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">{plan.description}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">
+                            {plan.description}
+                          </p>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0 ml-4">
@@ -155,7 +188,9 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
 
               {/* Selected Plan Features */}
               <div className="rounded-xl bg-accent/25 border border-border/30 p-3.5 space-y-2">
-                <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Included in {PLANS[selected].label}:</p>
+                <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                  Included in {PLANS[selected].label}:
+                </p>
                 <ul className="space-y-2 text-xs text-muted-foreground">
                   {PLANS[selected].features.map((feat, idx) => (
                     <li key={idx} className="flex items-start gap-2.5">
@@ -185,16 +220,29 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
                     disabled={loading}
                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
                   >
-                    {loading
-                      ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending prompt...</>
-                      : `Pay KES ${PLANS[selected].price} via M-Pesa`}
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Sending prompt...
+                      </>
+                    ) : (
+                      `Pay KES ${PLANS[selected].price} via M-Pesa`
+                    )}
                   </button>
                 </>
               ) : (
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800 px-4 py-4 text-center space-y-2">
-                  <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">📱 Check your phone!</p>
-                  <p className="text-xs text-emerald-600 dark:text-emerald-500">Enter your M-Pesa PIN to complete. Your plan activates instantly after payment.</p>
-                  <button onClick={onClose} className="mt-2 text-xs font-mono underline text-muted-foreground">Done</button>
+                  <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                    📱 Check your phone!
+                  </p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-500">
+                    Enter your M-Pesa PIN to complete. Your plan activates instantly after payment.
+                  </p>
+                  <button
+                    onClick={onClose}
+                    className="mt-2 text-xs font-mono underline text-muted-foreground"
+                  >
+                    Done
+                  </button>
                 </div>
               )}
               <p className="text-center font-mono text-[9px] text-muted-foreground">
@@ -204,9 +252,18 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
           ) : (
             <>
               <div className="rounded-xl bg-secondary p-4 space-y-1">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Rate</p>
-                <p className="font-serif text-lg font-bold">KES 1 <span className="text-muted-foreground text-sm font-sans font-normal">= 1,000 tokens</span></p>
-                <p className="text-xs text-muted-foreground">Tokens never expire and stack with your free daily allowance.</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Rate
+                </p>
+                <p className="font-serif text-lg font-bold">
+                  KES 1{" "}
+                  <span className="text-muted-foreground text-sm font-sans font-normal">
+                    = 1,000 tokens
+                  </span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Tokens never expire and stack with your free daily allowance.
+                </p>
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {[10, 20, 50, 100].map((amt) => (
@@ -220,7 +277,9 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
                     }`}
                   >
                     KES {amt}
-                    <span className="block text-[9px] font-normal text-muted-foreground">{(amt * TOPUP_TOKENS_PER_KES / 1000).toFixed(0)}K tkns</span>
+                    <span className="block text-[9px] font-normal text-muted-foreground">
+                      {((amt * TOPUP_TOKENS_PER_KES) / 1000).toFixed(0)}K tkns
+                    </span>
                   </button>
                 ))}
               </div>
@@ -240,7 +299,9 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
                     />
                     {topupAmount && Number(topupAmount) >= TOPUP_MIN_KES && (
                       <p className="mt-1 font-mono text-[10px] text-primary">
-                        = {(Math.floor(Number(topupAmount)) * TOPUP_TOKENS_PER_KES).toLocaleString()} tokens
+                        ={" "}
+                        {(Math.floor(Number(topupAmount)) * TOPUP_TOKENS_PER_KES).toLocaleString()}{" "}
+                        tokens
                       </p>
                     )}
                   </div>
@@ -261,16 +322,29 @@ export function PlansModal({ onClose, currentPlan = "free" }: Props) {
                     disabled={loading || !topupAmount || Number(topupAmount) < TOPUP_MIN_KES}
                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
                   >
-                    {loading
-                      ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending prompt...</>
-                      : `Top Up KES ${topupAmount || "—"} via M-Pesa`}
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Sending prompt...
+                      </>
+                    ) : (
+                      `Top Up KES ${topupAmount || "—"} via M-Pesa`
+                    )}
                   </button>
                 </>
               ) : (
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800 px-4 py-4 text-center space-y-2">
-                  <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">📱 Check your phone!</p>
-                  <p className="text-xs text-emerald-600 dark:text-emerald-500">Enter your M-Pesa PIN. Tokens will be added to your wallet instantly.</p>
-                  <button onClick={onClose} className="mt-2 text-xs font-mono underline text-muted-foreground">Done</button>
+                  <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                    📱 Check your phone!
+                  </p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-500">
+                    Enter your M-Pesa PIN. Tokens will be added to your wallet instantly.
+                  </p>
+                  <button
+                    onClick={onClose}
+                    className="mt-2 text-xs font-mono underline text-muted-foreground"
+                  >
+                    Done
+                  </button>
                 </div>
               )}
               <p className="text-center font-mono text-[9px] text-muted-foreground">

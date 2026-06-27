@@ -41,11 +41,12 @@ export async function checkRateLimit(
     .eq("key", key)
     .maybeSingle();
 
-  const resetTime = row?.reset_at ? new Date(row.reset_at).getTime() : now.getTime() + opts.windowMs;
+  const resetTime = row?.reset_at
+    ? new Date(row.reset_at).getTime()
+    : now.getTime() + opts.windowMs;
   const retryAfterMs = Math.max(0, resetTime - now.getTime());
   return { allowed: false, retryAfterMs };
 }
-
 
 /**
  * Decrement rate limit counter — call when a request fails after being counted.
@@ -99,7 +100,6 @@ export async function checkDualRateLimit(
 }
 
 // ─── Plan-aware daily limit ───────────────────────────────────────────────────
-
 
 export type RateLimitAction = "chat" | "quiz" | "planner" | "notes";
 
@@ -176,7 +176,14 @@ export async function checkPlanRateLimit(
 export async function getPlanRateLimitStatus(
   userId: string,
   action: RateLimitAction = "chat",
-): Promise<{ isRateLimited: boolean; retryAfterMs: number; isDaily: boolean; messagesUsed: number; messagesMax: number; plan: string }> {
+): Promise<{
+  isRateLimited: boolean;
+  retryAfterMs: number;
+  isDaily: boolean;
+  messagesUsed: number;
+  messagesMax: number;
+  plan: string;
+}> {
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("plan, plan_expiry")
@@ -194,11 +201,25 @@ export async function getPlanRateLimitStatus(
   let minuteMax: number;
   let dailyMax: number;
   switch (action) {
-    case "chat": minuteMax = planMinute; dailyMax = limits.dailyMessages; break;
-    case "quiz": minuteMax = Math.max(2, planMinute - 3); dailyMax = limits.dailyQuizzes; break;
-    case "planner": minuteMax = Math.max(2, planMinute - 3); dailyMax = limits.dailyPlanners; break;
-    case "notes": minuteMax = Math.max(2, planMinute - 3); dailyMax = limits.dailyNotes; break;
-    default: minuteMax = planMinute; dailyMax = limits.dailyMessages;
+    case "chat":
+      minuteMax = planMinute;
+      dailyMax = limits.dailyMessages;
+      break;
+    case "quiz":
+      minuteMax = Math.max(2, planMinute - 3);
+      dailyMax = limits.dailyQuizzes;
+      break;
+    case "planner":
+      minuteMax = Math.max(2, planMinute - 3);
+      dailyMax = limits.dailyPlanners;
+      break;
+    case "notes":
+      minuteMax = Math.max(2, planMinute - 3);
+      dailyMax = limits.dailyNotes;
+      break;
+    default:
+      minuteMax = planMinute;
+      dailyMax = limits.dailyMessages;
   }
 
   const now = new Date();
@@ -217,7 +238,9 @@ export async function getPlanRateLimitStatus(
       isRateLimited: true,
       retryAfterMs: Math.max(0, resetTime - now.getTime()),
       isDaily: true,
-      messagesUsed: dailyRow?.count ?? 0, messagesMax: dailyMax, plan,
+      messagesUsed: dailyRow?.count ?? 0,
+      messagesMax: dailyMax,
+      plan,
     };
   }
 
@@ -235,11 +258,20 @@ export async function getPlanRateLimitStatus(
       isRateLimited: true,
       retryAfterMs: Math.max(0, resetTime - now.getTime()),
       isDaily: false,
-      messagesUsed: minRow?.count ?? 0, messagesMax: minuteMax, plan,
+      messagesUsed: minRow?.count ?? 0,
+      messagesMax: minuteMax,
+      plan,
     };
   }
 
-  return { isRateLimited: false as const, retryAfterMs: 0, isDaily: false as const, messagesUsed: dailyRow?.count ?? 0, messagesMax: dailyMax, plan };
+  return {
+    isRateLimited: false as const,
+    retryAfterMs: 0,
+    isDaily: false as const,
+    messagesUsed: dailyRow?.count ?? 0,
+    messagesMax: dailyMax,
+    plan,
+  };
 }
 
 export const getRateLimitStatus = createServerFn({ method: "POST" })
@@ -251,7 +283,15 @@ export const getRateLimitStatus = createServerFn({ method: "POST" })
     try {
       authResult = await authenticateRequest(request);
     } catch {
-      const freeLimits = getPlanLimits("free"); return { isRateLimited: false as const, retryAfterMs: 0 as const, isDaily: false as const, messagesUsed: 0, messagesMax: freeLimits.dailyMessages, plan: "free" };
+      const freeLimits = getPlanLimits("free");
+      return {
+        isRateLimited: false as const,
+        retryAfterMs: 0 as const,
+        isDaily: false as const,
+        messagesUsed: 0,
+        messagesMax: freeLimits.dailyMessages,
+        plan: "free",
+      };
     }
     return getPlanRateLimitStatus(authResult.userId, action);
   });

@@ -8,10 +8,7 @@ type Props = {
 
 type TimerState = { minutes: number; seconds: number; running: boolean };
 
-export function ChatHeader({
-  title,
-  className,
-}: Props & { className?: string }) {
+export function ChatHeader({ title, className }: Props & { className?: string }) {
   const [timerState, setTimerState] = useState<TimerState | null>(null);
 
   useEffect(() => {
@@ -24,7 +21,9 @@ export function ChatHeader({
   }, []);
 
   return (
-    <div className={`flex items-center justify-between border-b border-border bg-card px-3 sm:px-5 py-2.5 gap-2 min-w-0 ${className ?? ""}`}>
+    <div
+      className={`flex items-center justify-between border-b border-border bg-card px-3 sm:px-5 py-2.5 gap-2 min-w-0 ${className ?? ""}`}
+    >
       {/* Left: menu toggle + timer (if running) */}
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <button
@@ -39,7 +38,8 @@ export function ChatHeader({
           <div className="flex items-center gap-1.5 rounded-lg border border-primary bg-primary/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-primary flex-shrink-0">
             <Timer className="h-3 w-3 animate-pulse" />
             <span className="font-mono">
-              {String(timerState.minutes).padStart(2, "0")}:{String(timerState.seconds).padStart(2, "0")}
+              {String(timerState.minutes).padStart(2, "0")}:
+              {String(timerState.seconds).padStart(2, "0")}
             </span>
           </div>
         ) : null}

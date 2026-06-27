@@ -1,4 +1,4 @@
-import * as ReactKatex from 'react-katex';
+import * as ReactKatex from "react-katex";
 import "katex/dist/katex.min.css";
 
 // Safely extract components to handle Vite's CJS/ESM interop quirks

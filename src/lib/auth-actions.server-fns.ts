@@ -3,7 +3,11 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { z } from "zod";
-import { sendTransactionalEmail, emailTemplate, passwordResetConfirmationEmail } from "@/lib/email.server";
+import {
+  sendTransactionalEmail,
+  emailTemplate,
+  passwordResetConfirmationEmail,
+} from "@/lib/email.server";
 
 export const assignUserRole = createServerFn({ method: "POST" })
   .inputValidator(
@@ -37,7 +41,6 @@ export const assignUserRole = createServerFn({ method: "POST" })
     }
 
     try {
-
       // Delete existing role to allow role changes (e.g. student -> teacher)
       await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
       const { error: insertError } = await supabaseAdmin
@@ -46,24 +49,24 @@ export const assignUserRole = createServerFn({ method: "POST" })
       if (insertError) throw insertError;
 
       // Also ensure profile exists for OAuth users
-      await supabaseAdmin
-        .from("profiles")
-        .upsert(
-          {
-            id: userId,
-            display_name: authResult.user.user_metadata?.full_name ?? null,
-            email: authResult.user.email ?? null,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "id" },
-        );
+      await supabaseAdmin.from("profiles").upsert(
+        {
+          id: userId,
+          display_name: authResult.user.user_metadata?.full_name ?? null,
+          email: authResult.user.email ?? null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" },
+      );
 
       // Send welcome email
       const userEmail = authResult.user.email;
       const userName = authResult.user.user_metadata?.full_name || "there";
       const dashboard =
-        role === "teacher" ? "/teacher/escalations"
-          : role === "admin" ? "/admin/users"
+        role === "teacher"
+          ? "/teacher/escalations"
+          : role === "admin"
+            ? "/admin/users"
             : "/dashboard";
       if (userEmail) {
         sendTransactionalEmail({
@@ -121,8 +124,8 @@ export const checkEmailExists = createServerFn({ method: "POST" })
  * Called client-side after supabase.auth.updateUser({ password }) succeeds.
  * Sends a "your password was reset — was this you?" confirmation email.
  */
-export const sendPasswordResetConfirmationFn = createServerFn({ method: "POST" })
-  .handler(async () => {
+export const sendPasswordResetConfirmationFn = createServerFn({ method: "POST" }).handler(
+  async () => {
     const request = getRequest();
     let authResult;
     try {
@@ -144,4 +147,5 @@ export const sendPasswordResetConfirmationFn = createServerFn({ method: "POST" }
     });
 
     return { sent };
-  });
+  },
+);

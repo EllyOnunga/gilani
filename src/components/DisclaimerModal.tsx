@@ -107,7 +107,9 @@ export function DisclaimerModal() {
             <BookOpen className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold">Privacy & Safety</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold">
+              Privacy & Safety
+            </p>
             <h2 className="text-xl font-serif font-bold">Welcome to GilaniAI</h2>
           </div>
         </div>
@@ -116,7 +118,9 @@ export function DisclaimerModal() {
         <div className="flex-1 overflow-y-auto space-y-6 pr-2 text-sm text-muted-foreground custom-scrollbar">
           <div>
             <p className="mb-4">
-              GilaniAI is an AI-powered study companion. To ensure a safe, legal, and premium learning environment, please review our terms and configure your consent preferences below.
+              GilaniAI is an AI-powered study companion. To ensure a safe, legal, and premium
+              learning environment, please review our terms and configure your consent preferences
+              below.
             </p>
 
             <div className="space-y-3">
@@ -126,7 +130,8 @@ export function DisclaimerModal() {
                 <div>
                   <p className="font-bold text-foreground">AI Limitations</p>
                   <p className="text-xs mt-0.5 leading-relaxed">
-                    AI responses can contain errors or outdated information. Always cross-verify critical educational material with official guides and textbook sources.
+                    AI responses can contain errors or outdated information. Always cross-verify
+                    critical educational material with official guides and textbook sources.
                   </p>
                 </div>
               </div>
@@ -137,7 +142,9 @@ export function DisclaimerModal() {
                 <div>
                   <p className="font-bold text-foreground">Educational Support Only</p>
                   <p className="text-xs mt-0.5 leading-relaxed">
-                    This platform serves solely as an academic supplement. It does not replace guidance from certified teachers, advisors, counselors, or professional services.
+                    This platform serves solely as an academic supplement. It does not replace
+                    guidance from certified teachers, advisors, counselors, or professional
+                    services.
                   </p>
                 </div>
               </div>
@@ -148,7 +155,8 @@ export function DisclaimerModal() {
                 <div>
                   <p className="font-bold text-foreground">Safety & Emergency Hotlines</p>
                   <p className="text-xs mt-0.5 leading-relaxed">
-                    Your safety is our top priority. For support, reach out to local counselors or contact emergency hotlines like Kenya Red Cross (1199) or Childline Kenya (116).
+                    Your safety is our top priority. For support, reach out to local counselors or
+                    contact emergency hotlines like Kenya Red Cross (1199) or Childline Kenya (116).
                   </p>
                 </div>
               </div>
@@ -157,16 +165,21 @@ export function DisclaimerModal() {
 
           {/* Consents Section */}
           <div className="space-y-3 pt-4 border-t border-border/40">
-            <h3 className="font-mono text-xs uppercase tracking-widest text-foreground font-bold">Consent Preferences</h3>
+            <h3 className="font-mono text-xs uppercase tracking-widest text-foreground font-bold">
+              Consent Preferences
+            </h3>
 
             {/* Cookie Toggle */}
             <div className="flex items-start justify-between gap-4 bg-muted/20 border border-border/30 rounded-xl p-3">
               <div className="flex gap-3">
                 <Cookie className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-bold text-foreground">Allow Cookie & Storage Consent</p>
+                  <p className="text-xs font-bold text-foreground">
+                    Allow Cookie & Storage Consent
+                  </p>
                   <p className="text-[11px] mt-0.5 leading-relaxed">
-                    Required to store your study settings, active session details, and interface choices locally.
+                    Required to store your study settings, active session details, and interface
+                    choices locally.
                   </p>
                 </div>
               </div>
@@ -190,9 +203,12 @@ export function DisclaimerModal() {
               <div className="flex gap-3">
                 <BarChart className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-bold text-foreground">Allow Anonymous Usage Telemetry</p>
+                  <p className="text-xs font-bold text-foreground">
+                    Allow Anonymous Usage Telemetry
+                  </p>
                   <p className="text-[11px] mt-0.5 leading-relaxed">
-                    Helps us improve study tools and response accuracy by collecting anonymized diagnostic information.
+                    Helps us improve study tools and response accuracy by collecting anonymized
+                    diagnostic information.
                   </p>
                 </div>
               </div>
@@ -220,9 +236,12 @@ export function DisclaimerModal() {
                 className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary/40 focus:ring-offset-0 cursor-pointer accent-primary"
               />
               <div>
-                <p className="text-xs font-bold text-foreground">Acknowledge AI Safety & Disclaimer (Required)</p>
+                <p className="text-xs font-bold text-foreground">
+                  Acknowledge AI Safety & Disclaimer (Required)
+                </p>
                 <p className="text-[11px] mt-0.5 leading-relaxed">
-                  I understand that AI outputs may be inaccurate, and I agree to use GilaniAI ethically as a study supplement.
+                  I understand that AI outputs may be inaccurate, and I agree to use GilaniAI
+                  ethically as a study supplement.
                 </p>
               </div>
             </label>
@@ -239,7 +258,8 @@ export function DisclaimerModal() {
             Accept Preferences & Let's Learn!
           </button>
           <p className="text-[10px] text-muted-foreground text-center">
-            By continuing, you agree to our Terms of Service and Privacy Policy. You can adjust your consent choices at any time in Settings.
+            By continuing, you agree to our Terms of Service and Privacy Policy. You can adjust your
+            consent choices at any time in Settings.
           </p>
         </div>
       </div>

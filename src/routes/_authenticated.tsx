@@ -31,12 +31,7 @@ import {
   Pencil,
   Check,
 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -90,20 +85,39 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthedShell,
 });
 
-
 function PresetAvatarSVG({ preset }: { preset: string }) {
   switch (preset) {
     case "socrates":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-amber-500 to-amber-700 p-1.5 text-white">
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-amber-500 to-amber-700 p-1.5 text-white"
+        >
           <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" strokeWidth="1" />
-          <path d="M12 24h8M16 24V14M13 14h6M11 11h10v3H11z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M12 24h8M16 24V14M13 14h6M11 11h10v3H11z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       );
     case "curie":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-emerald-500 to-emerald-700 p-1.5 text-white">
-          <path d="M11 23h10M13 23v-7a3 3 0 0 1-1-2.5v-3.5h8v3.5a3 3 0 0 1-1 2.5v7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-emerald-500 to-emerald-700 p-1.5 text-white"
+        >
+          <path
+            d="M11 23h10M13 23v-7a3 3 0 0 1-1-2.5v-3.5h8v3.5a3 3 0 0 1-1 2.5v7"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
           <circle cx="16" cy="7" r="1" fill="currentColor" />
           <circle cx="12" cy="15" r="1.2" fill="currentColor" />
           <circle cx="20" cy="17" r="0.8" fill="currentColor" />
@@ -111,40 +125,105 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
       );
     case "galileo":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-blue-500 to-blue-700 p-1.5 text-white">
-          <path d="M9 23l7-7M23 9l-7 7M16 16l4 4M21 7l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-blue-500 to-blue-700 p-1.5 text-white"
+        >
+          <path
+            d="M9 23l7-7M23 9l-7 7M16 16l4 4M21 7l4 4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+          />
           <circle cx="24" cy="16" r="0.8" fill="currentColor" />
-          <polygon points="12,7 13,9 15,9 13,10 14,12 12,11 10,12 11,10 9,9 11,9" fill="currentColor" />
+          <polygon
+            points="12,7 13,9 15,9 13,10 14,12 12,11 10,12 11,10 9,9 11,9"
+            fill="currentColor"
+          />
         </svg>
       );
     case "lovelace":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-purple-500 to-purple-700 p-1.5 text-white">
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-purple-500 to-purple-700 p-1.5 text-white"
+        >
           <circle cx="16" cy="16" r="5" stroke="currentColor" strokeWidth="1.5" fill="none" />
-          <path d="M16 8v3M16 21v3M8 16h3M21 16h3M10.5 10.5l2 2M19.5 19.5l2 2M10.5 19.5l2-2M19.5 10.5l2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <path
+            d="M16 8v3M16 21v3M8 16h3M21 16h3M10.5 10.5l2 2M19.5 19.5l2 2M10.5 19.5l2-2M19.5 10.5l2-2"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
         </svg>
       );
     case "hypatia":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-pink-500 to-pink-700 p-1.5 text-white">
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-pink-500 to-pink-700 p-1.5 text-white"
+        >
           <circle cx="16" cy="16" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" />
           <line x1="16" y1="9" x2="16" y2="23" stroke="currentColor" strokeWidth="1" />
           <line x1="9" y1="16" x2="23" y2="16" stroke="currentColor" strokeWidth="1" />
-          <polygon points="16,11 19,16 16,21 13,16" stroke="currentColor" strokeWidth="1" fill="none" />
+          <polygon
+            points="16,11 19,16 16,21 13,16"
+            stroke="currentColor"
+            strokeWidth="1"
+            fill="none"
+          />
         </svg>
       );
     case "einstein":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-rose-500 to-rose-700 p-1.5 text-white">
-          <path d="M12 15a4 4 0 0 1 8 0c0 2.5-2 3.5-2 5h-4c0-1.5-2-2.5-2-5zM13 23h6M14 26h4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          <line x1="16" y1="7" x2="16" y2="9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="8" y1="11" x2="10" y2="12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="24" y1="11" x2="22" y2="12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-rose-500 to-rose-700 p-1.5 text-white"
+        >
+          <path
+            d="M12 15a4 4 0 0 1 8 0c0 2.5-2 3.5-2 5h-4c0-1.5-2-2.5-2-5zM13 23h6M14 26h4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <line
+            x1="16"
+            y1="7"
+            x2="16"
+            y2="9"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
+          <line
+            x1="8"
+            y1="11"
+            x2="10"
+            y2="12"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
+          <line
+            x1="24"
+            y1="11"
+            x2="22"
+            y2="12"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
         </svg>
       );
     default:
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-primary to-primary/80 p-1.5 text-white">
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-primary to-primary/80 p-1.5 text-white"
+        >
           <circle cx="16" cy="16" r="12" fill="currentColor" opacity="0.2" />
         </svg>
       );
@@ -208,7 +287,6 @@ function groupThreadsByDate(threads: Thread[]): GroupedThreads {
   return { today, yesterday, last7Days, older };
 }
 
-
 function AuthedShell() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { roles, user, loading } = useAuth();
@@ -257,7 +335,9 @@ function AuthedShell() {
     }
     // Reset shortly after release so a genuine long-press still blocks the
     // immediate click, but a later normal tap on the same row works again.
-    setTimeout(() => { longPressTriggeredRef.current = false; }, 50);
+    setTimeout(() => {
+      longPressTriggeredRef.current = false;
+    }, 50);
   };
 
   // Tap anywhere outside a revealed thread row dismisses the action icons
@@ -465,11 +545,7 @@ function AuthedShell() {
     const isTeacher = roles.includes("teacher") && !roles.includes("admin");
     const isStudent = !isAdmin && !isTeacher;
 
-    const studentOnlyPaths = [
-      "/dashboard",
-      "/analytics",
-      "/tutor",
-    ];
+    const studentOnlyPaths = ["/dashboard", "/analytics", "/tutor"];
     const isOnStudentRoute = studentOnlyPaths.some((p) => path === p || path.startsWith(p + "/"));
 
     if (isAdmin) {
@@ -524,7 +600,6 @@ function AuthedShell() {
     return () => document.removeEventListener("mousedown", handler);
   }, [userMenuOpen]);
 
-
   // ─── 30-minute inactivity logout ─────────────────────────────────────────
   useEffect(() => {
     const TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
@@ -534,12 +609,19 @@ function AuthedShell() {
       clearTimeout(timer);
       timer = setTimeout(async () => {
         await supabase.auth.signOut();
-        toast.error('You were signed out due to inactivity.');
-        window.location.href = '/login';
+        toast.error("You were signed out due to inactivity.");
+        window.location.href = "/login";
       }, TIMEOUT_MS);
     };
 
-    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'visibilitychange'];
+    const events = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "touchstart",
+      "scroll",
+      "visibilitychange",
+    ];
     events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
     reset(); // start timer on mount
 
@@ -572,16 +654,11 @@ function AuthedShell() {
   }
 
   // Prevent rendering student content for admin/teacher before redirect fires
-  const studentOnlyPaths2 = [
-    "/dashboard",
-    "/analytics",
-    "/tutor",
-  ];
+  const studentOnlyPaths2 = ["/dashboard", "/analytics", "/tutor"];
   const isOnStudentRoute2 = studentOnlyPaths2.some((p) => path === p || path.startsWith(p + "/"));
   if ((isAdmin || isTeacher) && isOnStudentRoute2) {
     return <GilaniLoader />;
   }
-
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -624,14 +701,21 @@ function AuthedShell() {
 
       {/* Responsive Aside Navigation Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-sidebar p-4 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden rounded-r-2xl ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } ${collapsed ? "w-64 lg:w-[60px] lg:p-2" : "w-64"
-          }`}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-sidebar p-4 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden rounded-r-2xl ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } ${collapsed ? "w-64 lg:w-[60px] lg:p-2" : "w-64"}`}
       >
         {/* Brand logo, Collapse Toggle & Mobile Close Button */}
         <div className="flex items-center justify-between mb-6 min-w-0 w-full relative">
-          <div className={`flex flex-col items-start justify-center min-w-0 ${collapsed ? "lg:items-center lg:mx-auto" : "flex-1"}`}>
-            <Logo to="/dashboard" onClick={() => setSidebarOpen(false)} size={collapsed ? "sm" : "md"} className={collapsed ? "mx-auto" : ""} />
+          <div
+            className={`flex flex-col items-start justify-center min-w-0 ${collapsed ? "lg:items-center lg:mx-auto" : "flex-1"}`}
+          >
+            <Logo
+              to="/dashboard"
+              onClick={() => setSidebarOpen(false)}
+              size={collapsed ? "sm" : "md"}
+              className={collapsed ? "mx-auto" : ""}
+            />
             {!collapsed && (
               <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 pl-0.5">
                 Ethical Learning
@@ -669,7 +753,11 @@ function AuthedShell() {
                     <span className="lg:hidden">{collapsed ? "New Chat" : null}</span>
                   </button>
                 </TooltipTrigger>
-                {collapsed && <TooltipContent side="right" className="hidden lg:block">New Chat</TooltipContent>}
+                {collapsed && (
+                  <TooltipContent side="right" className="hidden lg:block">
+                    New Chat
+                  </TooltipContent>
+                )}
               </Tooltip>
 
               {/* Dashboard Link */}
@@ -678,16 +766,21 @@ function AuthedShell() {
                   <Link
                     to="/dashboard"
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center rounded-lg text-sm font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"} ${path === "/dashboard"
+                    className={`flex items-center rounded-lg text-sm font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"} ${
+                      path === "/dashboard"
                         ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r"
                         : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-                      }`}
+                    }`}
                   >
                     <GraduationCap className="h-4 w-4 flex-shrink-0" />
                     <span className={collapsed ? "lg:hidden" : ""}>Dashboard</span>
                   </Link>
                 </TooltipTrigger>
-                {collapsed && <TooltipContent side="right" className="hidden lg:block">Dashboard</TooltipContent>}
+                {collapsed && (
+                  <TooltipContent side="right" className="hidden lg:block">
+                    Dashboard
+                  </TooltipContent>
+                )}
               </Tooltip>
 
               {/* Escalations Button for Student */}
@@ -696,11 +789,14 @@ function AuthedShell() {
                   <button
                     onClick={() => {
                       setSidebarOpen(false);
-                      const isTutorThread = path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
+                      const isTutorThread =
+                        path.startsWith("/tutor/") && path !== "/tutor" && path !== "/tutor/";
                       if (isTutorThread) {
                         window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
                       } else {
-                        toast.info("Please select or create a study session first, then use the Escalate button in the chat.");
+                        toast.info(
+                          "Please select or create a study session first, then use the Escalate button in the chat.",
+                        );
                       }
                     }}
                     className={`flex w-full items-center rounded-lg text-sm font-medium transition-colors relative text-muted-foreground hover:bg-muted/20 hover:text-foreground ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"}`}
@@ -709,11 +805,17 @@ function AuthedShell() {
                     <span className={collapsed ? "lg:hidden" : ""}>Escalations</span>
                   </button>
                 </TooltipTrigger>
-                {collapsed && <TooltipContent side="right" className="hidden lg:block">Escalations</TooltipContent>}
+                {collapsed && (
+                  <TooltipContent side="right" className="hidden lg:block">
+                    Escalations
+                  </TooltipContent>
+                )}
               </Tooltip>
 
               {/* Chat History Grouped Chronologically (hidden in collapsed rail mode) */}
-              <div className={`mt-4 space-y-4 flex-1 overflow-y-auto min-h-0 ${collapsed ? "hidden lg:hidden" : ""}`}>
+              <div
+                className={`mt-4 space-y-4 flex-1 overflow-y-auto min-h-0 ${collapsed ? "hidden lg:hidden" : ""}`}
+              >
                 {threadsLoading ? (
                   <div className="text-xs text-muted-foreground/60 py-2 px-3 flex items-center gap-2 animate-pulse">
                     <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground/60" />
@@ -743,8 +845,7 @@ function AuthedShell() {
                         <div className="space-y-[2px]">
                           {groupThreads.map((t) => {
                             const isCurrent =
-                              path === `/tutor/${t.id}` ||
-                              path.startsWith(`/tutor/${t.id}/`);
+                              path === `/tutor/${t.id}` || path.startsWith(`/tutor/${t.id}/`);
                             return (
                               <div
                                 key={t.id}
@@ -753,11 +854,17 @@ function AuthedShell() {
                                 onTouchEnd={handleThreadTouchEnd}
                                 onTouchMove={handleThreadTouchEnd}
                                 onContextMenu={(e) => e.preventDefault()}
-                                style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none", WebkitTapHighlightColor: "transparent" }}
-                                className={`group flex items-center justify-between rounded-lg px-2.5 py-1 text-xs transition-all relative select-none ${isCurrent
+                                style={{
+                                  WebkitTouchCallout: "none",
+                                  WebkitUserSelect: "none",
+                                  userSelect: "none",
+                                  WebkitTapHighlightColor: "transparent",
+                                }}
+                                className={`group flex items-center justify-between rounded-lg px-2.5 py-1 text-xs transition-all relative select-none ${
+                                  isCurrent
                                     ? "bg-muted/40 text-foreground font-semibold"
                                     : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-                                  }`}
+                                }`}
                               >
                                 {renamingId === t.id ? (
                                   <input
@@ -766,8 +873,14 @@ function AuthedShell() {
                                     onChange={(e) => setRenameValue(e.target.value)}
                                     onBlur={() => commitRename(t.id)}
                                     onKeyDown={(e) => {
-                                      if (e.key === "Enter") { e.preventDefault(); commitRename(t.id); }
-                                      if (e.key === "Escape") { e.preventDefault(); setRenamingId(null); }
+                                      if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        commitRename(t.id);
+                                      }
+                                      if (e.key === "Escape") {
+                                        e.preventDefault();
+                                        setRenamingId(null);
+                                      }
                                     }}
                                     className="flex-1 min-w-0 bg-transparent border border-border/40 rounded-md px-1.5 py-0.5 text-xs outline-hidden focus:border-border"
                                     autoFocus
@@ -794,10 +907,13 @@ function AuthedShell() {
                                   </Link>
                                 )}
                                 {renamingId !== t.id && (
-                                  <div className={`flex items-center flex-shrink-0 transition-all duration-200 ${revealedThreadId === t.id
-                                      ? "gap-1 opacity-100 scale-100"
-                                      : "gap-0.5 opacity-0 scale-95 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:scale-100 lg:focus-within:opacity-100"
-                                    }`}>
+                                  <div
+                                    className={`flex items-center flex-shrink-0 transition-all duration-200 ${
+                                      revealedThreadId === t.id
+                                        ? "gap-1 opacity-100 scale-100"
+                                        : "gap-0.5 opacity-0 scale-95 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:scale-100 lg:focus-within:opacity-100"
+                                    }`}
+                                  >
                                     <button
                                       onClick={(e) => {
                                         e.preventDefault();
@@ -805,8 +921,11 @@ function AuthedShell() {
                                         startRename(t.id, t.title || "Untitled Chat");
                                         setRevealedThreadId(null);
                                       }}
-                                      className={`flex items-center gap-1 rounded-md hover:bg-muted text-muted-foreground/60 hover:text-foreground cursor-pointer ${revealedThreadId === t.id ? "px-2 py-1 text-[11px] font-semibold" : "p-1"
-                                        }`}
+                                      className={`flex items-center gap-1 rounded-md hover:bg-muted text-muted-foreground/60 hover:text-foreground cursor-pointer ${
+                                        revealedThreadId === t.id
+                                          ? "px-2 py-1 text-[11px] font-semibold"
+                                          : "p-1"
+                                      }`}
                                       title="Rename chat"
                                     >
                                       <Pencil className="h-3 w-3" />
@@ -819,8 +938,11 @@ function AuthedShell() {
                                         setDeleteConfirmId(t.id);
                                         setRevealedThreadId(null);
                                       }}
-                                      className={`flex items-center gap-1 rounded-md hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive cursor-pointer ${revealedThreadId === t.id ? "px-2 py-1 text-[11px] font-semibold" : "p-1"
-                                        }`}
+                                      className={`flex items-center gap-1 rounded-md hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive cursor-pointer ${
+                                        revealedThreadId === t.id
+                                          ? "px-2 py-1 text-[11px] font-semibold"
+                                          : "p-1"
+                                      }`}
                                       title="Delete chat"
                                     >
                                       <Trash2 className="h-3 w-3" />
@@ -848,10 +970,11 @@ function AuthedShell() {
               <Link
                 to={"/teacher/escalations" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${path.startsWith("/teacher/escalations")
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${
+                  path.startsWith("/teacher/escalations")
                     ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r"
                     : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-                  }`}
+                }`}
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
               </Link>
@@ -865,10 +988,11 @@ function AuthedShell() {
               <Link
                 to={"/admin/users" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${path.startsWith("/admin")
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${
+                  path.startsWith("/admin")
                     ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r"
                     : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-                  }`}
+                }`}
               >
                 <Users className="h-4 w-4" /> Users & Roles
               </Link>
@@ -896,7 +1020,10 @@ function AuthedShell() {
                   )}
                 </div>
                 <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
-                  <p className="truncate text-xs font-semibold leading-tight text-foreground" title={profileName || user?.email || ""}>
+                  <p
+                    className="truncate text-xs font-semibold leading-tight text-foreground"
+                    title={profileName || user?.email || ""}
+                  >
                     {profileName || user?.email?.split("@")[0]}
                   </p>
                 </div>
@@ -950,7 +1077,10 @@ function AuthedShell() {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
+              <DropdownMenuItem
+                onClick={signOut}
+                className="text-destructive focus:text-destructive"
+              >
                 <LogOut className="h-4 w-4" />
                 Logout
               </DropdownMenuItem>
@@ -962,7 +1092,9 @@ function AuthedShell() {
           </DropdownMenu>
         </div>
       </aside>
-      <main className={`flex-1 min-w-0 flex flex-col overflow-x-hidden ${path.startsWith("/tutor") ? "overflow-hidden h-full" : "overflow-y-auto scroll-smooth"}`}>
+      <main
+        className={`flex-1 min-w-0 flex flex-col overflow-x-hidden ${path.startsWith("/tutor") ? "overflow-hidden h-full" : "overflow-y-auto scroll-smooth"}`}
+      >
         {!path.startsWith("/tutor") && <Breadcrumb />}
         <div className="w-full flex-1 flex flex-col min-h-0">
           <Outlet />

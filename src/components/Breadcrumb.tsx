@@ -47,9 +47,7 @@ function getCrumbs(pathname: string): Crumb[] {
       // Dynamic param — label based on the parent segment
       const parent = segments[i - 1] ?? "";
       const label =
-        parent === "tutor" ? "Chat Session" :
-        parent === "escalations" ? "Escalation" :
-        "Session";
+        parent === "tutor" ? "Chat Session" : parent === "escalations" ? "Escalation" : "Session";
       crumbs.push({ label, href: accumulated, navigable: true });
       continue;
     }
@@ -57,13 +55,16 @@ function getCrumbs(pathname: string): Crumb[] {
     // Compound routes: teacher/escalations, admin/users — collapse parent into
     // a non-navigable label and emit the full path as the leaf
     const nextSegment = segments[i + 1];
-    if (nextSegment && !UUID_RE.test(nextSegment) && (segment === "teacher" || segment === "admin")) {
+    if (
+      nextSegment &&
+      !UUID_RE.test(nextSegment) &&
+      (segment === "teacher" || segment === "admin")
+    ) {
       const parentLabel = ROUTE_LABELS[segment] ?? segment;
       crumbs.push({ label: parentLabel, href: accumulated, navigable: false });
       accumulated += `/${nextSegment}`;
       const leafLabel =
-        ROUTE_LABELS[nextSegment] ??
-        nextSegment.charAt(0).toUpperCase() + nextSegment.slice(1);
+        ROUTE_LABELS[nextSegment] ?? nextSegment.charAt(0).toUpperCase() + nextSegment.slice(1);
       crumbs.push({ label: leafLabel, href: accumulated, navigable: true });
       i++; // consumed nextSegment
       continue;

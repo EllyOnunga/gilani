@@ -76,15 +76,35 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
   switch (preset) {
     case "socrates":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-amber-500 to-amber-700 p-2 text-white">
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-amber-500 to-amber-700 p-2 text-white"
+        >
           <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" strokeWidth="1" />
-          <path d="M12 24h8M16 24V14M13 14h6M11 11h10v3H11z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M12 24h8M16 24V14M13 14h6M11 11h10v3H11z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       );
     case "curie":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-emerald-500 to-emerald-700 p-2 text-white">
-          <path d="M11 23h10M13 23v-7a3 3 0 0 1-1-2.5v-3.5h8v3.5a3 3 0 0 1-1 2.5v7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-emerald-500 to-emerald-700 p-2 text-white"
+        >
+          <path
+            d="M11 23h10M13 23v-7a3 3 0 0 1-1-2.5v-3.5h8v3.5a3 3 0 0 1-1 2.5v7"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
           <circle cx="16" cy="7" r="1" fill="currentColor" />
           <circle cx="12" cy="15" r="1.2" fill="currentColor" />
           <circle cx="20" cy="17" r="0.8" fill="currentColor" />
@@ -92,35 +112,97 @@ function PresetAvatarSVG({ preset }: { preset: string }) {
       );
     case "galileo":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-blue-500 to-blue-700 p-2 text-white">
-          <path d="M9 23l7-7M23 9l-7 7M16 16l4 4M21 7l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-blue-500 to-blue-700 p-2 text-white"
+        >
+          <path
+            d="M9 23l7-7M23 9l-7 7M16 16l4 4M21 7l4 4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+          />
           <circle cx="24" cy="16" r="0.8" fill="currentColor" />
-          <polygon points="12,7 13,9 15,9 13,10 14,12 12,11 10,12 11,10 9,9 11,9" fill="currentColor" />
+          <polygon
+            points="12,7 13,9 15,9 13,10 14,12 12,11 10,12 11,10 9,9 11,9"
+            fill="currentColor"
+          />
         </svg>
       );
     case "lovelace":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-purple-500 to-purple-700 p-2 text-white">
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-purple-500 to-purple-700 p-2 text-white"
+        >
           <circle cx="16" cy="16" r="5" stroke="currentColor" strokeWidth="1.5" fill="none" />
-          <path d="M16 8v3M16 21v3M8 16h3M21 16h3M10.5 10.5l2 2M19.5 19.5l2 2M10.5 19.5l2-2M19.5 10.5l2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <path
+            d="M16 8v3M16 21v3M8 16h3M21 16h3M10.5 10.5l2 2M19.5 19.5l2 2M10.5 19.5l2-2M19.5 10.5l2-2"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
         </svg>
       );
     case "hypatia":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-pink-500 to-pink-700 p-2 text-white">
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-pink-500 to-pink-700 p-2 text-white"
+        >
           <circle cx="16" cy="16" r="7" stroke="currentColor" strokeWidth="1.5" fill="none" />
           <line x1="16" y1="9" x2="16" y2="23" stroke="currentColor" strokeWidth="1" />
           <line x1="9" y1="16" x2="23" y2="16" stroke="currentColor" strokeWidth="1" />
-          <polygon points="16,11 19,16 16,21 13,16" stroke="currentColor" strokeWidth="1" fill="none" />
+          <polygon
+            points="16,11 19,16 16,21 13,16"
+            stroke="currentColor"
+            strokeWidth="1"
+            fill="none"
+          />
         </svg>
       );
     case "einstein":
       return (
-        <svg viewBox="0 0 32 32" className="h-full w-full bg-gradient-to-br from-rose-500 to-rose-700 p-2 text-white">
-          <path d="M12 15a4 4 0 0 1 8 0c0 2.5-2 3.5-2 5h-4c0-1.5-2-2.5-2-5zM13 23h6M14 26h4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          <line x1="16" y1="7" x2="16" y2="9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="8" y1="11" x2="10" y2="12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="24" y1="11" x2="22" y2="12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <svg
+          viewBox="0 0 32 32"
+          className="h-full w-full bg-gradient-to-br from-rose-500 to-rose-700 p-2 text-white"
+        >
+          <path
+            d="M12 15a4 4 0 0 1 8 0c0 2.5-2 3.5-2 5h-4c0-1.5-2-2.5-2-5zM13 23h6M14 26h4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <line
+            x1="16"
+            y1="7"
+            x2="16"
+            y2="9"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
+          <line
+            x1="8"
+            y1="11"
+            x2="10"
+            y2="12"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
+          <line
+            x1="24"
+            y1="11"
+            x2="22"
+            y2="12"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
         </svg>
       );
     default:
@@ -290,7 +372,7 @@ function SettingsPage() {
 
             setAvatarUrl(base64);
             toast.success("Photo uploaded and optimized! Save settings to sync. 📸");
-          };
+          }
         };
         img.src = event.target?.result as string;
       };
@@ -327,12 +409,17 @@ function SettingsPage() {
     localStorage.removeItem("gilani_disclaimer_accepted");
     setDisclaimerAccepted(false);
     if (user?.id) {
-      await supabase.from("profiles").update({
-        disclaimer_accepted: false,
-        updated_at: new Date().toISOString(),
-      }).eq("id", user.id);
+      await supabase
+        .from("profiles")
+        .update({
+          disclaimer_accepted: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
     }
-    toast.info("AI Disclaimer consent revoked. You will be prompted to read it again on your next dashboard visit.");
+    toast.info(
+      "AI Disclaimer consent revoked. You will be prompted to read it again on your next dashboard visit.",
+    );
   };
 
   const toggleConsent = async (type: "cookie" | "analytics", value: boolean) => {
@@ -343,12 +430,15 @@ function SettingsPage() {
     } else {
       setAnalyticsConsent(value);
       localStorage.setItem("gilani_analytics_consent", String(value));
-      toast.success(value ? "Anonymous usage tracking enabled." : "Anonymous usage tracking disabled.");
+      toast.success(
+        value ? "Anonymous usage tracking enabled." : "Anonymous usage tracking disabled.",
+      );
     }
     if (user?.id) {
-      const updateData = type === "cookie"
-        ? { cookie_consent: value, updated_at: new Date().toISOString() }
-        : { analytics_consent: value, updated_at: new Date().toISOString() };
+      const updateData =
+        type === "cookie"
+          ? { cookie_consent: value, updated_at: new Date().toISOString() }
+          : { analytics_consent: value, updated_at: new Date().toISOString() };
       await supabase.from("profiles").update(updateData).eq("id", user.id);
     }
   };
@@ -375,7 +465,8 @@ function SettingsPage() {
             </p>
             <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-bold">App Settings</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Customize your tutor's persona, change your profile appearance, and oversee subscription parameters.
+              Customize your tutor's persona, change your profile appearance, and oversee
+              subscription parameters.
             </p>
           </div>
         </header>
@@ -411,7 +502,9 @@ function SettingsPage() {
                 <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                   <div className="flex items-center gap-2.5">
                     <User className="h-5 w-5 text-primary" />
-                    <h3 className="font-serif text-xl font-bold text-foreground">Profile Details</h3>
+                    <h3 className="font-serif text-xl font-bold text-foreground">
+                      Profile Details
+                    </h3>
                   </div>
 
                   {/* Avatar Picker Section */}
@@ -421,7 +514,11 @@ function SettingsPage() {
                         avatarUrl.startsWith("preset:") ? (
                           <PresetAvatarSVG preset={avatarUrl.substring(7)} />
                         ) : (
-                          <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                          <img
+                            src={avatarUrl}
+                            alt="Avatar"
+                            className="h-full w-full object-cover"
+                          />
                         )
                       ) : (
                         <span className="font-serif text-xl font-bold text-primary">
@@ -431,12 +528,19 @@ function SettingsPage() {
                       {/* Photo Overlap overlay */}
                       <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity duration-200">
                         <Upload className="h-5 w-5 text-white" />
-                        <input type="file" onChange={handlePhotoUpload} accept="image/*" className="sr-only" />
+                        <input
+                          type="file"
+                          onChange={handlePhotoUpload}
+                          accept="image/*"
+                          className="sr-only"
+                        />
                       </label>
                     </div>
 
                     <div className="flex-1 min-w-0 space-y-2">
-                      <p className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">Select Scholar Preset</p>
+                      <p className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                        Select Scholar Preset
+                      </p>
                       <div className="grid grid-cols-6 gap-1.5">
                         {PRESETS.map((p) => {
                           const isSelected = avatarUrl === `preset:${p.id}`;
@@ -446,7 +550,9 @@ function SettingsPage() {
                               type="button"
                               onClick={() => setAvatarUrl(`preset:${p.id}`)}
                               className={`relative w-8 h-8 rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
-                                isSelected ? "border-primary scale-102 ring-2 ring-primary/25" : "border-border/40 hover:border-primary/50"
+                                isSelected
+                                  ? "border-primary scale-102 ring-2 ring-primary/25"
+                                  : "border-border/40 hover:border-primary/50"
                               }`}
                               title={`${p.label}: ${p.desc}`}
                             >
@@ -461,7 +567,8 @@ function SettingsPage() {
                         })}
                       </div>
                       <p className="text-[10px] text-muted-foreground leading-normal mt-1 flex items-center gap-1">
-                        <Info className="h-3.5 w-3.5 flex-shrink-0 text-primary" /> Hover presets for biographies, or upload a custom image.
+                        <Info className="h-3.5 w-3.5 flex-shrink-0 text-primary" /> Hover presets
+                        for biographies, or upload a custom image.
                       </p>
                     </div>
                   </div>
@@ -480,7 +587,6 @@ function SettingsPage() {
                         className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
                       />
                     </div>
-
                   </div>
 
                   <div className="flex justify-end pt-2">
@@ -500,11 +606,14 @@ function SettingsPage() {
                 <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                   <div className="flex items-center gap-2.5">
                     <Brain className="h-5 w-5 text-primary" />
-                    <h3 className="font-serif text-xl font-bold text-foreground">Tutor Preferences</h3>
+                    <h3 className="font-serif text-xl font-bold text-foreground">
+                      Tutor Preferences
+                    </h3>
                   </div>
 
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Personalize how GilaniAI responds to your study questions. Choose styles that match your preferred learning pacing.
+                    Personalize how GilaniAI responds to your study questions. Choose styles that
+                    match your preferred learning pacing.
                   </p>
 
                   <div className="space-y-3">
@@ -545,7 +654,11 @@ function SettingsPage() {
                         {[
                           { id: "socratic", label: "Socratic Method", desc: "Guides with hints" },
                           { id: "direct", label: "Direct Mentor", desc: "Immediate solutions" },
-                          { id: "rigorous", label: "Proofs & Derivations", desc: "First principles" },
+                          {
+                            id: "rigorous",
+                            label: "Proofs & Derivations",
+                            desc: "First principles",
+                          },
                         ].map((t) => (
                           <button
                             key={t.id}
@@ -571,9 +684,21 @@ function SettingsPage() {
                       </label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {[
-                          { id: "guided", label: "Highly Scaffolded", desc: "Small incremental hints" },
-                          { id: "standard", label: "Standard Paced", desc: "Standard target level" },
-                          { id: "rigorous", label: "Deep Challenges", desc: "Minimal hand-holding" },
+                          {
+                            id: "guided",
+                            label: "Highly Scaffolded",
+                            desc: "Small incremental hints",
+                          },
+                          {
+                            id: "standard",
+                            label: "Standard Paced",
+                            desc: "Standard target level",
+                          },
+                          {
+                            id: "rigorous",
+                            label: "Deep Challenges",
+                            desc: "Minimal hand-holding",
+                          },
                         ].map((t) => (
                           <button
                             key={t.id}
@@ -610,11 +735,16 @@ function SettingsPage() {
             {activeTab === "theme" && (
               <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
-                  {isDark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+                  {isDark ? (
+                    <Moon className="h-5 w-5 text-primary" />
+                  ) : (
+                    <Sun className="h-5 w-5 text-primary" />
+                  )}
                   <h3 className="font-serif text-xl font-bold text-foreground">Display Theme</h3>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Choose between Light mode (scholarly warm parchment layout) and Dark mode (charcoal deep theme).
+                  Choose between Light mode (scholarly warm parchment layout) and Dark mode
+                  (charcoal deep theme).
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -670,11 +800,14 @@ function SettingsPage() {
               <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
                   <CreditCard className="h-5 w-5 text-primary" />
-                  <h3 className="font-serif text-xl font-bold text-foreground">Subscription Plan</h3>
+                  <h3 className="font-serif text-xl font-bold text-foreground">
+                    Subscription Plan
+                  </h3>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  Upgrade your plan to unlock more daily questions, quizzes, study notes synthesis, and premium AI models.
+                  Upgrade your plan to unlock more daily questions, quizzes, study notes synthesis,
+                  and premium AI models.
                 </p>
 
                 {/* Current plan + usage */}
@@ -682,12 +815,19 @@ function SettingsPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <Zap className="h-4 w-4 text-primary" />
-                      <span className="font-bold capitalize text-sm text-foreground">{currentPlan} Plan</span>
-                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary">Active</span>
+                      <span className="font-bold capitalize text-sm text-foreground">
+                        {currentPlan} Plan
+                      </span>
+                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary">
+                        Active
+                      </span>
                     </div>
                     {currentPlan !== "school" && (
-                      <button type="button" onClick={() => setShowPlans(true)}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer w-full sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => setShowPlans(true)}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer w-full sm:w-auto"
+                      >
                         <CreditCard className="h-3 w-3" /> Upgrade
                       </button>
                     )}
@@ -695,23 +835,32 @@ function SettingsPage() {
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Daily messages</span>
-                      <span className="font-mono font-bold">{dailyMessageCount} / {(dailyLimit as number) >= 999999 ? "∞" : dailyLimit}</span>
+                      <span className="font-mono font-bold">
+                        {dailyMessageCount} / {(dailyLimit as number) >= 999999 ? "∞" : dailyLimit}
+                      </span>
                     </div>
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div className={`h-full rounded-full transition-all duration-700 ${usagePercentage > 90 ? "bg-red-500" : usagePercentage > 60 ? "bg-amber-500" : "bg-primary"}`}
-                        style={{ width: `${usagePercentage}%` }} />
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${usagePercentage > 90 ? "bg-red-500" : usagePercentage > 60 ? "bg-amber-500" : "bg-primary"}`}
+                        style={{ width: `${usagePercentage}%` }}
+                      />
                     </div>
-                    <p className="text-[10px] text-muted-foreground">Resets daily at midnight EAT</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Resets daily at midnight EAT
+                    </p>
                   </div>
                 </div>
 
                 {/* Plan comparison */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {(["free","basic","premium","school"] as const).map((pid) => {
+                  {(["free", "basic", "premium", "school"] as const).map((pid) => {
                     const p = PLANS[pid];
                     const isActive = currentPlan === pid;
                     return (
-                      <div key={pid} className={`rounded-xl border p-4 space-y-3 transition-all ${isActive ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"}`}>
+                      <div
+                        key={pid}
+                        className={`rounded-xl border p-4 space-y-3 transition-all ${isActive ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"}`}
+                      >
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="font-bold text-sm text-foreground">{p.label}</p>
@@ -719,19 +868,29 @@ function SettingsPage() {
                               {p.price === 0 ? "Free" : `KSh ${p.price.toLocaleString()}/mo`}
                             </p>
                           </div>
-                          {isActive && <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-primary-foreground">Current</span>}
+                          {isActive && (
+                            <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-primary-foreground">
+                              Current
+                            </span>
+                          )}
                         </div>
                         <ul className="space-y-1">
                           {p.features.map((feat) => (
-                            <li key={feat} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                            <li
+                              key={feat}
+                              className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
+                            >
                               <span className="w-1 h-1 rounded-full bg-primary/60 flex-shrink-0" />
                               {feat}
                             </li>
                           ))}
                         </ul>
                         {!isActive && pid !== "free" && (
-                          <button type="button" onClick={() => setShowPlans(true)}
-                            className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary hover:bg-primary/10 transition-colors">
+                          <button
+                            type="button"
+                            onClick={() => setShowPlans(true)}
+                            className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-[11px] font-bold text-primary hover:bg-primary/10 transition-colors"
+                          >
                             Select Plan
                           </button>
                         )}
@@ -747,7 +906,9 @@ function SettingsPage() {
               <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
                 <div className="flex items-center gap-2.5">
                   <Shield className="h-5 w-5 text-primary" />
-                  <h3 className="font-serif text-xl font-bold text-foreground">Consent & Security</h3>
+                  <h3 className="font-serif text-xl font-bold text-foreground">
+                    Consent & Security
+                  </h3>
                 </div>
 
                 <div className="space-y-5">
@@ -758,7 +919,8 @@ function SettingsPage() {
                         <AlertTriangle className="h-4 w-4 text-amber-500" /> AI Disclaimer Agreement
                       </p>
                       <p className="text-xs text-muted-foreground leading-normal max-w-md">
-                        Acknowledgment of AI safety rules, limitations, and guidelines for ethical learning assistance.
+                        Acknowledgment of AI safety rules, limitations, and guidelines for ethical
+                        learning assistance.
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -837,7 +999,9 @@ function SettingsPage() {
 
                   {/* Policies Section */}
                   <div className="space-y-2.5">
-                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Review Policies</p>
+                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                      Review Policies
+                    </p>
                     <div className="flex flex-col gap-2">
                       <Link
                         to="/terms"
@@ -869,7 +1033,8 @@ function SettingsPage() {
                       <Trash2 className="h-4 w-4" /> Danger Zone
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Permanently delete your account and all associated data. This action cannot be undone.
+                      Permanently delete your account and all associated data. This action cannot be
+                      undone.
                     </p>
 
                     {!showDeleteConfirm ? (
@@ -883,7 +1048,8 @@ function SettingsPage() {
                     ) : (
                       <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 space-y-3">
                         <p className="text-xs font-semibold text-destructive">
-                          Are you sure? This will permanently delete your account, profile, and all chat history.
+                          Are you sure? This will permanently delete your account, profile, and all
+                          chat history.
                         </p>
                         <div className="flex flex-wrap gap-2">
                           <button

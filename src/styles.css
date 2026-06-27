@@ -209,7 +209,6 @@
 }
 
 @keyframes cursor-blink {
-
   0%,
   100% {
     opacity: 0;
@@ -288,7 +287,6 @@
 
 /* Streaming cursor for active messages */
 @keyframes streamCursor {
-
   0%,
   50% {
     opacity: 1;
@@ -301,7 +299,7 @@
 }
 
 .streaming-cursor::after {
-  content: '▋';
+  content: "▋";
   display: inline-block;
   animation: streamCursor 1s infinite;
   color: var(--color-primary);
@@ -321,10 +319,12 @@
 }
 
 .text-shimmer {
-  background: linear-gradient(100deg,
-      currentColor 35%,
-      rgba(212, 175, 55, 0.9) 50%,
-      currentColor 65%);
+  background: linear-gradient(
+    100deg,
+    currentColor 35%,
+    rgba(212, 175, 55, 0.9) 50%,
+    currentColor 65%
+  );
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -478,7 +478,7 @@
 }
 
 /* Ensure all direct children respect width */
-.prose-ai>* {
+.prose-ai > * {
   max-width: 100%;
   overflow: hidden;
 }
@@ -490,7 +490,7 @@
 }
 
 /* ── Improved block math spacing ─────────────────────────────────── */
-.prose-ai .katex-display+.katex-display {
+.prose-ai .katex-display + .katex-display {
   margin-top: 0.75rem;
 }
 
@@ -505,11 +505,13 @@
 
 /* Add subtle background to block math for visual separation */
 .prose-ai .katex-display:not(:only-child) {
-  background: linear-gradient(to right,
-      transparent 0%,
-      rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 10%,
-      rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 90%,
-      transparent 100%);
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 10%,
+    rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 90%,
+    transparent 100%
+  );
   border-radius: 0.375rem;
 }
 

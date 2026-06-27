@@ -19,9 +19,7 @@ export function EmptyState({ onPromptClick }: Props) {
   return (
     <div className="flex flex-col items-center justify-center h-full px-4 gap-3 text-center">
       <div>
-        <h3 className="font-serif text-sm font-bold text-foreground mb-0.5">
-          GilaniAI Tutor
-        </h3>
+        <h3 className="font-serif text-sm font-bold text-foreground mb-0.5">GilaniAI Tutor</h3>
         <p className="text-[11px] text-muted-foreground max-w-[240px] leading-relaxed">
           Your personal AI study assistant. Ask anything to get started.
         </p>

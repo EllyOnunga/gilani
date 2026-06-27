@@ -7,14 +7,7 @@ import { NewsletterSubscribe } from "@/components/NewsletterSubscribe";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
-import {
-  MessageCircle,
-  BookOpenText,
-  Flame,
-  Target,
-  Zap,
-  ChevronRight,
-} from "lucide-react";
+import { MessageCircle, BookOpenText, Flame, Target, Zap, ChevronRight } from "lucide-react";
 import { getRequest } from "@tanstack/react-start/server";
 import { generateText } from "ai";
 import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
@@ -65,11 +58,7 @@ const loadDashboardData = createServerFn({ method: "GET" })
     const { localDate } = data;
 
     // 1. Fetch dashboard data in parallel
-    const [
-      profileRes,
-      messagesRes,
-      streakAndStats,
-    ] = await Promise.all([
+    const [profileRes, messagesRes, streakAndStats] = await Promise.all([
       supabaseAdmin
         .from("profiles")
         .select("display_name, plan, curriculum, created_at")
@@ -80,7 +69,7 @@ const loadDashboardData = createServerFn({ method: "GET" })
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId),
       import("@/lib/analytics-utils.server").then(({ calculateUserStreakAndStats }) =>
-        calculateUserStreakAndStats(userId)
+        calculateUserStreakAndStats(userId),
       ),
     ]);
 
@@ -116,9 +105,14 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
     const { curriculum, streak } = data;
     const fallback = {
       tip: "Break your study sessions into 25-minute focused blocks with 5-minute breaks for maximum retention.",
-      topicOfDay: "Photosynthesis: Plants convert sunlight, water and CO₂ into glucose and oxygen via the Calvin cycle.",
-      didYouKnow: "The human brain can store approximately 2.5 petabytes of information — equivalent to 3 million hours of TV.",
-      streakMotivation: streak > 0 ? `${streak} days strong — consistency is the foundation of excellence!` : "Every expert was once a beginner — start your streak today!",
+      topicOfDay:
+        "Photosynthesis: Plants convert sunlight, water and CO₂ into glucose and oxygen via the Calvin cycle.",
+      didYouKnow:
+        "The human brain can store approximately 2.5 petabytes of information — equivalent to 3 million hours of TV.",
+      streakMotivation:
+        streak > 0
+          ? `${streak} days strong — consistency is the foundation of excellence!`
+          : "Every expert was once a beginner — start your streak today!",
     } satisfies DailyInsights;
 
     try {
@@ -159,7 +153,10 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
         const clean = text.replace(/```json|```/g, "").trim();
         return JSON.parse(clean) as DailyInsights;
       } catch (geminiErr) {
-        console.error("[Dashboard Server] Both Groq and Gemini insights fetch failed, returning static fallback:", geminiErr);
+        console.error(
+          "[Dashboard Server] Both Groq and Gemini insights fetch failed, returning static fallback:",
+          geminiErr,
+        );
         return fallback;
       }
     }
@@ -270,7 +267,6 @@ function Dashboard() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-12 p-4 sm:p-6 lg:p-8">
-
       {/* ── Hero Header ── */}
       <header className="animate-in-slide flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between items-start">
         {/* Greeting */}
@@ -287,13 +283,12 @@ function Dashboard() {
             <>
               <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-tight">
                 {getGreeting()},{" "}
-                <span className="capitalize text-foreground font-bold">{displayName}</span>. Ready to study?
+                <span className="capitalize text-foreground font-bold">{displayName}</span>. Ready
+                to study?
               </h2>
               <div className="flex flex-wrap items-center gap-3 mt-3">
                 {plan && (
-                  <span
-                    className="inline-flex items-center rounded-md bg-muted/30 border border-border/40 px-2 py-0.5 font-mono text-[9px] font-medium text-foreground"
-                  >
+                  <span className="inline-flex items-center rounded-md bg-muted/30 border border-border/40 px-2 py-0.5 font-mono text-[9px] font-medium text-foreground">
                     {plan === "Free" ? "Free Tier" : `${plan} Member`}
                   </span>
                 )}
@@ -313,9 +308,7 @@ function Dashboard() {
           <div className="flex flex-col items-start gap-0.5 px-2 min-w-[90px]">
             <div className="flex items-center gap-1.5 text-muted-foreground/60">
               <Flame className="h-3.5 w-3.5" />
-              <p className="font-mono text-[9px] uppercase tracking-widest font-semibold">
-                Streak
-              </p>
+              <p className="font-mono text-[9px] uppercase tracking-widest font-semibold">Streak</p>
             </div>
             <p className="text-xl font-bold tracking-tight text-foreground mt-1">
               {isLoading ? "—" : `${streak} days`}
@@ -339,7 +332,9 @@ function Dashboard() {
       {/* ── Study Suite ── */}
       <section className="animate-in-slide [animation-delay:40ms] space-y-4">
         <div>
-          <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">Your Study Suite</h3>
+          <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">
+            Your Study Suite
+          </h3>
           <p className="text-xs text-muted-foreground mt-1">
             Get curriculum-accurate assistance instantly without any wait.
           </p>
@@ -359,7 +354,9 @@ function Dashboard() {
               </p>
             </div>
             <div className="flex items-center justify-between mt-5 pt-4 border-t border-border/20">
-              <span className="text-[9px] font-mono uppercase tracking-widest font-bold text-muted-foreground">Start new session</span>
+              <span className="text-[9px] font-mono uppercase tracking-widest font-bold text-muted-foreground">
+                Start new session
+              </span>
               <ChevronRight className="h-3.5 w-3.5 opacity-40 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-foreground" />
             </div>
           </Link>
@@ -369,7 +366,9 @@ function Dashboard() {
       {/* ── Daily Educational Insights ── */}
       <section className="animate-in-slide [animation-delay:80ms] space-y-4">
         <div>
-          <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">Daily Learning Insights</h3>
+          <h3 className="text-sm font-mono uppercase tracking-wider text-muted-foreground/60">
+            Daily Learning Insights
+          </h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[

@@ -14,7 +14,9 @@ export const createGoogleAiProvider = (apiKey?: string) => {
     return s;
   };
 
-  const geminiKey = stripQuotes(apiKey || process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "");
+  const geminiKey = stripQuotes(
+    apiKey || process.env.GEMINI_API_KEY || process.env.LOVABLE_API_KEY || "",
+  );
   const groqKey = stripQuotes(process.env.GROQ_API_KEY || "");
   const openaiKey = stripQuotes(process.env.OPENAI_API_KEY || "");
   const mistralKey = stripQuotes(process.env.MISTRAL_API_KEY || "");
@@ -30,7 +32,7 @@ export const createGoogleAiProvider = (apiKey?: string) => {
   if (activeProviders.length === 0) {
     throw new Error(
       "[AI Gateway] No AI provider API key configured. " +
-      "Set at least one of: GEMINI_API_KEY, GROQ_API_KEY, OPENAI_API_KEY, MISTRAL_API_KEY."
+        "Set at least one of: GEMINI_API_KEY, GROQ_API_KEY, OPENAI_API_KEY, MISTRAL_API_KEY.",
     );
   }
 
@@ -40,9 +42,10 @@ export const createGoogleAiProvider = (apiKey?: string) => {
       return {
         name: "google" as const,
         chatModel: (modelId?: string) => {
-          const cleanModelId = modelId && modelId.includes("gemini")
-            ? modelId.replace(/^google\//, "")
-            : "gemini-2.5-flash";
+          const cleanModelId =
+            modelId && modelId.includes("gemini")
+              ? modelId.replace(/^google\//, "")
+              : "gemini-2.5-flash";
           return googleInstance(cleanModelId);
         },
       };
@@ -114,7 +117,7 @@ export const createGoogleAiProvider = (apiKey?: string) => {
         onError: (error: any, failedModelId: string) => {
           console.warn(
             `[AI Gateway] Chat Model ${failedModelId} failed. Falling back... Reason:`,
-            error?.message ?? error
+            error?.message ?? error,
           );
         },
       });
@@ -168,7 +171,7 @@ export const createGoogleAiProvider = (apiKey?: string) => {
 
       if (embedAttempts.length === 0) {
         throw new Error(
-          "[AI Gateway] No embedding-capable provider configured. Set GEMINI_API_KEY, OPENAI_API_KEY, or MISTRAL_API_KEY."
+          "[AI Gateway] No embedding-capable provider configured. Set GEMINI_API_KEY, OPENAI_API_KEY, or MISTRAL_API_KEY.",
         );
       }
 
@@ -196,9 +199,10 @@ export const createGoogleAiProvider = (apiKey?: string) => {
                 /invalid authentication/i.test(err?.message ?? "") ||
                 /permission.?denied/i.test(err?.message ?? "");
               console.warn(
-                `[AI Gateway] Embedding via ${attempt.name} failed${isRetryable ? ", trying next provider..." : " (not retryable):"
+                `[AI Gateway] Embedding via ${attempt.name} failed${
+                  isRetryable ? ", trying next provider..." : " (not retryable):"
                 }`,
-                err?.message ?? err
+                err?.message ?? err,
               );
               if (!isRetryable) throw err;
             }
