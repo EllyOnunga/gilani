@@ -596,12 +596,12 @@ const markdownComponents: any = {
       )}
     </figure>
   ),
-  ul: ({ children }: any) => <ul className="list-disc pl-5 my-2 space-y-2">{children}</ul>,
-  ol: ({ children }: any) => <ol className="list-decimal pl-5 my-2 space-y-2">{children}</ol>,
+  ul: ({ children }: any) => <ul className="list-disc pl-5 my-2 space-y-1.5">{children}</ul>,
+  ol: ({ children }: any) => <ol className="list-decimal pl-5 my-2 space-y-1.5">{children}</ol>,
   li: ({ children }: any) => {
     return (
-      <li className="text-sm leading-relaxed block">
-        <span className="block">{children}</span>
+      <li className="text-sm leading-relaxed" style={{ display: "list-item" }}>
+        {children}
       </li>
     );
   },

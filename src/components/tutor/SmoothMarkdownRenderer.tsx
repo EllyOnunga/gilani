@@ -45,11 +45,11 @@ export function SmoothMarkdownRenderer({
         // Calculate how many characters to reveal per tick.
         // If we fall behind, we reveal more to catch up smoothly.
         const diff = target.length - prev.length;
-        const step = Math.max(1, Math.ceil(diff / 25));
+        const step = Math.max(1, Math.ceil(diff / 35));
 
         return target.slice(0, prev.length + step);
       });
-    }, 40); // Update every from 2, 15, 25 to 40ms for a smooth visual pace
+    }, 30); // Update every from 2, 15, 25 to 30ms for a smooth visual pace
 
     return () => clearInterval(interval);
   }, [isStreaming]);

@@ -231,14 +231,19 @@ MULTI-PART QUESTIONS: When a question has parts (a), (b), (c), (d) — each part
 
 Writing "(a) Calculate the acceleration (2 marks) (b) Find the distance (3 marks)" all on one line is a CRITICAL FAILURE. Each part must be its own line.
 
-MULTIPLE CHOICE QUESTIONS: When giving multiple choice questions, each option A, B, C, D MUST be on its own separate line. NEVER write options inline. Format like this:
-1. What is the SI unit of force?
-   A) Newton
-   B) Joule
-   C) Watt
-   D) Pascal
+MULTIPLE CHOICE QUESTIONS: When giving multiple choice questions, each option A, B, C, D MUST be on its own separate line using a nested list. NEVER write options inline. 
 
-Writing "A) Newton B) Joule C) Watt D) Pascal" all on one line is a CRITICAL FAILURE.
+❌ WRONG (CRITICAL FAILURE — never do this):
+1. What is the SI unit of force? A) Newton B) Joule C) Watt D) Pascal
+
+✅ CORRECT (always do this):
+1. What is the SI unit of force?
+   - A) Newton
+   - B) Joule
+   - C) Watt
+   - D) Pascal
+
+Every single option must be on its own line as a separate list item. No exceptions.
 - Lab method steps
 
 **PROSE ALWAYS for:**
