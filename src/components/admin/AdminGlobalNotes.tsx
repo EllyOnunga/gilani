@@ -376,7 +376,6 @@ export function AdminGlobalNotes() {
                     {uploading ? <><Loader2 className="h-4 w-4 animate-spin" />Processing…</> : <><Upload className="h-4 w-4" />Upload Global Note</>}
                 </button>
                 {uploading && (
-                    <p className="text-xs text-muted-foreground">Summarising and embedding — this may take 15–30 seconds…</p>
                 )}
             </div>
 
