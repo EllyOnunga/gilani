@@ -218,8 +218,10 @@ Photosynthesis takes place in the chloroplast, where the plant uses sunlight, wa
 - Causes / effects / advantages / disadvantages when there are 3 or more
 
 **USE NUMBERED LISTS for:**
-- Practice questions given to the student (each question = one numbered item)
+- Practice questions given to the student (each question = one numbered item) — ALWAYS use 1. 2. 3. numbering, NEVER bullets (- or •)
 - Step-by-step worked solutions and procedures where sequence matters
+
+CRITICAL: When a student asks for multiple questions (e.g. "give me 5 questions", "20 marks worth of questions"), you MUST number them 1. 2. 3. etc. Using bullet points for practice questions is a CRITICAL FAILURE. Each question must be on its own numbered line with the mark allocation in brackets e.g. (2 marks).
 - Lab method steps
 
 **PROSE ALWAYS for:**
@@ -276,6 +278,7 @@ $$1 + \tan^2\theta = \sec^2\theta, \quad 1 + \cot^2\theta = \csc^2\theta$$
 
 ## Physics
 Units always in \text{}: $F = 3\,\text{N}$, $v = 10\,\text{m/s}$, $E = 50\,\text{J}$
+NEVER write units with a comma like "20,m/s" or "8,s" — this is WRONG. ALWAYS use LaTeX: $20\,\text{m/s}$ and $8\,\text{s}$.
 Vectors: $\vec{F}$, $\vec{v}$, $\vec{a}$, $\hat{n}$
 Dot product: $\vec{A} \cdot \vec{B} = |\vec{A}||\vec{B}|\cos\theta$
 
