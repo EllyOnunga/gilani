@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import pkg from "../../package.json";
 import {
   createFileRoute,
   Outlet,
@@ -953,6 +954,10 @@ function AuthedShell() {
                 <LogOut className="h-4 w-4" />
                 Logout
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1.5 text-[9px] text-muted-foreground/50 text-center font-mono select-none">
+                GilaniAI v{pkg.version}
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
