@@ -204,7 +204,7 @@ function Landing() {
             </Link>
             <Link
               to="/register"
-              className="rounded-lg bg-primary px-3 sm:px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-all shadow-sm"
+              className="rounded-lg bg-primary/10 px-3 sm:px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-all shadow-sm"
             >
               Get started
             </Link>
@@ -247,7 +247,7 @@ function Landing() {
                 <div className="mt-8 flex flex-col sm:flex-row justify-center lg:justify-start gap-3 sm:gap-4">
                   <Link
                     to="/register"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:scale-[1.02]"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary/10 px-6 py-3.5 text-sm font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:scale-[1.02]"
                   >
                     Start for free <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -298,11 +298,10 @@ function Landing() {
                       className={`flex ${msg.role === "student" ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-xs leading-relaxed ${
-                          msg.role === "student"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-foreground border border-border/50"
-                        }`}
+                        className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-xs leading-relaxed ${msg.role === "student"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground border border-border/50"
+                          }`}
                       >
                         {msg.text}
                       </div>
@@ -323,7 +322,7 @@ function Landing() {
         </section>
 
         {/* ── Stats Bar ── */}
-        <section className="border-y border-border/60 bg-foreground text-background">
+        <section className="border-y border-border/60 bg-primary/20 text-background">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
             {STATS.map(({ value, label, icon: Icon }) => (
               <div key={label} className="flex flex-col items-center text-center gap-1">
@@ -482,11 +481,10 @@ function Landing() {
                 return (
                   <div
                     key={plan.id}
-                    className={`relative rounded-2xl border flex flex-col justify-between w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] min-w-[220px] max-w-[300px] p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
-                      isPremium
-                        ? "border-2 border-primary bg-muted/40"
-                        : "border-border bg-muted/30"
-                    }`}
+                    className={`relative rounded-2xl border flex flex-col justify-between w-full sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] min-w-[220px] max-w-[300px] p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${isPremium
+                      ? "border-2 border-primary bg-muted/40"
+                      : "border-border bg-muted/30"
+                      }`}
                   >
                     {isPremium && (
                       <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm whitespace-nowrap">
@@ -496,13 +494,12 @@ function Landing() {
                     <div>
                       <div className="mb-4 mt-1">
                         <span
-                          className={`rounded-full px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold ${
-                            isPremium
-                              ? "bg-primary/10 text-primary"
-                              : isSchool
-                                ? "bg-violet-500/10 text-violet-500"
-                                : "bg-muted/60 text-muted-foreground"
-                          }`}
+                          className={`rounded-full px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold ${isPremium
+                            ? "bg-primary/10 text-primary"
+                            : isSchool
+                              ? "bg-violet-500/10 text-violet-500"
+                              : "bg-muted/60 text-muted-foreground"
+                            }`}
                         >
                           {plan.id === "free"
                             ? "Starter"
@@ -542,11 +539,10 @@ function Landing() {
                     </div>
                     <Link
                       to="/register"
-                      className={`w-full inline-flex items-center justify-center rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all ${
-                        isPremium
-                          ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20"
-                          : "border border-border text-foreground hover:bg-accent"
-                      }`}
+                      className={`w-full inline-flex items-center justify-center rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all ${isPremium
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20"
+                        : "border border-border text-foreground hover:bg-accent"
+                        }`}
                     >
                       {plan.price === 0 ? "Get Started Free" : "Upgrade Plan"}
                     </Link>
@@ -593,7 +589,7 @@ function Landing() {
 
         {/* ── CTA Banner ── */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-16 sm:pb-24">
-          <div className="relative overflow-hidden rounded-2xl bg-foreground p-8 sm:p-16 text-center">
+          <div className="relative overflow-hidden rounded-2xl bg-primary/20 p-8 sm:p-16 text-center">
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
               <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-primary/5 blur-2xl" />
               <div className="absolute -bottom-20 right-0 h-60 w-60 rounded-full bg-primary/5 blur-2xl" />
