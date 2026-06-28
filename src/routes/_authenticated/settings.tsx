@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Brain,
   Zap,
+  Mail,
 } from "lucide-react";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
@@ -236,6 +237,12 @@ function SettingsPage() {
 
   // Consent States
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [passwordBusy, setPasswordBusy] = useState(false);
   const [cookieConsent, setCookieConsent] = useState(true);
   const [analyticsConsent, setAnalyticsConsent] = useState(true);
 
@@ -443,6 +450,43 @@ function SettingsPage() {
     }
   };
 
+  const handleEmailChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail) return;
+    setEmailBusy(true);
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+    setEmailBusy(false);
+    if (error) {
+      toast.error(error.message || "Failed to update email.");
+    } else {
+      toast.success("Confirmation sent to your new email. Please verify it.");
+      setNewEmail("");
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+    setPasswordBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordBusy(false);
+    if (error) {
+      toast.error(error.message || "Failed to update password.");
+    } else {
+      toast.success("Password updated successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    }
+  };
+
   const dailyLimit = currentPlan === "free" ? 10 : currentPlan === "basic" ? 50 : 200;
   const usagePercentage = Math.min(100, (dailyMessageCount / dailyLimit) * 100);
 
@@ -537,38 +581,14 @@ function SettingsPage() {
                       </label>
                     </div>
 
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <p className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                        Select Scholar Preset
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-xs font-semibold text-foreground">
+                        {displayName || "No name set"}
                       </p>
-                      <div className="grid grid-cols-6 gap-1.5">
-                        {PRESETS.map((p) => {
-                          const isSelected = avatarUrl === `preset:${p.id}`;
-                          return (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() => setAvatarUrl(`preset:${p.id}`)}
-                              className={`relative w-8 h-8 rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
-                                isSelected
-                                  ? "border-primary scale-102 ring-2 ring-primary/25"
-                                  : "border-border/40 hover:border-primary/50"
-                              }`}
-                              title={`${p.label}: ${p.desc}`}
-                            >
-                              <PresetAvatarSVG preset={p.id} />
-                              {isSelected && (
-                                <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                                  <CheckCircle className="h-4 w-4 text-white drop-shadow-xs" />
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground leading-normal mt-1 flex items-center gap-1">
-                        <Info className="h-3.5 w-3.5 flex-shrink-0 text-primary" /> Hover presets
-                        for biographies, or upload a custom image.
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                        <Info className="h-3.5 w-3.5 flex-shrink-0 text-primary" /> Upload a photo
+                        or use your initials as avatar.
                       </p>
                     </div>
                   </div>
