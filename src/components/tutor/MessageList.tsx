@@ -28,14 +28,14 @@ function ThinkingSweep() {
   const text = "Thinking Process..";
   const chars = text.split("");
   const [opacities, setOpacities] = React.useState<number[]>(chars.map(() => 0.25));
-  const [arrowSize, setArrowSize] = React.useState(22);
+  const [arrowSize, setArrowSize] = React.useState(28);
   const [arrowOpacity, setArrowOpacity] = React.useState(0.3);
 
   const rafRef = React.useRef<number>(0);
   const startRef = React.useRef<number>(0);
 
   React.useEffect(() => {
-    const SWEEP = 1800;
+    const SWEEP = 900;
     const HOLD = 200;
     const total = chars.length;
 
@@ -57,10 +57,10 @@ function ThinkingSweep() {
       if (arrowDist < 5) {
         const b = Math.max(0, 1 - arrowDist / 5);
         setArrowOpacity(0.5 + b * 0.5);
-        setArrowSize(22 + b * 6);
+        setArrowSize(28 + b * 8);
       } else {
         setArrowOpacity(0.5);
-        setArrowSize(22);
+        setArrowSize(28);
       }
 
       rafRef.current = requestAnimationFrame(animate);
@@ -72,7 +72,7 @@ function ThinkingSweep() {
 
   return (
     <span className="select-none mb-3 inline-flex items-center gap-1.5">
-      <span style={{ fontSize: 26, lineHeight: 1, color: "hsl(var(--primary))", flexShrink: 0 }}>
+      <span style={{ fontSize: 32, lineHeight: 1, color: "hsl(22 75% 48%)", flexShrink: 0 }}>
         •
       </span>
       <span
@@ -84,7 +84,7 @@ function ThinkingSweep() {
             key={i}
             style={{
               opacity: opacities[i],
-              color: opacities[i] > 0.7 ? "hsl(var(--primary))" : "hsl(var(--foreground))",
+              color: "hsl(var(--foreground))",
               transition: "opacity 0.06s ease, color 0.06s ease",
               whiteSpace: "pre",
             }}
@@ -98,7 +98,7 @@ function ThinkingSweep() {
           fontSize: arrowSize,
           fontWeight: 800,
           lineHeight: 1,
-          color: "hsl(var(--primary))",
+          color: "hsl(var(--foreground))",
           opacity: arrowOpacity,
           transition: "font-size 0.06s ease, opacity 0.06s ease",
         }}
