@@ -109,9 +109,9 @@ const loadDashboardData = createServerFn({ method: "GET" })
 
     const memberSince = profile?.created_at
       ? new Date(profile.created_at).toLocaleDateString("en-KE", {
-          month: "short",
-          year: "numeric",
-        })
+        month: "short",
+        year: "numeric",
+      })
       : "";
 
     return {
@@ -143,21 +143,23 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
   .inputValidator(z.object({ curriculum: z.string(), streak: z.number() }))
   .handler(async ({ data }) => {
     const { curriculum, streak } = data;
+
+    // Add an 'isFallback' flag so the client knows not to cache this
     const fallback = {
       tip: "Break your study sessions into 25-minute focused blocks with 5-minute breaks for maximum retention.",
-      topicOfDay:
-        "Photosynthesis: Plants convert sunlight, water and CO₂ into glucose and oxygen via the Calvin cycle.",
-      didYouKnow:
-        "The human brain can store approximately 2.5 petabytes of information — equivalent to 3 million hours of TV.",
-      streakMotivation:
-        streak > 0
-          ? `${streak} days strong — consistency is the foundation of excellence!`
-          : "Every expert was once a beginner — start your streak today!",
-    } satisfies DailyInsights;
+      topicOfDay: "Photosynthesis: Plants convert sunlight, water and CO₂ into glucose and oxygen via the Calvin cycle.",
+      didYouKnow: "The human brain can store approximately 2.5 petabytes of information — equivalent to 3 million hours of TV.",
+      streakMotivation: streak > 0
+        ? `${streak} days strong — consistency is the foundation of excellence!`
+        : "Every expert was once a beginner — start your streak today!",
+      isFallback: true, // <--- NEW FLAG
+    } satisfies DailyInsights & { isFallback: boolean };
 
     try {
       const provider = createGoogleAiProvider();
+      // REVERTED: Your custom wrapper requires .chatModel()
       const model = provider.chatModel("gemini-2.5-flash");
+
       const { text } = await generateText({
         model,
         prompt: `Today is ${new Date().toISOString().slice(0, 10)}. Seed: ${Math.floor(Math.random() * 999983)}. You are an educational assistant for ${curriculum} students in Kenya. Generate 4 UNIQUE pieces of educational content different from previous days. Respond ONLY with valid JSON, no markdown, no backticks.
@@ -168,12 +170,42 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
   "didYouKnow": "A fascinating educational fact relevant to ${curriculum} subjects (1-2 sentences)",
   "streakMotivation": "${streak > 0 ? `An encouraging message about maintaining a ${streak}-day study streak` : "An encouraging message to start a study streak today"} (1 sentence)"
 }`,
-        maxOutputTokens: 800,
+        maxOutputTokens: 1200, // Increased slightly to prevent truncation
       });
+
+      // ROBUST JSON EXTRACTION
       const clean = text.replace(/```json|```/g, "").trim();
-      const jsonMatch = clean.match(/{[\s\S]*}/);
-      if (!jsonMatch) throw new Error("No JSON found in response");
-      return JSON.parse(jsonMatch[0]) as DailyInsights;
+      let parsedJson;
+
+      // Try parsing the whole string first
+      try {
+        parsedJson = JSON.parse(clean);
+      } catch {
+        // If it fails, find the first complete JSON object by counting braces
+        // This prevents trailing text like "Hope this helps! }" from breaking the parse
+        let depth = 0;
+        let start = -1;
+        for (let i = 0; i < clean.length; i++) {
+          if (clean[i] === '{') {
+            if (depth === 0) start = i;
+            depth++;
+          } else if (clean[i] === '}') {
+            depth--;
+            if (depth === 0 && start !== -1) {
+              try {
+                parsedJson = JSON.parse(clean.slice(start, i + 1));
+                break; // Successfully parsed
+              } catch {
+                start = -1; // Reset and keep looking if this wasn't valid JSON
+              }
+            }
+          }
+        }
+      }
+
+      if (!parsedJson) throw new Error("No valid JSON found in response");
+      return parsedJson as DailyInsights;
+
     } catch (err) {
       console.error(
         "[Dashboard Server] Gemini insights fetch failed:",
@@ -182,7 +214,6 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
       return fallback;
     }
   });
-
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -265,7 +296,12 @@ function Dashboard() {
               data: { curriculum: res.curriculum || "KCSE", streak: res.streak || 0 },
             });
             setInsights(ins);
-            localStorage.setItem(cacheKey, JSON.stringify(ins));
+
+            // FIX: Only cache if it's NOT the fallback
+            // This ensures that if the AI fails, we retry on the next page load/refresh
+            if (!(ins as any).isFallback) {
+              localStorage.setItem(cacheKey, JSON.stringify(ins));
+            }
           } catch (e) {
             console.error("[Dashboard] insights error:", e);
           } finally {
