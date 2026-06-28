@@ -14,6 +14,7 @@ function safeRedirectPath(url: string | undefined): string {
   if (url.startsWith("/") && !url.startsWith("//")) return url;
   return "/dashboard";
 }
+
 export const Route = createFileRoute("/login")({
   validateSearch: (
     s: Record<string, unknown>,
@@ -40,8 +41,10 @@ export const Route = createFileRoute("/login")({
       { name: "robots", content: "noindex, nofollow" },
     ],
     links: [{ rel: "canonical", href: "https://gilaniai.site/login" }],
+  }),
   component: LoginPage,
 });
+
 function LoginPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
@@ -53,9 +56,13 @@ function LoginPage() {
   const [magicLinkMode, setMagicLinkMode] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [magicLinkBusy, setMagicLinkBusy] = useState(false);
+
+  useEffect(() => {
     if (search.email) {
       setEmail(search.email);
+    }
   }, [search.email]);
+
   useEffect(() => {
     if (!loading && user) {
       if (roles.includes("admin")) {
@@ -65,7 +72,9 @@ function LoginPage() {
       } else {
         navigate({ to: safeRedirectPath(search.redirect) });
       }
+    }
   }, [user, roles, loading, navigate, search.redirect]);
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -80,8 +89,10 @@ function LoginPage() {
         error_description: undefined,
         code: undefined,
         type: undefined,
+      },
     });
   };
+
   const onGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -91,18 +102,29 @@ function LoginPage() {
           access_type: "offline",
           prompt: "select_account",
         },
+      },
+    });
     if (error) {
       setBusy(false);
       return toast.error(friendlyError(error, "Google sign-in failed. Please try again."));
+    }
+  };
+
   const onMagicLink = async (e: FormEvent) => {
+    e.preventDefault();
     if (!email) return toast.error("Please enter your email address.");
     setMagicLinkBusy(true);
     const { error } = await supabase.auth.signInWithOtp({
       email,
+      options: {
         emailRedirectTo: `${window.location.origin}/callback?next=${safeRedirectPath(search.redirect)}`,
+      },
+    });
     setMagicLinkBusy(false);
     if (error) return toast.error(friendlyError(error, "Failed to send sign-in link."));
     setMagicLinkSent(true);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0f1117] text-[#e2e4f0] px-4 py-12 relative overflow-hidden">
       {/* Glow */}
@@ -122,61 +144,127 @@ function LoginPage() {
           <Logo to="/" size="md" className="mx-auto" />
           <h1 className="font-serif text-3xl font-black text-white pt-2">Welcome back</h1>
           <p className="text-xs text-[#9ca3af]">Sign in to continue to your GilaniAI portal.</p>
-        <form onSubmit={onSubmit} className="space-y-4 pt-2">
-          {search.email && (
-            <div className="rounded-2xl bg-[#d9531e]/10 border border-[#d9531e]/20 p-3.5 text-xs text-[#d9531e]">
-              This email is already registered. If you forgot your password, please use the reset
-              flow below.
+        </div>
+
+        {magicLinkMode ? (
+          <form onSubmit={onMagicLink} className="space-y-4 pt-2">
+            {magicLinkSent ? (
+              <div className="rounded-2xl bg-green-500/10 border border-green-500/20 p-4 text-xs text-green-400 text-center space-y-1">
+                <p className="font-semibold">Check your inbox!</p>
+                <p>We sent a sign-in link to <span className="font-mono">{email}</span>.</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-[#9ca3af]">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b7280]" />
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      required
+                      placeholder="you@example.com"
+                      value={email}
+                      maxLength={254}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full rounded-xl border border-white/8 bg-[#0f1117] pl-10 pr-4 py-3 text-sm text-white placeholder-[#6b7280] focus:border-[#d9531e]/50 focus:outline-none focus:ring-1 focus:ring-[#d9531e]/50 transition-colors"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={magicLinkBusy}
+                  className="w-full rounded-xl bg-[#d9531e] py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#c44819] disabled:opacity-50 transition-all shadow-lg shadow-[#d9531e]/25"
+                >
+                  {magicLinkBusy ? "Sending…" : "Send sign-in link"}
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => { setMagicLinkMode(false); setMagicLinkSent(false); }}
+              className="w-full text-xs text-[#9ca3af] hover:text-white transition-colors"
+            >
+              ← Back to password sign-in
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={onSubmit} className="space-y-4 pt-2">
+            {search.email && (
+              <div className="rounded-2xl bg-[#d9531e]/10 border border-[#d9531e]/20 p-3.5 text-xs text-[#d9531e]">
+                This email is already registered. If you forgot your password, please use the reset
+                flow below.
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-[#9ca3af]">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b7280]" />
+                <input
+                  type="email"
+                  autoComplete="email"
+                  required
+                  placeholder="you@example.com"
+                  value={email}
+                  maxLength={254}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-xl border border-white/8 bg-[#0f1117] pl-10 pr-4 py-3 text-sm text-white placeholder-[#6b7280] focus:border-[#d9531e]/50 focus:outline-none focus:ring-1 focus:ring-[#d9531e]/50 transition-colors"
+                />
+              </div>
             </div>
-          )}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-[#9ca3af]">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b7280]" />
-              <input
-                type="email"
-                autoComplete="email"
-                required
-                placeholder="you@example.com"
-                value={email}
-                maxLength={254}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-white/8 bg-[#0f1117] pl-10 pr-4 py-3 text-sm text-white placeholder-[#6b7280] focus:border-[#d9531e]/50 focus:outline-none focus:ring-1 focus:ring-[#d9531e]/50 transition-colors"
-              />
-          </div>
-            <div className="flex justify-between items-center">
-              <label className="block text-xs font-semibold text-[#9ca3af]">Password</label>
-              <Link
-                to="/forgot-password"
-                search={{ email }}
-                className="text-xs font-semibold text-[#d9531e] hover:underline"
-              >
-                Forgot password?
-              </Link>
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b7280]" />
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                placeholder="Enter your password"
-                value={password}
-                maxLength={128}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-white/8 bg-[#0f1117] pl-10 pr-10 py-3 text-sm text-white placeholder-[#6b7280] focus:border-[#d9531e]/50 focus:outline-none focus:ring-1 focus:ring-[#d9531e]/50 transition-colors"
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-white"
-                title={showPassword ? "Hide password" : "Show password"}
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-          <PasswordRequirements password={password} />
-          <button
-            disabled={busy}
-            className="w-full rounded-xl bg-[#d9531e] py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#c44819] disabled:opacity-50 transition-all shadow-lg shadow-[#d9531e]/25"
-            {busy ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="block text-xs font-semibold text-[#9ca3af]">Password</label>
+                <Link
+                  to="/forgot-password"
+                  search={{ email }}
+                  className="text-xs font-semibold text-[#d9531e] hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b7280]" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={password}
+                  maxLength={128}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-xl border border-white/8 bg-[#0f1117] pl-10 pr-10 py-3 text-sm text-white placeholder-[#6b7280] focus:border-[#d9531e]/50 focus:outline-none focus:ring-1 focus:ring-[#d9531e]/50 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6b7280] hover:text-white"
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <PasswordRequirements password={password} />
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full rounded-xl bg-[#d9531e] py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#c44819] disabled:opacity-50 transition-all shadow-lg shadow-[#d9531e]/25"
+            >
+              {busy ? "Signing in…" : "Sign in"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMagicLinkMode(true)}
+              className="w-full text-xs text-[#9ca3af] hover:text-white transition-colors"
+            >
+              Sign in with a magic link instead
+            </button>
+          </form>
+        )}
+
         <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest text-[#6b7280]">
           <div className="h-px flex-1 bg-white/6" /> OR <div className="h-px flex-1 bg-white/6" />
+        </div>
         <button
           onClick={onGoogle}
           className="w-full flex items-center justify-center gap-3 rounded-xl border border-white/8 bg-[#0f1117] py-3.5 text-sm font-semibold text-white hover:bg-white/4 transition-colors"
@@ -188,6 +276,9 @@ function LoginPage() {
           New here?{" "}
           <Link to="/register" className="font-semibold text-[#d9531e] hover:underline">
             Create an account
+          </Link>
         </p>
+      </div>
     </div>
   );
+}
