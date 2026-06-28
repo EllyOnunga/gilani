@@ -39,8 +39,12 @@ export function DisclaimerModal() {
         if (!data || !data.disclaimer_accepted) {
           setIsOpen(true);
           // Set toggles to whatever is in the DB, or default to true
-          setCookieConsent(data?.cookie_consent ?? true);
-          setAnalyticsConsent(data?.analytics_consent ?? true);
+          setCookieConsent(
+            data?.cookie_consent ?? (localStorage.getItem("gilani_cookie_consent") === "true"),
+          );
+          setAnalyticsConsent(
+            data?.analytics_consent ?? (localStorage.getItem("gilani_analytics_consent") === "true"),
+          );
         } else {
           // If already accepted, sync to local storage just in case
           localStorage.setItem("gilani_disclaimer_accepted", "true");

@@ -14,6 +14,22 @@ import { Analytics } from "@vercel/analytics/react";
 import * as Sentry from "@sentry/react";
 
 import appCss from "../styles.css?url";
+import { CookieBanner, COOKIE_CONSENT_EVENT } from "@/components/CookieBanner";
+
+function ConsentGatedAnalytics() {
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const check = () => setAllowed(localStorage.getItem("gilani_analytics_consent") === "true");
+    check();
+    window.addEventListener(COOKIE_CONSENT_EVENT, check);
+    return () => window.removeEventListener(COOKIE_CONSENT_EVENT, check);
+  }, []);
+
+  if (!allowed) return null;
+  return <Analytics />;
+}
 
 if (typeof window !== "undefined" && import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
@@ -381,7 +397,8 @@ function RootComponent() {
       <AuthInvalidator />
       <Outlet />
       <Toaster position={toasterPos} />
-      <Analytics />
+      <ConsentGatedAnalytics />
+      <CookieBanner />
     </QueryClientProvider>
   );
 }
