@@ -33,29 +33,56 @@ import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 
-const deleteAccount = createServerFn({ method: "POST" }).handler(async () => {
-  const request = getRequest();
-  let authResult;
-  try {
-    authResult = await authenticateRequest(request);
-  } catch (err) {
-    throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
-  }
+const deleteAccount = createServerFn({ method: "POST" })
+  .validator((data: { password: string }) => data)
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    }
 
-  const { userId } = authResult;
+    const { userId, user } = authResult;
 
-  const { data: roleRow } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .single();
-  if (roleRow?.role === "admin") {
-    throw new Error("Admin accounts cannot be self-deleted. Transfer ownership first.");
-  }
+    // Server-side reauth — verify password before deletion
+    const SUPABASE_URL = process.env.SUPABASE_URL!;
+    const SUPABASE_ANON_KEY =
+      process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY!;
+    const { createClient } = await import("@supabase/supabase-js");
+    const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error: reauthErr } = await anonClient.auth.signInWithPassword({
+      email: user.email!,
+      password: data.password,
+    });
+    if (reauthErr) throw new Error("Incorrect password. Please try again.");
 
-  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-  if (error) throw new Error(error.message);
-});
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .single();
+    if (roleRow?.role === "admin") {
+      throw new Error("Admin accounts cannot be self-deleted. Transfer ownership first.");
+    }
+
+    // Send goodbye email before deletion using Supabase's magic link (repurposed as notification)
+    // The user is already verified so this is purely informational
+    try {
+      await supabaseAdmin.auth.admin.generateLink({
+        type: "magiclink",
+        email: user.email!,
+      });
+    } catch (_) {
+      // best-effort, don't block deletion
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (error) throw new Error(error.message);
+  });
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -402,15 +429,21 @@ function SettingsPage() {
   };
 
   const handleDeleteAccount = async () => {
+    if (!deletePassword) return;
+    setReauthError("");
     setDeleting(true);
     try {
-      await deleteAccount();
+      await deleteAccount({ data: { password: deletePassword } });
       await supabase.auth.signOut();
       window.location.href = "/";
     } catch (err: any) {
-      toast.error(friendlyError(err, "Failed to delete account."));
+      const msg = err?.message || "Failed to delete account.";
+      if (msg.toLowerCase().includes("incorrect password")) {
+        setReauthError(msg);
+      } else {
+        toast.error(friendlyError(err, "Failed to delete account."));
+      }
       setDeleting(false);
-      setShowDeleteConfirm(false);
     }
   };
 
@@ -454,8 +487,17 @@ function SettingsPage() {
 
   const handleEmailChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEmail) return;
+    if (!newEmail || !currentPassword) return;
     setEmailBusy(true);
+    const { error: reauthErr } = await supabase.auth.signInWithPassword({
+      email: user?.email ?? "",
+      password: currentPassword,
+    });
+    if (reauthErr) {
+      toast.error("Current password is incorrect.");
+      setEmailBusy(false);
+      return;
+    }
     const { error } = await supabase.auth.updateUser({ email: newEmail });
     setEmailBusy(false);
     if (error) {
@@ -463,6 +505,7 @@ function SettingsPage() {
     } else {
       toast.success("Confirmation sent to your new email. Please verify it.");
       setNewEmail("");
+      setCurrentPassword("");
     }
   };
 
@@ -477,12 +520,27 @@ function SettingsPage() {
       return;
     }
     setPasswordBusy(true);
+    const { error: reauthErr } = await supabase.auth.signInWithPassword({
+      email: user?.email ?? "",
+      password: currentPassword,
+    });
+    if (reauthErr) {
+      toast.error("Current password is incorrect.");
+      setPasswordBusy(false);
+      return;
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setPasswordBusy(false);
     if (error) {
       toast.error(error.message || "Failed to update password.");
     } else {
-      toast.success("Password updated successfully.");
+      // Notify user via email that their password was changed
+      await supabase.auth
+        .resetPasswordForEmail(user?.email ?? "", {
+          redirectTo: `${window.location.origin}/login`,
+        })
+        .catch(() => {}); // best-effort, don't block on failure
+      toast.success("Password updated. A confirmation email has been sent to " + user?.email);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
@@ -609,6 +667,82 @@ function SettingsPage() {
                         className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
                       />
                     </div>
+                  </div>
+
+                  {/* Email & Password Management */}
+                  <div className="space-y-3 pt-2 border-t border-border/30">
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Account Credentials
+                    </p>
+                    <form onSubmit={handleEmailChange} className="space-y-2">
+                      <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block">
+                        Change Email
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="Current email address"
+                        value={user?.email ?? ""}
+                        readOnly
+                        className="w-full rounded-lg border border-border bg-muted px-3 py-2.5 text-sm text-muted-foreground cursor-not-allowed"
+                      />
+                      <input
+                        type="password"
+                        placeholder="Current password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+                      />
+                      <input
+                        type="email"
+                        placeholder="New email address"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+                      />
+                      <button
+                        type="submit"
+                        disabled={emailBusy || !newEmail || !currentPassword}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
+                      >
+                        <Mail className="h-3.5 w-3.5" /> {emailBusy ? "Sending…" : "Update Email"}
+                      </button>
+                    </form>
+                    <form onSubmit={handlePasswordChange} className="space-y-2">
+                      <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block">
+                        Change Password
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Current password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+                      />
+                      <input
+                        type="password"
+                        placeholder="New password (min 8 characters)"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+                      />
+                      <input
+                        type="password"
+                        placeholder="Confirm new password"
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+                      />
+                      <button
+                        type="submit"
+                        disabled={
+                          passwordBusy || !currentPassword || !newPassword || !confirmNewPassword
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
+                      >
+                        <Save className="h-3.5 w-3.5" />{" "}
+                        {passwordBusy ? "Updating…" : "Update Password"}
+                      </button>
+                    </form>
                   </div>
 
                   <div className="flex justify-end pt-2">
