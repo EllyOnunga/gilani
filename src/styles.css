@@ -72,7 +72,7 @@
   --popover-foreground: hsl(24 20% 10%);
 
   /* Terracotta primary */
-  --primary: hsl(22 75% 48%);
+  --primary: hsl(22, 96%, 35%);
   --primary-foreground: hsl(38 30% 98%);
 
   --secondary: hsl(38 20% 90%);

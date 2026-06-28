@@ -244,8 +244,8 @@ function Landing() {
       </header>
 
       <main className="flex-1">
-        {/* ── Hero ── */}
-        <section className="relative overflow-hidden min-h-[90vh] flex items-center">
+        {/* ── Hero ─ */}
+        <section className="relative min-h-[90vh] flex items-center">
           {/* Animated gradient mesh */}
           <div className="pointer-events-none absolute inset-0 -z-10">
             <div
@@ -268,59 +268,92 @@ function Landing() {
 
           <div className="mx-auto max-w-7xl w-full px-4 sm:px-8 py-16 sm:py-24 lg:py-32">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
-              {/* Left */}
-              <div className="lg:col-span-6 text-center lg:text-left space-y-8">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#d9531e]/30 bg-[#d9531e]/8 px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-[#d9531e]">
-                  <Sparkles className="h-3 w-3" />
-                  Kenya's #1 AI Study Assistant
-                </div>
+              {/* Left - WITH BACKGROUND IMAGE */}
+              <div
+                className="lg:col-span-6 text-center lg:text-left space-y-8 relative overflow-visible p-8 lg:p-12 flex flex-col justify-center min-h-[400px] lg:min-h-[600px]"
+                style={{
+                  backgroundImage: "url('/landingphero.png')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              >
+                {/* Text readability overlay */}
+                <div
+                  className="absolute inset-0 z-[1]"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(15,17,23,0.75) 0%, rgba(15,17,23,0.5) 50%, rgba(15,17,23,0.2) 100%)",
+                  }}
+                />
 
-                <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.03] tracking-tight">
-                  Study smarter.{" "}
-                  <span className="relative inline-block">
-                    <span
-                      className="italic"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #d9531e 0%, #f97316 50%, #fbbf24 100%)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                      }}
+                {/* Content */}
+                <div className="relative z-[2] w-full">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#d9531e]/30 bg-[#d9531e]/10 px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-[#d9531e] backdrop-blur-sm">
+                    <Sparkles className="h-3 w-3" />
+                    Kenya's #1 AI Study Assistant
+                  </div>
+
+                  <h1
+                    className="font-serif text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.03] tracking-tight text-white mt-6"
+                    style={{ textShadow: "0 2px 20px rgba(0,0,0,0.8), 0 1px 4px rgba(0,0,0,0.9)" }}
+                  >
+                    Study smarter.{" "}
+                    <span className="relative inline-block">
+                      <span
+                        className="italic"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #d9531e 0%, #f97316 50%, #fbbf24 100%)",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                          textShadow: "none",
+                        }}
+                      >
+                        Score higher.
+                      </span>
+                    </span>{" "}
+                    <span className="text-white/90">Reach your potential.</span>
+                  </h1>
+
+                  <p
+                    className="text-base sm:text-lg leading-relaxed text-white max-w-lg mx-auto lg:mx-0 mt-6"
+                    style={{ textShadow: "0 1px 8px rgba(0,0,0,0.9)" }}
+                  >
+                    GilaniAI is your personal AI study study assistant — Socratic step-by-step
+                    tutoring across every subject, with real teacher escalation when you need a
+                    human expert.
+                  </p>
+
+                  <div className="flex flex-row flex-wrap justify-center lg:justify-start gap-3 mt-8">
+                    <Link
+                      to="/register"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#d9531e] px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#c44819] transition-all shadow-xl shadow-[#d9531e]/30 hover:scale-[1.02] hover:shadow-[#d9531e]/40"
                     >
-                      Score higher.
-                    </span>
-                  </span>{" "}
-                  <span className="text-[#e2e4f0]/80">Reach your potential.</span>
-                </h1>
+                      Start for free <ArrowRight className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      to="/about"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-white/20 hover:border-white/30 transition-all backdrop-blur-sm"
+                    >
+                      How it works
+                    </Link>
+                  </div>
 
-                <p className="text-base sm:text-lg leading-relaxed text-[#9ca3af] max-w-lg mx-auto lg:mx-0">
-                  GilaniAI is your personal AI study assistant — Socratic step-by-step tutoring
-                  across every subject, with real teacher escalation when you need a human expert.
-                </p>
-
-                <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3">
-                  <Link
-                    to="/register"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#d9531e] px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#c44819] transition-all shadow-xl shadow-[#d9531e]/30 hover:scale-[1.02] hover:shadow-[#d9531e]/40"
-                  >
-                    Start for free <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    to="/about"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/4 px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-[#9ca3af] hover:bg-white/8 hover:text-white hover:border-white/20 transition-all"
-                  >
-                    How it works
-                  </Link>
-                </div>
-
-                <div className="flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 text-xs text-[#6b7280]">
-                  {["No credit card required", "Free to get started", "Cancel anytime"].map((t) => (
-                    <span key={t} className="flex items-center gap-1.5">
-                      <Check className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
-                      {t}
-                    </span>
-                  ))}
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-x-4 gap-y-2 text-xs mt-6">
+                    {["No credit card required", "Free to get started", "Cancel anytime"].map(
+                      (t) => (
+                        <span
+                          key={t}
+                          className="flex items-center gap-1.5 rounded-full bg-black/40 backdrop-blur-sm px-3 py-1 text-white/90"
+                        >
+                          <Check className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+                          {t}
+                        </span>
+                      ),
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -412,6 +445,11 @@ function Landing() {
               </div>
             </div>
           </div>
+          {/* Bottom fade — blends hero into stats bar */}
+          <div
+            className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 z-10"
+            style={{ background: "linear-gradient(to bottom, transparent 0%, #0f1117 100%)" }}
+          />
         </section>
 
         {/* ── Stats Bar ── */}
