@@ -347,10 +347,10 @@ function Dashboard() {
   const [showPlans, setShowPlans] = useState(false);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-4xl space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8">
       {/* ── Header ── */}
-      <header className="flex flex-col gap-1">
-        <p className="font-mono text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+      <header className="flex flex-col gap-2">
+        <p className="font-mono text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
           {new Date().toLocaleDateString("en-KE", {
             weekday: "long",
             day: "numeric",
@@ -364,18 +364,22 @@ function Dashboard() {
           </div>
         ) : (
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
                 {getGreeting()}, <span className="capitalize">{displayName}</span>.
               </h1>
-              <div className="flex items-center gap-2 mt-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold font-mono tracking-wide border ${isFree ? "bg-muted/40 border-border/40 text-muted-foreground" : "bg-primary/10 border-primary/20 text-primary"}`}
+                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold font-mono tracking-wide border transition-all ${
+                    isFree
+                      ? "bg-muted/40 border-border/40 text-muted-foreground"
+                      : "bg-primary/10 border-primary/20 text-primary shadow-sm"
+                  }`}
                 >
                   {planLabel}
                 </span>
                 {memberSince && (
-                  <span className="text-[10px] text-muted-foreground/50 font-mono">
+                  <span className="text-[10px] sm:text-[11px] text-muted-foreground/50 font-mono">
                     since {memberSince}
                   </span>
                 )}
@@ -384,9 +388,9 @@ function Dashboard() {
             {isFree && (
               <button
                 onClick={() => setShowPlans(true)}
-                className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="self-start sm:self-auto inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-primary/90 px-4 py-2 text-xs sm:text-sm font-semibold text-primary-foreground hover:from-primary/90 hover:to-primary transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
               >
-                <Zap className="h-3 w-3" /> Upgrade Plan
+                <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Upgrade Plan
               </button>
             )}
           </div>
@@ -394,61 +398,74 @@ function Dashboard() {
       </header>
 
       {/* ── Stats + Quick Actions with dashboard bg image ── */}
-      <div
-        className="relative rounded-2xl overflow-hidden px-4 sm:px-6 pt-4 sm:pt-6 pb-0 space-y-4"
-        style={{
-          backgroundImage: "url('/dashboard.png')",
-          backgroundSize: "100% 100%",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
-      >
-        {/* Dark overlay */}
+      <div className="relative rounded-2xl overflow-hidden min-h-[400px] sm:min-h-[450px] lg:min-h-[500px]">
+        {/* Background Image */}
+        <img
+          src="/dashboard.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          loading="lazy"
+        />
+
+        {/* Dark overlay with better gradient */}
         <div
           className="absolute inset-0 z-[1]"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 100%)",
+              "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.6) 100%)",
           }}
         />
-        <div className="relative z-[2] space-y-4">
+
+        {/* Content */}
+        <div className="relative z-[2] p-4 sm:p-6 lg:p-8 space-y-6">
           {/* ── Stats row ── */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {[
               {
                 label: "Study Streak",
                 value: isLoading ? null : `${streak}`,
                 unit: "days",
                 icon: Flame,
-                color: streak > 0 ? "text-orange-500" : "text-muted-foreground/40",
+                color: streak > 0 ? "text-orange-400" : "text-muted-foreground/40",
+                glow: streak > 0 ? "shadow-orange-500/20" : "",
               },
               {
                 label: "Total Messages",
                 value: isLoading ? null : `${messagesCount}`,
                 unit: "sent",
                 icon: MessageCircle,
-                color: "text-blue-500",
+                color: "text-blue-400",
+                glow: "shadow-blue-500/20",
               },
               {
                 label: "Today's Usage",
                 value: isLoading ? null : `${dailyUsed}/${dailyMax}`,
                 unit: "msgs",
                 icon: TrendingUp,
-                color: usagePct >= 80 ? "text-red-500" : "text-green-500",
+                color: usagePct >= 80 ? "text-red-400" : "text-green-400",
+                glow: usagePct >= 80 ? "shadow-red-500/20" : "shadow-green-500/20",
               },
             ].map((s) => (
-              <div key={s.label} className="rounded-xl bg-white/5 p-3 sm:p-4 flex flex-col gap-1">
-                <div className="flex items-center gap-1.5">
-                  <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-white/70 font-semibold [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+              <div
+                key={s.label}
+                className={`rounded-xl border border-white/10 p-4 sm:p-5 flex flex-col gap-2 hover:bg-white/15 transition-all duration-300 shadow-lg ${s.glow}`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-lg bg-black/20 ${s.color}`}>
+                    <s.icon className="h-4 w-4" />
+                  </div>
+                  <p className="font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-white/80 font-semibold">
                     {s.label}
                   </p>
                 </div>
                 {s.value === null ? (
-                  <div className="h-6 w-16 rounded bg-muted/60 animate-pulse mt-1" />
+                  <div className="h-7 w-20 rounded bg-white/10 animate-pulse mt-1" />
                 ) : (
-                  <p className="text-xl sm:text-2xl font-bold text-white tracking-tight [text-shadow:0_1px_6px_rgba(0,0,0,0.9)]">
-                    {s.value} <span className="text-xs font-normal text-white/50">{s.unit}</span>
+                  <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    {s.value}{" "}
+                    <span className="text-xs sm:text-sm font-normal text-white/60 ml-1">
+                      {s.unit}
+                    </span>
                   </p>
                 )}
               </div>
@@ -457,136 +474,162 @@ function Dashboard() {
 
           {/* ── Daily usage bar ── */}
           {!isLoading && (
-            <div className="space-y-1.5">
+            <div className="space-y-2 bg-white/5 rounded-xl p-4 border border-white/10">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-white/70 font-semibold [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                <p className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-white/80 font-semibold">
                   Daily message quota
                 </p>
-                <p className="text-[10px] font-mono text-white/60">
+                <p className="text-[10px] sm:text-[11px] font-mono text-primary font-semibold">
                   {dailyUsed} / {dailyMax}
                 </p>
               </div>
-              <div className="h-1.5 w-full rounded-full bg-muted/40 overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-black/30 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${usagePct >= 90 ? "bg-red-500" : usagePct >= 70 ? "bg-amber-500" : "bg-primary"}`}
+                  className={`h-full rounded-full transition-all duration-500 ease-out ${
+                    usagePct >= 90
+                      ? "bg-gradient-to-r from-red-500 to-red-400"
+                      : usagePct >= 70
+                        ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                        : "bg-gradient-to-r from-primary to-primary/80"
+                  }`}
                   style={{ width: `${usagePct}%` }}
                 />
               </div>
+              {usagePct >= 80 && (
+                <p className="text-[10px] text-amber-300/80 font-medium">
+                  ⚠️ You're approaching your daily limit
+                </p>
+              )}
             </div>
           )}
 
           {/* ── Quick actions ── */}
           <section className="space-y-3">
-            <p className="font-mono text-[9px] uppercase tracking-widest text-white/70 font-semibold [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+            <p className="font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-white/80 font-semibold">
               Study Suite
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <Link
                 to="/tutor"
-                className="group flex items-center justify-between rounded-xl bg-white/5 hover:bg-white/10 p-4 transition-all duration-200"
+                className="group flex items-center justify-between rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <MessageCircle className="h-4 w-4 text-primary" />
+                  <div className="p-2.5 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors">
+                    <MessageCircle className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
-                      New AI Session
-                    </p>
-                    <p className="text-[11px] text-white/70 mt-0.5">
+                    <p className="text-sm sm:text-base font-semibold text-white">New AI Session</p>
+                    <p className="text-[11px] sm:text-xs text-white/70 mt-0.5">
                       Start a fresh tutoring session
                     </p>
                   </div>
                 </div>
-                <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
               </Link>
               {data?.lastSessionId && (
                 <Link
                   to="/tutor/$threadId"
                   params={{ threadId: data.lastSessionId }}
-                  className="group flex items-center justify-between rounded-xl bg-white/5 hover:bg-white/10 p-4 transition-all duration-200"
+                  className="group flex items-center justify-between rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted/40">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <div className="p-2.5 rounded-lg bg-white/10 group-hover:bg-white/20 transition-colors">
+                      <Calendar className="h-5 w-5 text-primary" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                      <p className="text-sm sm:text-base font-semibold text-white">
                         Continue Session
                       </p>
-                      <p className="text-[11px] text-white/70 mt-0.5 truncate max-w-[160px]">
+                      <p className="text-[11px] sm:text-xs text-white/70 mt-0.5 truncate max-w-[180px] sm:max-w-[220px]">
                         {data.lastSessionTitle ?? "Last session"}
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                 </Link>
               )}
             </div>
           </section>
         </div>
-        {/* end inner z-[2] */}
       </div>
-      {/* end dashboard bg wrapper */}
+
       {/* ── Daily Insights ── */}
-      <section className="space-y-3 -mt-10">
+      <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-white/70 font-semibold [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
-            Daily Learning Insights
-          </p>
-          <span className="font-mono text-[9px] text-muted-foreground/40">
+          <div className="flex items-center gap-2">
+            <div className="h-1 w-1 rounded-full bg-primary" />
+            <p className="font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-foreground font-semibold">
+              Daily Learning Insights
+            </p>
+          </div>
+          <span className="font-mono text-[10px] sm:text-[11px] text-muted-foreground/60">
             {new Date().toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
           </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {[
-            { label: "Study Tip", icon: Zap, content: insights?.tip, accent: "border-l-blue-500" },
+            {
+              label: "Study Tip",
+              icon: Zap,
+              content: insights?.tip,
+              accent: "border-l-blue-500",
+              iconBg: "bg-blue-500/10",
+              iconColor: "text-blue-500",
+            },
             {
               label: "Topic of the Day",
               icon: Target,
               content: insights?.topicOfDay,
               accent: "border-l-purple-500",
+              iconBg: "bg-purple-500/10",
+              iconColor: "text-purple-500",
             },
             {
               label: "Did You Know?",
               icon: BookOpenText,
               content: insights?.didYouKnow,
               accent: "border-l-green-500",
+              iconBg: "bg-green-500/10",
+              iconColor: "text-green-500",
             },
             {
               label: streak > 0 ? `${streak}-Day Streak` : "Start Your Streak",
               icon: Flame,
               content: insights?.streakMotivation,
-              accent: "border-l-orange-500" as const,
+              accent: "border-l-orange-500",
+              iconBg: "bg-orange-500/10",
+              iconColor: "text-orange-500",
             },
           ].map((card) => (
             <div
               key={card.label}
-              className={`rounded-xl border border-border/30 border-l-2 ${card.accent} bg-card p-4 flex flex-col gap-2`}
+              className={`group rounded-xl border border-border/40 border-l-4 ${card.accent} bg-card p-4 sm:p-5 flex flex-col gap-3 hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
             >
-              <div className="flex items-center gap-1.5">
-                <card.icon className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-                <p className="font-mono text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/60">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`p-2 rounded-lg ${card.iconBg} transition-colors group-hover:scale-110`}
+                >
+                  <card.icon className={`h-4 w-4 ${card.iconColor}`} />
+                </div>
+                <p className="font-mono text-[10px] sm:text-[11px] uppercase tracking-widest font-semibold text-foreground/70">
                   {card.label}
                 </p>
               </div>
               {insightsLoading ? (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <div
                     className="h-3 w-full rounded bg-muted/50 animate-pulse"
                     style={{ animationDelay: "0ms" }}
                   />
                   <div
-                    className="h-3 w-3/4 rounded bg-muted/50 animate-pulse"
+                    className="h-3 w-4/5 rounded bg-muted/50 animate-pulse"
                     style={{ animationDelay: "150ms" }}
                   />
                   <div
-                    className="h-3 w-1/2 rounded bg-muted/50 animate-pulse"
+                    className="h-3 w-3/5 rounded bg-muted/50 animate-pulse"
                     style={{ animationDelay: "300ms" }}
                   />
                 </div>
               ) : (
-                <p className="text-xs leading-relaxed text-muted-foreground animate-in fade-in duration-500 slide-in-from-bottom-1">
+                <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground animate-in fade-in duration-500 slide-in-from-bottom-1">
                   {card.content}
                 </p>
               )}

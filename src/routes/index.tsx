@@ -270,11 +270,11 @@ function Landing() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
               {/* Left - WITH BACKGROUND IMAGE */}
               <div
-                className="lg:col-span-6 text-center lg:text-left space-y-8 relative overflow-visible p-8 lg:p-12 flex flex-col justify-center min-h-[400px] lg:min-h-[600px]"
+                className="lg:col-span-6 text-center lg:text-left space-y-8 relative overflow-hidden rounded-3xl p-6 sm:p-8 lg:p-12 flex flex-col justify-end min-h-[560px] sm:min-h-[580px] lg:min-h-[650px]"
                 style={{
                   backgroundImage: "url('/landingphero.png')",
                   backgroundSize: "cover",
-                  backgroundPosition: "center",
+                  backgroundPosition: "50% 20%",
                   backgroundRepeat: "no-repeat",
                 }}
               >
@@ -326,12 +326,12 @@ function Landing() {
                     human expert.
                   </p>
 
-                  <div className="flex flex-row flex-wrap justify-center lg:justify-start gap-3 mt-8">
+                  <div className="flex flex-row justify-center lg:justify-start gap-3 mt-8">
                     <Link
                       to="/register"
                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#d9531e] px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#c44819] transition-all shadow-xl shadow-[#d9531e]/30 hover:scale-[1.02] hover:shadow-[#d9531e]/40"
                     >
-                      Start for free <ArrowRight className="h-4 w-4" />
+                      Start for free
                     </Link>
                     <Link
                       to="/about"
