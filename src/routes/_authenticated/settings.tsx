@@ -681,89 +681,6 @@ function SettingsPage() {
                 </section>
               )}
 
-              {/* Account Credentials */}
-              {activeTab === "profile" && (
-                <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
-                  <div className="flex items-center gap-2.5">
-                    <Mail className="h-5 w-5 text-primary" />
-                    <h3 className="font-serif text-xl font-bold text-foreground">
-                      Account Credentials
-                    </h3>
-                  </div>
-
-                  <form onSubmit={handleEmailChange} className="space-y-2">
-                    <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block">
-                      Change Email
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="Current email address"
-                      value={user?.email ?? ""}
-                      readOnly
-                      className="w-full rounded-lg border border-border bg-muted px-3 py-2.5 text-sm text-muted-foreground cursor-not-allowed"
-                    />
-                    <input
-                      type="password"
-                      placeholder="Current password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
-                    />
-                    <input
-                      type="email"
-                      placeholder="New email address"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
-                    />
-                    <button
-                      type="submit"
-                      disabled={emailBusy || !newEmail || !currentPassword}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
-                    >
-                      <Mail className="h-3.5 w-3.5" /> {emailBusy ? "Sending…" : "Update Email"}
-                    </button>
-                  </form>
-
-                  <form onSubmit={handlePasswordChange} className="space-y-2">
-                    <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block">
-                      Change Password
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Current password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
-                    />
-                    <input
-                      type="password"
-                      placeholder="New password (min 8 characters)"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
-                    />
-                    <input
-                      type="password"
-                      placeholder="Confirm new password"
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
-                    />
-                    <button
-                      type="submit"
-                      disabled={
-                        passwordBusy || !currentPassword || !newPassword || !confirmNewPassword
-                      }
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
-                    >
-                      <Save className="h-3.5 w-3.5" />{" "}
-                      {passwordBusy ? "Updating…" : "Update Password"}
-                    </button>
-                  </form>
-                </section>
-              )}
-
               {/* Tutor Preferences Tab */}
               {activeTab === "tutor" && (
                 <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
@@ -893,6 +810,89 @@ function SettingsPage() {
                 </section>
               )}
             </form>
+
+            {/* Account Credentials */}
+            {activeTab === "profile" && (
+              <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
+                <div className="flex items-center gap-2.5">
+                  <Mail className="h-5 w-5 text-primary" />
+                  <h3 className="font-serif text-xl font-bold text-foreground">
+                    Account Credentials
+                  </h3>
+                </div>
+
+                <form onSubmit={handleEmailChange} className="space-y-2">
+                  <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block">
+                    Change Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Current email address"
+                    value={user?.email ?? ""}
+                    readOnly
+                    className="w-full rounded-lg border border-border bg-muted px-3 py-2.5 text-sm text-muted-foreground cursor-not-allowed"
+                  />
+                  <input
+                    type="password"
+                    placeholder="Current password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+                  />
+                  <input
+                    type="email"
+                    placeholder="New email address"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+                  />
+                  <button
+                    type="submit"
+                    disabled={emailBusy || !newEmail || !currentPassword}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
+                  >
+                    <Mail className="h-3.5 w-3.5" /> {emailBusy ? "Sending…" : "Update Email"}
+                  </button>
+                </form>
+
+                <form onSubmit={handlePasswordChange} className="space-y-2">
+                  <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block">
+                    Change Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Current password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+                  />
+                  <input
+                    type="password"
+                    placeholder="New password (min 8 characters)"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+                  />
+                  <input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-all"
+                  />
+                  <button
+                    type="submit"
+                    disabled={
+                      passwordBusy || !currentPassword || !newPassword || !confirmNewPassword
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
+                  >
+                    <Save className="h-3.5 w-3.5" />{" "}
+                    {passwordBusy ? "Updating…" : "Update Password"}
+                  </button>
+                </form>
+              </section>
+            )}
 
             {/* Display Theme Tab */}
             {activeTab === "theme" && (
