@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useMemo } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { EmptyState } from "./EmptyState";
-import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw, Sparkles } from "lucide-react";
 
 type Props = {
   messages: any[];
@@ -25,7 +25,7 @@ type Props = {
 };
 
 function ThinkingSweep() {
-  const text = "Thinking Process..";
+  const text = "Thinking...";
   const chars = text.split("");
   const [opacities, setOpacities] = React.useState<number[]>(chars.map(() => 0.25));
   const [arrowSize, setArrowSize] = React.useState(28);
@@ -35,7 +35,7 @@ function ThinkingSweep() {
   const startRef = React.useRef<number>(0);
 
   React.useEffect(() => {
-    const SWEEP = 900;
+    const SWEEP = 800;
     const HOLD = 200;
     const total = chars.length;
 
@@ -72,12 +72,13 @@ function ThinkingSweep() {
 
   return (
     <span className="select-none mb-3 inline-flex items-center gap-1.5">
-      <span style={{ fontSize: 32, lineHeight: 1, color: "hsl(22 75% 48%)", flexShrink: 0 }}>
-        •
-      </span>
+      <Sparkles
+        className="shrink-0 animate-pulse"
+        style={{ width: 20, height: 20, color: "hsl(22 75% 48%)" }}
+      />
       <span
         className="inline-flex"
-        style={{ fontSize: 11, fontWeight: 500, letterSpacing: "0.04em" }}
+        style={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.04em" }}
       >
         {chars.map((ch, i) => (
           <span
