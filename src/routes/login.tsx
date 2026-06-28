@@ -57,7 +57,6 @@ function LoginPage() {
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [magicLinkBusy, setMagicLinkBusy] = useState(false);
   const [magicLinkMode, setMagicLinkMode] = useState(false);
-  useEffect(() => {
     if (search.email) {
       setEmail(search.email);
     }
