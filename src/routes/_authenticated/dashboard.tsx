@@ -160,7 +160,7 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
       const model = provider.chatModel("gemini-2.5-flash");
       const { text } = await generateText({
         model,
-        prompt: `You are an educational assistant for ${curriculum} students in Kenya. Generate 4 short pieces of educational content. Respond ONLY with valid JSON, no markdown, no backticks.
+        prompt: `Today is ${new Date().toISOString().slice(0, 10)}. Seed: ${Math.floor(Math.random() * 999983)}. You are an educational assistant for ${curriculum} students in Kenya. Generate 4 UNIQUE pieces of educational content different from previous days. Respond ONLY with valid JSON, no markdown, no backticks.
 
 {
   "tip": "A practical study tip for ${curriculum} students (1-2 sentences)",
@@ -174,8 +174,8 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
       return JSON.parse(clean) as DailyInsights;
     } catch (err) {
       console.error(
-        "[Dashboard Server] Gemini insights fetch failed, returning static fallback:",
-        err,
+        "[Dashboard Server] Gemini insights fetch failed:",
+        err instanceof Error ? err.message : JSON.stringify(err),
       );
       return fallback;
     }
@@ -235,7 +235,7 @@ function Dashboard() {
         setData(res);
 
         // Retrieve/save AI insights daily cache
-        const cacheKey = `gilani_daily_insights_${res.userId}_${localDate}`;
+        const cacheKey = `gilani_daily_insights_v2_${res.userId}_${localDate}`;
         const cached = localStorage.getItem(cacheKey);
         let loadedInsights = null;
         if (cached) {
