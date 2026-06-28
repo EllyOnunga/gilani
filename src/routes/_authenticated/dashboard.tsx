@@ -168,10 +168,12 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
   "didYouKnow": "A fascinating educational fact relevant to ${curriculum} subjects (1-2 sentences)",
   "streakMotivation": "${streak > 0 ? `An encouraging message about maintaining a ${streak}-day study streak` : "An encouraging message to start a study streak today"} (1 sentence)"
 }`,
-        maxOutputTokens: 400,
+        maxOutputTokens: 800,
       });
       const clean = text.replace(/```json|```/g, "").trim();
-      return JSON.parse(clean) as DailyInsights;
+      const jsonMatch = clean.match(/{[\s\S]*}/);
+      if (!jsonMatch) throw new Error("No JSON found in response");
+      return JSON.parse(jsonMatch[0]) as DailyInsights;
     } catch (err) {
       console.error(
         "[Dashboard Server] Gemini insights fetch failed:",
@@ -499,11 +501,23 @@ function Dashboard() {
               </div>
               {insightsLoading ? (
                 <div className="space-y-1.5">
-                  <div className="h-3 w-full rounded bg-muted/50 animate-pulse" />
-                  <div className="h-3 w-3/4 rounded bg-muted/50 animate-pulse" />
+                  <div
+                    className="h-3 w-full rounded bg-muted/50 animate-pulse"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <div
+                    className="h-3 w-3/4 rounded bg-muted/50 animate-pulse"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <div
+                    className="h-3 w-1/2 rounded bg-muted/50 animate-pulse"
+                    style={{ animationDelay: "300ms" }}
+                  />
                 </div>
               ) : (
-                <p className="text-xs leading-relaxed text-muted-foreground">{card.content}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground animate-in fade-in duration-500 slide-in-from-bottom-1">
+                  {card.content}
+                </p>
               )}
             </div>
           ))}
