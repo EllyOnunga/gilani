@@ -4,10 +4,6 @@ import { ChevronRight, Home } from "lucide-react";
 const ROUTE_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   tutor: "Tutor Chat",
-  notes: "Study Notes",
-  quizzes: "Practice Quizzes",
-  planner: "Planner",
-  analytics: "Analytics",
   settings: "Settings",
   teacher: "Teacher",
   escalations: "Escalations",

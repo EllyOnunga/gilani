@@ -297,9 +297,9 @@ function AuthedShell() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const timer = setTimeout(() => {
-      router.preloadRoute({ to: "/dashboard" }).catch(() => {});
-      router.preloadRoute({ to: "/settings" }).catch(() => {});
-      router.preloadRoute({ to: "/tutor" }).catch(() => {});
+      router.preloadRoute({ to: "/dashboard" }).catch(() => { });
+      router.preloadRoute({ to: "/settings" }).catch(() => { });
+      router.preloadRoute({ to: "/tutor" }).catch(() => { });
     }, 2000);
     return () => clearTimeout(timer);
   }, [router]);
@@ -535,6 +535,7 @@ function AuthedShell() {
 
   useEffect(() => {
     if (loading) return;
+    if (signingOutRef.current) return; // intentional signout in progress — skip auto-redirect
     if (!user) {
       navigate({ to: "/login", search: { redirect: window.location.href } });
       return;
@@ -545,7 +546,7 @@ function AuthedShell() {
     const isTeacher = roles.includes("teacher") && !roles.includes("admin");
     const isStudent = !isAdmin && !isTeacher;
 
-    const studentOnlyPaths = ["/dashboard", "/analytics", "/tutor"];
+    const studentOnlyPaths = ["/dashboard", "/tutor"];
     const isOnStudentRoute = studentOnlyPaths.some((p) => path === p || path.startsWith(p + "/"));
 
     if (isAdmin) {
@@ -599,6 +600,8 @@ function AuthedShell() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [userMenuOpen]);
+
+  const signingOutRef = useRef(false);
 
   // ─── 30-minute inactivity logout ─────────────────────────────────────────
   useEffect(() => {
@@ -660,21 +663,22 @@ function AuthedShell() {
   }
 
   // Prevent rendering student content for admin/teacher before redirect fires
-  const studentOnlyPaths2 = ["/dashboard", "/analytics", "/tutor"];
+  const studentOnlyPaths2 = ["/dashboard", "/tutor"];
   const isOnStudentRoute2 = studentOnlyPaths2.some((p) => path === p || path.startsWith(p + "/"));
   if ((isAdmin || isTeacher) && isOnStudentRoute2) {
     return <GilaniLoader />;
   }
 
   const signOut = async () => {
+    signingOutRef.current = true;
     try {
       sessionStorage.removeItem("__gilani_role");
       await supabase.auth.signOut();
       toast.success("Signed out");
-      navigate({ to: "/" });
     } catch {
       sessionStorage.removeItem("__gilani_role");
-      navigate({ to: "/" });
+    } finally {
+      window.location.href = "/";
     }
   };
 
@@ -713,9 +717,8 @@ function AuthedShell() {
 
       {/* Responsive Aside Navigation Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-sidebar p-4 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden rounded-r-2xl ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${collapsed ? "w-64 lg:w-[60px] lg:p-2" : "w-64"}`}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-sidebar p-4 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden rounded-r-2xl ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } ${collapsed ? "w-64 lg:w-[60px] lg:p-2" : "w-64"}`}
       >
         {/* Brand logo, Collapse Toggle & Mobile Close Button */}
         <div className="flex items-center justify-between mb-6 min-w-0 w-full relative">
@@ -778,11 +781,10 @@ function AuthedShell() {
                   <Link
                     to="/dashboard"
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center rounded-lg text-sm font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"} ${
-                      path === "/dashboard"
+                    className={`flex items-center rounded-lg text-sm font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"} ${path === "/dashboard"
                         ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r"
                         : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <GraduationCap className="h-4 w-4 flex-shrink-0" />
                     <span className={collapsed ? "lg:hidden" : ""}>Dashboard</span>
@@ -872,11 +874,10 @@ function AuthedShell() {
                                   userSelect: "none",
                                   WebkitTapHighlightColor: "transparent",
                                 }}
-                                className={`group flex items-center justify-between rounded-lg px-2.5 py-1 text-xs transition-all relative select-none ${
-                                  isCurrent
+                                className={`group flex items-center justify-between rounded-lg px-2.5 py-1 text-xs transition-all relative select-none ${isCurrent
                                     ? "bg-muted/40 text-foreground font-semibold"
                                     : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-                                }`}
+                                  }`}
                               >
                                 {renamingId === t.id ? (
                                   <input
@@ -920,11 +921,10 @@ function AuthedShell() {
                                 )}
                                 {renamingId !== t.id && (
                                   <div
-                                    className={`flex items-center flex-shrink-0 transition-all duration-200 ${
-                                      revealedThreadId === t.id
+                                    className={`flex items-center flex-shrink-0 transition-all duration-200 ${revealedThreadId === t.id
                                         ? "gap-1 opacity-100 scale-100"
                                         : "gap-0.5 opacity-0 scale-95 lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:scale-100 lg:focus-within:opacity-100"
-                                    }`}
+                                      }`}
                                   >
                                     <button
                                       onClick={(e) => {
@@ -933,11 +933,10 @@ function AuthedShell() {
                                         startRename(t.id, t.title || "Untitled Chat");
                                         setRevealedThreadId(null);
                                       }}
-                                      className={`flex items-center gap-1 rounded-md hover:bg-muted text-muted-foreground/60 hover:text-foreground cursor-pointer ${
-                                        revealedThreadId === t.id
+                                      className={`flex items-center gap-1 rounded-md hover:bg-muted text-muted-foreground/60 hover:text-foreground cursor-pointer ${revealedThreadId === t.id
                                           ? "px-2 py-1 text-[11px] font-semibold"
                                           : "p-1"
-                                      }`}
+                                        }`}
                                       title="Rename chat"
                                     >
                                       <Pencil className="h-3 w-3" />
@@ -950,11 +949,10 @@ function AuthedShell() {
                                         setDeleteConfirmId(t.id);
                                         setRevealedThreadId(null);
                                       }}
-                                      className={`flex items-center gap-1 rounded-md hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive cursor-pointer ${
-                                        revealedThreadId === t.id
+                                      className={`flex items-center gap-1 rounded-md hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive cursor-pointer ${revealedThreadId === t.id
                                           ? "px-2 py-1 text-[11px] font-semibold"
                                           : "p-1"
-                                      }`}
+                                        }`}
                                       title="Delete chat"
                                     >
                                       <Trash2 className="h-3 w-3" />
@@ -982,11 +980,10 @@ function AuthedShell() {
               <Link
                 to={"/teacher/escalations" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${
-                  path.startsWith("/teacher/escalations")
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${path.startsWith("/teacher/escalations")
                     ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r"
                     : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-                }`}
+                  }`}
               >
                 <ShieldAlert className="h-4 w-4" /> Escalations
               </Link>
@@ -1000,11 +997,10 @@ function AuthedShell() {
               <Link
                 to={"/admin/users" as any}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${
-                  path.startsWith("/admin")
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${path.startsWith("/admin")
                     ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r"
                     : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-                }`}
+                  }`}
               >
                 <Users className="h-4 w-4" /> Users & Roles
               </Link>

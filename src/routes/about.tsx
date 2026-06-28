@@ -42,7 +42,7 @@ const AGENTS = [
     name: "Scout",
     icon: Target,
     description:
-      "Keeps your revision rhythms steady. Tracks streaks, monitors exam countdowns, and sends gentle nudges when you fall behind your study plan.",
+      "Keeps your revision rhythms steady. Right in the chat, it tracks exam countdowns and gently nudges you to stay consistent with your studying.",
     iconColor: "text-orange-400",
     bg: "from-orange-500/20 via-orange-500/5 to-transparent",
     accent: "border-l-orange-500",
@@ -51,7 +51,7 @@ const AGENTS = [
     name: "Guardian",
     icon: Brain,
     description:
-      "The core tutoring engine. Handles summarisation, explanation, quiz generation and note analysis — all grounded in your uploaded curriculum materials.",
+      "The core tutoring engine. Handles summarisation, explanation, and quiz practice — all grounded in your uploaded curriculum materials, right in the conversation.",
     iconColor: "text-blue-400",
     bg: "from-blue-500/20 via-blue-500/5 to-transparent",
     accent: "border-l-blue-500",

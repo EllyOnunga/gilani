@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
+import { useState, useEffect, useRef } from "react";
 import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { LegalHeader, LegalFooter } from "@/components/LegalLayout";
 
@@ -24,11 +24,15 @@ const FAQS = [
     items: [
       {
         q: "What is GilaniAI?",
-        a: "GilaniAI is an AI-powered study assistant built for students. It provides AI tutoring, practice quizzes, smart notes, a study planner, and real teacher escalation.",
+        a: "GilaniAI is an AI-powered study assistant built for students. It provides Socratic AI tutoring through chat — including quiz practice and note-based help directly in the conversation — plus real teacher escalation when you need a human to step in.",
+      },
+      {
+        q: "What happened to quizzes, notes, and the planner?",
+        a: "We've folded those into the chat experience — just ask your AI tutor for practice questions or to summarize a topic, right in the conversation. It's faster and more natural than switching tabs.",
       },
       {
         q: "Is GilaniAI free to use?",
-        a: "Yes — GilaniAI is free to start. Create an account and get immediate access to all core features including the AI tutor, quizzes, notes and planner.",
+        a: "Yes — GilaniAI is free to start. Create an account and get immediate access to the AI tutor chat and teacher escalation. Premium plans unlock higher daily message limits and priority escalation.",
       },
       {
         q: "How do I create an account?",
@@ -122,11 +126,36 @@ const FAQS = [
   },
 ];
 
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 function FAQItem({ q, a }: { q: string; a: string }) {
+  const location = useLocation();
+  const itemRef = useRef<HTMLDivElement>(null);
+  const slug = slugify(q);
+  const targetHash = location.hash?.replace(/^#/, "");
+  const isTargeted = Boolean(targetHash) && targetHash === slug;
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (isTargeted) {
+      setOpen(true);
+      const t = setTimeout(() => {
+        itemRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 150);
+      return () => clearTimeout(t);
+    }
+  }, [isTargeted]);
+
   return (
     <div
-      className={`border rounded-2xl overflow-hidden transition-all duration-200 ${
+      ref={itemRef}
+      id={slug}
+      className={`border rounded-2xl overflow-hidden transition-all duration-200 scroll-mt-24 ${
         open ? "border-[#d9531e]/30 bg-[#1a1d27]" : "border-white/8 bg-[#1a1d27]"
       }`}
     >

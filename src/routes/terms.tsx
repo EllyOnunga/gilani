@@ -35,11 +35,8 @@ function TermsPage() {
               includes:
             </p>
             <ul>
-              <li>Socratic AI tutoring chat sessions</li>
-              <li>Notes summarisation and flashcard generation</li>
-              <li>AI-generated practice quizzes</li>
-              <li>Personalised 7-day study planners</li>
-              <li>Performance analytics and streak tracking</li>
+              <li>Socratic AI tutoring chat sessions, including notes summarisation and practice quizzes generated within the conversation</li>
+              <li>Exam countdown reminders and streak tracking</li>
               <li>Teacher escalation for human expert review</li>
             </ul>
           </Section>

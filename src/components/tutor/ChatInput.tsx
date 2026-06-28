@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   FileText,
   Loader2,
@@ -437,9 +438,7 @@ export function ChatInput({
         {/* Footer hint — desktop only */}
         <div className="mt-1.5 hidden md:flex items-center justify-between px-1 min-h-[14px]">
           <p className="font-mono text-[9px] text-muted-foreground/70">
-            {isPending ? (
-              <span className="animate-pulse font-bold text-primary/70">GilaniAI is thinking…</span>
-            ) : isRateLimited && isDaily ? (
+            {isRateLimited && isDaily ? (
               <span className="text-amber-600 font-semibold">
                 Daily cap reached · resets at midnight
               </span>
@@ -455,23 +454,16 @@ export function ChatInput({
             </span>
           )}
         </div>
-        {/* Mobile: thinking indicator */}
-        {isPending && (
-          <div className="mt-1 flex items-center gap-1.5 px-1 sm:hidden">
-            <span className="inline-flex gap-0.5">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="h-1 w-1 rounded-full bg-primary/70 animate-bounce"
-                  style={{ animationDelay: `${i * 120}ms` }}
-                />
-              ))}
-            </span>
-            <span className="font-mono text-[9px] text-primary/70 font-semibold animate-pulse">
-              GilaniAI is thinking…
-            </span>
-          </div>
-        )}
+        {/* Disclaimer — always visible, single line, mobile & desktop */}
+        <div className="mt-1 flex justify-center px-1 w-full min-w-0 overflow-hidden">
+          <Link
+            to="/faq"
+            hash="can-the-ai-make-mistakes"
+            className="block w-full min-w-0 font-mono text-[8px] text-muted-foreground/60 text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis hover:text-muted-foreground/90 hover:underline"
+          >
+            GilaniAI can make mistakes. Please check responses.
+          </Link>
+        </div>
 
         {/* Mobile: only show char count when typing */}
         {input.length > 0 && (

@@ -102,7 +102,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "keywords",
         content:
-          "KCSE AI tutor, CBC study assistant, Kenya education AI, IGCSE revision, AI tutor Kenya, study planner Kenya, KCSE revision, online tutoring Kenya, GilaniAI",
+          "KCSE AI tutor, CBC study assistant, Kenya education AI, IGCSE revision, AI tutor Kenya, KCSE revision, online tutoring Kenya, GilaniAI",
       },
       { title: "GilaniAI — Ethical AI Learning Assistant" },
       {
@@ -169,7 +169,7 @@ const JSON_LD = JSON.stringify({
   name: "GilaniAI",
   url: "https://gilaniai.site",
   description:
-    "Curriculum-grounded AI tutoring platform for KCSE, CBC and IGCSE students in Kenya. Includes AI tutor, quizzes, notes summariser, study planner, and teacher escalation.",
+    "Curriculum-grounded AI tutoring platform for KCSE, CBC and IGCSE students in Kenya. Includes Socratic AI tutoring chat and real teacher escalation.",
   applicationCategory: "EducationApplication",
   operatingSystem: "Web, Android, iOS",
   offers: [
@@ -359,9 +359,7 @@ function RootComponent() {
       if (
         message.includes("dynamically imported module") ||
         message.includes("Failed to fetch dynamically") ||
-        (message.includes("Failed to fetch") &&
-          window.location.pathname !== "/tutor" &&
-          window.location.pathname !== "/notes")
+        (message.includes("Failed to fetch") && window.location.pathname !== "/tutor")
       ) {
         safeReload(`Dynamic import rejection: ${message}`);
       }

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/register")({
       {
         name: "description",
         content:
-          "Create your free GilaniAI account. Students get AI tutoring, quizzes and a smart study planner. Teachers get an escalation dashboard for student support.",
+          "Create your free GilaniAI account. Students get Socratic AI tutoring chat. Teachers get an escalation dashboard for student support.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],

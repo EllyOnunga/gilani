@@ -37,7 +37,7 @@ export const Route = createFileRoute("/login")({
       {
         name: "description",
         content:
-          "Sign in to your GilaniAI account to access AI tutoring, quizzes, notes, and your personalised study planner.",
+          "Sign in to your GilaniAI account to access AI tutoring and teacher escalation.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
