@@ -203,20 +203,19 @@ export function ChatInput({
   return (
     <div className="px-2 pb-2 pt-1 sm:px-4 sm:pb-4 sm:pt-3 sm:bg-background/95 sm:backdrop-blur-sm sm:border-t sm:border-border/40">
       <div className="lg:max-w-3xl lg:mx-auto">
-        {/* Approaching-limit soft warning */}
+        {/* Approaching-limit soft warning — auto-hides when usage drops below 80% */}
         {isApproachingLimit && (
           <div className="mb-2.5 rounded-2xl border border-orange-200 bg-orange-50/60 dark:bg-orange-950/20 dark:border-orange-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
-            <div className="flex items-center justify-between gap-2.5 px-3.5 py-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5">
               <div className="flex items-center gap-2 min-w-0">
                 <AlertCircle className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400 flex-shrink-0" />
-                <p className="text-[11px] font-semibold text-orange-800 dark:text-orange-300 truncate">
+                <p className="text-[11px] font-semibold text-orange-800 dark:text-orange-300 leading-snug">
                   {remaining <= 1
-                    ? "Last message — upgrade to continue chatting"
-                    : `${remaining} message${remaining === 1 ? "" : "s"} left today`}
+                    ? `You've used all ${messagesMax} messages today`
+                    : `You've used ${Math.round(usagePct * 100)}% of your daily limit — ${remaining} left`}
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                {/* usage pill */}
                 <span className="font-mono text-[10px] text-orange-600 dark:text-orange-400 tabular-nums">
                   {messagesUsed}/{messagesMax}
                 </span>
@@ -243,51 +242,29 @@ export function ChatInput({
 
         {/* Rate limit banner */}
         {isRateLimited && (
-          <div className="mb-2 flex items-center gap-2.5 rounded-xl border border-border/60 bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
-            <Clock className="h-3.5 w-3.5 flex-shrink-0 text-foreground/50" />
-            <span className="flex-1">
-              {isDaily ? (
-                <>
-                  Daily limit reached.
-                  {secondsLeft > 0 ? (
-                    <>
-                      {" "}
-                      Resets in{" "}
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {formatTime(secondsLeft)}
-                      </span>
-                      .
-                    </>
-                  ) : (
-                    " Resets at midnight (EAT)."
-                  )}
-                </>
-              ) : (
-                <>
-                  Too many messages.
-                  {secondsLeft > 0 ? (
-                    <>
-                      {" "}
-                      Try in{" "}
-                      <span className="font-semibold tabular-nums text-foreground">
-                        {formatTime(secondsLeft)}
-                      </span>
-                      .
-                    </>
-                  ) : (
-                    ""
-                  )}
-                </>
+          <div className="mb-2 rounded-xl border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 dark:border-destructive/30 overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <Clock className="h-3.5 w-3.5 flex-shrink-0 text-destructive dark:text-red-400" />
+                <p className="text-[11px] font-semibold text-destructive dark:text-red-300 leading-snug">
+                  {isDaily
+                    ? secondsLeft > 0
+                      ? `Daily limit reached — resets in ${formatTime(secondsLeft)}`
+                      : "Daily limit reached — resets at midnight (EAT)"
+                    : secondsLeft > 0
+                      ? `Too many messages — try again in ${formatTime(secondsLeft)}`
+                      : "Too many messages — please wait a moment"}
+                </p>
+              </div>
+              {onUpgrade && (
+                <button
+                  onClick={onUpgrade}
+                  className="flex-shrink-0 inline-flex items-center gap-1 rounded-lg bg-destructive px-2.5 py-1 text-[10px] font-bold text-white hover:bg-destructive/90 active:scale-95 transition-all"
+                >
+                  <CreditCard className="h-2.5 w-2.5" /> Upgrade
+                </button>
               )}
-            </span>
-            {onUpgrade && (
-              <button
-                onClick={onUpgrade}
-                className="flex-shrink-0 rounded-lg bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Upgrade
-              </button>
-            )}
+            </div>
           </div>
         )}
         {/* General AI/Server Error Banner */}
