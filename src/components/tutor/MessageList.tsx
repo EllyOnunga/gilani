@@ -24,14 +24,13 @@ type Props = {
   chatError?: string | null;
 };
 
-
 function ThinkingSweep() {
   const text = "Thinking Process..";
   const chars = text.split("");
   const [opacities, setOpacities] = React.useState<number[]>(chars.map(() => 0.25));
   const [arrowSize, setArrowSize] = React.useState(22);
   const [arrowOpacity, setArrowOpacity] = React.useState(0.3);
-  const [bulletOpacity, setBulletOpacity] = React.useState(0.25);
+
   const rafRef = React.useRef<number>(0);
   const startRef = React.useRef<number>(0);
 
@@ -46,21 +45,21 @@ function ThinkingSweep() {
       const progress = elapsed / SWEEP;
       const peak = progress * (total + 2);
 
-      setBulletOpacity(Math.min(1, Math.max(0.25, peak < 1 ? 0.25 + peak * 0.75 : Math.max(0.25, 1 - (peak - 1) * 0.15))));
-
-      setOpacities(chars.map((_, i) => {
-        const dist = Math.abs(peak - 1 - i);
-        if (dist < 2) return Math.max(0.25, 0.25 + (1 - dist / 2) * 0.75);
-        return 0.25;
-      }));
+      setOpacities(
+        chars.map((_, i) => {
+          const dist = Math.abs(peak - i);
+          if (dist < 5) return Math.max(0.55, 0.55 + (1 - dist / 5) * 0.45);
+          return 0.55;
+        }),
+      );
 
       const arrowDist = Math.abs(peak - total - 1);
-      if (arrowDist < 2) {
-        const b = Math.max(0, 1 - arrowDist / 2);
-        setArrowOpacity(0.3 + b * 0.7);
-        setArrowSize(22 + b * 4);
+      if (arrowDist < 5) {
+        const b = Math.max(0, 1 - arrowDist / 5);
+        setArrowOpacity(0.5 + b * 0.5);
+        setArrowSize(22 + b * 6);
       } else {
-        setArrowOpacity(0.3);
+        setArrowOpacity(0.5);
         setArrowSize(22);
       }
 
@@ -73,14 +72,19 @@ function ThinkingSweep() {
 
   return (
     <span className="select-none mb-3 inline-flex items-center gap-1.5">
-      <span style={{ fontSize: 20, lineHeight: 1, color: "hsl(var(--primary))", opacity: bulletOpacity }}>•</span>
-      <span className="inline-flex" style={{ fontSize: 11, fontWeight: 500, letterSpacing: "0.04em" }}>
+      <span style={{ fontSize: 26, lineHeight: 1, color: "hsl(var(--primary))", flexShrink: 0 }}>
+        •
+      </span>
+      <span
+        className="inline-flex"
+        style={{ fontSize: 11, fontWeight: 500, letterSpacing: "0.04em" }}
+      >
         {chars.map((ch, i) => (
           <span
             key={i}
             style={{
               opacity: opacities[i],
-              color: opacities[i] > 0.6 ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+              color: opacities[i] > 0.7 ? "hsl(var(--primary))" : "hsl(var(--foreground))",
               transition: "opacity 0.06s ease, color 0.06s ease",
               whiteSpace: "pre",
             }}
@@ -89,7 +93,18 @@ function ThinkingSweep() {
           </span>
         ))}
       </span>
-      <span style={{ fontSize: arrowSize, fontWeight: 800, lineHeight: 1, color: "hsl(var(--primary))", opacity: arrowOpacity, transition: "font-size 0.06s ease, opacity 0.06s ease" }}>›</span>
+      <span
+        style={{
+          fontSize: arrowSize,
+          fontWeight: 800,
+          lineHeight: 1,
+          color: "hsl(var(--primary))",
+          opacity: arrowOpacity,
+          transition: "font-size 0.06s ease, opacity 0.06s ease",
+        }}
+      >
+        ›
+      </span>
     </span>
   );
 }
