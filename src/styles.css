@@ -209,6 +209,7 @@
 }
 
 @keyframes cursor-blink {
+
   0%,
   100% {
     opacity: 0;
@@ -287,6 +288,7 @@
 
 /* Streaming cursor for active messages */
 @keyframes streamCursor {
+
   0%,
   50% {
     opacity: 1;
@@ -319,12 +321,10 @@
 }
 
 .text-shimmer {
-  background: linear-gradient(
-    100deg,
-    currentColor 35%,
-    rgba(212, 175, 55, 0.9) 50%,
-    currentColor 65%
-  );
+  background: linear-gradient(100deg,
+      currentColor 35%,
+      rgba(212, 175, 55, 0.9) 50%,
+      currentColor 65%);
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -463,8 +463,8 @@
   margin-top: 0.25rem;
 }
 
-.prose-ai li > ol,
-.prose-ai li > ul {
+.prose-ai li>ol,
+.prose-ai li>ul {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }
@@ -512,7 +512,7 @@
 }
 
 /* Ensure all direct children respect width */
-.prose-ai > * {
+.prose-ai>* {
   max-width: 100%;
   overflow: hidden;
 }
@@ -524,7 +524,7 @@
 }
 
 /* ── Improved block math spacing ─────────────────────────────────── */
-.prose-ai .katex-display + .katex-display {
+.prose-ai .katex-display+.katex-display {
   margin-top: 0.75rem;
 }
 
@@ -539,13 +539,11 @@
 
 /* Add subtle background to block math for visual separation */
 .prose-ai .katex-display:not(:only-child) {
-  background: linear-gradient(
-    to right,
-    transparent 0%,
-    rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 10%,
-    rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 90%,
-    transparent 100%
-  );
+  background: linear-gradient(to right,
+      transparent 0%,
+      rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 10%,
+      rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 90%,
+      transparent 100%);
   border-radius: 0.375rem;
 }
 
@@ -605,10 +603,42 @@
 
 /* Thinking indicator animations */
 @keyframes thinking-converge {
-  0%   { background-position: 0% center; }
-  100% { background-position: 100% center; }
+  0% {
+    background-position: 0% center;
+  }
+
+  100% {
+    background-position: 100% center;
+  }
 }
+
 @keyframes bar-pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.85; }
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 0.85;
+  }
+}
+
+/* Gilani loader */
+@keyframes g-bounce {
+
+  0%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-g-bounce {
+  animation: g-bounce 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
