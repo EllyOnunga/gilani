@@ -268,22 +268,22 @@ function Landing() {
 
           <div className="mx-auto max-w-7xl w-full px-4 sm:px-8 py-16 sm:py-24 lg:py-32">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
-              {/* Left - WITH BACKGROUND IMAGE */}
-              <div
-                className="lg:col-span-6 text-center lg:text-left space-y-8 relative overflow-hidden rounded-3xl p-6 sm:p-8 lg:p-12 flex flex-col justify-end min-h-[560px] sm:min-h-[580px] lg:min-h-[650px]"
-                style={{
-                  backgroundImage: "url('/landingphero.png')",
-                  backgroundSize: "cover",
-                  backgroundPosition: "50% 20%",
-                  backgroundRepeat: "no-repeat",
-                }}
-              >
-                {/* Text readability overlay */}
+              {/* Left - RESPONSIVE & BLENDED BACKGROUND IMAGE */}
+              <div className="lg:col-span-6 text-center lg:text-left space-y-8 relative overflow-hidden rounded-3xl p-6 sm:p-8 lg:p-12 flex flex-col justify-end min-h-[560px] sm:min-h-[580px] lg:min-h-[650px]">
+                {/* Responsive Background Image */}
+                <img
+                  src="/landingphero.png"
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover object-center z-0"
+                  loading="eager"
+                />
+
+                {/* Enhanced blending overlay - smoothly fades into the dark background */}
                 <div
                   className="absolute inset-0 z-[1]"
                   style={{
                     background:
-                      "linear-gradient(135deg, rgba(15,17,23,0.75) 0%, rgba(15,17,23,0.5) 50%, rgba(15,17,23,0.2) 100%)",
+                      "linear-gradient(to top, rgba(15,17,23,0.9) 0%, rgba(15,17,23,0.55) 0%, rgba(15,17,23,0.25) 70%, transparent 100%)",
                   }}
                 />
 
@@ -335,7 +335,7 @@ function Landing() {
                     </Link>
                     <Link
                       to="/about"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary bg-white/10 px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-white/20 hover:border-white/30 transition-all backdrop-blur-sm"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary bg-white/10 px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-primary hover:bg-white/20 hover:border-white/30 transition-all backdrop-blur-sm"
                     >
                       Learn More
                     </Link>

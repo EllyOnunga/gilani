@@ -535,7 +535,7 @@ function Dashboard() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm sm:text-base font-bold text-orange-400">
-                        Continue Chat
+                        Resume Chat
                       </p>
                       {/*<p className="text-[11px] sm:text-xs text-white/70 mt-0.5 truncate max-w-[180px] sm:max-w-[220px]">
                         {data.lastSessionTitle ?? "Last session"}
