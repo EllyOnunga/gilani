@@ -110,9 +110,9 @@ const loadDashboardData = createServerFn({ method: "GET" })
 
     const memberSince = profile?.created_at
       ? new Date(profile.created_at).toLocaleDateString("en-KE", {
-          month: "short",
-          year: "numeric",
-        })
+        month: "short",
+        year: "numeric",
+      })
       : "";
 
     return {
@@ -370,11 +370,10 @@ function Dashboard() {
               </h1>
               <div className="flex items-center gap-2 flex-wrap">
                 <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold font-mono tracking-wide border transition-all ${
-                    isFree
-                      ? "bg-muted/40 border-border/40 text-muted-foreground"
-                      : "bg-primary/10 border-primary/20 text-primary shadow-sm"
-                  }`}
+                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold font-mono tracking-wide border transition-all ${isFree
+                    ? "bg-muted/40 border-border/40 text-muted-foreground"
+                    : "bg-primary/10 border-primary/20 text-primary shadow-sm"
+                    }`}
                 >
                   {planLabel}
                 </span>
@@ -485,13 +484,12 @@ function Dashboard() {
               </div>
               <div className="h-2 w-full rounded-full bg-black/30 overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ease-out ${
-                    usagePct >= 90
-                      ? "bg-gradient-to-r from-red-500 to-red-400"
-                      : usagePct >= 70
-                        ? "bg-gradient-to-r from-amber-500 to-amber-400"
-                        : "bg-gradient-to-r from-primary to-primary/80"
-                  }`}
+                  className={`h-full rounded-full transition-all duration-500 ease-out ${usagePct >= 90
+                    ? "bg-gradient-to-r from-red-500 to-red-400"
+                    : usagePct >= 70
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                      : "bg-gradient-to-r from-primary to-primary/80"
+                    }`}
                   style={{ width: `${usagePct}%` }}
                 />
               </div>
@@ -511,17 +509,17 @@ function Dashboard() {
             <div className="grid grid-cols-2 gap-2">
               <Link
                 to="/tutor"
-                className="group flex items-center justify-between rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+                className="group flex items-center justify-between rounded-xl bg-white/10 hover:bg-white/20 border border-[#FF9500] p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors">
+                  <div className="p-1 rounded-lg transition-colors">
                     <MessageCircle className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm sm:text-base font-semibold text-white">New AI Session</p>
-                    <p className="text-[11px] sm:text-xs text-white/70 mt-0.5">
+                    <p className="text-sm sm:text-base font-bold text-orange-400">New Chat</p>
+                    {/*<p className="text-[11px] sm:text-xs text-white/70 mt-0.5">
                       Start a fresh tutoring session
-                    </p>
+                    </p>*/}
                   </div>
                 </div>
               </Link>
@@ -529,19 +527,19 @@ function Dashboard() {
                 <Link
                   to="/tutor/$threadId"
                   params={{ threadId: data.lastSessionId }}
-                  className="group flex items-center justify-between rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+                  className="group flex items-center justify-between rounded-xl bg-white/10 hover:bg-white/20 border border-[#FF9500] p-4 sm:p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-lg bg-white/10 group-hover:bg-white/20 transition-colors">
+                    <div className="p-1 rounded-lg transition-colors">
                       <Calendar className="h-5 w-5 text-primary" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm sm:text-base font-semibold text-white">
-                        Continue Session
+                      <p className="text-sm sm:text-base font-bold text-orange-400">
+                        Continue Chat
                       </p>
-                      <p className="text-[11px] sm:text-xs text-white/70 mt-0.5 truncate max-w-[180px] sm:max-w-[220px]">
+                      {/*<p className="text-[11px] sm:text-xs text-white/70 mt-0.5 truncate max-w-[180px] sm:max-w-[220px]">
                         {data.lastSessionTitle ?? "Last session"}
-                      </p>
+                      </p>*/}
                     </div>
                   </div>
                 </Link>
