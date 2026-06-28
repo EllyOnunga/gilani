@@ -259,6 +259,9 @@ function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [reauthError, setReauthError] = useState("");
+  const [reauthOtp, setReauthOtp] = useState("");
+  const [reauthSent, setReauthSent] = useState(false);
+  const [reauthSending, setReauthSending] = useState(false);
 
   // Theme & Stats States
   const [isDark, setIsDark] = useState(false);
@@ -428,21 +431,39 @@ function SettingsPage() {
     }
   };
 
+  const handleRequestReauth = async () => {
+    setReauthSending(true);
+    setReauthError("");
+    const { error } = await supabase.auth.reauthenticate();
+    setReauthSending(false);
+    if (error) {
+      setReauthError("Failed to send verification code. Please try again.");
+    } else {
+      setReauthSent(true);
+    }
+  };
+
   const handleDeleteAccount = async () => {
-    if (!deletePassword) return;
+    if (!reauthOtp) return;
     setReauthError("");
     setDeleting(true);
+    // Verify the OTP before deleting
+    const { error: otpError } = await supabase.auth.verifyOtp({
+      email: user?.email ?? "",
+      token: reauthOtp,
+      type: "reauthentication",
+    });
+    if (otpError) {
+      setReauthError("Invalid or expired code. Please try again.");
+      setDeleting(false);
+      return;
+    }
     try {
-      await deleteAccount({ data: { password: deletePassword } });
+      await deleteAccount({ data: { password: "" } });
       await supabase.auth.signOut();
       window.location.href = "/";
     } catch (err: any) {
-      const msg = err?.message || "Failed to delete account.";
-      if (msg.toLowerCase().includes("incorrect password")) {
-        setReauthError(msg);
-      } else {
-        toast.error(friendlyError(err, "Failed to delete account."));
-      }
+      toast.error(friendlyError(err, "Failed to delete account."));
       setDeleting(false);
     }
   };
@@ -1202,7 +1223,10 @@ function SettingsPage() {
 
                     {!showDeleteConfirm ? (
                       <button
-                        onClick={() => setShowDeleteConfirm(true)}
+                        onClick={() => {
+                          setShowDeleteConfirm(true);
+                          handleRequestReauth();
+                        }}
                         type="button"
                         className="inline-flex items-center gap-2 rounded-lg border border-destructive/50 px-4 py-2 text-xs font-bold uppercase tracking-wider text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors cursor-pointer"
                       >
@@ -1210,48 +1234,70 @@ function SettingsPage() {
                       </button>
                     ) : (
                       <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 space-y-3">
-                        <p className="text-xs font-semibold text-destructive">
-                          Are you sure? This will permanently delete your account, profile, and all
-                          chat history. Enter your password to confirm.
-                        </p>
-                        <div>
-                          <input
-                            type="password"
-                            placeholder="Enter your password to confirm"
-                            value={deletePassword}
-                            onChange={(e) => {
-                              setDeletePassword(e.target.value);
-                              setReauthError("");
-                            }}
-                            className="w-full rounded-lg border border-destructive/30 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-destructive/40"
-                          />
-                          {reauthError && (
-                            <p className="text-xs text-destructive mt-1">{reauthError}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={handleDeleteAccount}
-                            disabled={deleting || !deletePassword}
-                            type="button"
-                            className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-xs font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            {deleting ? "Deleting..." : "Yes, Delete Everything"}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowDeleteConfirm(false);
-                              setDeletePassword("");
-                              setReauthError("");
-                            }}
-                            disabled={deleting}
-                            type="button"
-                            className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent transition-colors cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                        </div>
+                        {!reauthSent ? (
+                          <p className="text-xs font-semibold text-destructive">
+                            {reauthSending
+                              ? "Sending verification code to your email…"
+                              : "A verification code is being sent to your email."}
+                          </p>
+                        ) : (
+                          <>
+                            <p className="text-xs font-semibold text-destructive">
+                              A verification code was sent to{" "}
+                              <span className="font-mono">{user?.email}</span>. Enter it below to
+                              permanently delete your account.
+                            </p>
+                            <div>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="Enter 6-digit code"
+                                value={reauthOtp}
+                                onChange={(e) => {
+                                  setReauthOtp(e.target.value);
+                                  setReauthError("");
+                                }}
+                                className="w-full rounded-lg border border-destructive/30 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-destructive/40 tracking-widest font-mono"
+                                maxLength={6}
+                              />
+                              {reauthError && (
+                                <p className="text-xs text-destructive mt-1">{reauthError}</p>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={handleDeleteAccount}
+                                disabled={deleting || reauthOtp.length < 6}
+                                type="button"
+                                className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-xs font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                {deleting ? "Deleting..." : "Yes, Delete Everything"}
+                              </button>
+                              <button
+                                onClick={() => handleRequestReauth()}
+                                disabled={reauthSending}
+                                type="button"
+                                className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent transition-colors cursor-pointer"
+                              >
+                                Resend Code
+                              </button>
+                            </div>
+                          </>
+                        )}
+                        <button
+                          onClick={() => {
+                            setShowDeleteConfirm(false);
+                            setReauthOtp("");
+                            setReauthSent(false);
+                            setReauthError("");
+                          }}
+                          disabled={deleting}
+                          type="button"
+                          className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent transition-colors cursor-pointer"
+                        >
+                          Cancel
+                        </button>
                       </div>
                     )}
                   </div>
