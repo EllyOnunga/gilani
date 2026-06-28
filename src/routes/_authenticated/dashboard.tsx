@@ -110,9 +110,9 @@ const loadDashboardData = createServerFn({ method: "GET" })
 
     const memberSince = profile?.created_at
       ? new Date(profile.created_at).toLocaleDateString("en-KE", {
-        month: "short",
-        year: "numeric",
-      })
+          month: "short",
+          year: "numeric",
+        })
       : "";
 
     return {
@@ -183,10 +183,10 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
         let depth = 0;
         let start = -1;
         for (let i = 0; i < clean.length; i++) {
-          if (clean[i] === '{') {
+          if (clean[i] === "{") {
             if (depth === 0) start = i;
             depth++;
-          } else if (clean[i] === '}') {
+          } else if (clean[i] === "}") {
             depth--;
             if (depth === 0 && start !== -1) {
               try {
@@ -393,123 +393,145 @@ function Dashboard() {
         )}
       </header>
 
-      {/* ── Stats row ── */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          {
-            label: "Study Streak",
-            value: isLoading ? null : `${streak}`,
-            unit: "days",
-            icon: Flame,
-            color: (streak > 0) ? "text-orange-500" : "text-muted-foreground/40",
-          },
-          {
-            label: "Total Messages",
-            value: isLoading ? null : `${messagesCount}`,
-            unit: "sent",
-            icon: MessageCircle,
-            color: "text-blue-500",
-          },
-          {
-            label: "Today's Usage",
-            value: isLoading ? null : `${dailyUsed}/${dailyMax}`,
-            unit: "msgs",
-            icon: TrendingUp,
-            color: usagePct >= 80 ? "text-red-500" : "text-green-500",
-          },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="rounded-xl border border-border/40 bg-card p-3 sm:p-4 flex flex-col gap-1"
-          >
-            <div className="flex items-center gap-1.5">
-              <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
-              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 font-semibold">
-                {s.label}
-              </p>
-            </div>
-            {s.value === null ? (
-              <div className="h-6 w-16 rounded bg-muted/60 animate-pulse mt-1" />
-            ) : (
-              <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-                {s.value}{" "}
-                <span className="text-xs font-normal text-muted-foreground/50">{s.unit}</span>
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* ── Daily usage bar ── */}
-      {!isLoading && (
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60 font-semibold">
-              Daily message quota
-            </p>
-            <p className="text-[10px] font-mono text-muted-foreground/60">
-              {dailyUsed} / {dailyMax}
-            </p>
-          </div>
-          <div className="h-1.5 w-full rounded-full bg-muted/40 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${usagePct >= 90 ? "bg-red-500" : usagePct >= 70 ? "bg-amber-500" : "bg-primary"}`}
-              style={{ width: `${usagePct}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ── Quick actions ── */}
-      <section className="space-y-3">
-        <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 font-semibold">
-          Study Suite
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Link
-            to="/tutor"
-            className="group flex items-center justify-between rounded-xl border border-border/40 bg-card hover:border-primary/30 hover:bg-primary/5 p-4 transition-all duration-200"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <MessageCircle className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">New AI Session</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Start a fresh tutoring session
-                </p>
-              </div>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-          </Link>
-          {data?.lastSessionId && (
-            <Link
-              to="/tutor/$threadId"
-              params={{ threadId: data.lastSessionId }}
-              className="group flex items-center justify-between rounded-xl border border-border/40 bg-card hover:border-primary/30 hover:bg-primary/5 p-4 transition-all duration-200"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted/40">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Continue Session</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-[160px]">
-                    {data.lastSessionTitle ?? "Last session"}
+      {/* ── Stats + Quick Actions with dashboard bg image ── */}
+      <div
+        className="relative rounded-2xl overflow-hidden px-4 sm:px-6 pt-4 sm:pt-6 pb-0 space-y-4"
+        style={{
+          backgroundImage: "url('/dashboard.png')",
+          backgroundSize: "100% 100%",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        {/* Dark overlay */}
+        <div
+          className="absolute inset-0 z-[1]"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 100%)",
+          }}
+        />
+        <div className="relative z-[2] space-y-4">
+          {/* ── Stats row ── */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              {
+                label: "Study Streak",
+                value: isLoading ? null : `${streak}`,
+                unit: "days",
+                icon: Flame,
+                color: streak > 0 ? "text-orange-500" : "text-muted-foreground/40",
+              },
+              {
+                label: "Total Messages",
+                value: isLoading ? null : `${messagesCount}`,
+                unit: "sent",
+                icon: MessageCircle,
+                color: "text-blue-500",
+              },
+              {
+                label: "Today's Usage",
+                value: isLoading ? null : `${dailyUsed}/${dailyMax}`,
+                unit: "msgs",
+                icon: TrendingUp,
+                color: usagePct >= 80 ? "text-red-500" : "text-green-500",
+              },
+            ].map((s) => (
+              <div key={s.label} className="rounded-xl bg-white/5 p-3 sm:p-4 flex flex-col gap-1">
+                <div className="flex items-center gap-1.5">
+                  <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-white/70 font-semibold [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                    {s.label}
                   </p>
                 </div>
+                {s.value === null ? (
+                  <div className="h-6 w-16 rounded bg-muted/60 animate-pulse mt-1" />
+                ) : (
+                  <p className="text-xl sm:text-2xl font-bold text-white tracking-tight [text-shadow:0_1px_6px_rgba(0,0,0,0.9)]">
+                    {s.value} <span className="text-xs font-normal text-white/50">{s.unit}</span>
+                  </p>
+                )}
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
-            </Link>
-          )}
-        </div>
-      </section>
+            ))}
+          </div>
 
+          {/* ── Daily usage bar ── */}
+          {!isLoading && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-white/70 font-semibold [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                  Daily message quota
+                </p>
+                <p className="text-[10px] font-mono text-white/60">
+                  {dailyUsed} / {dailyMax}
+                </p>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-muted/40 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${usagePct >= 90 ? "bg-red-500" : usagePct >= 70 ? "bg-amber-500" : "bg-primary"}`}
+                  style={{ width: `${usagePct}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ── Quick actions ── */}
+          <section className="space-y-3">
+            <p className="font-mono text-[9px] uppercase tracking-widest text-white/70 font-semibold [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+              Study Suite
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Link
+                to="/tutor"
+                className="group flex items-center justify-between rounded-xl bg-white/5 hover:bg-white/10 p-4 transition-all duration-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <MessageCircle className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                      New AI Session
+                    </p>
+                    <p className="text-[11px] text-white/70 mt-0.5">
+                      Start a fresh tutoring session
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-white/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+              </Link>
+              {data?.lastSessionId && (
+                <Link
+                  to="/tutor/$threadId"
+                  params={{ threadId: data.lastSessionId }}
+                  className="group flex items-center justify-between rounded-xl bg-white/5 hover:bg-white/10 p-4 transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted/40">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                        Continue Session
+                      </p>
+                      <p className="text-[11px] text-white/70 mt-0.5 truncate max-w-[160px]">
+                        {data.lastSessionTitle ?? "Last session"}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+                </Link>
+              )}
+            </div>
+          </section>
+        </div>
+        {/* end inner z-[2] */}
+      </div>
+      {/* end dashboard bg wrapper */}
       {/* ── Daily Insights ── */}
-      <section className="space-y-3">
+      <section className="space-y-3 -mt-10">
         <div className="flex items-center justify-between">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 font-semibold">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-white/70 font-semibold [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
             Daily Learning Insights
           </p>
           <span className="font-mono text-[9px] text-muted-foreground/40">
