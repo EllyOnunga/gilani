@@ -10,7 +10,7 @@ import {
 } from "@/lib/email.server";
 
 export const assignUserRole = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       role: z.enum(["student", "teacher", "admin"]),
       // userId removed — extracted from server session
@@ -92,7 +92,7 @@ export const assignUserRole = createServerFn({ method: "POST" })
  * Server action to check if an email already exists in Supabase Auth.
  */
 export const checkEmailExists = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       email: z.string().email(),
     }),

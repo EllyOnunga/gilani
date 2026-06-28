@@ -5,7 +5,7 @@ import { z } from "zod";
 import { sendTransactionalEmail, emailTemplate } from "./email.server";
 
 export const submitContactFn = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       name: z.string().min(1).max(100),
       email: z.string().email().max(200),

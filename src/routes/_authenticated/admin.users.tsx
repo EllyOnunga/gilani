@@ -241,7 +241,7 @@ const listContactMessages = createServerFn({ method: "GET" }).handler(async () =
 });
 
 const updateMessageStatus = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({ id: z.string().uuid(), status: z.enum(["unread", "read", "resolved"]) }),
   )
   .handler(async ({ data }) => {
@@ -255,7 +255,7 @@ const updateMessageStatus = createServerFn({ method: "POST" })
   });
 
 const updateRole = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ userId: z.string(), role: z.string() }))
+  .validator(z.object({ userId: z.string(), role: z.string() }))
   .handler(async ({ data }) => {
     const request = getRequest();
     const adminId = await verifyAdmin(request);
@@ -370,7 +370,7 @@ const listPayments = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 const updateUserPlan = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       userId: z.string(),
       plan: z.enum(["free", "basic", "premium", "school"]),
@@ -388,7 +388,7 @@ const updateUserPlan = createServerFn({ method: "POST" })
   });
 
 const resetUserRateLimit = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ userId: z.string() }))
+  .validator(z.object({ userId: z.string() }))
   .handler(async ({ data }) => {
     const request = getRequest();
     await verifyAdmin(request);

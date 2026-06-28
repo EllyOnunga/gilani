@@ -25,7 +25,7 @@ type GlobalNote = {
 
 // ─── Server: ingest a global note (admin only) ────────────────────────────────
 export const ingestGlobalNote = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       title: z.string(),
       subject: z.string().optional(),
@@ -141,7 +141,7 @@ export const listGlobalNotes = createServerFn({ method: "GET" }).handler(async (
 
 // ─── Server: delete global note ───────────────────────────────────────────────
 export const deleteGlobalNote = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id: z.string().uuid() }))
+  .validator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data }) => {
     const request = getRequest();
     let authResult;

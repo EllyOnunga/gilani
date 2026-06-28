@@ -323,7 +323,7 @@ export async function getPlanRateLimitStatus(
 }
 
 export const getRateLimitStatus = createServerFn({ method: "POST" })
-  .inputValidator(z.string())
+  .validator(z.string())
   .handler(async ({ data }) => {
     const action = data as RateLimitAction;
     const request = getRequest();

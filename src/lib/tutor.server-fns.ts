@@ -4,7 +4,7 @@ import { z } from "zod";
 import { sendTransactionalEmail, emailTemplate } from "./email.server";
 
 export const createEscalationFn = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       conversationId: z.string().uuid(),
       reason: z.string().default("student_request"),
@@ -43,7 +43,7 @@ export const createEscalationFn = createServerFn({ method: "POST" })
   });
 
 export const deleteThreadFn = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ threadId: z.string().uuid() }))
+  .validator(z.object({ threadId: z.string().uuid() }))
   .handler(async ({ data }) => {
     const request = (await import("@tanstack/react-start/server")).getRequest();
     const { authenticateRequest } = await import("@/lib/api-auth.server");
@@ -64,7 +64,7 @@ export const deleteThreadFn = createServerFn({ method: "POST" })
   });
 
 export const generateThreadTitleFn = createServerFn({ method: "POST" })
-  .inputValidator(z.string().max(500))
+  .validator(z.string().max(500))
   .handler(async ({ data: firstMessage }) => {
     const request = (await import("@tanstack/react-start/server")).getRequest();
     const { authenticateRequest } = await import("@/lib/api-auth.server");
@@ -119,7 +119,7 @@ export const generateThreadTitleFn = createServerFn({ method: "POST" })
   });
 
 export const lookupTeacherByEmail = createServerFn({ method: "POST" })
-  .inputValidator(z.string().email())
+  .validator(z.string().email())
   .handler(async ({ data: email }) => {
     const request = (await import("@tanstack/react-start/server")).getRequest();
     const { authenticateRequest } = await import("@/lib/api-auth.server");
@@ -172,7 +172,7 @@ export async function createNotification({
   } as any);
 }
 export const createEscalationNotification = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       conversationId: z.string().uuid(),
       reviewerId: z.string().uuid().nullable(),
@@ -282,7 +282,7 @@ export const createEscalationNotification = createServerFn({ method: "POST" })
   });
 
 export const createResolutionNotification = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       studentId: z.string().uuid(),
       conversationId: z.string().uuid(),
@@ -336,7 +336,7 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
   });
 
 export const renameThreadFn = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({ threadId: z.string().uuid(), title: z.string().trim().min(1).max(120) }),
   )
   .handler(async ({ data }) => {

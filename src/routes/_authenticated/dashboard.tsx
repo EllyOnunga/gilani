@@ -37,6 +37,7 @@ type DailyInsights = {
   topicOfDay: string;
   didYouKnow: string;
   streakMotivation: string;
+  isFallback?: boolean;
 };
 
 type DashboardData = {
@@ -61,7 +62,7 @@ type DashboardData = {
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
 const loadDashboardData = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ localDate: z.string() }))
+  .validator(z.object({ localDate: z.string() }))
   .handler(async ({ data }) => {
     const request = getRequest();
     let authResult;
@@ -140,26 +141,25 @@ const loadDashboardData = createServerFn({ method: "GET" })
 // ─── Daily Insights Server Function ───────────────────────────────────────────
 
 const fetchDailyInsights = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ curriculum: z.string(), streak: z.number() }))
+  .validator(z.object({ curriculum: z.string(), streak: z.number() }))
   .handler(async ({ data }) => {
     const { curriculum, streak } = data;
-
-    // Add an 'isFallback' flag so the client knows not to cache this
     const fallback = {
       tip: "Break your study sessions into 25-minute focused blocks with 5-minute breaks for maximum retention.",
-      topicOfDay: "Photosynthesis: Plants convert sunlight, water and CO₂ into glucose and oxygen via the Calvin cycle.",
-      didYouKnow: "The human brain can store approximately 2.5 petabytes of information — equivalent to 3 million hours of TV.",
-      streakMotivation: streak > 0
-        ? `${streak} days strong — consistency is the foundation of excellence!`
-        : "Every expert was once a beginner — start your streak today!",
-      isFallback: true, // <--- NEW FLAG
-    } satisfies DailyInsights & { isFallback: boolean };
+      topicOfDay:
+        "Photosynthesis: Plants convert sunlight, water and CO₂ into glucose and oxygen via the Calvin cycle.",
+      didYouKnow:
+        "The human brain can store approximately 2.5 petabytes of information — equivalent to 3 million hours of TV.",
+      streakMotivation:
+        streak > 0
+          ? `${streak} days strong — consistency is the foundation of excellence!`
+          : "Every expert was once a beginner — start your streak today!",
+      isFallback: true,
+    } satisfies DailyInsights;
 
     try {
       const provider = createGoogleAiProvider();
-      // REVERTED: Your custom wrapper requires .chatModel()
       const model = provider.chatModel("gemini-2.5-flash");
-
       const { text } = await generateText({
         model,
         prompt: `Today is ${new Date().toISOString().slice(0, 10)}. Seed: ${Math.floor(Math.random() * 999983)}. You are an educational assistant for ${curriculum} students in Kenya. Generate 4 UNIQUE pieces of educational content different from previous days. Respond ONLY with valid JSON, no markdown, no backticks.
@@ -170,19 +170,16 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
   "didYouKnow": "A fascinating educational fact relevant to ${curriculum} subjects (1-2 sentences)",
   "streakMotivation": "${streak > 0 ? `An encouraging message about maintaining a ${streak}-day study streak` : "An encouraging message to start a study streak today"} (1 sentence)"
 }`,
-        maxOutputTokens: 1200, // Increased slightly to prevent truncation
+        maxOutputTokens: 1200,
       });
 
-      // ROBUST JSON EXTRACTION
       const clean = text.replace(/```json|```/g, "").trim();
       let parsedJson;
 
-      // Try parsing the whole string first
       try {
         parsedJson = JSON.parse(clean);
       } catch {
-        // If it fails, find the first complete JSON object by counting braces
-        // This prevents trailing text like "Hope this helps! }" from breaking the parse
+        // Robust extraction: find the first complete JSON object by counting braces
         let depth = 0;
         let start = -1;
         for (let i = 0; i < clean.length; i++) {
@@ -194,18 +191,17 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
             if (depth === 0 && start !== -1) {
               try {
                 parsedJson = JSON.parse(clean.slice(start, i + 1));
-                break; // Successfully parsed
+                break;
               } catch {
-                start = -1; // Reset and keep looking if this wasn't valid JSON
+                start = -1;
               }
             }
           }
         }
       }
 
-      if (!parsedJson) throw new Error("No valid JSON found in response");
+      if (!parsedJson) throw new Error("No JSON found in response");
       return parsedJson as DailyInsights;
-
     } catch (err) {
       console.error(
         "[Dashboard Server] Gemini insights fetch failed:",
@@ -214,6 +210,7 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
       return fallback;
     }
   });
+
 // ─── Route ─────────────────────────────────────────────────────────────────────
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -268,23 +265,31 @@ function Dashboard() {
         setData(res);
 
         // Retrieve/save AI insights daily cache
-        // Clear old cache keys
+        // Clear old cache keys (Bumped to v3 to clear poisoned v2 keys)
         Object.keys(localStorage).forEach((k) => {
           if (
             k.startsWith("gilani_daily_insights_") &&
-            !k.startsWith("gilani_daily_insights_v2_")
+            !k.startsWith("gilani_daily_insights_v3_")
           ) {
             localStorage.removeItem(k);
           }
         });
-        const cacheKey = `gilani_daily_insights_v2_${res.userId}_${localDate}`;
+
+        const cacheKey = `gilani_daily_insights_v3_${res.userId}_${localDate}`;
         const cached = localStorage.getItem(cacheKey);
         let loadedInsights = null;
+
         if (cached) {
           try {
             loadedInsights = JSON.parse(cached);
-            setInsights(loadedInsights);
-            setInsightsLoading(false);
+            // Discard if it's the static fallback
+            if (loadedInsights.isFallback) {
+              loadedInsights = null;
+              localStorage.removeItem(cacheKey);
+            } else {
+              setInsights(loadedInsights);
+              setInsightsLoading(false);
+            }
           } catch {
             localStorage.removeItem(cacheKey);
           }
@@ -297,9 +302,8 @@ function Dashboard() {
             });
             setInsights(ins);
 
-            // FIX: Only cache if it's NOT the fallback
-            // This ensures that if the AI fails, we retry on the next page load/refresh
-            if (!(ins as any).isFallback) {
+            // Only cache if it's NOT the fallback
+            if (!ins.isFallback) {
               localStorage.setItem(cacheKey, JSON.stringify(ins));
             }
           } catch (e) {
@@ -397,7 +401,7 @@ function Dashboard() {
             value: isLoading ? null : `${streak}`,
             unit: "days",
             icon: Flame,
-            color: streak > 0 ? "text-orange-500" : "text-muted-foreground/40",
+            color: (streak > 0) ? "text-orange-500" : "text-muted-foreground/40",
           },
           {
             label: "Total Messages",
@@ -531,7 +535,7 @@ function Dashboard() {
               label: streak > 0 ? `${streak}-Day Streak` : "Start Your Streak",
               icon: Flame,
               content: insights?.streakMotivation,
-              accent: "border-l-orange-500",
+              accent: "border-l-orange-500" as const,
             },
           ].map((card) => (
             <div

@@ -102,7 +102,7 @@ const listEscalations = createServerFn({ method: "POST" }).handler(async () => {
 });
 
 const resolveEscalation = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ id: z.string(), expertAnswer: z.string() }))
+  .validator(z.object({ id: z.string(), expertAnswer: z.string() }))
   .handler(async ({ data }) => {
     const request = getRequest();
     let authResult;
@@ -187,7 +187,7 @@ const resolveEscalation = createServerFn({ method: "POST" })
   });
 
 const getConversationMessages = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ conversationId: z.string() }))
+  .validator(z.object({ conversationId: z.string() }))
   .handler(async ({ data }) => {
     const request = getRequest();
     let authResult;
