@@ -237,6 +237,15 @@ function Dashboard() {
         setData(res);
 
         // Retrieve/save AI insights daily cache
+        // Clear old cache keys
+        Object.keys(localStorage).forEach((k) => {
+          if (
+            k.startsWith("gilani_daily_insights_") &&
+            !k.startsWith("gilani_daily_insights_v2_")
+          ) {
+            localStorage.removeItem(k);
+          }
+        });
         const cacheKey = `gilani_daily_insights_v2_${res.userId}_${localDate}`;
         const cached = localStorage.getItem(cacheKey);
         let loadedInsights = null;
