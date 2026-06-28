@@ -36,8 +36,7 @@ export const Route = createFileRoute("/login")({
       { title: "Sign in — GilaniAI" },
       {
         name: "description",
-        content:
-          "Sign in to your GilaniAI account to access AI tutoring and teacher escalation.",
+        content: "Sign in to your GilaniAI account to access AI tutoring and teacher escalation.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -54,6 +53,12 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [magicLinkMode, setMagicLinkMode] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [magicLinkBusy, setMagicLinkBusy] = useState(false);
+  const [magicLinkMode, setMagicLinkMode] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [magicLinkBusy, setMagicLinkBusy] = useState(false);
 
   useEffect(() => {
     if (search.email) {
@@ -107,6 +112,36 @@ function LoginPage() {
       setBusy(false);
       return toast.error(friendlyError(error, "Google sign-in failed. Please try again."));
     }
+  };
+
+  const onMagicLink = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email) return toast.error("Please enter your email address.");
+    setMagicLinkBusy(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/callback?next=${safeRedirectPath(search.redirect)}`,
+      },
+    });
+    setMagicLinkBusy(false);
+    if (error) return toast.error(friendlyError(error, "Failed to send sign-in link."));
+    setMagicLinkSent(true);
+  };
+
+  const onMagicLink = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email) return toast.error("Please enter your email address.");
+    setMagicLinkBusy(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/callback?next=${safeRedirectPath(search.redirect)}`,
+      },
+    });
+    setMagicLinkBusy(false);
+    if (error) return toast.error(friendlyError(error, "Failed to send sign-in link."));
+    setMagicLinkSent(true);
   };
 
   return (

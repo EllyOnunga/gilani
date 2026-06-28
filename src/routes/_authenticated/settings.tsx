@@ -230,6 +230,8 @@ function SettingsPage() {
   const [showPlans, setShowPlans] = useState(false);
   const [currentPlan, setCurrentPlan] = useState("free");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [reauthError, setReauthError] = useState("");
 
   // Theme & Stats States
   const [isDark, setIsDark] = useState(false);
@@ -1069,12 +1071,27 @@ function SettingsPage() {
                       <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 space-y-3">
                         <p className="text-xs font-semibold text-destructive">
                           Are you sure? This will permanently delete your account, profile, and all
-                          chat history.
+                          chat history. Enter your password to confirm.
                         </p>
+                        <div>
+                          <input
+                            type="password"
+                            placeholder="Enter your password to confirm"
+                            value={deletePassword}
+                            onChange={(e) => {
+                              setDeletePassword(e.target.value);
+                              setReauthError("");
+                            }}
+                            className="w-full rounded-lg border border-destructive/30 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-destructive/40"
+                          />
+                          {reauthError && (
+                            <p className="text-xs text-destructive mt-1">{reauthError}</p>
+                          )}
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           <button
                             onClick={handleDeleteAccount}
-                            disabled={deleting}
+                            disabled={deleting || !deletePassword}
                             type="button"
                             className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-xs font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors cursor-pointer"
                           >
@@ -1082,7 +1099,11 @@ function SettingsPage() {
                             {deleting ? "Deleting..." : "Yes, Delete Everything"}
                           </button>
                           <button
-                            onClick={() => setShowDeleteConfirm(false)}
+                            onClick={() => {
+                              setShowDeleteConfirm(false);
+                              setDeletePassword("");
+                              setReauthError("");
+                            }}
                             disabled={deleting}
                             type="button"
                             className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent transition-colors cursor-pointer"
