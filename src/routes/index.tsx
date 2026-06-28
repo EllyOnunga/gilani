@@ -335,7 +335,7 @@ function Landing() {
                     </Link>
                     <Link
                       to="/about"
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-white/20 hover:border-white/30 transition-all backdrop-blur-sm"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary bg-white/10 px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-white/20 hover:border-white/30 transition-all backdrop-blur-sm"
                     >
                       Learn More
                     </Link>
@@ -406,8 +406,8 @@ function Landing() {
                           )}
                           <div
                             className={`max-w-[82%] rounded-xl px-3.5 py-2.5 text-xs leading-relaxed ${msg.role === "student"
-                                ? "bg-[#d9531e] text-white rounded-br-sm"
-                                : "bg-[#252836] text-[#e2e4f0] border border-white/6 rounded-bl-sm"
+                              ? "bg-[#d9531e] text-white rounded-br-sm"
+                              : "bg-[#252836] text-[#e2e4f0] border border-white/6 rounded-bl-sm"
                               }`}
                           >
                             {msg.text}
@@ -636,8 +636,8 @@ function Landing() {
                   <div
                     key={plan.id}
                     className={`relative rounded-2xl flex flex-col justify-between w-full sm:w-[calc(50%-10px)] lg:w-[calc(25%-15px)] min-w-[220px] max-w-[290px] p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl ${isPremium
-                        ? "border-2 border-[#d9531e] bg-[#1a1d27] shadow-xl shadow-[#d9531e]/10"
-                        : "border border-white/8 bg-[#1a1d27]"
+                      ? "border-2 border-[#d9531e] bg-[#1a1d27] shadow-xl shadow-[#d9531e]/10"
+                      : "border border-white/8 bg-[#1a1d27]"
                       }`}
                   >
                     {isPremium && (
@@ -649,10 +649,10 @@ function Landing() {
                       <div className="mb-4 mt-1">
                         <span
                           className={`rounded-full px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider font-semibold ${isPremium
-                              ? "bg-[#d9531e]/15 text-[#d9531e]"
-                              : isSchool
-                                ? "bg-purple-500/10 text-purple-400"
-                                : "bg-white/6 text-[#9ca3af]"
+                            ? "bg-[#d9531e]/15 text-[#d9531e]"
+                            : isSchool
+                              ? "bg-purple-500/10 text-purple-400"
+                              : "bg-white/6 text-[#9ca3af]"
                             }`}
                         >
                           {plan.id === "free"
@@ -683,10 +683,10 @@ function Landing() {
                           <li key={feat} className="flex gap-2.5 items-start">
                             <Check
                               className={`h-4 w-4 flex-shrink-0 ${isPremium
-                                  ? "text-[#d9531e]"
-                                  : isSchool
-                                    ? "text-purple-400"
-                                    : "text-emerald-500"
+                                ? "text-[#d9531e]"
+                                : isSchool
+                                  ? "text-purple-400"
+                                  : "text-emerald-500"
                                 }`}
                             />
                             <span className={isPremium ? "text-white/90 font-medium" : ""}>
@@ -699,8 +699,8 @@ function Landing() {
                     <Link
                       to="/register"
                       className={`w-full inline-flex items-center justify-center rounded-xl py-3 text-xs font-bold uppercase tracking-wider transition-all ${isPremium
-                          ? "bg-[#d9531e] text-white hover:bg-[#c44819] shadow-lg shadow-[#d9531e]/20"
-                          : "border border-white/10 text-[#9ca3af] hover:bg-white/6 hover:text-white"
+                        ? "bg-[#d9531e] text-white hover:bg-[#c44819] shadow-lg shadow-[#d9531e]/20"
+                        : "border border-white/10 text-[#9ca3af] hover:bg-white/6 hover:text-white"
                         }`}
                     >
                       {plan.price === 0 ? "Get Started Free" : "Upgrade Plan"}
