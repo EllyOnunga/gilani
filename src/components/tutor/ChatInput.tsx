@@ -33,6 +33,8 @@ type Props = {
   onClearDocError: () => void;
   onUpgrade?: () => void;
   onStop?: () => void;
+  /** Called when a rate-limit countdown finishes so the parent can clear the error and refresh status */
+  onRateLimitExpired?: () => void;
   messagesUsed?: number;
   messagesMax?: number;
   /** Optional ref so parent can programmatically focus the textarea (e.g. after clicking Edit on a bubble) */
@@ -60,12 +62,14 @@ function formatTime(seconds: number): string {
   return parts.join(" ");
 }
 
-function useRateLimitCountdown(chatError: string | null) {
+function useRateLimitCountdown(chatError: string | null, onExpired?: () => void) {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [isDaily, setIsDaily] = useState(false);
   const [maxSeconds, setMaxSeconds] = useState(60);
   const [customMessage, setCustomMessage] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onExpiredRef = useRef(onExpired);
+  onExpiredRef.current = onExpired;
 
   useEffect(() => {
     if (!chatError) {
@@ -107,6 +111,8 @@ function useRateLimitCountdown(chatError: string | null) {
         setSecondsLeft((s) => {
           if (s <= 1) {
             clearInterval(timerRef.current!);
+            // Notify parent so it can clear the error & re-fetch status
+            onExpiredRef.current?.();
             return 0;
           }
           return s - 1;
@@ -135,6 +141,7 @@ export function ChatInput({
   onClearDocError,
   onUpgrade,
   onStop,
+  onRateLimitExpired,
   messagesUsed = 0,
   messagesMax = undefined,
   inputRef: externalInputRef,
@@ -179,6 +186,7 @@ export function ChatInput({
 
   const { secondsLeft, isDaily, maxSeconds, customMessage } = useRateLimitCountdown(
     isRateLimited ? chatError : null,
+    onRateLimitExpired,
   );
   const isDisabled = isPending || parsingFile || isRateLimited;
 

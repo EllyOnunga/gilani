@@ -34,7 +34,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 
 const deleteAccount = createServerFn({ method: "POST" })
-  .validator((data: { password: string }) => data)
+  .validator((data: { otp: string }) => data)
   .handler(async ({ data }) => {
     const request = getRequest();
     let authResult;
@@ -46,7 +46,7 @@ const deleteAccount = createServerFn({ method: "POST" })
 
     const { userId, user } = authResult;
 
-    // Server-side reauth — verify password before deletion
+    // Server-side reauth — verify OTP before deletion
     const SUPABASE_URL = process.env.SUPABASE_URL!;
     const SUPABASE_ANON_KEY =
       process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY!;
@@ -54,11 +54,12 @@ const deleteAccount = createServerFn({ method: "POST" })
     const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
-    const { error: reauthErr } = await anonClient.auth.signInWithPassword({
+    const { error: otpError } = await anonClient.auth.verifyOtp({
       email: user.email!,
-      password: data.password,
+      token: data.otp,
+      type: "reauthentication",
     });
-    if (reauthErr) throw new Error("Incorrect password. Please try again.");
+    if (otpError) throw new Error("Invalid or expired verification code. Please try again.");
 
     const { data: roleRow } = await supabaseAdmin
       .from("user_roles")
@@ -447,23 +448,12 @@ function SettingsPage() {
     if (!reauthOtp) return;
     setReauthError("");
     setDeleting(true);
-    // Verify the OTP before deleting
-    const { error: otpError } = await supabase.auth.verifyOtp({
-      email: user?.email ?? "",
-      token: reauthOtp,
-      type: "reauthentication",
-    });
-    if (otpError) {
-      setReauthError("Invalid or expired code. Please try again.");
-      setDeleting(false);
-      return;
-    }
     try {
-      await deleteAccount({ data: { password: "" } });
+      await deleteAccount({ data: { otp: reauthOtp } });
       await supabase.auth.signOut();
       window.location.href = "/";
     } catch (err: any) {
-      toast.error(friendlyError(err, "Failed to delete account."));
+      setReauthError(friendlyError(err, "Failed to delete account."));
       setDeleting(false);
     }
   };
@@ -555,13 +545,7 @@ function SettingsPage() {
     if (error) {
       toast.error(error.message || "Failed to update password.");
     } else {
-      // Notify user via email that their password was changed
-      await supabase.auth
-        .resetPasswordForEmail(user?.email ?? "", {
-          redirectTo: `${window.location.origin}/login`,
-        })
-        .catch(() => {}); // best-effort, don't block on failure
-      toast.success("Password updated. A confirmation email has been sent to " + user?.email);
+      toast.success("Password updated successfully!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmNewPassword("");

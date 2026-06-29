@@ -850,6 +850,12 @@ function TutorThreadInner({
               setDocUploadError(null);
             }}
             onUpgrade={() => setShowPlans(true)}
+            onRateLimitExpired={() => {
+              // Countdown expired (daily reset hit midnight) — clear stale error
+              // and re-fetch real status so the banner disappears automatically
+              setChatError(null);
+              refreshRateLimitStatus();
+            }}
             messagesUsed={messagesUsed}
             messagesMax={messagesMax}
           />

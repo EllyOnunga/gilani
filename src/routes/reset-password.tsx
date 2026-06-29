@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,8 +29,12 @@ function ResetPasswordPage() {
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const verifiedRef = useRef(false);
 
   useEffect(() => {
+    if (verifiedRef.current) return;
+    verifiedRef.current = true;
+
     const verifyRecoveryToken = async () => {
       // 1. Check if Supabase sent error in URL fragment or search params
       const hash = window.location.hash;

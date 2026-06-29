@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,11 +20,15 @@ function AuthCallback() {
   const { next, error: urlError, error_description } = useSearch({ from: "/callback" });
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const processedRef = useRef(false);
 
   // Sanitize next — prevent open redirect attacks
   const safePath = next.startsWith("/") ? next : "/dashboard";
 
   useEffect(() => {
+    if (processedRef.current) return;
+    processedRef.current = true;
+
     // Check for error in URL hash (e.g. expired OTP)
     const hash = window.location.hash;
     const hashParams = new URLSearchParams(hash.replace("#", ""));
@@ -42,13 +46,23 @@ function AuthCallback() {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get("code");
       const tokenHash = urlParams.get("token_hash");
-      const type = urlParams.get("type") as "email" | "recovery" | null;
+      const type = urlParams.get("type");
+
+      // PKCE code flow
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          setIsError(true);
+          setErrorMessage(exchangeError.message || "The link is invalid or has expired.");
+          return;
+        }
+      }
 
       // token_hash flow
       if (tokenHash && type) {
         const { error: verifyError } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
-          type,
+          type: type as any,
         });
         if (verifyError) {
           setIsError(true);
@@ -74,6 +88,12 @@ function AuthCallback() {
       }
 
       if (session) {
+        // If recovery flow (reset-password), bypass role checks to allow user to reset password
+        if (safePath === "/reset-password" || type === "recovery") {
+          navigate({ to: "/reset-password" });
+          return;
+        }
+
         // Check if this user already has a role (existing user)
         const { data: roleRow } = await supabase
           .from("user_roles")
