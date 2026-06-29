@@ -471,36 +471,6 @@ function Dashboard() {
             ))}
           </div>
 
-          {/* ── Daily usage bar ── */}
-          {!isLoading && (
-            <div className="space-y-2 bg-white/5 rounded-xl p-4 border border-white/10">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] sm:text-[11px] font-mono uppercase tracking-widest text-white/80 font-semibold">
-                  Daily message quota
-                </p>
-                <p className="text-[10px] sm:text-[11px] font-mono text-primary font-semibold">
-                  {dailyUsed} / {dailyMax}
-                </p>
-              </div>
-              <div className="h-2 w-full rounded-full bg-black/30 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ease-out ${usagePct >= 90
-                    ? "bg-gradient-to-r from-red-500 to-red-400"
-                    : usagePct >= 70
-                      ? "bg-gradient-to-r from-amber-500 to-amber-400"
-                      : "bg-gradient-to-r from-primary to-primary/80"
-                    }`}
-                  style={{ width: `${usagePct}%` }}
-                />
-              </div>
-              {usagePct >= 80 && (
-                <p className="text-[10px] text-amber-300/80 font-medium">
-                  ⚠️ You're approaching your daily limit
-                </p>
-              )}
-            </div>
-          )}
-
           {/* ── Quick actions ── */}
           <section className="space-y-3">
             <p className="font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-white/80 font-semibold">
