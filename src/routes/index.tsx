@@ -538,7 +538,7 @@ function Landing() {
                 {
                   step: "01",
                   title: "Sign up free",
-                  desc: "Create your account in under a minute. Set your curriculum and subjects to personalise the AI to your learning needs.",
+                  desc: "Create your account in under a minute and start chatting — GilaniAI adapts to your curriculum automatically as you study.",
                   icon: GraduationCap,
                 },
                 {

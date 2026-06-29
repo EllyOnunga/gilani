@@ -119,7 +119,7 @@ const loadDashboardData = createServerFn({ method: "GET" })
       userId: userId,
       email: authResult.user?.email || "",
       displayName: profile?.display_name || authResult.user?.email?.split("@")[0] || "Student",
-      curriculum: profile?.curriculum || "KCSE",
+      curriculum: profile?.curriculum || "",
       plan: profile?.plan || "Free",
       memberSince,
       streak,
@@ -160,14 +160,27 @@ const fetchDailyInsights = createServerFn({ method: "GET" })
     try {
       const provider = createGoogleAiProvider();
       const model = provider.chatModel("gemini-2.5-flash");
+      const contextText = curriculum
+        ? `You are an educational assistant for ${curriculum} students in Kenya.`
+        : `You are an educational assistant for secondary school students in Kenya.`;
+      const tipText = curriculum
+        ? `A practical study tip for ${curriculum} students (1-2 sentences)`
+        : `A practical, broadly-applicable study tip for secondary school students (1-2 sentences)`;
+      const topicText = curriculum
+        ? `A specific ${curriculum} syllabus topic with a one-sentence explanation of a key concept`
+        : `A specific academic topic (any core subject) with a one-sentence explanation of a key concept`;
+      const factText = curriculum
+        ? `A fascinating educational fact relevant to ${curriculum} subjects (1-2 sentences)`
+        : `A fascinating, broadly-relevant educational fact (1-2 sentences)`;
+
       const { text } = await generateText({
         model,
-        prompt: `Today is ${new Date().toISOString().slice(0, 10)}. Seed: ${Math.floor(Math.random() * 999983)}. You are an educational assistant for ${curriculum} students in Kenya. Generate 4 UNIQUE pieces of educational content different from previous days. Respond ONLY with valid JSON, no markdown, no backticks.
+        prompt: `Today is ${new Date().toISOString().slice(0, 10)}. Seed: ${Math.floor(Math.random() * 999983)}. ${contextText} Generate 4 UNIQUE pieces of educational content different from previous days. Respond ONLY with valid JSON, no markdown, no backticks.
 
 {
-  "tip": "A practical study tip for ${curriculum} students (1-2 sentences)",
-  "topicOfDay": "A specific ${curriculum} syllabus topic with a one-sentence explanation of a key concept",
-  "didYouKnow": "A fascinating educational fact relevant to ${curriculum} subjects (1-2 sentences)",
+  "tip": "${tipText}",
+  "topicOfDay": "${topicText}",
+  "didYouKnow": "${factText}",
   "streakMotivation": "${streak > 0 ? `An encouraging message about maintaining a ${streak}-day study streak` : "An encouraging message to start a study streak today"} (1 sentence)"
 }`,
         maxOutputTokens: 1200,
@@ -298,7 +311,7 @@ function Dashboard() {
         if (!loadedInsights) {
           try {
             const ins = await fetchDailyInsights({
-              data: { curriculum: res.curriculum || "KCSE", streak: res.streak || 0 },
+              data: { curriculum: res.curriculum || "", streak: res.streak || 0 },
             });
             setInsights(ins);
 
