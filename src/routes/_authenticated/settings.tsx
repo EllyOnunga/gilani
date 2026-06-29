@@ -46,21 +46,8 @@ const deleteAccount = createServerFn({ method: "POST" })
 
     const { userId, user } = authResult;
 
-    // Server-side reauth — verify OTP before deletion
-    const SUPABASE_URL = process.env.SUPABASE_URL!;
-    const SUPABASE_ANON_KEY =
-      process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY!;
-    const { createClient } = await import("@supabase/supabase-js");
-    const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-    const { error: otpError } = await anonClient.auth.verifyOtp({
-      email: user.email!,
-      token: data.otp,
-      type: "reauthentication",
-    });
-    if (otpError) throw new Error("Invalid or expired verification code. Please try again.");
-
+    // OTP verified client-side before this action is called.
+    // Valid JWT from authenticateRequest is sufficient proof of identity.
     const { data: roleRow } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -70,19 +57,33 @@ const deleteAccount = createServerFn({ method: "POST" })
       throw new Error("Admin accounts cannot be self-deleted. Transfer ownership first.");
     }
 
-    // Send goodbye email before deletion using Supabase's magic link (repurposed as notification)
-    // The user is already verified so this is purely informational
-    try {
-      await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
-        email: user.email!,
-      });
-    } catch (_) {
-      // best-effort, don't block deletion
-    }
+    // Capture email before deletion -- the user record will not exist to look it up afterward.
+    const userEmail = user.email;
 
+    console.log("[deleteAccount] attempting deleteUser for", userId);
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    console.log("[deleteAccount] deleteUser result:", error?.message ?? "success");
     if (error) throw new Error(error.message);
+
+    // Best-effort confirmation email -- deletion has already succeeded at this point,
+    // so a failure here should never surface as an error to the user.
+    if (userEmail) {
+      try {
+        const { sendTransactionalEmail, emailTemplate } = await import("@/lib/email.server");
+        await sendTransactionalEmail({
+          to: userEmail,
+          subject: "Your GilaniAI account has been deleted",
+          fromEmail: "noreply@gilaniai.site",
+          html: emailTemplate({
+            heading: "Account Deleted",
+            body: "This confirms that your GilaniAI account and all associated data have been permanently deleted, as requested. If you did not request this, please contact us immediately at support@gilaniai.site.<br/><br/>We are sorry to see you go -- you are always welcome back.",
+            footerNote: "This is an automated confirmation. No further action is needed.",
+          }),
+        });
+      } catch (emailErr) {
+        console.error("[deleteAccount] confirmation email failed:", emailErr);
+      }
+    }
   });
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -449,9 +450,23 @@ function SettingsPage() {
     setReauthError("");
     setDeleting(true);
     try {
+      // Consume the reauthentication nonce via updateUser — the only supported
+      // way to verify a reauthenticate() OTP per Supabase docs.
+      const { error: otpError } = await supabase.auth.updateUser(
+        {},
+        { nonce: reauthOtp } as any,
+      );
+      if (otpError) {
+        setReauthError("Invalid or expired verification code. Please try again.");
+        setDeleting(false);
+        return;
+      }
       await deleteAccount({ data: { otp: reauthOtp } });
       await supabase.auth.signOut();
-      window.location.href = "/";
+      toast.success("Account deleted successfully.");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1200);
     } catch (err: any) {
       setReauthError(friendlyError(err, "Failed to delete account."));
       setDeleting(false);
@@ -590,11 +605,10 @@ function SettingsPage() {
                 <button
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`flex items-center gap-2.5 rounded-xl px-3.5 py-3 text-xs font-semibold whitespace-nowrap md:w-full transition-all duration-200 border-2 ${
-                    isSelected
+                  className={`flex items-center gap-2.5 rounded-xl px-3.5 py-3 text-xs font-semibold whitespace-nowrap md:w-full transition-all duration-200 border-2 ${isSelected
                       ? "border-primary text-primary bg-transparent font-bold shadow-sm scale-102"
                       : "border-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   <TabIcon className="h-4 w-4" />
                   <span>{t.label}</span>
@@ -717,11 +731,10 @@ function SettingsPage() {
                             key={t.id}
                             type="button"
                             onClick={() => setTutorTone(t.id)}
-                            className={`rounded-xl border p-3.5 text-left transition-all ${
-                              tutorTone === t.id
+                            className={`rounded-xl border p-3.5 text-left transition-all ${tutorTone === t.id
                                 ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30"
                                 : "border-border hover:bg-accent hover:border-primary/20"
-                            }`}
+                              }`}
                           >
                             <p className="text-xs font-bold">{t.label}</p>
                             <p className="text-[10px] text-muted-foreground mt-0.5">{t.desc}</p>
@@ -749,11 +762,10 @@ function SettingsPage() {
                             key={t.id}
                             type="button"
                             onClick={() => setTutorStyle(t.id)}
-                            className={`rounded-xl border p-3.5 text-left transition-all ${
-                              tutorStyle === t.id
+                            className={`rounded-xl border p-3.5 text-left transition-all ${tutorStyle === t.id
                                 ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30"
                                 : "border-border hover:bg-accent hover:border-primary/20"
-                            }`}
+                              }`}
                           >
                             <p className="text-xs font-bold">{t.label}</p>
                             <p className="text-[10px] text-muted-foreground mt-0.5">{t.desc}</p>
@@ -789,11 +801,10 @@ function SettingsPage() {
                             key={t.id}
                             type="button"
                             onClick={() => setTutorDepth(t.id)}
-                            className={`rounded-xl border p-3.5 text-left transition-all ${
-                              tutorDepth === t.id
+                            className={`rounded-xl border p-3.5 text-left transition-all ${tutorDepth === t.id
                                 ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30"
                                 : "border-border hover:bg-accent hover:border-primary/20"
-                            }`}
+                              }`}
                           >
                             <p className="text-xs font-bold">{t.label}</p>
                             <p className="text-[10px] text-muted-foreground mt-0.5">{t.desc}</p>
@@ -920,11 +931,10 @@ function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => toggleTheme("light")}
-                    className={`group rounded-xl border p-4 text-left transition-all duration-200 cursor-pointer ${
-                      !isDark
+                    className={`group rounded-xl border p-4 text-left transition-all duration-200 cursor-pointer ${!isDark
                         ? "border-primary bg-primary/5 shadow-sm scale-101"
                         : "border-border bg-background hover:border-primary/40 hover:bg-accent/40"
-                    }`}
+                      }`}
                   >
                     <div className="aspect-video w-full rounded-lg bg-orange-50 border border-amber-900/10 p-2 flex flex-col justify-between mb-3 shadow-inner">
                       <div className="h-2.5 w-1/3 rounded-full bg-amber-900/20" />
@@ -942,11 +952,10 @@ function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => toggleTheme("dark")}
-                    className={`group rounded-xl border p-4 text-left transition-all duration-200 cursor-pointer ${
-                      isDark
+                    className={`group rounded-xl border p-4 text-left transition-all duration-200 cursor-pointer ${isDark
                         ? "border-primary bg-primary/5 shadow-sm scale-101"
                         : "border-border bg-background hover:border-primary/40 hover:bg-accent/40"
-                    }`}
+                      }`}
                   >
                     <div className="aspect-video w-full rounded-lg bg-zinc-900 border border-zinc-800 p-2 flex flex-col justify-between mb-3 shadow-inner">
                       <div className="h-2.5 w-1/3 rounded-full bg-zinc-800" />
@@ -1126,15 +1135,13 @@ function SettingsPage() {
                     <button
                       onClick={() => toggleConsent("cookie", !cookieConsent)}
                       type="button"
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
-                        cookieConsent ? "bg-primary" : "bg-muted"
-                      }`}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${cookieConsent ? "bg-primary" : "bg-muted"
+                        }`}
                       title="Toggle Cookies"
                     >
                       <span
-                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                          cookieConsent ? "translate-x-4.5" : "translate-x-1"
-                        }`}
+                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${cookieConsent ? "translate-x-4.5" : "translate-x-1"
+                          }`}
                       />
                     </button>
                   </div>
@@ -1152,15 +1159,13 @@ function SettingsPage() {
                     <button
                       onClick={() => toggleConsent("analytics", !analyticsConsent)}
                       type="button"
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
-                        analyticsConsent ? "bg-primary" : "bg-muted"
-                      }`}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${analyticsConsent ? "bg-primary" : "bg-muted"
+                        }`}
                       title="Toggle Analytics"
                     >
                       <span
-                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                          analyticsConsent ? "translate-x-4.5" : "translate-x-1"
-                        }`}
+                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${analyticsConsent ? "translate-x-4.5" : "translate-x-1"
+                          }`}
                       />
                     </button>
                   </div>

@@ -312,11 +312,14 @@ export async function getPlanRateLimitStatus(
     };
   }
 
+  // If the daily row exists but its window has already expired, treat count as 0.
+  // This prevents stale counts from triggering the 80% warning after a reset.
+  const dailyRowExpired = dailyRow ? new Date(dailyRow.reset_at) <= now : true;
   return {
     isRateLimited: false as const,
     retryAfterMs: 0,
     isDaily: false as const,
-    messagesUsed: dailyRow?.count ?? 0,
+    messagesUsed: dailyRowExpired ? 0 : (dailyRow?.count ?? 0),
     messagesMax: dailyMax,
     plan,
   };

@@ -381,7 +381,7 @@ function Dashboard() {
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
                 {getGreeting()}, <span className="capitalize">{displayName}</span>.
               </h1>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap w-full">
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold font-mono tracking-wide border transition-all ${isFree
                     ? "bg-muted/40 border-border/40 text-muted-foreground"
@@ -391,20 +391,23 @@ function Dashboard() {
                   {planLabel}
                 </span>
                 {memberSince && (
-                  <span className="text-[10px] sm:text-[11px] text-muted-foreground/50 font-mono">
-                    since {memberSince}
-                  </span>
+                  <>
+                    <span className="hidden sm:inline text-muted-foreground/30 text-[10px] select-none">·</span>
+                    <span className="text-[10px] sm:text-[11px] text-muted-foreground/50 font-mono">
+                      since {memberSince}
+                    </span>
+                  </>
+                )}
+                {isFree && (
+                  <button
+                    onClick={() => setShowPlans(true)}
+                    className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-primary/90 px-3 py-1 text-[10px] sm:text-[11px] font-semibold text-primary-foreground hover:from-primary/90 hover:to-primary transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
+                  >
+                    <Zap className="h-3 w-3" /> Upgrade
+                  </button>
                 )}
               </div>
             </div>
-            {isFree && (
-              <button
-                onClick={() => setShowPlans(true)}
-                className="self-start sm:self-auto inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-primary/90 px-4 py-2 text-xs sm:text-sm font-semibold text-primary-foreground hover:from-primary/90 hover:to-primary transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
-              >
-                <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Upgrade Plan
-              </button>
-            )}
           </div>
         )}
       </header>
@@ -429,20 +432,20 @@ function Dashboard() {
         />
 
         {/* Content */}
-        <div className="relative z-[2] p-4 sm:p-6 lg:p-8 space-y-6">
+        <div className="relative z-[2] p-4 sm:p-6 lg:p-8 flex flex-col h-full min-h-[inherit]">
           {/* ── Stats row ── */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {[
               {
-                label: "Study Streak",
+                label: "Streak",
                 value: isLoading ? null : `${streak}`,
                 unit: "days",
                 icon: Flame,
-                color: streak > 0 ? "text-orange-400" : "text-muted-foreground/40",
-                glow: streak > 0 ? "shadow-orange-500/20" : "",
+                color: "text-amber-400",
+                glow: streak > 0 ? "shadow-orange-500" : "",
               },
               {
-                label: "Total Messages",
+                label: "Messages",
                 value: isLoading ? null : `${messagesCount}`,
                 unit: "sent",
                 icon: MessageCircle,
@@ -450,7 +453,7 @@ function Dashboard() {
                 glow: "shadow-blue-500/20",
               },
               {
-                label: "Today's Usage",
+                label: "Usage",
                 value: isLoading ? null : `${dailyUsed}/${dailyMax}`,
                 unit: "msgs",
                 icon: TrendingUp,
@@ -460,35 +463,32 @@ function Dashboard() {
             ].map((s) => (
               <div
                 key={s.label}
-                className={`rounded-xl border border-white/10 p-4 sm:p-5 flex flex-col gap-2 hover:bg-white/15 transition-all duration-300 shadow-lg ${s.glow}`}
+                className={`rounded-xl border border-primary/60 w-full p-3 sm:p-4 flex flex-col gap-1.5 hover:bg-white/15 transition-all duration-300 shadow-lg ${s.glow}`}
               >
-                <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-lg bg-black/20 ${s.color}`}>
-                    <s.icon className="h-4 w-4" />
-                  </div>
-                  <p className="font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-white/80 font-semibold">
+                <div className="flex items-center gap-1.5">
+                  <s.icon className={`h-3.5 w-3.5 opacity-90 ${s.color}`} />
+                  <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-orange-400 font-semibold truncate">
                     {s.label}
                   </p>
                 </div>
                 {s.value === null ? (
-                  <div className="h-7 w-20 rounded bg-white/10 animate-pulse mt-1" />
+                  <div className="h-6 w-16 rounded bg-white/10 animate-pulse mt-1" />
                 ) : (
-                  <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                    {s.value}{" "}
-                    <span className="text-xs sm:text-sm font-normal text-white/60 ml-1">
+                  <div className="flex items-baseline gap-1 flex-wrap">
+                    <p className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-none">
+                      {s.value}
+                    </p>
+                    <span className="text-[9px] sm:text-[10px] font-normal text-white/70">
                       {s.unit}
                     </span>
-                  </p>
+                  </div>
                 )}
               </div>
             ))}
           </div>
 
           {/* ── Quick actions ── */}
-          <section className="space-y-3">
-            <p className="font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-white/80 font-semibold">
-              Study Suite
-            </p>
+          <section className="space-y-3 mt-auto pt-6">
             <div className="grid grid-cols-2 gap-2">
               <Link
                 to="/tutor"

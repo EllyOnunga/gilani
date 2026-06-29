@@ -181,7 +181,13 @@ export function ChatInput({
   // Warn when approaching limit (80–99%)
   const usagePct = (messagesMax ?? 0) > 0 ? messagesUsed / (messagesMax ?? 1) : 0;
   const isApproachingLimit =
-    (messagesMax ?? 999_999) < 999_999 && usagePct >= 0.8 && !isRateLimited;
+    (messagesMax ?? 999_999) < 999_999 &&
+    usagePct >= 0.8 &&
+    // Only show the soft warning when the user hasn't actually hit the hard wall.
+    // messagesUsed < messagesMax guards against stale counts that equal the max
+    // after a reset but before the server clears them (Bug 3).
+    messagesUsed < (messagesMax ?? 999_999) &&
+    !isRateLimited;
   const remaining = Math.max(0, (messagesMax ?? 0) - messagesUsed);
 
   const { secondsLeft, isDaily, maxSeconds, customMessage } = useRateLimitCountdown(

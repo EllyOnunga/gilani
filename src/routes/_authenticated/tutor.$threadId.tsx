@@ -228,6 +228,24 @@ function TutorThreadInner({
               : `Rate limit exceeded. Try again in ${secs}s.`,
           }),
         );
+      } else {
+        // Limit is not active — clear any stale rate-limit error so banners disappear
+        setChatError((prev) => {
+          if (!prev) return prev;
+          try {
+            const p = JSON.parse(prev);
+            if (p.retryAfterMs !== undefined || p.isDaily !== undefined) return null;
+          } catch {}
+          const lower = prev.toLowerCase();
+          if (
+            lower.includes("rate limit") ||
+            lower.includes("daily") ||
+            lower.includes("quota") ||
+            lower.includes("exceeded")
+          )
+            return null;
+          return prev;
+        });
       }
     } catch {
       /* ignore – not signed in */
