@@ -636,15 +636,30 @@ function TutorThreadInner({
 
         if (messagesRes.data && messagesRes.data.length > 0) {
           if (!silent || messagesRes.data.length >= messagesRef.current.length) {
-            setMessages(
-              messagesRes.data.map((m) => ({
+            const __mapped = messagesRes.data.map((m) => {
+              // Defensive: older rows may have parts double-encoded as a JSON
+              // string (a historical bug) instead of a real jsonb array/object.
+              // Self-heal on read so old conversations render correctly too.
+              let resolvedParts: any[] | null = null;
+              if (Array.isArray(m.parts) && m.parts.length > 0) {
+                resolvedParts = m.parts as any[];
+              } else if (typeof m.parts === "string" && m.parts.trim().startsWith("[")) {
+                try {
+                  const parsed = JSON.parse(m.parts);
+                  if (Array.isArray(parsed) && parsed.length > 0) resolvedParts = parsed;
+                } catch {
+                  // fall through to text-only fallback below
+                }
+              }
+              return {
                 id: m.id ?? crypto.randomUUID(),
                 role: m.role as "user" | "assistant",
                 content: m.content || "",
-                parts: [{ type: "text" as const, text: m.content || "" }],
+                parts: resolvedParts ?? [{ type: "text" as const, text: m.content || "" }],
                 createdAt: m.created_at ? new Date(m.created_at) : new Date(),
-              })),
-            );
+              };
+            });
+            setMessages(__mapped);
           }
         } else {
           if (!silent) {

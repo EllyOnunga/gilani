@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useCallback, useMemo } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { EmptyState } from "./EmptyState";
-import { Loader2, AlertCircle, RefreshCw, Sparkles } from "lucide-react";
+import { ThinkingSweep } from "./ThinkingSweep";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 type Props = {
   messages: any[];
@@ -24,91 +25,6 @@ type Props = {
   chatError?: string | null;
 };
 
-function ThinkingSweep() {
-  const text = "Thinking...";
-  const chars = text.split("");
-  const [opacities, setOpacities] = React.useState<number[]>(chars.map(() => 0.25));
-  const [arrowSize, setArrowSize] = React.useState(28);
-  const [arrowOpacity, setArrowOpacity] = React.useState(0.3);
-
-  const rafRef = React.useRef<number>(0);
-  const startRef = React.useRef<number>(0);
-
-  React.useEffect(() => {
-    const SWEEP = 800;
-    const HOLD = 200;
-    const total = chars.length;
-
-    const animate = (ts: number) => {
-      if (!startRef.current) startRef.current = ts;
-      const elapsed = (ts - startRef.current) % (SWEEP + HOLD);
-      const progress = elapsed / SWEEP;
-      const peak = progress * (total + 2);
-
-      setOpacities(
-        chars.map((_, i) => {
-          const dist = Math.abs(peak - i);
-          if (dist < 5) return Math.max(0.55, 0.55 + (1 - dist / 5) * 0.45);
-          return 0.55;
-        }),
-      );
-
-      const arrowDist = Math.abs(peak - total - 1);
-      if (arrowDist < 5) {
-        const b = Math.max(0, 1 - arrowDist / 5);
-        setArrowOpacity(0.5 + b * 0.5);
-        setArrowSize(28 + b * 8);
-      } else {
-        setArrowOpacity(0.5);
-        setArrowSize(28);
-      }
-
-      rafRef.current = requestAnimationFrame(animate);
-    };
-
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
-
-  return (
-    <span className="select-none mb-3 inline-flex items-center gap-1.5">
-      <Sparkles
-        className="shrink-0 animate-pulse"
-        style={{ width: 20, height: 20, color: "hsl(22 75% 48%)" }}
-      />
-      <span
-        className="inline-flex"
-        style={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.04em" }}
-      >
-        {chars.map((ch, i) => (
-          <span
-            key={i}
-            style={{
-              opacity: opacities[i],
-              color: "hsl(var(--foreground))",
-              transition: "opacity 0.06s ease, color 0.06s ease",
-              whiteSpace: "pre",
-            }}
-          >
-            {ch}
-          </span>
-        ))}
-      </span>
-      <span
-        style={{
-          fontSize: arrowSize,
-          fontWeight: 800,
-          lineHeight: 1,
-          color: "hsl(var(--foreground))",
-          opacity: arrowOpacity,
-          transition: "font-size 0.06s ease, opacity 0.06s ease",
-        }}
-      >
-        ›
-      </span>
-    </span>
-  );
-}
 
 export const MessageList = React.memo(function MessageList({
   messages,
@@ -149,6 +65,35 @@ export const MessageList = React.memo(function MessageList({
       last.content ||
       "";
     return text.trim().length === 0;
+  }, [isPending, messages]);
+
+  // While streaming, surface the actual tool currently in flight (if any),
+  // by finding the most recent tool-call part with no matching tool-result yet.
+  const TOOL_LABELS: Record<string, string> = {
+    searchWeb: "Searching the web...",
+    evaluateCode: "Checking your work...",
+    setCurriculum: "Saving your preferences...",
+  };
+  const activeToolLabel = useMemo(() => {
+    if (!isPending) return null;
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant" || !Array.isArray(last.parts)) return null;
+
+    // Live UI message stream parts use type "tool-{toolName}" with a state
+    // field, NOT the separate "tool-call"/"tool-result" types from server-side
+    // step results. A tool is still in flight while state is input-streaming
+    // or input-available (no output yet).
+    const inFlight = last.parts.filter(
+      (p: any) =>
+        typeof p.type === "string" &&
+        p.type.startsWith("tool-") &&
+        (p.state === "input-streaming" || p.state === "input-available"),
+    );
+    if (inFlight.length === 0) return null;
+
+    const latest = inFlight[inFlight.length - 1];
+    const toolName = String(latest.type).replace(/^tool-/, "");
+    return TOOL_LABELS[toolName] || `Using ${toolName}...`;
   }, [isPending, messages]);
 
   // Smart scroll: only auto-scroll if user is near bottom
@@ -308,6 +253,7 @@ export const MessageList = React.memo(function MessageList({
               escalationStatus={escalationStatus}
               escalating={escalating}
               messagesLoading={messagesLoading}
+              pauseLabel={idx === messages.length - 1 ? activeToolLabel : null}
             />
           ))}
 
@@ -319,18 +265,7 @@ export const MessageList = React.memo(function MessageList({
             aria-label="AI is thinking"
           >
             <div className="flex flex-col gap-2.5 px-1 py-3">
-              <ThinkingSweep />
-              {[
-                ["w-[88%]", 0],
-                ["w-[55%]", 120],
-              ].map(([width, delay], i) => (
-                <div
-                  key={i}
-                  className={`h-3 rounded-full bg-muted ${String(width)}`}
-                  style={{ animation: `bar-pulse 1.6s ease-in-out ${delay}ms infinite` }}
-                  aria-hidden="true"
-                />
-              ))}
+              <ThinkingSweep label={activeToolLabel ?? undefined} />
             </div>
           </div>
         )}

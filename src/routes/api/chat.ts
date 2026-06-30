@@ -321,6 +321,7 @@ ${finalContent}`;
               google: {
                 thinkingConfig: {
                   thinkingBudget: -1,
+                  includeThoughts: true,
                 },
               },
             },
@@ -514,7 +515,7 @@ ${finalContent}`;
                 typeof error === "object" ? JSON.stringify(error).slice(0, 300) : String(error),
               );
             },
-            onFinish: async ({ text: assistantText, providerMetadata, finishReason }) => {
+            onFinish: async ({ text: assistantText, providerMetadata, finishReason, steps }) => {
               clearTimeout(streamTimeoutId);
               const usage = (providerMetadata as any)?.google?.usageMetadata;
               const cachedTokens = usage?.cachedContentTokenCount ?? 0;
@@ -527,8 +528,45 @@ ${finalContent}`;
               const safeText =
                 assistantText.trim() ||
                 "Sorry, I could not generate a response right now. Please try again.";
+
+              // Build a real thinking-step trace from this turn's steps.
+              // Each step may carry reasoning text and/or tool calls/results.
+              const thinkingSteps: Array<Record<string, unknown>> = [];
               try {
-                const assistantParts = [{ type: "text" as const, text: safeText }];
+                for (const step of steps ?? []) {
+                  if (step.reasoningText?.trim()) {
+                    thinkingSteps.push({
+                      type: "reasoning",
+                      text: step.reasoningText.trim().slice(0, 2000),
+                    });
+                  }
+                  for (const part of step.content ?? []) {
+                    if (part.type === "tool-call") {
+                      thinkingSteps.push({
+                        type: "tool-call",
+                        toolName: (part as any).toolName,
+                        input: (part as any).input,
+                      });
+                    } else if (part.type === "tool-result") {
+                      thinkingSteps.push({
+                        type: "tool-result",
+                        toolName: (part as any).toolName,
+                        output: (part as any).output,
+                      });
+                    }
+                  }
+                }
+              } catch (stepErr) {
+                console.error("[API Chat] Failed to build thinking steps:", stepErr);
+              }
+
+              try {
+                const assistantParts: Array<Record<string, unknown>> = [
+                  { type: "text" as const, text: safeText },
+                ];
+                if (thinkingSteps.length) {
+                  assistantParts.push({ type: "thinking-steps", steps: thinkingSteps });
+                }
                 const thoughtSignature =
                   (providerMetadata as any)?.google?.thoughtSignature || null;
                 const { data: insertedMsg } = await supabaseAdmin
@@ -537,7 +575,7 @@ ${finalContent}`;
                     conversation_id: threadId,
                     role: "assistant",
                     content: safeText,
-                    parts: JSON.stringify(assistantParts),
+                    parts: assistantParts,
                     confidence: 0.9,
                     user_id: userId,
                     thought_signature: thoughtSignature,

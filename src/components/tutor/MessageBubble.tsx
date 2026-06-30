@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SmoothMarkdownRenderer } from "@/components/tutor/SmoothMarkdownRenderer";
 import { PomodoroTimer } from "@/components/tutor/PomodoroTimer";
+import { ThinkingSweep } from "@/components/tutor/ThinkingSweep";
 
 type Props = {
   message: any;
@@ -39,6 +40,7 @@ type Props = {
   escalationStatus?: "open" | "in_review" | "resolved" | null;
   escalating?: boolean;
   messagesLoading?: boolean;
+  pauseLabel?: string | null;
 };
 
 // Memoize the entire component to prevent unnecessary re-renders
@@ -53,6 +55,7 @@ export const MessageBubble = memo(function MessageBubble({
   userId,
   initialVote,
   onVote,
+  pauseLabel,
   onDelete,
   onExportPDF,
   onEscalate,
@@ -115,7 +118,42 @@ export const MessageBubble = memo(function MessageBubble({
       : rawText;
   }, [m.id, m.role, m.parts, m.content]);
 
+  const thinkingSteps: any[] = useMemo(() => {
+    const part = m.parts?.find((p: any) => p.type === "thinking-steps");
+    return Array.isArray(part?.steps) ? part.steps : [];
+  }, [m.id, m.parts]);
+
+  const [showThinkingPanel, setShowThinkingPanel] = useState(false);
+
   const isStreamActive = isPending && isLast;
+  // Detect a silent mid-stream pause (no tool, no new text for a beat) so we
+  // can still show a "Thinking..." indicator instead of a stuck blinking cursor.
+  const [isStalled, setIsStalled] = useState(false);
+  const lastTextRef = useRef<string>("");
+  const stallTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    if (!isStreamActive) {
+      setIsStalled(false);
+      return;
+    }
+    if (displayText !== lastTextRef.current) {
+      lastTextRef.current = displayText;
+      setIsStalled(false);
+      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = setTimeout(() => setIsStalled(true), 1500);
+    }
+    return () => {
+      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+    };
+  }, [displayText, isStreamActive]);
+  useEffect(() => {
+    if (!isStreamActive) return;
+    stallTimerRef.current = setTimeout(() => setIsStalled(true), 1500);
+    return () => {
+      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStreamActive]);
   const showBubbleCard = displayText.length > 0;
   const isUser = m.role === "user";
 
@@ -192,16 +230,64 @@ export const MessageBubble = memo(function MessageBubble({
             <div className="flex flex-col w-full">
               {showBubbleCard ? (
                 <div className="prose-ai relative">
+                  {thinkingSteps.length > 0 && (
+                    <div className="mb-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowThinkingPanel((v) => !v)}
+                        className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-muted-foreground/70 hover:text-foreground transition-colors"
+                      >
+                        Thinking{showThinkingPanel ? " ▲" : " ..."}
+                      </button>
+                      {showThinkingPanel && (
+                        <div className="mt-1.5 space-y-1.5 rounded-lg border border-border/50 bg-muted/20 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
+                          {thinkingSteps.map((step: any, i: number) => (
+                            <div key={i}>
+                              {step.type === "reasoning" && (
+                                <p className="italic">{step.text}</p>
+                              )}
+                              {step.type === "tool-call" && (
+                                <p>
+                                  <span className="font-semibold text-foreground/80">
+                                    Used {step.toolName}
+                                  </span>
+                                  {step.input ? (
+                                    <span className="opacity-70">
+                                      {" "}
+                                      — {JSON.stringify(step.input).slice(0, 120)}
+                                    </span>
+                                  ) : null}
+                                </p>
+                              )}
+                              {step.type === "tool-result" && (
+                                <p className="opacity-70">
+                                  Result:{" "}
+                                  {typeof step.output === "string"
+                                    ? step.output.slice(0, 200)
+                                    : JSON.stringify(step.output).slice(0, 200)}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {/* Use SmoothMarkdownRenderer for word-by-word streaming */}
                   <SmoothMarkdownRenderer
                     content={displayText}
                     isStreaming={isStreamActive}
                     className={
-                      isStreamActive
+                      isStreamActive && !pauseLabel && !isStalled
                         ? "transition-opacity duration-200 streaming-cursor"
                         : "transition-opacity duration-200"
                     }
                   />
+                  {isStreamActive && (pauseLabel || isStalled) && (
+                    <div className="mt-1 animate-in fade-in duration-300">
+                      <ThinkingSweep label={pauseLabel || "Thinking..."} />
+                    </div>
+                  )}
                 </div>
               ) : (
                 !isStreamActive && (
