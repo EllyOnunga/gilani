@@ -68,7 +68,7 @@ export default function Hero() {
                     
                     <p className="max-w-xl text-lg text-[#a1a1aa] sm:text-xl leading-relaxed font-light">
                         Upload notes, solve homework, and master exams. 
-                        Your intelligent tutor grounded in the Kenyan curriculum.
+                        Your intelligent tutor that works with <span className="text-white font-semibold">any curriculum</span>.
                     </p>
 
                     <div className="flex flex-wrap items-center gap-4 mt-2">

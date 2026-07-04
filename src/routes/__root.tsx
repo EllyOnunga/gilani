@@ -118,24 +118,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "keywords",
         content:
-          "KCSE AI tutor, CBC study assistant, Kenya education AI, IGCSE revision, AI tutor Kenya, KCSE revision, online tutoring Kenya, GilaniAI",
+          "AI tutor, study assistant, KCSE AI tutor, CBC study assistant, Cambridge IGCSE revision, Edexcel IGCSE tutor, Canadian curriculum AI, any curriculum AI tutor, GilaniAI",
       },
       { title: "GilaniAI — Ethical AI Learning Assistant" },
       {
         name: "description",
         content:
-          "Curriculum-grounded AI tutoring, notes summarization, quizzes, and study planning for KCSE and CBC students. Human oversight built in.",
+          "Curriculum-grounded AI tutoring, notes summarization, quizzes, and study planning for any curriculum — KCSE, CBC, Cambridge IGCSE, Edexcel, Canadian and more. Human oversight built in.",
       },
       // Open Graph
       { property: "og:site_name", content: "GilaniAI" },
       { property: "og:locale", content: "en_KE" },
       { property: "og:type", content: "website" },
       { property: "og:url", content: SITE_URL },
-      { property: "og:title", content: "GilaniAI — AI Study Assistant for Kenyan Students" },
+      { property: "og:title", content: "GilaniAI — AI Study Assistant for Any Curriculum" },
       {
         property: "og:description",
         content:
-          "Curriculum-grounded AI tutoring, notes summarization, quizzes, and study planning for KCSE, CBC and IGCSE students. Human oversight built in.",
+          "Curriculum-grounded AI tutoring, notes summarization, quizzes, and study planning for any curriculum — KCSE, CBC, Cambridge IGCSE, Edexcel, Canadian and more. Human oversight built in.",
       },
       { property: "og:image", content: OG_IMAGE },
       { property: "og:image:width", content: "512" },
@@ -144,11 +144,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       // Twitter / X Cards
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@GilaniAI" },
-      { name: "twitter:title", content: "GilaniAI — AI Study Assistant for Kenyan Students" },
+      { name: "twitter:title", content: "GilaniAI — AI Study Assistant for Any Curriculum" },
       {
         name: "twitter:description",
         content:
-          "AI tutoring for KCSE, CBC and IGCSE students. Quizzes, notes, planner and real teacher escalation — all in one place.",
+          "AI tutoring for any curriculum — KCSE, CBC, IGCSE, Canadian and more. Quizzes, notes, planner and real teacher escalation — all in one place.",
       },
       { name: "twitter:image", content: OG_IMAGE },
       { name: "twitter:image:alt", content: "GilaniAI logo" },
@@ -185,12 +185,12 @@ const JSON_LD = JSON.stringify({
   name: "GilaniAI",
   url: "https://gilaniai.site",
   description:
-    "Curriculum-grounded AI tutoring platform for KCSE, CBC and IGCSE students in Kenya. Includes Socratic AI tutoring chat and real teacher escalation.",
+    "Curriculum-grounded AI tutoring platform supporting any curriculum — KCSE, CBC, CBE, Cambridge IGCSE, Edexcel IGCSE, Canadian Curriculum and more. Includes Socratic AI tutoring chat and real teacher escalation.",
   applicationCategory: "EducationApplication",
   operatingSystem: "Web, Android, iOS",
   offers: [
-    { "@type": "Offer", price: "0", priceCurrency: "KES", name: "Free tier" },
-    { "@type": "Offer", price: "499", priceCurrency: "KES", name: "Scholar plan" },
+    { "@type": "Offer", price: "0", priceCurrency: "KES", name: "Free plan" },
+    { "@type": "Offer", price: "1000", priceCurrency: "KES", name: "Pro plan" },
   ],
   aggregateRating: {
     "@type": "AggregateRating",

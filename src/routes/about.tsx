@@ -21,7 +21,7 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "Learn how GilaniAI combines curriculum-grounded AI, Socratic questioning, and human teacher oversight to help KCSE, CBC and IGCSE students study more effectively and ethically.",
+          "Learn how GilaniAI combines curriculum-grounded AI, Socratic questioning, and human teacher oversight to help students across any curriculum study more effectively and ethically.",
       },
       { name: "robots", content: "index, follow" },
       { property: "og:title", content: "How GilaniAI Works — Ethical AI Tutoring" },
@@ -72,7 +72,7 @@ const TEAM_VALUES = [
     icon: GraduationCap,
     title: "Curriculum First",
     description:
-      "Every AI response is grounded in official KCSE, CBC and IGCSE syllabus content — not generic internet knowledge.",
+      "Every AI response is grounded in your official syllabus content — works with KCSE, CBC, CBE, Cambridge IGCSE, Edexcel IGCSE, Canadian Curriculum, and more.",
   },
   {
     icon: Users,
@@ -136,8 +136,7 @@ function About() {
               <span className="text-[#d9531e] italic">not a replacement.</span>
             </h1>
             <p className="text-base sm:text-lg leading-relaxed text-[#9ca3af] max-w-2xl mx-auto">
-              GilaniAI is Kenya's AI-powered study assistant built specifically for secondary school
-              students. We combine curriculum-grounded AI, Socratic questioning, and real human
+              GilaniAI is an AI-powered study assistant built for students on any curriculum. We combine curriculum-grounded AI, Socratic questioning, and real human
               teacher oversight to help students learn better — not just get answers.
             </p>
           </div>
@@ -158,7 +157,7 @@ function About() {
                   <Check className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
                   <p>
                     <span className="font-semibold text-white">Ground every answer</span> in real
-                    curriculum material from KCSE, CBC and IGCSE syllabuses — no generic internet
+                    curriculum material from KCSE, CBC, CBE, Cambridge IGCSE, Edexcel, Canadian Curriculum and more — no generic internet
                     responses.
                   </p>
                 </div>
@@ -245,27 +244,28 @@ function About() {
                 Who It's For
               </p>
               <h2 className="font-serif text-3xl sm:text-5xl font-black text-white">
-                Built for Kenyan learners
+                Supporting any curriculum
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-left">
               {[
                 {
-                  title: "KCSE Students",
-                  desc: "Form 1–4 coverage across all major subjects. Exam-focused practice and revision aligned to KNEC standards.",
-                  badge: "National Exam",
+                  title: "National Curricula",
+                  desc: "KCSE Form 1–4 and CBC Grade 7–10 coverage across all major subjects. Exam-focused practice aligned to national standards.",
+                  badge: "KCSE · CBC · CBE",
                 },
                 {
-                  title: "CBC Learners",
-                  desc: "Grade 7–10 support with competency-based learning activities and formative assessment tools.",
-                  badge: "Curriculum Reform",
+                  title: "International Curricula",
+                  desc: "Cambridge IGCSE and Edexcel IGCSE support for students at international and private schools worldwide.",
+                  badge: "Cambridge · Edexcel",
                 },
                 {
-                  title: "IGCSE Candidates",
-                  desc: "Edexcel and Cambridge curriculum support for international school students across Kenya.",
-                  badge: "International",
+                  title: "Global Curricula",
+                  desc: "Canadian curriculum and other globally recognised frameworks — GilaniAI adapts to your syllabus, wherever you study.",
+                  badge: "Canada & Beyond",
                 },
               ].map(({ title, desc, badge }) => (
+
                 <div
                   key={title}
                   className="rounded-2xl border border-white/8 bg-[#1a1d27] p-6 hover:border-white/14 transition-colors flex flex-col justify-between h-full"
