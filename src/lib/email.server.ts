@@ -233,6 +233,77 @@ export function emailTemplate({
 </html>`;
 }
 
+// ─── Welcome Email ───────────────────────────────────────────────────────────
+
+export function welcomeEmail({
+  userName,
+  role,
+  dashboardUrl,
+}: {
+  userName: string;
+  role: string;
+  dashboardUrl: string;
+}): string {
+  const name = escapeHtml(userName || "there");
+  const isStudent = role === "student";
+
+  return emailTemplate({
+    heading: `Welcome, ${name}!`,
+    body: isStudent
+      ? `
+        <p style="margin:0 0 16px;text-align:center;color:#9ca3af">
+          Your account is ready. You're now on the <strong style="color:#f9fafb">Free plan</strong> — here's what's waiting for you:
+        </p>
+
+        <!-- Free Plan features -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px">
+          <tr>
+            <td style="background:#0f1117;border:1px solid #2a2d3a;border-radius:10px;padding:18px 20px">
+              <p style="margin:0 0 12px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;font-weight:700">Free Plan — Included Today</p>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td style="font-size:13px;color:#d1d5db;padding-bottom:8px">✅ &nbsp;AI Tutor Chat</td></tr>
+                <tr><td style="font-size:13px;color:#d1d5db;padding-bottom:8px">✅ &nbsp;Upload &amp; Analyze Notes</td></tr>
+                <tr><td style="font-size:13px;color:#d1d5db;padding-bottom:8px">✅ &nbsp;Homework Help</td></tr>
+                <tr><td style="font-size:13px;color:#d1d5db;padding-bottom:8px">✅ &nbsp;Basic Quizzes</td></tr>
+                <tr><td style="font-size:13px;color:#d1d5db;padding-bottom:0">✅ &nbsp;Study Planner</td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Pro Plan upsell -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
+          <tr>
+            <td style="background:#1a1209;border:1px solid #7c3d12;border-radius:10px;padding:18px 20px">
+              <p style="margin:0 0 4px;font-size:11px;color:#c96a3d;text-transform:uppercase;letter-spacing:0.08em;font-weight:700">⚡ Pro Plan — Ksh 1,000 / month</p>
+              <p style="margin:0 0 12px;font-size:12px;color:#9ca3af">Unlock your full potential with unlimited access.</p>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td style="font-size:13px;color:#f9fafb;font-weight:600;padding-bottom:8px">🚀 &nbsp;Unlimited AI messages</td></tr>
+                <tr><td style="font-size:13px;color:#f9fafb;font-weight:600;padding-bottom:8px">🚀 &nbsp;Unlimited document uploads</td></tr>
+                <tr><td style="font-size:13px;color:#f9fafb;font-weight:600;padding-bottom:8px">🚀 &nbsp;Advanced Quizzes &amp; Practice Tests</td></tr>
+                <tr><td style="font-size:13px;color:#f9fafb;font-weight:600;padding-bottom:8px">🚀 &nbsp;AI-Generated Study Summaries</td></tr>
+                <tr><td style="font-size:13px;color:#f9fafb;font-weight:600;padding-bottom:8px">🚀 &nbsp;Priority AI responses</td></tr>
+                <tr><td style="font-size:13px;color:#f9fafb;font-weight:600;padding-bottom:0">🚀 &nbsp;Export chats as PDF</td></tr>
+              </table>
+              <p style="margin:14px 0 0;font-size:11px;color:#6b7280">Billed monthly via M-Pesa · Cancel anytime</p>
+            </td>
+          </tr>
+        </table>
+      `
+      : `
+        <p style="margin:0 0 16px;text-align:center;color:#9ca3af">
+          Your account has been created successfully as a <strong style="color:#f9fafb">${role}</strong>.
+        </p>
+        <p style="margin:0 0 16px;text-align:center;color:#9ca3af">
+          You're all set to start using GilaniAI!
+        </p>
+      `,
+    buttonText: isStudent ? "Start Learning" : "Go to Dashboard",
+    buttonUrl: dashboardUrl,
+    footerNote: "You're receiving this because you just registered on GilaniAI.",
+  });
+}
+
 // ─── Password Reset Confirmation Email ───────────────────────────────────────
 
 /**
@@ -388,8 +459,8 @@ export function mpesaReceiptEmail({
         <a href="mailto:support@gilaniai.site" style="color:${BRAND_ORANGE}">support@gilaniai.site</a>.
       </p>
     `,
-    buttonText: "Go to Dashboard",
-    buttonUrl: `${APP_URL}/dashboard`,
+    buttonText: "Return to GilaniAI",
+    buttonUrl: `${APP_URL}/tutor`,
     footerNote:
       "You received this receipt because a payment was successfully processed on your GilaniAI account. Please retain it for your records.",
   });

@@ -7,6 +7,12 @@ type Props = {
   className?: string;
 };
 
+/**
+ * StreamingMarkdown renders markdown progressively during a live AI stream.
+ * Passes `isStreaming` into MarkdownRenderer so incomplete LaTeX/mhchem
+ * expressions are silenced (error colour = transparent) instead of showing
+ * red error boxes while the model is still typing.
+ */
 export const StreamingMarkdown = React.memo(function StreamingMarkdown({
   content,
   isStreaming,
@@ -14,13 +20,11 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
 }: Props) {
   if (!content) return null;
 
-  // Render markdown progressively during streaming
-  // This gives formatted text as it streams in, not raw markdown
   return (
     <div className={`markdown-content text-foreground ${className}`}>
       <MarkdownRenderer
         content={content}
-        isStreaming={isStreaming} // Pass this to suppress incomplete math errors
+        isStreaming={isStreaming}
       />
       {isStreaming && (
         <span

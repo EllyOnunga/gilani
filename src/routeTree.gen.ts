@@ -10,11 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -26,29 +23,24 @@ import { Route as ApiStreamTestRouteImport } from './routes/api/stream-test'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedTutorRouteImport } from './routes/_authenticated/tutor'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as ApiTutorThreadsRouteImport } from './routes/api/tutor/threads'
 import { Route as ApiNewsletterSubscribeRouteImport } from './routes/api/newsletter/subscribe'
 import { Route as ApiNewsletterSendRouteImport } from './routes/api/newsletter/send'
 import { Route as ApiMpesaInitiateRouteImport } from './routes/api/mpesa/initiate'
 import { Route as ApiMpesaCallbackRouteImport } from './routes/api/mpesa/callback'
+import { Route as AuthenticatedTutorSavedRouteImport } from './routes/_authenticated/tutor.saved'
+import { Route as AuthenticatedTutorQuizzesRouteImport } from './routes/_authenticated/tutor.quizzes'
+import { Route as AuthenticatedTutorPlannerRouteImport } from './routes/_authenticated/tutor.planner'
+import { Route as AuthenticatedTutorDocumentsRouteImport } from './routes/_authenticated/tutor.documents'
+import { Route as AuthenticatedTutorChatsRouteImport } from './routes/_authenticated/tutor.chats'
 import { Route as AuthenticatedTutorThreadIdRouteImport } from './routes/_authenticated/tutor.$threadId'
 import { Route as AuthenticatedTeacherEscalationsRouteImport } from './routes/_authenticated/teacher.escalations'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedTutorQuizzesQuizIdRouteImport } from './routes/_authenticated/tutor.quizzes_.$quizId'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -59,11 +51,6 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -120,11 +107,6 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const ApiTutorThreadsRoute = ApiTutorThreadsRouteImport.update({
   id: '/api/tutor/threads',
   path: '/api/tutor/threads',
@@ -150,6 +132,34 @@ const ApiMpesaCallbackRoute = ApiMpesaCallbackRouteImport.update({
   path: '/api/mpesa/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTutorSavedRoute = AuthenticatedTutorSavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => AuthenticatedTutorRoute,
+} as any)
+const AuthenticatedTutorQuizzesRoute =
+  AuthenticatedTutorQuizzesRouteImport.update({
+    id: '/quizzes',
+    path: '/quizzes',
+    getParentRoute: () => AuthenticatedTutorRoute,
+  } as any)
+const AuthenticatedTutorPlannerRoute =
+  AuthenticatedTutorPlannerRouteImport.update({
+    id: '/planner',
+    path: '/planner',
+    getParentRoute: () => AuthenticatedTutorRoute,
+  } as any)
+const AuthenticatedTutorDocumentsRoute =
+  AuthenticatedTutorDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
+    getParentRoute: () => AuthenticatedTutorRoute,
+  } as any)
+const AuthenticatedTutorChatsRoute = AuthenticatedTutorChatsRouteImport.update({
+  id: '/chats',
+  path: '/chats',
+  getParentRoute: () => AuthenticatedTutorRoute,
+} as any)
 const AuthenticatedTutorThreadIdRoute =
   AuthenticatedTutorThreadIdRouteImport.update({
     id: '/$threadId',
@@ -167,6 +177,12 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedTutorQuizzesQuizIdRoute =
+  AuthenticatedTutorQuizzesQuizIdRouteImport.update({
+    id: '/quizzes_/$quizId',
+    path: '/quizzes/$quizId',
+    getParentRoute: () => AuthenticatedTutorRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -175,13 +191,9 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/faq': typeof FaqRoute
-  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
-  '/register': typeof RegisterRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tutor': typeof AuthenticatedTutorRouteWithChildren
   '/api/chat': typeof ApiChatRoute
@@ -189,11 +201,17 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
   '/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
+  '/tutor/chats': typeof AuthenticatedTutorChatsRoute
+  '/tutor/documents': typeof AuthenticatedTutorDocumentsRoute
+  '/tutor/planner': typeof AuthenticatedTutorPlannerRoute
+  '/tutor/quizzes': typeof AuthenticatedTutorQuizzesRoute
+  '/tutor/saved': typeof AuthenticatedTutorSavedRoute
   '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
   '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
   '/api/newsletter/send': typeof ApiNewsletterSendRoute
   '/api/newsletter/subscribe': typeof ApiNewsletterSubscribeRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
+  '/tutor/quizzes/$quizId': typeof AuthenticatedTutorQuizzesQuizIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -202,13 +220,9 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/faq': typeof FaqRoute
-  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
-  '/register': typeof RegisterRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tutor': typeof AuthenticatedTutorRouteWithChildren
   '/api/chat': typeof ApiChatRoute
@@ -216,11 +230,17 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
   '/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
+  '/tutor/chats': typeof AuthenticatedTutorChatsRoute
+  '/tutor/documents': typeof AuthenticatedTutorDocumentsRoute
+  '/tutor/planner': typeof AuthenticatedTutorPlannerRoute
+  '/tutor/quizzes': typeof AuthenticatedTutorQuizzesRoute
+  '/tutor/saved': typeof AuthenticatedTutorSavedRoute
   '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
   '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
   '/api/newsletter/send': typeof ApiNewsletterSendRoute
   '/api/newsletter/subscribe': typeof ApiNewsletterSubscribeRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
+  '/tutor/quizzes/$quizId': typeof AuthenticatedTutorQuizzesQuizIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -231,13 +251,9 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/faq': typeof FaqRoute
-  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
-  '/register': typeof RegisterRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tutor': typeof AuthenticatedTutorRouteWithChildren
   '/api/chat': typeof ApiChatRoute
@@ -245,11 +261,17 @@ export interface FileRoutesById {
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
   '/_authenticated/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
+  '/_authenticated/tutor/chats': typeof AuthenticatedTutorChatsRoute
+  '/_authenticated/tutor/documents': typeof AuthenticatedTutorDocumentsRoute
+  '/_authenticated/tutor/planner': typeof AuthenticatedTutorPlannerRoute
+  '/_authenticated/tutor/quizzes': typeof AuthenticatedTutorQuizzesRoute
+  '/_authenticated/tutor/saved': typeof AuthenticatedTutorSavedRoute
   '/api/mpesa/callback': typeof ApiMpesaCallbackRoute
   '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
   '/api/newsletter/send': typeof ApiNewsletterSendRoute
   '/api/newsletter/subscribe': typeof ApiNewsletterSubscribeRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
+  '/_authenticated/tutor/quizzes_/$quizId': typeof AuthenticatedTutorQuizzesQuizIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -260,13 +282,9 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/faq'
-    | '/forgot-password'
     | '/login'
     | '/privacy'
-    | '/register'
-    | '/reset-password'
     | '/terms'
-    | '/dashboard'
     | '/settings'
     | '/tutor'
     | '/api/chat'
@@ -274,11 +292,17 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/teacher/escalations'
     | '/tutor/$threadId'
+    | '/tutor/chats'
+    | '/tutor/documents'
+    | '/tutor/planner'
+    | '/tutor/quizzes'
+    | '/tutor/saved'
     | '/api/mpesa/callback'
     | '/api/mpesa/initiate'
     | '/api/newsletter/send'
     | '/api/newsletter/subscribe'
     | '/api/tutor/threads'
+    | '/tutor/quizzes/$quizId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -287,13 +311,9 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/faq'
-    | '/forgot-password'
     | '/login'
     | '/privacy'
-    | '/register'
-    | '/reset-password'
     | '/terms'
-    | '/dashboard'
     | '/settings'
     | '/tutor'
     | '/api/chat'
@@ -301,11 +321,17 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/teacher/escalations'
     | '/tutor/$threadId'
+    | '/tutor/chats'
+    | '/tutor/documents'
+    | '/tutor/planner'
+    | '/tutor/quizzes'
+    | '/tutor/saved'
     | '/api/mpesa/callback'
     | '/api/mpesa/initiate'
     | '/api/newsletter/send'
     | '/api/newsletter/subscribe'
     | '/api/tutor/threads'
+    | '/tutor/quizzes/$quizId'
   id:
     | '__root__'
     | '/'
@@ -315,13 +341,9 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/faq'
-    | '/forgot-password'
     | '/login'
     | '/privacy'
-    | '/register'
-    | '/reset-password'
     | '/terms'
-    | '/_authenticated/dashboard'
     | '/_authenticated/settings'
     | '/_authenticated/tutor'
     | '/api/chat'
@@ -329,11 +351,17 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/users'
     | '/_authenticated/teacher/escalations'
     | '/_authenticated/tutor/$threadId'
+    | '/_authenticated/tutor/chats'
+    | '/_authenticated/tutor/documents'
+    | '/_authenticated/tutor/planner'
+    | '/_authenticated/tutor/quizzes'
+    | '/_authenticated/tutor/saved'
     | '/api/mpesa/callback'
     | '/api/mpesa/initiate'
     | '/api/newsletter/send'
     | '/api/newsletter/subscribe'
     | '/api/tutor/threads'
+    | '/_authenticated/tutor/quizzes_/$quizId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -344,11 +372,8 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
   FaqRoute: typeof FaqRoute
-  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
-  RegisterRoute: typeof RegisterRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiStreamTestRoute: typeof ApiStreamTestRoute
@@ -368,20 +393,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -394,13 +405,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -480,13 +484,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/api/tutor/threads': {
       id: '/api/tutor/threads'
       path: '/api/tutor/threads'
@@ -522,6 +519,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMpesaCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/tutor/saved': {
+      id: '/_authenticated/tutor/saved'
+      path: '/saved'
+      fullPath: '/tutor/saved'
+      preLoaderRoute: typeof AuthenticatedTutorSavedRouteImport
+      parentRoute: typeof AuthenticatedTutorRoute
+    }
+    '/_authenticated/tutor/quizzes': {
+      id: '/_authenticated/tutor/quizzes'
+      path: '/quizzes'
+      fullPath: '/tutor/quizzes'
+      preLoaderRoute: typeof AuthenticatedTutorQuizzesRouteImport
+      parentRoute: typeof AuthenticatedTutorRoute
+    }
+    '/_authenticated/tutor/planner': {
+      id: '/_authenticated/tutor/planner'
+      path: '/planner'
+      fullPath: '/tutor/planner'
+      preLoaderRoute: typeof AuthenticatedTutorPlannerRouteImport
+      parentRoute: typeof AuthenticatedTutorRoute
+    }
+    '/_authenticated/tutor/documents': {
+      id: '/_authenticated/tutor/documents'
+      path: '/documents'
+      fullPath: '/tutor/documents'
+      preLoaderRoute: typeof AuthenticatedTutorDocumentsRouteImport
+      parentRoute: typeof AuthenticatedTutorRoute
+    }
+    '/_authenticated/tutor/chats': {
+      id: '/_authenticated/tutor/chats'
+      path: '/chats'
+      fullPath: '/tutor/chats'
+      preLoaderRoute: typeof AuthenticatedTutorChatsRouteImport
+      parentRoute: typeof AuthenticatedTutorRoute
+    }
     '/_authenticated/tutor/$threadId': {
       id: '/_authenticated/tutor/$threadId'
       path: '/$threadId'
@@ -543,22 +575,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/tutor/quizzes_/$quizId': {
+      id: '/_authenticated/tutor/quizzes_/$quizId'
+      path: '/quizzes/$quizId'
+      fullPath: '/tutor/quizzes/$quizId'
+      preLoaderRoute: typeof AuthenticatedTutorQuizzesQuizIdRouteImport
+      parentRoute: typeof AuthenticatedTutorRoute
+    }
   }
 }
 
 interface AuthenticatedTutorRouteChildren {
   AuthenticatedTutorThreadIdRoute: typeof AuthenticatedTutorThreadIdRoute
+  AuthenticatedTutorChatsRoute: typeof AuthenticatedTutorChatsRoute
+  AuthenticatedTutorDocumentsRoute: typeof AuthenticatedTutorDocumentsRoute
+  AuthenticatedTutorPlannerRoute: typeof AuthenticatedTutorPlannerRoute
+  AuthenticatedTutorQuizzesRoute: typeof AuthenticatedTutorQuizzesRoute
+  AuthenticatedTutorSavedRoute: typeof AuthenticatedTutorSavedRoute
+  AuthenticatedTutorQuizzesQuizIdRoute: typeof AuthenticatedTutorQuizzesQuizIdRoute
 }
 
 const AuthenticatedTutorRouteChildren: AuthenticatedTutorRouteChildren = {
   AuthenticatedTutorThreadIdRoute: AuthenticatedTutorThreadIdRoute,
+  AuthenticatedTutorChatsRoute: AuthenticatedTutorChatsRoute,
+  AuthenticatedTutorDocumentsRoute: AuthenticatedTutorDocumentsRoute,
+  AuthenticatedTutorPlannerRoute: AuthenticatedTutorPlannerRoute,
+  AuthenticatedTutorQuizzesRoute: AuthenticatedTutorQuizzesRoute,
+  AuthenticatedTutorSavedRoute: AuthenticatedTutorSavedRoute,
+  AuthenticatedTutorQuizzesQuizIdRoute: AuthenticatedTutorQuizzesQuizIdRoute,
 }
 
 const AuthenticatedTutorRouteWithChildren =
   AuthenticatedTutorRoute._addFileChildren(AuthenticatedTutorRouteChildren)
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTutorRoute: typeof AuthenticatedTutorRouteWithChildren
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
@@ -566,7 +616,6 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTutorRoute: AuthenticatedTutorRouteWithChildren,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
@@ -585,11 +634,8 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
   FaqRoute: FaqRoute,
-  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
-  RegisterRoute: RegisterRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiStreamTestRoute: ApiStreamTestRoute,

@@ -1,22 +1,27 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Menu, Plus, Loader2 } from "lucide-react";
 import { GilaniLoader } from "@/components/GilaniLoader";
+import { useLayout } from "@/contexts/layout-context";
 import { parseDocument } from "@/lib/document-parser";
-import {
-  createEscalationNotification,
-  generateThreadTitleFn,
-  lookupTeacherByEmail,
-  createEscalationFn,
-} from "@/lib/tutor.server-fns";
-import { useChat, type UIMessage } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-// Export utils loaded lazily — jspdf + html2canvas are ~700kB combined
-const exportAsPDF = async (
-  ...args: Parameters<typeof import("@/lib/export-utils").exportAsPDF>
-) => {
+import { toast } from "sonner";
+import { friendlyError } from "@/lib/async";
+import { generateThreadTitleFn, renameThreadFn } from "@/lib/tutor.server-fns";
+
+import { useTutorChat } from "@/components/tutor/hooks/useTutorChat";
+import { ThreadHeader } from "@/components/tutor/ThreadHeader";
+import { ChatInput } from "@/components/tutor/ChatInput";
+import { PlansModal } from "@/components/PlansModal";
+import { EscalateModal } from "@/components/tutor/EscalateModal";
+import { MessageList } from "@/components/tutor/MessageList";
+import { PomodoroTimer } from "@/components/tutor/PomodoroTimer";
+
+export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
+  component: TutorThread,
+});
+
+// Export utils loaded lazily
+const exportAsPDF = async (...args: Parameters<typeof import("@/lib/export-utils").exportAsPDF>) => {
   try {
     const { exportAsPDF: fn } = await import("@/lib/export-utils");
     return fn(...args);
@@ -25,29 +30,8 @@ const exportAsPDF = async (
     toast.error("Export failed — try again or use a different browser");
   }
 };
-import { withTimeout, friendlyError } from "@/lib/async";
-import { toast } from "sonner";
-import { ChatHeader } from "@/components/tutor/ChatHeader";
-import { ChatInput } from "@/components/tutor/ChatInput";
-import { PlansModal } from "@/components/PlansModal";
-import { EscalateModal } from "@/components/tutor/EscalateModal";
-import { MessageList } from "@/components/tutor/MessageList";
-import { getRateLimitStatus } from "@/lib/rate-limit.server";
-
-export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
-  component: TutorThread,
-});
-
-type Thread = {
-  id: string;
-  title?: string | null;
-  updated_at?: string | null;
-};
 
 function TutorThread() {
-  // ✅ Read threadId here so we can key TutorThreadInner on it.
-  // This forces a full remount whenever the thread changes, eliminating the
-  // race condition where messages=[] and messagesLoading=false flash together.
   const { threadId } = Route.useParams();
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -55,119 +39,70 @@ function TutorThread() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth
-      .getSession()
-      .then((res) => {
-        if (!active) return;
-        const session = res?.data?.session;
-        if (session?.access_token) setAuthToken(session.access_token);
-        if (session?.user?.id) setUserId(session.user.id);
-        setAuthLoading(false);
-      })
-      .catch((err) => {
-        console.error("[TutorThread] Failed to get auth session:", err);
-        if (active) setAuthLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+    supabase.auth.getSession().then((res) => {
+      if (!active) return;
+      const session = res?.data?.session;
+      if (session?.access_token) setAuthToken(session.access_token);
+      if (session?.user?.id) setUserId(session.user.id);
+      setAuthLoading(false);
+    }).catch((err) => {
+      console.error("[TutorThread] Failed to get auth session:", err);
+      if (active) setAuthLoading(false);
+    });
+    return () => { active = false; };
   }, []);
 
-  if (authLoading) {
-    return <GilaniLoader />;
-  }
+  if (authLoading) return <GilaniLoader />;
 
-  // key={threadId} forces TutorThreadInner to remount on every thread switch.
-  // Fresh mount means messagesLoading starts as true — no empty-state flash.
   return <TutorThreadInner key={threadId} authToken={authToken} userId={userId} />;
 }
 
-function TutorThreadInner({
-  authToken,
-  userId,
-}: {
-  authToken: string | null;
-  userId: string | null;
-}) {
+function TutorThreadInner({ authToken, userId }: { authToken: string | null; userId: string | null }) {
   const { threadId } = Route.useParams();
   const navigate = useNavigate({ from: "/tutor/$threadId" });
+  const { setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
 
-  const queryClient = useQueryClient();
-  const threadsQuery = useQuery({
-    queryKey: ["threads", userId],
-    queryFn: async () => {
-      const { data, error } = (await withTimeout(
-        Promise.resolve(
-          supabase
-            .from("conversations")
-            .select("id,title,updated_at")
-            .eq("user_id", userId as string)
-            .order("updated_at", { ascending: false }),
-        ),
-        8000,
-        "Database connection timed out",
-      )) as any;
-      if (error) throw new Error(`Failed to load sessions: ${error.message}`);
-      return (data ?? []) as Thread[];
-    },
-    enabled: !!userId,
-    staleTime: 0,
-  });
-  const threads = threadsQuery.data ?? [];
-  const threadsLoading = !!userId && threadsQuery.isPending;
-  const threadsLoadError = threadsQuery.error ? (threadsQuery.error as Error).message : null;
-  const setThreads = (updater: Thread[] | ((prev: Thread[]) => Thread[])) => {
-    queryClient.setQueryData(["threads", userId], (prev: Thread[] = []) =>
-      typeof updater === "function" ? (updater as (p: Thread[]) => Thread[])(prev) : updater,
-    );
-  };
-  const [chatError, setChatError] = useState<string | null>(null);
-  const [messagesUsed, setMessagesUsed] = useState<number>(0);
-  const [messagesMax, setMessagesMax] = useState<number>(10);
-  const isRateLimited = !!(
-    chatError?.includes("Rate limit") ||
-    chatError?.includes("rate limit") ||
-    chatError?.includes("Daily") ||
-    chatError?.includes("daily") ||
-    chatError?.includes("quota")
-  );
-  const [showPlans, setShowPlans] = useState(false);
-  const [currentPlan, setCurrentPlan] = useState("free");
-  const [messagesLoading, setMessagesLoading] = useState(true);
-  const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
-  /** Map of messageId → vote, loaded in bulk once per thread load */
-  const [userVotes, setUserVotes] = useState<Record<string, 1 | -1>>({});
-  const [threadsOpen, setThreadsOpen] = useState(false);
+  const chatState = useTutorChat({ threadId, userId, authToken });
+
   const [input, setInput] = useState("");
-  const [escalationStatus, setEscalationStatus] = useState<
-    "open" | "in_review" | "resolved" | null
-  >(null);
-  const [escalating, setEscalating] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [timerOpen, setTimerOpen] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
   const [escalateModalOpen, setEscalateModalOpen] = useState(false);
   const [teacherEmail, setTeacherEmail] = useState("");
-  const [escalateEmailError, setEscalateEmailError] = useState("");
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [attachedFile, setAttachedFile] = useState<{
-    name: string;
-    text: string;
-    size: number;
-  } | null>(null);
 
+  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; size: number; } | null>(null);
   const [parsingFile, setParsingFile] = useState(false);
   const [docUploadError, setDocUploadError] = useState<string | null>(null);
-  /** Ref to ChatInput's textarea so Edit-on-bubble can focus it */
+
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const [timerState, setTimerState] = useState<{ minutes: number; seconds: number; running: boolean } | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { minutes, seconds, running } = (e as CustomEvent).detail as any;
+      setTimerState(running ? { minutes, seconds, running } : null);
+    };
+    window.addEventListener("pomodoro:tick", handler);
+    return () => window.removeEventListener("pomodoro:tick", handler);
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalEscalate = () => {
+      if (!chatState.escalationStatus && !chatState.escalating && !chatState.messagesLoading) {
+        setEscalateModalOpen(true);
+      }
+    };
+    window.addEventListener("custom:trigger-escalation", handleGlobalEscalate);
+    return () => window.removeEventListener("custom:trigger-escalation", handleGlobalEscalate);
+  }, [chatState.escalationStatus, chatState.escalating, chatState.messagesLoading]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return; // Exit if no file was actually selected
+    if (!file) return;
 
-    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+    const MAX_FILE_SIZE = 2 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
-      setDocUploadError(
-        `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 2MB. Please split large documents into smaller sections.`,
-      );
+      setDocUploadError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 2MB.`);
       return;
     }
 
@@ -187,270 +122,39 @@ function TutorThreadInner({
     }
   };
 
-  // Load user plan profile for billing plan checks
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const sessionRes = await supabase.auth.getSession();
-        const userId = sessionRes?.data?.session?.user?.id;
-        if (!userId) return;
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("plan")
-          .eq("id", userId)
-          .maybeSingle();
-        if (error) throw error;
-        if (mounted && (data as any)?.plan) setCurrentPlan((data as any).plan);
-      } catch (err) {
-        console.error("Failed to load user plan profile:", err);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const handleExportPDF = useCallback(() => {
+    const title = chatState.threads.find((t) => t.id === threadId)?.title || "study-session";
+    exportAsPDF(chatState.messages, title);
+  }, [chatState.threads, threadId, chatState.messages]);
 
-  // ─── Rate limit status helpers ──────────────────────────────────────────────
-  const refreshRateLimitStatus = useCallback(async () => {
-    try {
-      const status = await getRateLimitStatus({ data: "chat" });
-      setMessagesUsed((status as any).messagesUsed ?? 0);
-      setMessagesMax((status as any).messagesMax ?? 10);
-      if (status.isRateLimited) {
-        const secs = Math.ceil(status.retryAfterMs / 1000);
-        setChatError(
-          JSON.stringify({
-            retryAfterMs: status.retryAfterMs,
-            isDaily: status.isDaily,
-            message: status.isDaily
-              ? `Daily message limit reached. Resets in ${secs}s.`
-              : `Rate limit exceeded. Try again in ${secs}s.`,
-          }),
-        );
-      } else {
-        // Limit is not active — clear any stale rate-limit error so banners disappear
-        setChatError((prev) => {
-          if (!prev) return prev;
-          try {
-            const p = JSON.parse(prev);
-            if (p.retryAfterMs !== undefined || p.isDaily !== undefined) return null;
-          } catch {}
-          const lower = prev.toLowerCase();
-          if (
-            lower.includes("rate limit") ||
-            lower.includes("daily") ||
-            lower.includes("quota") ||
-            lower.includes("exceeded")
-          )
-            return null;
-          return prev;
-        });
-      }
-    } catch {
-      /* ignore – not signed in */
-    }
-  }, []);
-
-  // Check rate limit status on page load so warning persists after refresh
-  useEffect(() => {
-    refreshRateLimitStatus();
-  }, [refreshRateLimitStatus]);
-
-  // Subscribe to rate_limits table via Realtime so server-side increments
-  // propagate immediately — user sees the warning without refreshing.
-  useEffect(() => {
-    if (!userId) return;
-    const dailyKey = `${userId}:chat:day`;
-    const channel = supabase
-      .channel(`rate-limit-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "rate_limits",
-          filter: `key=eq.${dailyKey}`,
-        },
-        () => {
-          // Re-poll status whenever the rate_limit row changes
-          refreshRateLimitStatus();
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userId, refreshRateLimitStatus]);
-  useEffect(() => {
-    const safety = setTimeout(() => {
-      setMessagesLoading((prev) => {
-        if (prev) console.warn("[TutorThread] Safety timeout: forcing messagesLoading off");
-        return false;
-      });
-    }, 25000);
-    return () => clearTimeout(safety);
-  }, []);
-
-  const transport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        api: "/api/chat",
-        body: { threadId },
-        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-        fetch: async (input, init) => {
-          const res = await fetch(input, init);
-          if (!res.ok) {
-            let errText = "";
-            try {
-              errText = await res.text();
-            } catch {
-              errText = res.statusText;
-            }
-            throw new Error(errText);
-          }
-          return res;
-        },
-      }),
-    [threadId, authToken],
-  );
-
-  const chatHelpers: any = useChat({
-    id: threadId,
-    transport,
-    // smoothStream with word chunking + 10ms delay gives smooth word-by-word reveals.
-    experimental_throttle: 700,
-
-    onError: async (err) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      const isAuthError =
-        msg.includes("401") ||
-        msg.toLowerCase().includes("expired") ||
-        msg.toLowerCase().includes("jwt") ||
-        msg.toLowerCase().includes("unauthorized");
-      if (isAuthError) {
-        await supabase.auth.refreshSession();
-        toast.error("Your session expired. Please send your message again.", { duration: 5000 });
-        setChatError(null);
-        return;
-      }
-      setChatError(msg);
-      toast.error("Something went wrong. Please try again.", { duration: 4000 });
-    },
-    onFinish: (message: any) => {
-      setChatError(null);
-      let dbMessageId: string | null = null;
-      if (Array.isArray(message.annotations)) {
-        for (const ann of message.annotations) {
-          const arr = Array.isArray(ann) ? ann : [ann];
-          for (const a of arr) {
-            if (a?.messageId) {
-              dbMessageId = a.messageId;
-              break;
-            }
-          }
-          if (dbMessageId) break;
-        }
-      }
-      if (dbMessageId) {
-        setMessages((prev: any[]) =>
-          prev.map((m: any) => (m.id === message.id ? { ...m, id: dbMessageId } : m)),
-        );
-      }
-      // Refresh rate limit counter after each completed AI response
-      refreshRateLimitStatus();
-    },
-  });
-
-  const { messages: messagesRaw, setMessages, sendMessage, stop, status, regenerate } = chatHelpers;
-  const handleReload = useCallback(() => regenerate({ body: { isRetry: true } }), [regenerate]);
-  const handlePromptClick = useCallback((prompt: string) => setInput(prompt), [setInput]);
-  const handleVote = useCallback(
-    (msgId: string, vote: 1 | -1 | null) => {
-      setUserVotes((prev) => {
-        if (vote === null) {
-          const next = { ...prev };
-          delete next[msgId];
-          return next;
-        }
-        return { ...prev, [msgId]: vote };
-      });
-    },
-    [setUserVotes],
-  );
-  /** When user clicks Edit on a bubble, load its text into ChatInput and focus it */
   const handleEditRequest = useCallback(
     (text: string) => {
       setInput(text);
       setTimeout(() => {
-        chatInputRef.current?.focus();
-        chatInputRef.current?.setSelectionRange(
-          chatInputRef.current.value.length,
-          chatInputRef.current.value.length,
-        );
+        if (chatInputRef.current) {
+          chatInputRef.current.focus();
+          chatInputRef.current.setSelectionRange(
+            chatInputRef.current.value.length,
+            chatInputRef.current.value.length,
+          );
+        }
       }, 50);
     },
     [setInput],
   );
-  const messages = messagesRaw as UIMessage[];
-  const messagesRef = useRef<UIMessage[]>(messages);
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
-  const handleEdit = useCallback(
-    async (messageId: string, newText: string) => {
-      const { data: editedMsg } = await supabase
-        .from("messages")
-        .select("created_at")
-        .eq("id", messageId)
-        .maybeSingle();
-      if (!editedMsg) {
-        toast.error("Message not found");
-        return;
-      }
-      setMessages((prev: UIMessage[]) =>
-        prev.map((m: UIMessage) =>
-          m.id === messageId
-            ? { ...m, content: newText, parts: [{ type: "text" as const, text: newText }] }
-            : m,
-        ),
-      );
-      const { error: updateError } = await supabase
-        .from("messages")
-        .update({ content: newText, parts: JSON.stringify([{ type: "text", text: newText }]) })
-        .eq("id", messageId);
-      if (updateError) {
-        toast.error("Failed to save edit");
-        return;
-      }
-      const { error: deleteError } = await supabase
-        .from("messages")
-        .delete()
-        .eq("conversation_id", threadId)
-        .gt("created_at", editedMsg.created_at);
-      if (deleteError) {
-        console.error("Failed to clean up subsequent messages:", deleteError);
-      }
-      const msgs = messagesRaw as any[];
-      const editedIdx = msgs.findIndex((m: any) => m.id === messageId);
-      if (editedIdx === -1) return;
-      const baseMessages = msgs
-        .slice(0, editedIdx + 1)
-        .map((m: any) =>
-          m.id === messageId
-            ? { ...m, content: newText, parts: [{ type: "text", text: newText }] }
-            : m,
-        );
-      setMessages(baseMessages);
-      regenerate({ body: { isRetry: true } });
-    },
-    [threadId, messagesRaw, setMessages, regenerate],
-  );
-  const isPending = status === "submitted" || status === "streaming";
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(event.target.value);
-  };
+  const handlePromptClick = useCallback(
+    (prompt: string) => {
+      setInput(prompt);
+      setTimeout(() => {
+        if (chatInputRef.current) {
+          chatInputRef.current.focus();
+          chatInputRef.current.setSelectionRange(prompt.length, prompt.length);
+        }
+      }, 50);
+    },
+    [setInput],
+  );
 
   const submit = async (event?: { preventDefault?: () => void }) => {
     event?.preventDefault?.();
@@ -463,43 +167,35 @@ function TutorThreadInner({
         const docText =
           attachedFile.text.length > MAX_DOC_CHARS
             ? attachedFile.text.slice(0, MAX_DOC_CHARS) +
-              "\n\n[Document truncated to 8000 characters due to size limits]"
+            "\n\n[Document truncated to 8000 characters due to size limits]"
             : attachedFile.text;
         finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${docText}\n</DocumentContent>\n\nStudent Query: ${trimmedInput || "(See attached document)"}`;
       }
 
-      const currentThread = threads.find((t) => t.id === threadId);
+      const currentThread = chatState.threads.find((t) => t.id === threadId);
       if (
-        messages.length === 0 &&
+        chatState.messages.length === 0 &&
         (!currentThread?.title ||
           currentThread.title === "New thread" ||
           currentThread.title === "New tutor session")
       ) {
-        generateThreadTitleFn({ data: trimmedInput })
-          .then((derivedTitle) => {
-            supabase
-              .from("conversations")
-              .update({ title: derivedTitle })
-              .eq("id", threadId)
-              .then(({ error }) => {
-                if (error) console.error("Failed to update thread title:", error);
-              });
-            setThreads((prev) =>
-              prev.map((t) => (t.id === threadId ? { ...t, title: derivedTitle } : t)),
-            );
+        const userInputText = trimmedInput || (attachedFile ? `Uploaded a document: ${attachedFile.name}` : "Started a new session");
+        generateThreadTitleFn({ data: userInputText })
+          .then((title) => {
+            renameThreadFn({ data: { threadId, title } })
+              .then(() => {
+                chatState.setThreads((prev: any[]) =>
+                  prev.map((t) => (t.id === threadId ? { ...t, title } : t))
+                );
+              })
+              .catch(console.error);
           })
-          .catch(() => {
-            const fallback = trimmedInput.slice(0, 29) + (trimmedInput.length > 29 ? "..." : "");
-            supabase.from("conversations").update({ title: fallback }).eq("id", threadId);
-            setThreads((prev) =>
-              prev.map((t) => (t.id === threadId ? { ...t, title: fallback } : t)),
-            );
-          });
+          .catch(console.error);
       }
 
       setInput("");
       setAttachedFile(null);
-      sendMessage({ text: finalMessage }).catch((error: unknown) => {
+      chatState.sendMessage({ text: finalMessage }).catch((error: unknown) => {
         console.error("[TutorThread] sendMessage background error:", error);
         toast.error("Failed to send message. Please try again.");
       });
@@ -508,374 +204,81 @@ function TutorThreadInner({
     }
   };
 
-  const handleEscalate = async (email?: string) => {
-    if (!threadId) return;
-
-    // Teacher email is required
-    if (!email || !email.trim()) {
-      setEscalateEmailError("Please enter your teacher's email address.");
-      return;
-    }
-
-    setEscalating(true);
-    try {
-      const sessionRes = await supabase.auth.getSession();
-      const session = sessionRes?.data?.session;
-      const userId = session?.user?.id;
-      if (!userId) throw new Error("Not logged in");
-
-      // Look up teacher — throws if not found or not a teacher
-      let reviewerId: string;
-      try {
-        reviewerId = await lookupTeacherByEmail({ data: email.trim().toLowerCase() });
-      } catch (err: any) {
-        setEscalateEmailError(err.message || "No teacher found with that email address.");
-        setEscalating(false);
-        return;
-      }
-
-      // Server fn handles duplicate guard, auth, and insert atomically
-      const result = await createEscalationFn({
-        data: {
-          conversationId: threadId,
-          reason: "student_request",
-          detail: "Student manually requested teacher review.",
-          reviewerId: reviewerId ?? null,
-        },
-      });
-      if (result.alreadyOpen) {
-        toast.info("This conversation already has an open escalation.");
-        setEscalating(false);
-        return;
-      }
-
-      // Send email notification to teacher
-      await createEscalationNotification({
-        data: { conversationId: threadId, reviewerId: reviewerId ?? null },
-      });
-
-      setEscalationStatus("open");
+  const handleEscalateConfirm = async (email?: string) => {
+    const success = await chatState.handleEscalate(email);
+    if (success) {
       setEscalateModalOpen(false);
       setTeacherEmail("");
-      setEscalateEmailError("");
-      toast.success("Conversation escalated to your teacher! They will be notified by email.");
-    } catch (err: any) {
-      toast.error(friendlyError(err, "Failed to escalate conversation."));
-    } finally {
-      setEscalating(false);
     }
-  };
-
-  // Global escalation event listener
-  useEffect(() => {
-    const handleGlobalEscalate = () => {
-      if (!escalationStatus && !escalating && !messagesLoading) setEscalateModalOpen(true);
-    };
-    window.addEventListener("custom:trigger-escalation", handleGlobalEscalate);
-    return () => window.removeEventListener("custom:trigger-escalation", handleGlobalEscalate);
-  }, [handleEscalate, escalationStatus, escalating, messagesLoading]);
-
-  const loadMessages = useCallback(
-    async (silent = false) => {
-      if (!threadId) {
-        setMessagesLoading(false);
-        return;
-      }
-
-      if (!silent) {
-        setMessagesLoading(true);
-        setMessagesLoadError(null);
-      }
-
-      let timeoutId: ReturnType<typeof setTimeout> | undefined;
-      if (!silent) {
-        timeoutId = setTimeout(() => {
-          setMessagesLoading(false);
-          setMessagesLoadError("Loading timed out.");
-        }, 20000);
-      }
-
-      try {
-        const [messagesRes, escalationRes, feedbackRes] = await Promise.all([
-          supabase
-            .from("messages")
-            .select("*")
-            .eq("conversation_id", threadId)
-            .order("created_at", { ascending: true }),
-          (async () => {
-            try {
-              const {
-                data: { user },
-              } = await supabase.auth.getUser();
-              return await supabase
-                .from("escalations")
-                .select("status")
-                .eq("conversation_id", threadId)
-                .eq("user_id", user?.id ?? "")
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
-            } catch {
-              return { data: null, error: null };
-            }
-          })(),
-          userId
-            ? supabase.from("message_feedback").select("message_id, vote").eq("user_id", userId)
-            : Promise.resolve({ data: null, error: null }),
-        ]);
-
-        if (timeoutId) clearTimeout(timeoutId);
-
-        // Component remounts per-thread (key={threadId}), so no need to re-read params here.
-
-        if (messagesRes.error) {
-          if (!silent) setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
-          setMessagesLoading(false);
-          return;
-        }
-
-        if (messagesRes.data && messagesRes.data.length > 0) {
-          if (!silent || messagesRes.data.length >= messagesRef.current.length) {
-            const __mapped = messagesRes.data.map((m) => {
-              // Defensive: older rows may have parts double-encoded as a JSON
-              // string (a historical bug) instead of a real jsonb array/object.
-              // Self-heal on read so old conversations render correctly too.
-              let resolvedParts: any[] | null = null;
-              if (Array.isArray(m.parts) && m.parts.length > 0) {
-                resolvedParts = m.parts as any[];
-              } else if (typeof m.parts === "string" && m.parts.trim().startsWith("[")) {
-                try {
-                  const parsed = JSON.parse(m.parts);
-                  if (Array.isArray(parsed) && parsed.length > 0) resolvedParts = parsed;
-                } catch {
-                  // fall through to text-only fallback below
-                }
-              }
-              return {
-                id: m.id ?? crypto.randomUUID(),
-                role: m.role as "user" | "assistant",
-                content: m.content || "",
-                parts: resolvedParts ?? [{ type: "text" as const, text: m.content || "" }],
-                createdAt: m.created_at ? new Date(m.created_at) : new Date(),
-              };
-            });
-            setMessages(__mapped);
-          }
-        } else {
-          if (!silent) {
-            setMessages([]);
-          }
-        }
-
-        if (escalationRes.error) {
-          console.error("[Escalation] Failed to fetch status:", escalationRes.error.message);
-        }
-        setEscalationStatus((escalationRes.data?.status as any) || null);
-
-        if (feedbackRes.data && feedbackRes.data.length > 0) {
-          const votesMap: Record<string, 1 | -1> = {};
-          for (const row of feedbackRes.data as any[]) {
-            if (row.message_id && row.vote != null) {
-              votesMap[row.message_id] = row.vote as 1 | -1;
-            }
-          }
-          setUserVotes(votesMap);
-        } else {
-          setUserVotes({});
-        }
-      } catch (e) {
-        if (timeoutId) clearTimeout(timeoutId);
-        if (!silent) {
-          setMessagesLoadError("Connection failed. Try refreshing.");
-        }
-      } finally {
-        setMessagesLoading(false);
-      }
-    },
-    [threadId, userId, setMessages],
-  );
-
-  const handleDeleteMessage = useCallback(
-    async (messageId: string) => {
-      // Optimistically remove from UI immediately
-      setMessages((prev: UIMessage[]) => prev.filter((m: UIMessage) => m.id !== messageId));
-      try {
-        const { error } = await supabase.from("messages").delete().eq("id", messageId);
-        if (error) throw error;
-        toast.success("Message deleted");
-      } catch {
-        // Revert on failure by reloading
-        loadMessages(true);
-        toast.error("Failed to delete message");
-      }
-    },
-    [setMessages, loadMessages],
-  );
-
-  // Load messages on mount/thread switch
-  useEffect(() => {
-    loadMessages(false);
-  }, [loadMessages]);
-
-  // When isPending transitions from true to false, reload messages to fetch actual database UUIDs
-  const prevPendingRef = useRef(isPending);
-  useEffect(() => {
-    if (prevPendingRef.current && !isPending) {
-      const timer = setTimeout(() => {
-        loadMessages(true);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-    prevPendingRef.current = isPending;
-  }, [isPending, loadMessages]);
-
-  // Real-time escalation status
-  useEffect(() => {
-    if (!threadId) return;
-    const channel = supabase
-      .channel(`escalation-status-${threadId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "escalations",
-          filter: `conversation_id=eq.${threadId}`,
-        },
-        (payload) => {
-          const newStatus = (payload.new as any)?.status;
-          if (newStatus) {
-            setEscalationStatus(newStatus);
-            if (newStatus === "resolved")
-              toast.success("A teacher has reviewed your conversation and responded!", {
-                duration: 6000,
-              });
-            else if (newStatus === "in_review")
-              toast.info("A teacher is now reviewing your conversation.", { duration: 4000 });
-          }
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [threadId]);
-
-  // Real-time teacher messages
-  useEffect(() => {
-    if (!threadId || messagesLoading) return;
-    const channel = supabase
-      .channel(`messages-${threadId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${threadId}`,
-        },
-        (payload) => {
-          const msg = payload.new as any;
-          if (msg?.role === "assistant" && msg?.content?.includes("Teacher Review:")) {
-            const teacherMsg = {
-              id: msg.id ?? crypto.randomUUID(),
-              role: "assistant" as const,
-              content: msg.content || "",
-              parts: [{ type: "text" as const, text: msg.content || "" }],
-              createdAt: msg.created_at ? new Date(msg.created_at) : new Date(),
-            };
-            setMessages((prev: UIMessage[]) => {
-              const alreadyExists = prev.some((m) => m.id === teacherMsg.id);
-              if (alreadyExists) return prev;
-              return [...prev, teacherMsg];
-            });
-          }
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [threadId, messagesLoading]);
-
-  const handleSelectThread = (id: string) => {
-    navigate({ to: "/tutor/$threadId", params: { threadId: id } } as any);
-  };
-
-  const createNewThread = async () => {
-    const sessionRes = await supabase.auth.getSession();
-    const userId = sessionRes?.data?.session?.user?.id;
-    if (!userId) return;
-    const { data, error } = await supabase
-      .from("conversations")
-      .insert([{ title: "New thread", user_id: userId }])
-      .select()
-      .single();
-    if (error) {
-      console.error("[TutorThread] create thread error:", error);
-      return;
-    }
-    const newId = (data as any).id;
-    setThreads((prev) => [{ id: newId, title: "New thread" }, ...prev]);
-    setThreadsOpen(false);
-    // ✅ Clear messages for new thread (this one is correct)
-    setMessages([]);
-    navigate({ to: "/tutor/$threadId", params: { threadId: newId } } as any);
-  };
-
-  // Export as PDF
-  const handleExportPDF = () => {
-    const title = threads.find((t) => t.id === threadId)?.title || "study-session";
-    exportAsPDF(messages, title);
   };
 
   return (
     <div className="flex h-full bg-background text-foreground overflow-hidden">
-      {/* Main chat area */}
-      <main
-        className="flex flex-col min-w-0 overflow-hidden w-full h-full"
-        style={{ flex: 1, minHeight: 0 }}
-      >
-        {/* Chat header */}
-        <ChatHeader
-          title={threads.find((t) => t.id === threadId)?.title || "Untitled Session"}
-          threadId={threadId}
+      <main className="flex flex-col min-w-0 overflow-hidden w-full h-full" style={{ flex: 1, minHeight: 0 }}>
+        <ThreadHeader
+          threadId={threadId as string}
+          threads={chatState.threads}
+          userId={userId}
+          timerState={timerState}
+          escalationStatus={chatState.escalationStatus}
+          setSidebarOpen={setSidebarOpen}
+          createNewThread={() => chatState.createNewThread(navigate)}
+          requestRenameThread={requestRenameThread}
+          requestDeleteThread={requestDeleteThread}
+          setTimerOpen={setTimerOpen}
+          handleExportPDF={handleExportPDF}
+          setEscalateModalOpen={setEscalateModalOpen}
         />
-        {/* Messages area */}
+
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <MessageList
-            messages={messages}
-            messagesLoading={messagesLoading}
-            messagesLoadError={messagesLoadError}
-            isPending={isPending}
-            isRateLimited={isRateLimited}
-            chatError={chatError}
-            onReload={handleReload}
+            messages={chatState.messages}
+            messagesLoading={chatState.messagesLoading}
+            messagesLoadError={chatState.messagesLoadError}
+            isPending={chatState.isPending}
+            isRateLimited={chatState.isRateLimited}
+            chatError={chatState.chatError}
+            onReload={chatState.handleReload}
             onEditRequest={handleEditRequest}
-            onDelete={handleDeleteMessage}
+            onDelete={chatState.handleDeleteMessage}
             onPromptClick={handlePromptClick}
+            recentThreads={chatState.threads.slice(0, 3)}
             userId={userId}
-            userVotes={userVotes}
-            onVote={handleVote}
+            userVotes={chatState.userVotes}
+            onVote={chatState.handleVote}
             onExportPDF={handleExportPDF}
             onEscalate={() => setEscalateModalOpen(true)}
-            escalationStatus={escalationStatus}
-            escalating={escalating}
+            escalationStatus={chatState.escalationStatus}
+            escalating={chatState.escalating}
+            onUploadClick={() => {
+              const el = document.getElementById("chat-file-input") as HTMLInputElement | null;
+              el?.click();
+            }}
+            onScanClick={() => {
+              const el = document.getElementById("chat-file-input") as HTMLInputElement | null;
+              if (el) {
+                el.setAttribute("capture", "environment");
+                el.click();
+                setTimeout(() => el.removeAttribute("capture"), 500);
+              }
+            }}
+            onVoiceClick={() => chatInputRef.current?.focus()}
+            allThreadsPath="/tutor/chats"
           />
         </div>
-        {/* Input area */}
+
         <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">
           <ChatInput
             input={input}
-            isPending={isPending}
+            isPending={chatState.isPending}
             parsingFile={parsingFile}
             attachedFile={attachedFile}
-            chatError={chatError}
+            chatError={chatState.chatError}
             docUploadError={docUploadError}
             onClearDocError={() => setDocUploadError(null)}
-            onInputChange={handleInputChange}
+            onInputChange={(e) => setInput(e.target.value)}
             onSubmit={submit}
-            onStop={stop}
+            onStop={chatState.stop}
             onFileChange={handleFileChange}
             inputRef={chatInputRef}
             onRemoveFile={() => {
@@ -884,36 +287,45 @@ function TutorThreadInner({
             }}
             onUpgrade={() => setShowPlans(true)}
             onRateLimitExpired={() => {
-              // Countdown expired (daily reset hit midnight) — clear stale error
-              // and re-fetch real status so the banner disappears automatically
-              setChatError(null);
-              refreshRateLimitStatus();
+              chatState.setChatError(null);
+              chatState.refreshRateLimitStatus();
             }}
-            messagesUsed={messagesUsed}
-            messagesMax={messagesMax}
+            messagesUsed={chatState.messagesUsed}
+            messagesMax={chatState.messagesMax}
+            onScanClick={() => {
+              const el = document.getElementById("chat-file-input") as HTMLInputElement | null;
+              if (el) {
+                el.setAttribute("capture", "environment");
+                el.click();
+                setTimeout(() => el.removeAttribute("capture"), 500);
+              }
+            }}
+            onVoiceClick={() => chatInputRef.current?.focus()}
           />
         </div>
       </main>
-      {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={currentPlan} />}
 
-      {/* Escalate Modal */}
+      {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={chatState.currentPlan} />}
+
       {escalateModalOpen && (
         <EscalateModal
           teacherEmail={teacherEmail}
           onEmailChange={(val) => {
             setTeacherEmail(val);
-            setEscalateEmailError("");
+            chatState.setEscalateEmailError("");
           }}
-          onConfirm={() => handleEscalate(teacherEmail || undefined)}
+          onConfirm={() => handleEscalateConfirm(teacherEmail || undefined)}
           onCancel={() => {
             setEscalateModalOpen(false);
             setTeacherEmail("");
-            setEscalateEmailError("");
+            chatState.setEscalateEmailError("");
           }}
-          isEscalating={escalating}
-          error={escalateEmailError}
+          isEscalating={chatState.escalating}
+          error={chatState.escalateEmailError}
         />
       )}
+
+      <PomodoroTimer open={timerOpen} onOpenChange={setTimerOpen} showTrigger={false} />
     </div>
   );
 }

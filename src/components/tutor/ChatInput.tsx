@@ -11,6 +11,8 @@ import {
   Clock,
   CreditCard,
   X,
+  Camera,
+  Mic,
 } from "lucide-react";
 
 type AttachedFile = {
@@ -39,6 +41,8 @@ type Props = {
   messagesMax?: number;
   /** Optional ref so parent can programmatically focus the textarea (e.g. after clicking Edit on a bubble) */
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
+  onScanClick?: () => void;
+  onVoiceClick?: () => void;
 };
 
 function formatFileSize(bytes: number): string {
@@ -145,6 +149,8 @@ export function ChatInput({
   messagesUsed = 0,
   messagesMax = undefined,
   inputRef: externalInputRef,
+  onScanClick,
+  onVoiceClick,
 }: Props) {
   const internalRef = useRef<HTMLTextAreaElement | null>(null);
   const textareaRef = externalInputRef ?? internalRef;
@@ -418,7 +424,25 @@ export function ChatInput({
             style={{ maxHeight: 160, overflowY: "hidden" }}
           />
 
-          <div className="pb-2 pr-2 pt-2 flex items-center">
+          <div className="pb-2 pr-2 pt-2 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onScanClick}
+              className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90 ${isDisabled ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}`}
+              title="Scan homework"
+              disabled={isDisabled}
+            >
+              <Camera className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onVoiceClick}
+              className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90 ${isDisabled ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}`}
+              title="Voice input"
+              disabled={isDisabled}
+            >
+              <Mic className="h-4 w-4" />
+            </button>
             <button
               type="button"
               onClick={(e) => {

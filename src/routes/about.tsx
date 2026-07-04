@@ -96,9 +96,9 @@ const TEAM_VALUES = [
 
 function About() {
   return (
-    <div className="min-h-screen bg-[#0f1117] text-[#e2e4f0] flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0a0a] text-[#e2e4f0] flex flex-col overflow-x-hidden">
       {/* Header */}
-      <header className="border-b border-white/5 sticky top-0 bg-[#0f1117]/80 backdrop-blur-xl z-30">
+      <header className="border-b border-white/5 sticky top-0 bg-[#0a0a0a]/80 backdrop-blur-xl z-30">
         <div className="flex w-full items-center justify-between px-4 sm:px-8 py-3.5 max-w-7xl mx-auto">
           <Logo to="/" size="md" />
           <nav className="flex items-center gap-3">
@@ -109,7 +109,8 @@ function About() {
               <ArrowLeft className="h-3.5 w-3.5" /> Back to home
             </Link>
             <Link
-              to="/register"
+              to="/"
+              search={{ authModalOpen: true } as any}
               className="rounded-lg bg-[#d9531e] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#c44819] transition-all shadow-lg shadow-[#d9531e]/25"
             >
               Get started
@@ -196,7 +197,7 @@ function About() {
         </section>
 
         {/* The Three Agents */}
-        <section className="bg-[#12151e] border-y border-white/6 px-4 sm:px-8 py-16 sm:py-24">
+        <section className="bg-[#050505] border-y border-white/6 px-4 sm:px-8 py-16 sm:py-24">
           <div className="max-w-7xl mx-auto space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-3">
               <p className="font-mono text-[10px] uppercase tracking-widest text-[#d9531e] font-bold">
@@ -298,13 +299,15 @@ function About() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
-                to="/register"
+                to="/"
+                search={{ authModalOpen: true } as any}
                 className="rounded-xl bg-white px-7 py-3 text-sm font-bold uppercase tracking-wider text-[#d9531e] hover:bg-white/90 transition-all shadow-lg hover:scale-[1.02]"
               >
                 Start for free
               </Link>
               <Link
-                to="/login"
+                to="/"
+                search={{ authModalOpen: true } as any}
                 className="rounded-xl border border-white/20 bg-white/5 px-7 py-3 text-sm font-bold uppercase tracking-wider text-white hover:bg-white/10 transition-all"
               >
                 Sign in

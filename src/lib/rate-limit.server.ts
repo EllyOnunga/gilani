@@ -181,20 +181,20 @@ export async function checkPlanRateLimit(
 
   switch (action) {
     case "chat":
-      minuteMax = plan === "free" ? 5 : plan === "basic" ? 10 : 20;
+      minuteMax = plan === "free" ? 5 : 20;
       dailyMax = limits.dailyMessages;
       break;
     case "quiz":
-      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
-      dailyMax = limits.dailyQuizzes;
+      minuteMax = plan === "free" ? 0 : 10;
+      dailyMax = plan === "free" ? 0 : limits.dailyQuizzes;
       break;
     case "planner":
-      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
-      dailyMax = limits.dailyPlanners;
+      minuteMax = plan === "free" ? 0 : 10;
+      dailyMax = plan === "free" ? 0 : limits.dailyPlanners;
       break;
     case "notes":
-      minuteMax = plan === "free" ? 2 : plan === "basic" ? 5 : 10;
-      dailyMax = limits.dailyNotes;
+      minuteMax = plan === "free" ? 0 : 10;
+      dailyMax = plan === "free" ? 0 : limits.dailyNotes;
       break;
   }
 
@@ -254,16 +254,16 @@ export async function getPlanRateLimitStatus(
       dailyMax = limits.dailyMessages;
       break;
     case "quiz":
-      minuteMax = Math.max(2, planMinute - 3);
-      dailyMax = limits.dailyQuizzes;
+      minuteMax = plan === "free" ? 0 : planMinute;
+      dailyMax = plan === "free" ? 0 : limits.dailyQuizzes;
       break;
     case "planner":
-      minuteMax = Math.max(2, planMinute - 3);
-      dailyMax = limits.dailyPlanners;
+      minuteMax = plan === "free" ? 0 : planMinute;
+      dailyMax = plan === "free" ? 0 : limits.dailyPlanners;
       break;
     case "notes":
-      minuteMax = Math.max(2, planMinute - 3);
-      dailyMax = limits.dailyNotes;
+      minuteMax = plan === "free" ? 0 : planMinute;
+      dailyMax = plan === "free" ? 0 : limits.dailyNotes;
       break;
     default:
       minuteMax = planMinute;

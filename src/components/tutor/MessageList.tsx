@@ -23,6 +23,11 @@ type Props = {
   escalationStatus?: "open" | "in_review" | "resolved" | null;
   escalating?: boolean;
   chatError?: string | null;
+  recentThreads?: { id: string; title?: string | null }[];
+  onUploadClick?: () => void;
+  onScanClick?: () => void;
+  onVoiceClick?: () => void;
+  allThreadsPath?: string;
 };
 
 
@@ -44,6 +49,11 @@ export const MessageList = React.memo(function MessageList({
   escalationStatus,
   escalating,
   chatError,
+  recentThreads,
+  onUploadClick,
+  onScanClick,
+  onVoiceClick,
+  allThreadsPath,
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -228,7 +238,14 @@ export const MessageList = React.memo(function MessageList({
 
         {/* Empty state */}
         {!messagesLoading && !messagesLoadError && messages.length === 0 && (
-          <EmptyState onPromptClick={onPromptClick} />
+          <EmptyState
+            onPromptClick={onPromptClick}
+            recentThreads={recentThreads ?? []}
+            onUploadClick={onUploadClick}
+            onScanClick={onScanClick}
+            onVoiceClick={onVoiceClick}
+            allThreadsPath={allThreadsPath}
+          />
         )}
 
         {/* Messages */}

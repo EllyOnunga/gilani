@@ -100,33 +100,33 @@
 }
 
 .dark {
-  --background: hsl(24 15% 8%);
-  --foreground: hsl(38 30% 94%);
-  --card: hsl(24 15% 12%);
-  --card-foreground: hsl(38 30% 94%);
-  --popover: hsl(24 15% 12%);
-  --popover-foreground: hsl(38 30% 94%);
-  --primary: hsl(22 75% 55%);
-  --primary-foreground: hsl(24 15% 8%);
-  --secondary: hsl(24 10% 18%);
-  --secondary-foreground: hsl(38 30% 94%);
-  --muted: hsl(24 10% 18%);
-  --muted-foreground: hsl(38 10% 65%);
-  --accent: hsl(24 10% 22%);
-  --accent-foreground: hsl(38 30% 94%);
+  --background: #161210;
+  --foreground: #ffffff;
+  --card: #211B18;
+  --card-foreground: #ffffff;
+  --popover: #211B18;
+  --popover-foreground: #ffffff;
+  --primary: #C96A3D;
+  --primary-foreground: #161210;
+  --secondary: #211B18;
+  --secondary-foreground: rgba(255, 255, 255, 0.7);
+  --muted: #211B18;
+  --muted-foreground: rgba(255, 255, 255, 0.7);
+  --accent: #E28743;
+  --accent-foreground: #ffffff;
   --destructive: hsl(0 70% 55%);
-  --destructive-foreground: hsl(38 30% 94%);
-  --border: hsl(38 30% 94% / 0.12);
-  --input: hsl(38 30% 94% / 0.15);
-  --ring: hsl(22 75% 55% / 0.5);
-  --sidebar: hsl(24 15% 10%);
-  --sidebar-foreground: hsl(38 30% 94%);
-  --sidebar-primary: hsl(22 75% 55%);
-  --sidebar-primary-foreground: hsl(24 15% 8%);
-  --sidebar-accent: hsl(24 10% 18%);
-  --sidebar-accent-foreground: hsl(38 30% 94%);
-  --sidebar-border: hsl(38 30% 94% / 0.1);
-  --sidebar-ring: hsl(22 75% 55% / 0.5);
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #C96A3D;
+  --sidebar: #161210;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #C96A3D;
+  --sidebar-primary-foreground: #161210;
+  --sidebar-accent: #211B18;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #C96A3D;
 }
 
 @keyframes slideUp {
@@ -641,4 +641,114 @@
 
 .animate-g-bounce {
   animation: g-bounce 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ── Markdown content global styles ──────────────────────────────────────── */
+/* These rules are a safety net for any element the React component map misses */
+
+.markdown-content {
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+/* Links — bright sky-blue, clearly clickable */
+.markdown-content a {
+  color: #38bdf8;
+  text-decoration: underline;
+  text-decoration-color: rgba(56, 189, 248, 0.5);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.markdown-content a:hover {
+  color: #7dd3fc;
+  text-decoration-color: #7dd3fc;
+}
+
+/* Tables */
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.markdown-content th {
+  background: rgba(var(--color-primary), 0.12);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.625rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.markdown-content td {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.markdown-content tr:last-child td {
+  border-bottom: none;
+}
+.markdown-content tr:nth-child(even) td {
+  background: rgba(255,255,255,0.03);
+}
+.markdown-content tr:hover td {
+  background: rgba(255,255,255,0.06);
+}
+
+/* Lists */
+.markdown-content ul {
+  list-style-type: disc;
+  padding-left: 1.4rem;
+  margin: 0.5rem 0;
+}
+.markdown-content ol {
+  list-style-type: decimal;
+  padding-left: 1.4rem;
+  margin: 0.5rem 0;
+}
+.markdown-content li {
+  margin: 0.2rem 0;
+  display: list-item;
+}
+.markdown-content li > ul,
+.markdown-content li > ol {
+  margin: 0.2rem 0 0.2rem 0.5rem;
+}
+
+/* Blockquotes */
+.markdown-content blockquote {
+  border-left: 3px solid rgba(var(--color-primary), 0.5);
+  padding: 0.4rem 0.8rem;
+  margin: 0.75rem 0;
+  color: rgba(255,255,255,0.7);
+  font-style: italic;
+  background: rgba(255,255,255,0.03);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+/* Inline code */
+.markdown-content code:not(pre code) {
+  background: rgba(255,255,255,0.08);
+  color: #f472b6;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.3rem;
+}
+
+/* Horizontal rule */
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  margin: 1rem 0;
+}
+
+/* Paragraph spacing */
+.markdown-content p {
+  margin: 0 0 0.6rem;
+}
+.markdown-content p:last-child {
+  margin-bottom: 0;
 }

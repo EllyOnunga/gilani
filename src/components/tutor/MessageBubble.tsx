@@ -118,10 +118,37 @@ export const MessageBubble = memo(function MessageBubble({
       : rawText;
   }, [m.id, m.role, m.parts, m.content]);
 
-  const thinkingSteps: any[] = useMemo(() => {
+  const { reasoningSteps, toolSteps } = useMemo(() => {
     const part = m.parts?.find((p: any) => p.type === "thinking-steps");
-    return Array.isArray(part?.steps) ? part.steps : [];
-  }, [m.id, m.parts]);
+    const steps = Array.isArray(part?.steps) ? part.steps : [];
+    
+    const dbToolSteps = steps.filter((s: any) => s.type === "tool-call" || s.type === "tool-result");
+    
+    const liveToolSteps: any[] = [];
+    if (m.toolInvocations && m.toolInvocations.length > 0) {
+      for (const inv of m.toolInvocations) {
+        liveToolSteps.push({
+          type: "tool-call",
+          toolName: inv.toolName,
+          input: inv.args,
+        });
+        if ('result' in inv) {
+           liveToolSteps.push({
+             type: "tool-result",
+             toolName: inv.toolName,
+             output: inv.result,
+           });
+        }
+      }
+    }
+
+    const finalToolSteps = liveToolSteps.length > 0 ? liveToolSteps : dbToolSteps;
+
+    return {
+      reasoningSteps: steps.filter((s: any) => s.type === "reasoning"),
+      toolSteps: finalToolSteps,
+    };
+  }, [m.id, m.parts, m.toolInvocations]);
 
   const [showThinkingPanel, setShowThinkingPanel] = useState(false);
 
@@ -211,9 +238,37 @@ export const MessageBubble = memo(function MessageBubble({
 
   return (
     <div
-      className="flex relative group"
-      style={{ justifyContent: isUser ? "flex-end" : "flex-start" }}
+      className="flex flex-col relative group"
+      style={{ alignItems: isUser ? "flex-end" : "flex-start" }}
     >
+      {/* Live tool call indicator — rendered OUTSIDE the bubble so it's visible even before text appears */}
+      {!isUser && isStreamActive && toolSteps.length > 0 && !showBubbleCard && (
+        <div className="mb-2 flex flex-wrap gap-2 animate-in fade-in duration-300 w-full max-w-[96%]">
+          {toolSteps.map((step: any, i: number) => {
+            if (step.type !== "tool-call") return null;
+            const isDone = toolSteps.some(
+              (s: any) => s.type === "tool-result" && s.toolName === step.toolName
+            );
+            return (
+              <div
+                key={i}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-mono border transition-all duration-300 ${
+                  isDone
+                    ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/50"
+                    : "bg-amber-950/40 text-amber-400 border-amber-800/50"
+                }`}
+              >
+                {isDone ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                )}
+                <span className="font-semibold">{step.toolName}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div
         className={`${
           isUser ? "max-w-[88%] sm:max-w-[72%]" : "w-full max-w-[96%] sm:max-w-full"
@@ -222,7 +277,7 @@ export const MessageBubble = memo(function MessageBubble({
             ? "bg-card border border-border text-foreground rounded-2xl rounded-tr-sm shadow-sm"
             : isStreamActive && !showBubbleCard
               ? "opacity-0 pointer-events-none"
-              : "bg-transparent text-foreground"
+              : "bg-[#1c1714] text-foreground rounded-2xl border border-border/20 shadow-sm px-5"
         }`}
       >
         {!isUser ? (
@@ -230,7 +285,35 @@ export const MessageBubble = memo(function MessageBubble({
             <div className="flex flex-col w-full">
               {showBubbleCard ? (
                 <div className="prose-ai relative">
-                  {thinkingSteps.length > 0 && (
+                  {toolSteps.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      {toolSteps.map((step: any, i: number) => {
+                        if (step.type !== "tool-call") return null;
+                        const isDone = toolSteps.some(
+                          (s: any) => s.type === "tool-result" && s.toolName === step.toolName
+                        );
+                        return (
+                          <div
+                            key={i}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono border transition-all duration-300 ${
+                              isDone
+                                ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/50"
+                                : "bg-amber-950/40 text-amber-400 border-amber-800/50"
+                            }`}
+                          >
+                            {isDone ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                            )}
+                            <span className="font-semibold">{step.toolName}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {reasoningSteps.length > 0 && (
                     <div className="mb-2">
                       <button
                         type="button"
@@ -241,33 +324,8 @@ export const MessageBubble = memo(function MessageBubble({
                       </button>
                       {showThinkingPanel && (
                         <div className="mt-1.5 space-y-1.5 rounded-lg border border-border/50 bg-muted/20 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
-                          {thinkingSteps.map((step: any, i: number) => (
-                            <div key={i}>
-                              {step.type === "reasoning" && (
-                                <p className="italic">{step.text}</p>
-                              )}
-                              {step.type === "tool-call" && (
-                                <p>
-                                  <span className="font-semibold text-foreground/80">
-                                    Used {step.toolName}
-                                  </span>
-                                  {step.input ? (
-                                    <span className="opacity-70">
-                                      {" "}
-                                      — {JSON.stringify(step.input).slice(0, 120)}
-                                    </span>
-                                  ) : null}
-                                </p>
-                              )}
-                              {step.type === "tool-result" && (
-                                <p className="opacity-70">
-                                  Result:{" "}
-                                  {typeof step.output === "string"
-                                    ? step.output.slice(0, 200)
-                                    : JSON.stringify(step.output).slice(0, 200)}
-                                </p>
-                              )}
-                            </div>
+                          {reasoningSteps.map((step: any, i: number) => (
+                            <p key={i} className="italic">{step.text}</p>
                           ))}
                         </div>
                       )}
@@ -360,87 +418,9 @@ export const MessageBubble = memo(function MessageBubble({
                   >
                     <ThumbsDown className="h-3.5 w-3.5" />
                   </button>
-
-                  {/* Session actions — only on last assistant bubble */}
-                  {isLast && (onExportPDF || onEscalate) && (
-                    <>
-                      <span className="w-px h-3 bg-border/60 mx-0.5" />
-
-                      {/* Study Timer */}
-                      <button
-                        onClick={() => setTimerOpen(true)}
-                        className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
-                        title="Study Timer"
-                        aria-label="Open study timer"
-                      >
-                        <Timer className="h-3.5 w-3.5" />
-                      </button>
-
-                      {/* Export PDF */}
-                      {onExportPDF && (
-                        <button
-                          onClick={onExportPDF}
-                          className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
-                          title="Export PDF"
-                          aria-label="Export as PDF"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">PDF</span>
-                        </button>
-                      )}
-
-                      {/* Escalate */}
-                      {onEscalate &&
-                        (escalationStatus ? (
-                          <span
-                            className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded ${
-                              escalationStatus === "resolved"
-                                ? "text-green-600"
-                                : escalationStatus === "in_review"
-                                  ? "text-blue-600"
-                                  : "text-amber-600"
-                            }`}
-                          >
-                            {escalationStatus === "resolved" ? (
-                              <>
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                                <span className="hidden sm:inline">Reviewed</span>
-                              </>
-                            ) : (
-                              <>
-                                <Clock className="h-3.5 w-3.5 animate-pulse" />
-                                <span className="hidden sm:inline">
-                                  {escalationStatus === "in_review" ? "Reviewing" : "Pending"}
-                                </span>
-                              </>
-                            )}
-                          </span>
-                        ) : (
-                          ((
-                            <button
-                              onClick={onEscalate}
-                              disabled={escalating || messagesLoading}
-                              className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-600 hover:text-amber-700 transition-colors px-2 py-1 rounded hover:bg-amber-50 disabled:opacity-50"
-                              title="Escalate to teacher"
-                              aria-label="Escalate to teacher"
-                            >
-                              {escalating ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <ShieldAlert className="h-3.5 w-3.5" />
-                              )}
-                              <span className="hidden sm:inline">
-                                {escalating ? "Escalating…" : "Escalate"}
-                              </span>
-                            </button>
-                          ) as React.ReactNode)
-                        ))}
-                    </>
-                  )}
                 </div>
               )}
             </div>
-            <PomodoroTimer open={timerOpen} onOpenChange={setTimerOpen} showTrigger={false} />
           </>
         ) : (
           /* User message */

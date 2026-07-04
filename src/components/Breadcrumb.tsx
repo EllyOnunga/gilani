@@ -29,7 +29,7 @@ function getCrumbs(pathname: string): Crumb[] {
   const segments = pathname.split("/").filter(Boolean);
 
   // Always start with Home → Dashboard
-  const crumbs: Crumb[] = [{ label: "Home", href: "/dashboard", navigable: true }];
+  const crumbs: Crumb[] = [{ label: "Home", href: "/tutor", navigable: true }];
 
   let accumulated = "";
 
@@ -72,7 +72,7 @@ function getCrumbs(pathname: string): Crumb[] {
   }
 
   // Remove duplicate if first crumb after Home is also /dashboard
-  if (crumbs.length > 1 && crumbs[1].href === "/dashboard") {
+  if (crumbs.length > 1 && crumbs[1].href === "/tutor") {
     return crumbs.slice(1);
   }
 
@@ -84,7 +84,7 @@ export function Breadcrumb() {
   const crumbs = getCrumbs(pathname);
 
   // Don't show breadcrumb on dashboard root or single-crumb pages
-  if (pathname === "/dashboard" || crumbs.length <= 1) return null;
+  if (pathname === "/tutor" || crumbs.length <= 1) return null;
 
   return (
     <nav

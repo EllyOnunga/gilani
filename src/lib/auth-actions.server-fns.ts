@@ -6,14 +6,14 @@ import { z } from "zod";
 import {
   sendTransactionalEmail,
   emailTemplate,
-  passwordResetConfirmationEmail,
+  welcomeEmail,
 } from "@/lib/email.server";
 
 export const assignUserRole = createServerFn({ method: "POST" })
   .validator(
     z.object({
       role: z.enum(["student", "teacher", "admin"]),
-      // userId removed — extracted from server session
+      displayName: z.string().optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -25,7 +25,7 @@ export const assignUserRole = createServerFn({ method: "POST" })
       throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
     }
     const userId = authResult.userId;
-    const { role } = data;
+    const { role, displayName } = data;
 
     // SECURITY: Prevent privilege escalation -- only existing admins may
     // (re)assign themselves the "admin" role via this self-service endpoint.
@@ -52,7 +52,7 @@ export const assignUserRole = createServerFn({ method: "POST" })
       await supabaseAdmin.from("profiles").upsert(
         {
           id: userId,
-          display_name: authResult.user.user_metadata?.full_name ?? null,
+          display_name: displayName || authResult.user.user_metadata?.full_name || null,
           email: authResult.user.email ?? null,
           updated_at: new Date().toISOString(),
         },
@@ -61,23 +61,21 @@ export const assignUserRole = createServerFn({ method: "POST" })
 
       // Send welcome email
       const userEmail = authResult.user.email;
-      const userName = authResult.user.user_metadata?.full_name || "there";
+      const userName = displayName || authResult.user.user_metadata?.full_name || "there";
       const dashboard =
         role === "teacher"
           ? "/teacher/escalations"
           : role === "admin"
             ? "/admin/users"
-            : "/dashboard";
+            : "/tutor";
       if (userEmail) {
         sendTransactionalEmail({
           to: userEmail,
           subject: `Welcome to GilaniAI 🎉`,
-          html: emailTemplate({
-            heading: `Welcome, ${userName}!`,
-            body: `Your account has been created successfully as a <strong>${role}</strong>. You're all set to start using GilaniAI — your curriculum-aligned AI study assistant for KCSE & CBC.`,
-            buttonText: "Go to Dashboard",
-            buttonUrl: `${process.env.APP_URL || "https://gilaniai.site"}/login?signout=true&redirect=${dashboard}`,
-            footerNote: "You're receiving this because you just registered on GilaniAI.",
+          html: welcomeEmail({
+            userName,
+            role,
+            dashboardUrl: `${process.env.APP_URL || "https://gilaniai.site"}/login?signout=true&redirect=${dashboard}`,
           }),
         }).catch((err) => console.error("[Welcome Email] Failed:", err));
       }
@@ -119,33 +117,3 @@ export const checkEmailExists = createServerFn({ method: "POST" })
       return { exists: false };
     }
   });
-
-/**
- * Called client-side after supabase.auth.updateUser({ password }) succeeds.
- * Sends a "your password was reset — was this you?" confirmation email.
- */
-export const sendPasswordResetConfirmationFn = createServerFn({ method: "POST" }).handler(
-  async () => {
-    const request = getRequest();
-    let authResult;
-    try {
-      authResult = await authenticateRequest(request);
-    } catch {
-      throw new Error("Unauthorized");
-    }
-
-    const userEmail = authResult.user.email;
-    const userName = authResult.user.user_metadata?.full_name || undefined;
-
-    if (!userEmail) return { sent: false };
-
-    const sent = await sendTransactionalEmail({
-      to: userEmail,
-      subject: "Your GilaniAI Password Was Changed",
-      html: passwordResetConfirmationEmail(userName),
-      text: `Hi ${userName || "there"},\n\nYour GilaniAI password was successfully changed.\n\nIf you did NOT make this change, reset your password immediately at: ${process.env.APP_URL || "https://gilaniai.site"}/forgot-password\n\nBest regards,\nThe GilaniAI Team`,
-    });
-
-    return { sent };
-  },
-);

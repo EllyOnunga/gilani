@@ -398,8 +398,14 @@ ${finalContent}`;
                 }) as any,
               }) as any,
               searchWeb: tool({
-                description: "Search the web for up-to-date facts or current events.",
-                inputSchema: z.object({ query: z.string() }) as any,
+                description:
+                  "Search the live web for current information. Call this tool PROACTIVELY whenever: " +
+                  "(1) the question involves past papers, exam resources, revision materials, or specific curriculum documents; " +
+                  "(2) the question involves current events, recent dates, live statistics, or any fact that could have changed since training; " +
+                  "(3) the student asks for links, websites, or external resources; " +
+                  "(4) you are not 100% confident in a specific fact, formula, or data point. " +
+                  "Prefer searching multiple times with different queries to ground your answer comprehensively.",
+                inputSchema: z.object({ query: z.string().describe("A specific, targeted search query — be detailed for best results.") }) as any,
                 execute: (async ({ query }: any) => {
                   console.log(`[API Chat] searchWeb tool invoked. Query: ${query}`);
 
@@ -419,11 +425,12 @@ ${finalContent}`;
                       body: JSON.stringify({
                         api_key: tavilyKey,
                         query,
-                        search_depth: "basic",
+                        search_depth: "advanced",
                         include_answer: true,
-                        max_results: 5,
+                        include_raw_content: false,
+                        max_results: 8,
                       }),
-                      signal: AbortSignal.timeout(12000),
+                      signal: AbortSignal.timeout(15000),
                     });
 
                     if (!response.ok) {
@@ -438,20 +445,20 @@ ${finalContent}`;
                     const results: any[] = Array.isArray(data?.results) ? data.results : [];
 
                     const formattedResults = results
-                      .slice(0, 5)
+                      .slice(0, 8)
                       .map(
                         (r: any, i: number) =>
-                          `${i + 1}. ${r.title || "Untitled"} (${r.url || "no url"})\n${(r.content || "").slice(0, 300)}`,
+                          `${i + 1}. **${r.title || "Untitled"}** — ${r.url || "no url"}\n${(r.content || "").slice(0, 500)}`,
                       )
                       .join("\n\n");
 
                     let result = "";
-                    if (answer) result += `Summary: ${answer}\n\n`;
+                    if (answer) result += `AI Summary: ${answer}\n\n`;
                     result += formattedResults
-                      ? `Sources:\n${formattedResults}`
+                      ? `Web Results:\n${formattedResults}`
                       : "No relevant results found.";
 
-                    console.log(`[API Chat] searchWeb: ${results.length} results returned`);
+                    console.log(`[API Chat] searchWeb: ${results.length} results returned for query: "${query}"`);
                     return { result };
                   } catch (err: unknown) {
                     const message = err instanceof Error ? err.message : String(err);
@@ -499,8 +506,7 @@ ${finalContent}`;
                 }) as any,
               }) as any,
             } as any,
-            stopWhen: stepCountIs(3),
-            // REVERTED back to "line": word-level chunking caused the same
+            stopWhen: stepCountIs(5),
             // SSE backpressure / multi-second stall reported previously (~10s
             // dump delay observed). Keeping line-chunking until the stall's
             // actual cause (likely unrelated per-commit cost, not chunking
@@ -525,8 +531,9 @@ ${finalContent}`;
                 `[API Chat] google finished. Length: ${assistantText.length}. FinishReason: ${finishReason}. Tokens: ${totalTokens} (cached: ${cachedTokens}) Cache: ${cacheHit ? "✅ HIT" : "❌ MISS"}`,
               );
 
+              const fullAssistantText = steps?.map(s => s.text || "").filter(Boolean).join("\n\n") || assistantText;
               const safeText =
-                assistantText.trim() ||
+                fullAssistantText.trim() ||
                 "Sorry, I could not generate a response right now. Please try again.";
 
               // Build a real thinking-step trace from this turn's steps.

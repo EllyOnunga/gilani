@@ -9,9 +9,7 @@ import { TOPUP_TOKENS_PER_KES, TOPUP_MIN_KES } from "@/lib/plans";
 
 const PLAN_ICONS: Record<PlanId, typeof Zap> = {
   free: Zap,
-  basic: GraduationCap,
-  premium: Star,
-  school: School,
+  pro: Star,
 };
 
 interface Props {
@@ -21,7 +19,7 @@ interface Props {
 
 export function PlansModal({ onClose, currentPlan = "free" }: Props) {
   const { user } = useAuth();
-  const [selected, setSelected] = useState<PlanId>("basic");
+  const [selected, setSelected] = useState<PlanId>("pro");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);

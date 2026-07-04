@@ -32,7 +32,7 @@ export function LegalHeader({ backTo, backLabel }: { backTo?: any; backLabel?: s
           </a>
           {user && (
             <Link
-              to={"/dashboard" as any}
+              to={"/tutor" as any}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-[#d9531e] hover:text-[#c44819] transition-colors px-3 py-2 rounded-lg bg-[#d9531e]/10 hover:bg-[#d9531e]/15"
             >
               <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard

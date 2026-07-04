@@ -1,13 +1,16 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { GilaniLoader } from "@/components/GilaniLoader";
+import { Logo } from "@/components/ui/logo";
+import { User } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/callback")({
   component: AuthCallback,
   validateSearch: (search: Record<string, unknown>) => ({
-    next: (search.next as string) || "/dashboard",
+    next: (search.next as string) || "/tutor",
     error: (search.error as string) || undefined,
     error_description: (search.error_description as string) || undefined,
     code: (search.code as string) || undefined,
@@ -20,10 +23,14 @@ function AuthCallback() {
   const { next, error: urlError, error_description } = useSearch({ from: "/callback" });
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showNameForm, setShowNameForm] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [pendingRole, setPendingRole] = useState<"student" | "teacher">("student");
   const processedRef = useRef(false);
 
   // Sanitize next — prevent open redirect attacks
-  const safePath = next.startsWith("/") ? next : "/dashboard";
+  const safePath = next.startsWith("/") ? next : "/tutor";
 
   useEffect(() => {
     if (processedRef.current) return;
@@ -70,7 +77,7 @@ function AuthCallback() {
           return;
         }
         if (type === "recovery") {
-          navigate({ to: "/reset-password" });
+          navigate({ to: "/" });
           return;
         }
         // Email confirmed — fall through to get session below
@@ -88,9 +95,8 @@ function AuthCallback() {
       }
 
       if (session) {
-        // If recovery flow (reset-password), bypass role checks to allow user to reset password
         if (safePath === "/reset-password" || type === "recovery") {
-          navigate({ to: "/reset-password" });
+          navigate({ to: "/" });
           return;
         }
 
@@ -101,29 +107,23 @@ function AuthCallback() {
           .eq("user_id", session.user.id)
           .maybeSingle();
 
-        const pendingRole = localStorage.getItem("pending_role") as "student" | "teacher" | null;
+        const storedRole = localStorage.getItem("pending_role") as "student" | "teacher" | null;
+        const effectiveRole = storedRole || "student";
         localStorage.removeItem("pending_role");
 
-        if (!roleRow || (pendingRole === "teacher" && roleRow.role === "student")) {
-          // New user or needs role upgrade to teacher
-          if (pendingRole === "teacher") {
-            try {
-              const { supabase: sb } = await import("@/integrations/supabase/client");
-              // Delete the auto-assigned student role and insert teacher
-              await sb.from("user_roles").delete().eq("user_id", session.user.id);
-              const { assignUserRole } = await import("@/lib/auth-actions.server-fns");
-              await assignUserRole({ data: { role: "teacher" } });
-              navigate({ to: "/teacher/escalations" as any });
-            } catch {
-              navigate({ to: safePath });
-            }
-          } else {
-            navigate({ to: safePath });
-          }
+        const isNewUser = !roleRow;
+
+        if (isNewUser || (storedRole === "teacher" && roleRow?.role === "student")) {
+          // New user — show display name form before proceeding
+          setPendingRole(effectiveRole as "student" | "teacher");
+          // Pre-fill with Google name if available
+          const googleName = session.user.user_metadata?.full_name || "";
+          setDisplayName(googleName);
+          setShowNameForm(true);
           return;
         }
 
-        // Existing user — redirect based on role to avoid flash
+        // Existing user — redirect based on role
         if (roleRow.role === "admin") {
           navigate({ to: "/admin/users" });
         } else if (roleRow.role === "teacher") {
@@ -138,9 +138,8 @@ function AuthCallback() {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((event, s) => {
         if (event === "PASSWORD_RECOVERY") {
-          navigate({ to: "/reset-password" });
+          navigate({ to: "/" });
         } else if (event === "SIGNED_IN" && s) {
-          // Don't redirect on SIGNED_IN during a recovery flow
           const urlParams = new URLSearchParams(window.location.search);
           const type = urlParams.get("type");
           if (type !== "recovery") {
@@ -154,6 +153,72 @@ function AuthCallback() {
 
     handleCallback();
   }, []);
+
+  const onSaveName = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!displayName.trim()) return toast.error("Please enter your display name.");
+    setSavingName(true);
+    try {
+      const { assignUserRole } = await import("@/lib/auth-actions.server-fns");
+      await assignUserRole({
+        data: {
+          role: pendingRole,
+          displayName: displayName.trim(),
+        },
+      });
+      // Redirect based on role
+      if (pendingRole === "teacher") {
+        navigate({ to: "/teacher/escalations" as any });
+      } else {
+        navigate({ to: safePath });
+      }
+    } catch (err) {
+      console.error("[Callback] Failed to save display name:", err);
+      toast.error("Something went wrong. Please try again.");
+      setSavingName(false);
+    }
+  };
+
+  if (showNameForm) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-[#0a0f1e] p-4">
+        <div className="w-full max-w-md rounded-3xl border border-white/8 bg-[#1a1d27] shadow-2xl p-8 sm:p-10 space-y-6 animate-in fade-in zoom-in-95 duration-300">
+          <div className="text-center space-y-2">
+            <Logo to="/" size="md" className="mx-auto" />
+            <h1 className="font-serif text-2xl font-black text-white pt-2">Almost there!</h1>
+            <p className="text-xs text-[#9ca3af]">What should we call you? This will be your display name.</p>
+          </div>
+
+          <form onSubmit={onSaveName} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-[#9ca3af]">Display Name</label>
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b7280]" />
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="Your Name"
+                  value={displayName}
+                  maxLength={100}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full rounded-xl border border-white/8 bg-[#0f1117] pl-10 pr-4 py-3 text-sm text-white placeholder-[#6b7280] focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/50 transition-colors"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={savingName || !displayName.trim()}
+              className="w-full rounded-xl bg-[#C96A3D] py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#E28743] disabled:opacity-50 transition-all shadow-lg shadow-[#C96A3D]/25"
+            >
+              {savingName ? "Setting up your account…" : "Let's Go →"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (isError) {
     return (
@@ -204,22 +269,7 @@ function AuthCallback() {
           }}
         >
           <a
-            href="/forgot-password"
-            style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
-              color: "#fff",
-              textDecoration: "none",
-              padding: "0.7rem 1.5rem",
-              borderRadius: 8,
-              fontWeight: 600,
-              fontSize: "0.85rem",
-              textAlign: "center",
-            }}
-          >
-            Request a new link
-          </a>
-          <a
-            href="/login"
+            href="/"
             style={{
               background: "rgba(255,255,255,0.05)",
               border: "1px solid rgba(255,255,255,0.1)",
@@ -232,7 +282,7 @@ function AuthCallback() {
               textAlign: "center",
             }}
           >
-            Back to sign in
+            Back to home
           </a>
         </div>
       </div>

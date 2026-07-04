@@ -1,181 +1,105 @@
 import React from "react";
+import { Link } from "@tanstack/react-router";
 import {
-  FlaskConical,
-  Globe,
-  Calculator,
-  BookOpen,
-  Leaf,
-  Code2,
-  FileText,
-  PenLine,
+  FileUp,
+  Camera,
+  Mic,
+  ArrowRight,
+  MessageSquare,
 } from "lucide-react";
 
 const SUBJECTS = [
-  {
-    icon: Calculator,
-    label: "Solve Maths",
-    prompt: "Help me solve a maths problem step by step",
-    color: "text-orange-400",
-  },
-  {
-    icon: Globe,
-    label: "Geography",
-    prompt: "Explain major landforms of East Africa for Geography",
-    color: "text-cyan-400",
-  },
-  {
-    icon: FlaskConical,
-    label: "Chemistry",
-    prompt: "Explain periodic table trends for Chemistry",
-    color: "text-emerald-400",
-  },
-  {
-    icon: BookOpen,
-    label: "History",
-    prompt: "What are the causes of World War I?",
-    color: "text-amber-400",
-  },
-  {
-    icon: Leaf,
-    label: "Biology",
-    prompt: "Help me understand photosynthesis for Biology",
-    color: "text-green-400",
-  },
-  {
-    icon: Code2,
-    label: "Programming",
-    prompt: "Teach me the basics of programming with examples",
-    color: "text-blue-400",
-  },
-  {
-    icon: FileText,
-    label: "Summarise PDF",
-    prompt: "I'll upload a document — please summarise the key points",
-    color: "text-purple-400",
-  },
-  {
-    icon: PenLine,
-    label: "Essay Help",
-    prompt: "Help me structure and write an essay",
-    color: "text-pink-400",
-  },
+  { icon: "📐", label: "Math", prompt: "Help me solve a maths problem step by step" },
+  { icon: "🧪", label: "Chemistry", prompt: "Explain periodic table trends for Chemistry" },
+  { icon: "🌍", label: "Geography", prompt: "Explain major landforms for Geography" },
+  { icon: "🌱", label: "Biology", prompt: "Help me understand photosynthesis for Biology" },
+  { icon: "📖", label: "History", prompt: "What are the causes of World War I?" },
+  { icon: "💻", label: "Coding", prompt: "Teach me the basics of programming with examples" },
+  { icon: "✍️", label: "Essays", prompt: "Help me structure and write an essay" },
+  { icon: "📄", label: "Summarize PDF", prompt: "I'll upload a document — please summarise the key points" },
 ];
 
 type Props = {
   onPromptClick: (prompt: string) => void;
+  onUploadClick?: () => void;
+  onScanClick?: () => void;
+  onVoiceClick?: () => void;
+  recentThreads?: { id: string; title?: string | null }[];
+  allThreadsPath?: string;
 };
 
-export function EmptyState({ onPromptClick }: Props) {
+export function EmptyState({
+  onPromptClick,
+  onUploadClick,
+  onScanClick,
+  onVoiceClick,
+  recentThreads = [],
+  allThreadsPath,
+}: Props) {
   return (
-    <div
-      className="flex flex-col items-center justify-center h-full px-5 py-8 gap-6 text-center select-none"
-      style={{ minHeight: 0 }}
-    >
-      {/* Avatar */}
-      <div
-        className="relative flex items-center justify-center"
-        style={{
-          animation: "gs-fadein 0.5s ease both",
-        }}
-      >
-        {/* Outer glow pulse */}
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 72,
-            height: 72,
-            background:
-              "radial-gradient(circle, rgba(217,83,30,0.25) 0%, transparent 70%)",
-            animation: "gs-pulse 2.4s ease-in-out infinite",
-          }}
-        />
-        {/* Avatar circle */}
-        <div
-          className="relative flex items-center justify-center rounded-full"
-          style={{
-            width: 52,
-            height: 52,
-            background: "linear-gradient(135deg, #C96A3D 0%, #E28743 100%)",
-            boxShadow:
-              "0 0 0 3px rgba(217,83,30,0.18), 0 4px 20px rgba(217,83,30,0.35)",
-          }}
-        >
-          <span
-            style={{
-              fontSize: 24,
-              lineHeight: 1,
-              userSelect: "none",
-            }}
-            aria-hidden="true"
-          >
-            🎓
-          </span>
+    <div className="flex flex-col items-center justify-start h-full px-5 pt-8 pb-16 gap-8 overflow-y-auto w-full max-w-2xl mx-auto">
+      
+      {/* Welcome Section */}
+      <div className="flex flex-col items-center text-center space-y-4 animate-in-slide">
+        <div className="text-4xl bg-primary/20 p-4 rounded-full flex items-center justify-center">
+          🤖
         </div>
-      </div>
-
-      {/* Headline */}
-      <div
-        style={{
-          animation: "gs-fadein 0.5s 0.1s ease both",
-        }}
-      >
-        <h2
-          className="font-serif font-black text-foreground leading-tight"
-          style={{ fontSize: 22 }}
-        >
-          GilaniAI
-        </h2>
-        <p
-          className="font-mono font-bold uppercase tracking-widest"
-          style={{
-            fontSize: 9,
-            color: "#d9531e",
-            letterSpacing: "0.18em",
-            marginTop: 2,
-          }}
-        >
-          AI Tutor
-        </p>
-        <p
-          className="text-muted-foreground leading-relaxed mt-2"
-          style={{ fontSize: 12, maxWidth: 220 }}
-        >
-          Ask questions, solve problems, or upload notes — all in one place.
+        <div>
+          <h1 className="text-3xl font-serif font-bold text-foreground">GilaniAI</h1>
+          <h2 className="text-xl text-primary font-medium mt-1">Your AI Study Assistant</h2>
+        </div>
+        <p className="text-muted-foreground text-sm max-w-[280px]">
+          Ask questions, upload notes, or solve homework.
         </p>
       </div>
 
-      {/* Subject grid */}
-      <div
-        className="w-full"
-        style={{
-          maxWidth: 320,
-          animation: "gs-slideup 0.5s 0.2s ease both",
-        }}
-      >
-        <p
-          className="font-mono uppercase tracking-widest text-muted-foreground mb-3"
-          style={{ fontSize: 9, letterSpacing: "0.16em" }}
+      {/* Quick Actions */}
+      <div className="grid grid-cols-3 gap-3 w-full animate-in-slide" style={{ animationDelay: "100ms" }}>
+        <button
+          onClick={onUploadClick}
+          className="flex flex-col items-center justify-center gap-2 bg-card border border-border rounded-2xl p-4 hover:border-primary/50 hover:bg-muted/40 transition-all text-sm font-medium text-foreground active:scale-[0.97]"
+          title="Upload a document (PDF, DOCX, TXT)"
         >
-          Try asking about
-        </p>
-        <div className="grid gap-2" style={{ gridTemplateColumns: "1fr 1fr" }}>
-          {SUBJECTS.map((s, i) => (
+          <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+            <FileUp className="h-5 w-5" />
+          </div>
+          Upload
+        </button>
+        <button
+          onClick={onScanClick}
+          className="flex flex-col items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl p-4 shadow-lg shadow-primary/20 hover:opacity-90 transition-all text-sm font-bold active:scale-[0.97]"
+          title="Scan a question with your camera"
+        >
+          <div className="h-10 w-10 rounded-full bg-black/20 flex items-center justify-center">
+            <Camera className="h-5 w-5" />
+          </div>
+          Scan
+        </button>
+        <button
+          onClick={onVoiceClick}
+          className="flex flex-col items-center justify-center gap-2 bg-card border border-border rounded-2xl p-4 hover:border-primary/50 hover:bg-muted/40 transition-all text-sm font-medium text-foreground active:scale-[0.97]"
+          title="Voice input"
+        >
+          <div className="h-10 w-10 rounded-full bg-accent/20 text-accent flex items-center justify-center">
+            <Mic className="h-5 w-5" />
+          </div>
+          Voice
+        </button>
+      </div>
+
+      <hr className="w-full border-border/40" />
+
+      {/* Subject Cards */}
+      <div className="w-full animate-in-slide" style={{ animationDelay: "200ms" }}>
+        <div className="grid grid-cols-2 gap-3">
+          {SUBJECTS.map((s) => (
             <button
               key={s.label}
               onClick={() => onPromptClick(s.prompt)}
-              className="group flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 text-left transition-all duration-200 hover:border-primary/40 hover:bg-[#1a1d27] active:scale-[0.97]"
-              style={{
-                animation: `gs-slideup 0.4s ${0.25 + i * 0.04}s ease both`,
-              }}
+              className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4 text-left transition-all hover:border-primary/40 hover:bg-muted/40 active:scale-[0.98]"
             >
-              <s.icon
-                className={`${s.color} flex-shrink-0 transition-transform duration-200 group-hover:scale-110`}
-                style={{ width: 14, height: 14 }}
-              />
-              <span
-                className="font-semibold text-muted-foreground group-hover:text-foreground transition-colors"
-                style={{ fontSize: 11, lineHeight: 1.3 }}
-              >
+              <span className="text-xl flex-shrink-0">{s.icon}</span>
+              <span className="font-semibold text-foreground text-sm truncate">
                 {s.label}
               </span>
             </button>
@@ -183,24 +107,45 @@ export function EmptyState({ onPromptClick }: Props) {
         </div>
       </div>
 
-      {/* Keyframes injected once */}
-      <style>{`
-        @keyframes gs-fadein {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes gs-slideup {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes gs-pulse {
-          0%, 100% { transform: scale(1);   opacity: 0.7; }
-          50%       { transform: scale(1.5); opacity: 0;   }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          [style*="gs-"] { animation: none !important; }
-        }
-      `}</style>
+      {/* Continue Learning */}
+      {recentThreads.length > 0 && (
+        <>
+          <hr className="w-full border-border/40" />
+          <div className="w-full animate-in-slide" style={{ animationDelay: "300ms" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-mono uppercase tracking-widest text-muted-foreground font-semibold">
+                Continue Learning
+              </h3>
+              <Link
+                to="/tutor/chats"
+                className="text-xs text-primary hover:underline font-medium flex items-center gap-1"
+              >
+                View All <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              {recentThreads.map((t) => (
+                <Link
+                  key={t.id}
+                  to="/tutor/$threadId"
+                  params={{ threadId: t.id } as any}
+                  className="flex items-center gap-3 w-full text-left p-3 rounded-xl hover:bg-muted/30 transition-colors group"
+                >
+                  <div className="h-8 w-8 rounded bg-primary/20 text-primary flex items-center justify-center flex-shrink-0 group-hover:bg-primary/30 transition-colors">
+                    <MessageSquare className="h-4 w-4" />
+                  </div>
+                  <span className="flex-1 text-sm font-medium text-foreground truncate">
+                    {t.title && t.title !== "New thread" && t.title !== "New tutor session"
+                      ? t.title
+                      : "Untitled Chat"}
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-50 transition-opacity flex-shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

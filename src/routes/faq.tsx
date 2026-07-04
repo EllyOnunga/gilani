@@ -36,7 +36,7 @@ const FAQS = [
       },
       {
         q: "How do I create an account?",
-        a: "Click 'Get started' on the homepage and sign up with your email and password, or use 'Continue with Google' for instant access.",
+        a: "Click 'Get started' on the homepage and enter your email for a secure Magic Link, or use 'Continue with Google' for instant access. No passwords required.",
       },
       {
         q: "Can I use GilaniAI on my phone?",
@@ -115,12 +115,12 @@ const FAQS = [
         a: "GilaniAI requires an internet connection to generate AI responses. However, as a PWA, some parts of the interface may load from cache when offline.",
       },
       {
-        q: "I'm not receiving the confirmation email. What should I do?",
+        q: "I'm not receiving my sign-in link. What should I do?",
         a: "Check your spam or junk folder first. If it's not there, wait 5 minutes and try again. If the problem persists, contact us at support@gilaniai.site.",
       },
       {
-        q: "How do I reset my password?",
-        a: "On the login page, click 'Forgot password?' and enter your email address. You'll receive a password reset link within a few minutes. The link expires in 1 hour.",
+        q: "Do I need a password?",
+        a: "No! We use secure Magic Links and Google OAuth. Simply enter your email, click the link we send you, and you'll be instantly signed in.",
       },
     ],
   },
@@ -171,7 +171,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         )}
       </button>
       {open && (
-        <div className="px-5 pb-5 pt-3 text-sm text-[#9ca3af] leading-relaxed border-t border-white/6 bg-[#0f1117]/30">
+        <div className="px-5 pb-5 pt-3 text-sm text-[#9ca3af] leading-relaxed border-t border-white/6 bg-[#0a0a0a]/50">
           {a}
         </div>
       )}
@@ -184,8 +184,8 @@ function FAQPage() {
   const filtered = activeCategory ? FAQS.filter((f) => f.category === activeCategory) : FAQS;
 
   return (
-    <div className="min-h-screen bg-[#0f1117] text-[#e2e4f0] flex flex-col overflow-x-hidden">
-      <LegalHeader backTo={"/register" as any} backLabel="Get started" />
+    <div className="min-h-screen bg-[#0a0a0a] text-[#e2e4f0] flex flex-col overflow-x-hidden">
+      <LegalHeader backTo={"/" as any} backLabel="Back to home" />
 
       {/* Hero */}
       <div className="relative overflow-hidden border-b border-white/5 py-12 sm:py-20 text-center">
