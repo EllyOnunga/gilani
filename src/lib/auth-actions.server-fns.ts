@@ -57,6 +57,7 @@ export const assignUserRole = createServerFn({ method: "POST" })
           id: userId,
           display_name: displayName || authResult.user.user_metadata?.full_name || null,
           email: authResult.user.email ?? null,
+          onboarding_completed: true,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "id" },
@@ -107,7 +108,7 @@ export const instantLogin = createServerFn({ method: "POST" })
 
     const { data: existingProfile } = await supabaseAdmin
       .from("profiles")
-      .select("id")
+      .select("id, onboarding_completed")
       .eq("email", email)
       .maybeSingle();
     // Used only to decide whether to send the one-time verification email —
@@ -145,12 +146,7 @@ export const instantLogin = createServerFn({ method: "POST" })
     // (e.g. verification email sent, but the name form was never submitted)
     // without a role ever having been set — that user must still see the
     // setup form, mirroring callback.tsx's OAuth-path logic.
-    const { data: existingRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    const needsProfileSetup = !existingRole;
+    const needsProfileSetup = !existingProfile?.onboarding_completed;
 
     // Role, profile display_name, and welcome email are handled later by
     // assignUserRole once the user picks a display name (see NameCaptureForm).

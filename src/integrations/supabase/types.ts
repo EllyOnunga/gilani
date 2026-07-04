@@ -486,6 +486,7 @@ export type Database = {
           email_verify_sent_at: string | null
           email_verify_token: string | null
           id: string
+          onboarding_completed: boolean
           plan: string
           plan_expiry: string | null
           topup_tokens: number
@@ -507,6 +508,7 @@ export type Database = {
           email_verify_sent_at?: string | null
           email_verify_token?: string | null
           id: string
+          onboarding_completed?: boolean
           plan?: string
           plan_expiry?: string | null
           topup_tokens?: number
@@ -528,6 +530,7 @@ export type Database = {
           email_verify_sent_at?: string | null
           email_verify_token?: string | null
           id?: string
+          onboarding_completed?: boolean
           plan?: string
           plan_expiry?: string | null
           topup_tokens?: number

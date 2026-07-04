@@ -106,11 +106,21 @@ function AuthCallback() {
           .eq("user_id", session.user.id)
           .maybeSingle();
 
+        // handle_new_user() DB trigger auto-creates both profiles and user_roles
+        // rows synchronously at signup, so roleRow existing is not a valid
+        // "already onboarded" signal. onboarding_completed is set explicitly
+        // by assignUserRole once the user actually submits their display name.
+        const { data: profileRow } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("id", session.user.id)
+          .maybeSingle();
+
         const storedRole = localStorage.getItem("pending_role") as "student" | "teacher" | null;
         const effectiveRole = storedRole || "student";
         localStorage.removeItem("pending_role");
 
-        const isNewUser = !roleRow;
+        const isNewUser = !profileRow?.onboarding_completed;
 
         if (isNewUser || (storedRole === "teacher" && roleRow?.role === "student")) {
           // New user — show display name form before proceeding
@@ -123,9 +133,9 @@ function AuthCallback() {
         }
 
         // Existing user — redirect based on role
-        if (roleRow.role === "admin") {
+        if (roleRow?.role === "admin") {
           navigate({ to: "/admin/users" });
-        } else if (roleRow.role === "teacher") {
+        } else if (roleRow?.role === "teacher") {
           navigate({ to: "/teacher/escalations" });
         } else {
           navigate({ to: safePath });
