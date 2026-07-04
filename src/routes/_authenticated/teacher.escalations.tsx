@@ -194,7 +194,7 @@ export const Route = createFileRoute("/_authenticated/teacher/escalations")({
     if (typeof window === "undefined") return;
     const { data } = await supabaseClient.auth.getSession();
     if (!data.session) {
-      throw redirect({ to: "/login", search: { redirect: location.href, email: undefined, signout: undefined } });
+      throw redirect({ to: "/login", search: { redirect: location.href, signout: undefined } });
     }
     const { data: roleCheck } = await supabaseClient
       .from("user_roles")

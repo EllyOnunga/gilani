@@ -47,28 +47,37 @@ export async function sendTransactionalEmail({
     ...(replyTo ? { reply_to: replyTo } : {}),
   };
 
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
-    });
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error("[Email] Resend error:", response.status, response.statusText, err);
-      return false;
+      if (!response.ok) {
+        const err = await response.text();
+        console.error("[Email] Resend error:", response.status, response.statusText, err);
+        return false; // API-level error — retrying won't help
+      }
+
+      console.log("[Email] Successfully sent to:", recipients.join(", "));
+      return true;
+    } catch (err) {
+      const isLastAttempt = attempt === MAX_ATTEMPTS;
+      console.error(
+        `[Email] Send attempt ${attempt}/${MAX_ATTEMPTS} failed:`,
+        err instanceof Error ? err.message : err,
+      );
+      if (isLastAttempt) return false;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 500));
     }
-
-    console.log("[Email] Successfully sent to:", recipients.join(", "));
-    return true;
-  } catch (err) {
-    console.error("[Email] Failed to send email:", err);
-    return false;
   }
+  return false;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -231,6 +240,29 @@ export function emailTemplate({
   </table>
 </body>
 </html>`;
+}
+
+// ─── Verify Email ────────────────────────────────────────────────────────────
+
+export function verifyEmailTemplate({
+  userName,
+  verifyUrl,
+}: {
+  userName: string;
+  verifyUrl: string;
+}): string {
+  const name = escapeHtml(userName || "there");
+  return emailTemplate({
+    heading: `Verify your email, ${name}`,
+    body: `
+      <p style="margin:0;text-align:center;color:#9ca3af">
+        You're already signed in — this is just to confirm this email address belongs to you, so we can keep your account secure.
+      </p>
+    `,
+    buttonText: "Verify email",
+    buttonUrl: verifyUrl,
+    footerNote: "If you didn't create a GilaniAI account, you can safely ignore this email.",
+  });
 }
 
 // ─── Welcome Email ───────────────────────────────────────────────────────────

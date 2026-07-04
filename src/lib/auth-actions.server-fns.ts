@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { z } from "zod";
@@ -7,6 +9,7 @@ import {
   sendTransactionalEmail,
   emailTemplate,
   welcomeEmail,
+  verifyEmailTemplate,
 } from "@/lib/email.server";
 
 export const assignUserRole = createServerFn({ method: "POST" })
@@ -87,33 +90,79 @@ export const assignUserRole = createServerFn({ method: "POST" })
   });
 
 /**
- * Server action to check if an email already exists in Supabase Auth.
+ * Passwordless instant login: creates or resolves a user by email, mints a
+ * real Supabase session server-side with zero user-visible steps (no OTP
+ * screen, no magic link click), and — for brand new signups only — fires a
+ * non-blocking verification email. Verification is informational only and
+ * never gates access.
  */
-export const checkEmailExists = createServerFn({ method: "POST" })
+export const instantLogin = createServerFn({ method: "POST" })
   .validator(
     z.object({
       email: z.string().email(),
     }),
   )
   .handler(async ({ data }) => {
-    const { email } = data;
-    try {
-      // Use profiles table lookup instead of listing all auth users (avoids O(n) scan + data exposure)
-      const { data: profile, error } = await supabaseAdmin
-        .from("profiles")
-        .select("id")
-        .eq("email", email.toLowerCase())
-        .maybeSingle();
+    const email = data.email.toLowerCase().trim();
 
-      if (error) {
-        // Log generic message only — do not surface Supabase internals
-        console.error("[checkEmailExists] Profile lookup failed");
-        return { exists: false };
-      }
+    const { data: existingProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    const isNewUser = !existingProfile;
 
-      return { exists: !!profile };
-    } catch {
-      console.error("[checkEmailExists] Server function failed");
-      return { exists: false };
+    const { data: linkData, error: linkError } =
+      await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email });
+    if (linkError || !linkData?.properties?.hashed_token) {
+      throw new Error(linkError?.message || "Failed to create session");
     }
+
+    const SUPABASE_URL = process.env.SUPABASE_URL!;
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
+    const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const { data: verifyData, error: verifyError } = await anonClient.auth.verifyOtp({
+      token_hash: linkData.properties.hashed_token,
+      type: "email",
+    });
+    if (verifyError || !verifyData.session || !verifyData.user) {
+      throw new Error(verifyError?.message || "Failed to verify session");
+    }
+
+    const userId = verifyData.user.id;
+
+    // Role, profile display_name, and welcome email are handled later by
+    // assignUserRole once the user picks a display name (see NameCaptureForm).
+    // Here we only track email-ownership verification, which isn't tied to role.
+    if (isNewUser) {
+      const verifyToken = randomUUID();
+      await supabaseAdmin.from("profiles").upsert(
+        {
+          id: userId,
+          email,
+          email_verified: false,
+          email_verify_token: verifyToken,
+          email_verify_sent_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" },
+      );
+
+      const appUrl = process.env.APP_URL || "https://gilaniai.site";
+      const verifyUrl = `${appUrl}/verify-email?token=${verifyToken}`;
+
+      sendTransactionalEmail({
+        to: email,
+        subject: "Verify your email — GilaniAI",
+        html: verifyEmailTemplate({ userName: email.split("@")[0], verifyUrl }),
+      }).catch((err) => console.error("[Verify Email] Failed:", err));
+    }
+
+    return {
+      access_token: verifyData.session.access_token,
+      refresh_token: verifyData.session.refresh_token,
+      isNewUser,
+    };
   });
+
