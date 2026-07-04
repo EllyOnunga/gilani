@@ -2,8 +2,13 @@ import { createStart, createMiddleware } from "@tanstack/react-start";
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
+const CSRF_EXEMPT_PATHS = ["/api/mpesa/callback"];
+
 const csrfMiddleware = createMiddleware().server(async ({ next, request }) => {
-  if (request.method !== "GET") {
+  const pathname = new URL(request.url).pathname;
+  const isExempt = CSRF_EXEMPT_PATHS.some((p) => pathname.startsWith(p));
+
+  if (request.method !== "GET" && !isExempt) {
     const origin = request.headers.get("origin");
     const host = request.headers.get("host");
 
