@@ -110,7 +110,10 @@ export const instantLogin = createServerFn({ method: "POST" })
       .select("id")
       .eq("email", email)
       .maybeSingle();
-    const isNewUser = !existingProfile;
+    // Used only to decide whether to send the one-time verification email —
+    // a stub profile can exist (e.g. an abandoned earlier sign-up) without a
+    // role ever having been assigned.
+    const isBrandNewProfile = !existingProfile;
 
     const { data: linkData, error: linkError } =
       await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email });
@@ -136,10 +139,23 @@ export const instantLogin = createServerFn({ method: "POST" })
 
     const userId = verifyData.user.id;
 
+    // Whether this user still needs the name/role setup step — based on
+    // whether a role has ever been assigned, not on profile row existence.
+    // A profile row can exist from an abandoned earlier sign-up attempt
+    // (e.g. verification email sent, but the name form was never submitted)
+    // without a role ever having been set — that user must still see the
+    // setup form, mirroring callback.tsx's OAuth-path logic.
+    const { data: existingRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const needsProfileSetup = !existingRole;
+
     // Role, profile display_name, and welcome email are handled later by
     // assignUserRole once the user picks a display name (see NameCaptureForm).
     // Here we only track email-ownership verification, which isn't tied to role.
-    if (isNewUser) {
+    if (isBrandNewProfile) {
       const verifyToken = randomUUID();
       await supabaseAdmin.from("profiles").upsert(
         {
@@ -166,7 +182,7 @@ export const instantLogin = createServerFn({ method: "POST" })
     return {
       access_token: verifyData.session.access_token,
       refresh_token: verifyData.session.refresh_token,
-      isNewUser,
+      needsProfileSetup,
     };
   });
 

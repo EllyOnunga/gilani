@@ -67,6 +67,11 @@ export function AuthModal({ onClose }: AuthModalProps) {
     e.preventDefault();
     if (!email) return toast.error("Please enter your email address.");
     setBusy(true);
+    // Mirror onGoogle: stash the chosen role so use-auth's own SIGNED_IN
+    // listener assigns it immediately, keeping its `roles` state in sync.
+    // Without this, roles stayed empty until a full page reload, which made
+    // freshly-signed-up teachers appear as students until refresh.
+    localStorage.setItem("pending_role", role);
     try {
       const result = await instantLogin({ data: { email } });
       const { error } = await supabase.auth.setSession({
@@ -75,14 +80,16 @@ export function AuthModal({ onClose }: AuthModalProps) {
       });
       if (error) throw error;
 
-      if (result.isNewUser) {
+      if (result.needsProfileSetup) {
         setBusy(false);
         setShowNameForm(true);
       } else {
+        localStorage.removeItem("pending_role");
         await routeToDestination();
         onClose();
       }
     } catch (err) {
+      localStorage.removeItem("pending_role");
       setBusy(false);
       toast.error(friendlyError(err as { message?: string }, "Sign-in failed. Please try again."));
     }

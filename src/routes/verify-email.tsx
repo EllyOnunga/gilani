@@ -16,9 +16,13 @@ const consumeVerifyToken = createServerFn({ method: "GET" })
 
     if (!profile) return { success: false };
 
+    // Intentionally keep email_verify_token in place — this verification is
+    // informational only and never gates access, so it's safe (and necessary)
+    // to make the link idempotent. Nulling it caused false "expired" screens
+    // when a link was opened twice (e.g. corporate email link-scanners).
     await supabaseAdmin
       .from("profiles")
-      .update({ email_verified: true, email_verify_token: null })
+      .update({ email_verified: true })
       .eq("id", profile.id);
 
     return { success: true };
