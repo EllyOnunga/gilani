@@ -11,9 +11,15 @@ import { friendlyError } from "@/lib/async";
 
 interface AuthModalProps {
   onClose: () => void;
+  // Lets the parent page know an in-progress sign-up (which may still need
+  // the name-capture step) is happening, so it doesn't unmount this modal
+  // and redirect away the instant Supabase reports the user as signed in —
+  // that race was causing the name form to never actually render.
+  onAuthStart?: () => void;
+  onAuthComplete?: () => void;
 }
 
-export function AuthModal({ onClose }: AuthModalProps) {
+export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalProps) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"student" | "teacher">("student");
@@ -67,6 +73,11 @@ export function AuthModal({ onClose }: AuthModalProps) {
     e.preventDefault();
     if (!email) return toast.error("Please enter your email address.");
     setBusy(true);
+    // Tell the parent page an auth flow is underway BEFORE calling
+    // setSession — setSession fires a SIGNED_IN event synchronously enough
+    // that the parent's own "user is signed in, redirect away" effect could
+    // otherwise unmount this whole modal before the name form ever renders.
+    onAuthStart?.();
     // Mirror onGoogle: stash the chosen role so use-auth's own SIGNED_IN
     // listener assigns it immediately, keeping its `roles` state in sync.
     // Without this, roles stayed empty until a full page reload, which made
@@ -86,10 +97,12 @@ export function AuthModal({ onClose }: AuthModalProps) {
       } else {
         localStorage.removeItem("pending_role");
         await routeToDestination();
+        onAuthComplete?.();
         onClose();
       }
     } catch (err) {
       localStorage.removeItem("pending_role");
+      onAuthComplete?.();
       setBusy(false);
       toast.error(friendlyError(err as { message?: string }, "Sign-in failed. Please try again."));
     }
@@ -101,6 +114,7 @@ export function AuthModal({ onClose }: AuthModalProps) {
     setSavingName(true);
     try {
       await assignUserRole({ data: { role, displayName: displayName.trim() } });
+      onAuthComplete?.();
       if (role === "teacher") {
         navigate({ to: "/teacher/escalations" as any });
       } else {
