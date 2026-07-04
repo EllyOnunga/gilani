@@ -119,7 +119,11 @@ export const instantLogin = createServerFn({ method: "POST" })
     }
 
     const SUPABASE_URL = process.env.SUPABASE_URL!;
-    const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
+    const SUPABASE_ANON_KEY =
+      process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+    if (!SUPABASE_ANON_KEY) {
+      throw new Error("Missing SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY) environment variable");
+    }
     const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const { data: verifyData, error: verifyError } = await anonClient.auth.verifyOtp({
