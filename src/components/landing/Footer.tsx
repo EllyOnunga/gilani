@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Mail, Phone, MapPin } from "lucide-react";
+import { Logo } from "../ui/logo";
 
 export default function Footer() {
     const [subEmail, setSubEmail] = useState("");
@@ -29,19 +30,19 @@ export default function Footer() {
     return (
         <footer className="w-full border-t border-white/10 bg-[#121212] py-16">
             <div className="mx-auto max-w-7xl px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-                
+
                 {/* Brand & Socials */}
                 <div className="flex flex-col gap-4">
-                    <span className="text-xl font-bold tracking-tight text-white">GilaniAI</span>
+                    <Logo to="/" size="md" />
                     <p className="text-sm text-[rgba(255,255,255,0.75)]">
                         Your intelligent AI study assistant. Learn smarter, faster, and better.
                     </p>
                     <div className="flex items-center gap-4 text-[#C96A3D] mt-2">
                         <a href="#" className="hover:text-[#E28743] transition-colors">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" /></svg>
                         </a>
                         <a href="#" className="hover:text-[#E28743] transition-colors">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.68c.223-.198-.054-.31-.346-.116l-6.405 4.02-2.76-.86c-.6-.188-.616-.605.126-.894l10.77-4.148c.5-.188.94.116.805.895z"/></svg>
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.68c.223-.198-.054-.31-.346-.116l-6.405 4.02-2.76-.86c-.6-.188-.616-.605.126-.894l10.77-4.148c.5-.188.94.116.805.895z" /></svg>
                         </a>
                     </div>
                 </div>
@@ -71,7 +72,7 @@ export default function Footer() {
                             </button>
                         </form>
                     )}
-                    
+
                     <div className="flex flex-col gap-2 text-sm text-[rgba(255,255,255,0.75)] mt-4">
                         <p className="flex items-center gap-2">
                             <Mail className="h-4 w-4 text-[#C96A3D] flex-shrink-0" />
@@ -97,7 +98,7 @@ export default function Footer() {
                     <Link to="/contact" className="text-sm text-[rgba(255,255,255,0.75)] hover:text-white transition-colors">Contact Support</Link>
                 </div>
             </div>
-            
+
             <div className="mt-16 pt-8 border-t border-white/5 text-center text-sm text-white/30">
                 &copy; {new Date().getFullYear()} GilaniAI. All rights reserved.
             </div>
