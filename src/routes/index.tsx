@@ -84,7 +84,7 @@ function LandingPage() {
         }
     }, [user, roles, loading, authInProgress, navigate]);
 
-    if (!authInProgress && (loading || user)) {
+    if (!authInProgress && user && !loading) {
         return <GilaniLoader />;
     }
 

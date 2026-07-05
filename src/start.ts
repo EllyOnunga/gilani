@@ -4,11 +4,13 @@ import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 const CSRF_EXEMPT_PATHS = ["/api/mpesa/callback"];
 
+const UNSAFE_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
+
 const csrfMiddleware = createMiddleware().server(async ({ next, request }) => {
   const pathname = new URL(request.url).pathname;
   const isExempt = CSRF_EXEMPT_PATHS.some((p) => pathname.startsWith(p));
 
-  if (request.method !== "GET" && !isExempt) {
+  if (UNSAFE_METHODS.includes(request.method) && !isExempt) {
     const origin = request.headers.get("origin");
     const host = request.headers.get("host");
 
