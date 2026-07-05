@@ -52,16 +52,28 @@ export const assignUserRole = createServerFn({ method: "POST" })
       if (insertError) throw insertError;
 
       // Also ensure profile exists for OAuth users
+      const resolvedDisplayName =
+        displayName || authResult.user.user_metadata?.full_name || null;
+
       await supabaseAdmin.from("profiles").upsert(
         {
           id: userId,
-          display_name: displayName || authResult.user.user_metadata?.full_name || null,
+          display_name: resolvedDisplayName,
           email: authResult.user.email ?? null,
           onboarding_completed: true,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "id" },
       );
+
+      // Cosmetic only: syncs the name into auth.users' metadata so it shows
+      // up in the Supabase Auth dashboard's user list. The app itself always
+      // reads display_name from the profiles table above, never from here.
+      if (resolvedDisplayName) {
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          user_metadata: { display_name: resolvedDisplayName },
+        }).catch((err) => console.error("[assignUserRole] Failed to sync auth metadata:", err));
+      }
 
       // Send welcome email
       const userEmail = authResult.user.email;
