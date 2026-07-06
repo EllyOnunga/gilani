@@ -24,6 +24,22 @@ export const Route = createFileRoute("/_authenticated/tutor")({
 function TutorIndex() {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // ✅ Check if we're on exact /tutor BEFORE any hooks
+  const isExactTutor = location.pathname === "/tutor" || location.pathname === "/tutor/";
+  
+  // ✅ If not on exact /tutor, render Outlet immediately (before calling any other hooks)
+  if (!isExactTutor) {
+    return (
+      <div className="flex flex-col h-screen">
+        <div className="flex-1 overflow-hidden">
+          <Outlet />
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Now call all hooks ONLY when we're on /tutor
   const composer = useComposer();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,20 +109,10 @@ function TutorIndex() {
   };
 
   useEffect(() => {
-    const isExactTutor = location.pathname === "/tutor" || location.pathname === "/tutor/";
-
-    if (!isExactTutor) {
-      // Reset the guard whenever we're viewing a thread so that the NEXT
-      // time we return to /tutor (e.g. after deleting the current thread)
-      // checkSession() fires again instead of being permanently blocked.
-      startedRef.current = false;
-      return;
-    }
-
     if (startedRef.current) return;
     startedRef.current = true;
     checkSession();
-  }, [location.pathname]);
+  }, []);
 
   const handleDraftSubmit = async (event?: { preventDefault?: () => void }) => {
     event?.preventDefault?.();
@@ -149,17 +155,6 @@ function TutorIndex() {
       toast.error(getErrorMessage(err, "Failed to start chat. Please try again."));
     }
   };
-
-  const isExactTutor = location.pathname === "/tutor" || location.pathname === "/tutor/";
-  if (!isExactTutor) {
-    return (
-      <div className="flex flex-col h-screen">
-        <div className="flex-1 overflow-hidden">
-          <Outlet />
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     const isServiceRoleError =
@@ -292,4 +287,3 @@ function TutorIndex() {
     </div>
   );
 }
-
