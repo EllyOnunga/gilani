@@ -115,6 +115,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "robots", content: "index, follow" },
       { name: "googlebot", content: "index, follow" },
       { name: "author", content: "GilaniAI" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "GilaniAI" },
+      { name: "format-detection", content: "telephone=no" },
       {
         name: "keywords",
         content:
@@ -170,6 +174,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
         { rel: "manifest", href: "/manifest.json" },
         { rel: "stylesheet", href: appCss },
+        { rel: "preconnect", href: "https://lxgwoizxoqnymkkwaplq.supabase.co" },
+        { rel: "dns-prefetch", href: "https://lxgwoizxoqnymkkwaplq.supabase.co" },
+        { rel: "preconnect", href: "https://cdnjs.cloudflare.com", crossOrigin: "anonymous" },
+        { rel: "dns-prefetch", href: "https://cdn.jsdelivr.net" },
       ],
     };
   },
@@ -192,19 +200,22 @@ const JSON_LD = JSON.stringify({
     { "@type": "Offer", price: "0", priceCurrency: "KES", name: "Free plan" },
     { "@type": "Offer", price: "1000", priceCurrency: "KES", name: "Pro plan" },
   ],
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.9",
-    reviewCount: "312",
-    bestRating: "5",
-  },
   author: { "@type": "Organization", name: "GilaniAI", url: "https://gilaniai.site" },
-  inLanguage: ["en", "sw"],
+  inLanguage: ["en"],
   audience: {
     "@type": "Audience",
     audienceType: "Students",
     geographicArea: { "@type": "Country", name: "Kenya" },
   },
+});
+
+const ORG_JSON_LD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "GilaniAI",
+  url: SITE_URL,
+  logo: OG_IMAGE,
+  sameAs: [],
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
@@ -229,6 +240,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         />
         {/* JSON-LD Structured Data */}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON_LD }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ORG_JSON_LD }} />
       </head>
       <body suppressHydrationWarning style={{ background: "hsl(var(--background, 24 15% 8%))" }}>
         <script

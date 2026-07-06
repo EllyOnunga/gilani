@@ -27,8 +27,8 @@ const FAQS = [
         a: "GilaniAI is an AI-powered study assistant built for students. It provides Socratic AI tutoring through chat — including quiz practice and note-based help directly in the conversation — plus real teacher escalation when you need a human to step in.",
       },
       {
-        q: "What happened to quizzes, notes, and the planner?",
-        a: "We've folded those into the chat experience — just ask your AI tutor for practice questions or to summarize a topic, right in the conversation. It's faster and more natural than switching tabs.",
+        q: "Does GilaniAI have quizzes, notes, and a study planner?",
+        a: "Yes. Beyond the AI tutor chat, GilaniAI includes a dedicated Quiz Generator for practice questions on any topic, a Notes tool that produces exhaustive AI summaries from uploaded PDFs, Word docs, images, or pasted text, and a Study Planner that builds a day-by-day schedule around your exam dates and subjects.",
       },
       {
         q: "Is GilaniAI free to use?",
@@ -36,7 +36,7 @@ const FAQS = [
       },
       {
         q: "How do I create an account?",
-        a: "Click 'Get started' on the homepage and enter your email for a secure Magic Link, or use 'Continue with Google' for instant access. No passwords required.",
+        a: "Click 'Get started' on the homepage and enter your email for instant access, or use 'Continue with Google.' There's no password and no link to click — you're signed in immediately.",
       },
       {
         q: "Can I use GilaniAI on my phone?",
@@ -115,12 +115,12 @@ const FAQS = [
         a: "GilaniAI requires an internet connection to generate AI responses. However, as a PWA, some parts of the interface may load from cache when offline.",
       },
       {
-        q: "I'm not receiving my sign-in link. What should I do?",
-        a: "Check your spam or junk folder first. If it's not there, wait 5 minutes and try again. If the problem persists, contact us at support@gilaniai.site.",
+        q: "I signed up but haven't received the verification email. What should I do?",
+        a: "You're already signed in and can use GilaniAI right away — the verification email is just a background confirmation of your email address and doesn't block access. If it hasn't arrived, check your spam or junk folder, or contact us at support@gilaniai.site.",
       },
       {
         q: "Do I need a password?",
-        a: "No! We use secure Magic Links and Google OAuth. Simply enter your email, click the link we send you, and you'll be instantly signed in.",
+        a: "No. Just enter your email or use Google sign-in and you're in immediately — no password, no link to click, no code to enter.",
       },
     ],
   },
@@ -179,12 +179,25 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   );
 }
 
+const FAQ_JSON_LD = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.flatMap((category) =>
+    category.items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  ),
+});
+
 function FAQPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const filtered = activeCategory ? FAQS.filter((f) => f.category === activeCategory) : FAQS;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e2e4f0] flex flex-col overflow-x-hidden">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: FAQ_JSON_LD }} />
       <LegalHeader backTo={"/" as any} backLabel="Back to home" />
 
       {/* Hero */}

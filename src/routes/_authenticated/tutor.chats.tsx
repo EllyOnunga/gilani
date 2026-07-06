@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  ArrowLeft,
   Plus,
   MessageSquare,
   Loader2,
@@ -122,13 +121,6 @@ function ChatsPage() {
             title="Open Menu"
           >
             <Menu className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => navigate({ to: "/tutor" } as any)}
-            className="rounded-full p-2 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors active:scale-95"
-            title="Go back"
-          >
-            <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-base font-semibold text-foreground truncate">Chats</h1>
         </div>

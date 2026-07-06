@@ -78,47 +78,10 @@ function TutorIndex() {
       setAuthToken(session?.access_token ?? null);
       const sessionUserId = session?.user?.id ?? null;
       setUserId(sessionUserId);
-      const userId = sessionUserId;
-      const forceNew = (location.search as any)?.new === "1";
 
-      if (userId && !forceNew) {
-        // Query the most recent existing thread to keep the chat threaded (wrapped in timeout to prevent hangs)
-        try {
-          const { data: existingThreads } = (await withTimeout(
-            Promise.resolve(
-              supabase
-                .from("conversations")
-                .select("id")
-                .eq("user_id", userId)
-                .order("updated_at", { ascending: false })
-                .limit(1),
-            ),
-            5000,
-            "Thread lookup timed out",
-          )) as any;
-
-          if (existingThreads && existingThreads.length > 0) {
-            const threadId = existingThreads[0].id;
-            console.log("[TutorIndex] Navigating to existing most recent thread:", threadId);
-            try {
-              await navigate({
-                to: "/tutor/$threadId",
-                params: { threadId },
-              } as any);
-              return;
-            } catch (navErr) {
-              console.error("[TutorIndex] navigation to existing failed:", navErr);
-              window.location.href = `/tutor/${threadId}`;
-              return;
-            }
-          }
-        } catch (fetchErr) {
-          console.warn("[TutorIndex] Existing thread check timed out or failed:", fetchErr);
-        }
-      }
-
-      // No existing thread (or the user explicitly asked for a new one) — show the composer.
-      // The actual conversation row is only created once the user sends a first message.
+      // Always land on the empty-state composer, even if the user has previous
+      // threads. The actual conversation row is only created once the user
+      // sends a first message. Previous chats remain reachable via the sidebar.
       setLoading(false);
     } catch (err) {
       setError(getErrorMessage(err, "Failed to start tutor chat"));
