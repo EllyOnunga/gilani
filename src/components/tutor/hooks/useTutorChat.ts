@@ -326,7 +326,12 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
             setMessages(__mapped);
           }
         } else {
-          if (!silent) setMessages([]);
+          // Don't clobber messages already present locally (e.g. an
+          // optimistically-appended message from a just-triggered
+          // sendMessage) just because the DB hasn't caught up yet on a
+          // brand-new thread. Only clear when we know there's truly
+          // nothing to preserve.
+          if (!silent && messagesRef.current.length === 0) setMessages([]);
         }
 
         if (escalationRes.error) {

@@ -125,19 +125,26 @@ export const MessageBubble = memo(function MessageBubble({
     const dbToolSteps = steps.filter((s: any) => s.type === "tool-call" || s.type === "tool-result");
     
     const liveToolSteps: any[] = [];
+    const seenCalls = new Set<string>();
+    const seenResults = new Set<string>();
     if (m.toolInvocations && m.toolInvocations.length > 0) {
       for (const inv of m.toolInvocations) {
-        liveToolSteps.push({
-          type: "tool-call",
-          toolName: inv.toolName,
-          input: inv.args,
-        });
-        if ('result' in inv) {
-           liveToolSteps.push({
-             type: "tool-result",
-             toolName: inv.toolName,
-             output: inv.result,
-           });
+        const invId = inv.toolCallId || inv.toolName;
+        if (!seenCalls.has(invId)) {
+          seenCalls.add(invId);
+          liveToolSteps.push({
+            type: "tool-call",
+            toolName: inv.toolName,
+            input: inv.args,
+          });
+        }
+        if ('result' in inv && !seenResults.has(invId)) {
+          seenResults.add(invId);
+          liveToolSteps.push({
+            type: "tool-result",
+            toolName: inv.toolName,
+            output: inv.result,
+          });
         }
       }
     }
@@ -285,34 +292,6 @@ export const MessageBubble = memo(function MessageBubble({
             <div className="flex flex-col w-full">
               {showBubbleCard ? (
                 <div className="prose-ai relative">
-                  {toolSteps.length > 0 && (
-                    <div className="mb-3 flex flex-wrap gap-2">
-                      {toolSteps.map((step: any, i: number) => {
-                        if (step.type !== "tool-call") return null;
-                        const isDone = toolSteps.some(
-                          (s: any) => s.type === "tool-result" && s.toolName === step.toolName
-                        );
-                        return (
-                          <div
-                            key={`${step.toolName}-${i}`}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono border transition-all duration-300 ${
-                              isDone
-                                ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/50"
-                                : "bg-amber-950/40 text-amber-400 border-amber-800/50"
-                            }`}
-                          >
-                            {isDone ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                            )}
-                            <span className="font-semibold">{step.toolName}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
                   {reasoningSteps.length > 0 && (
                     <div className="mb-2">
                       <button
@@ -346,6 +325,35 @@ export const MessageBubble = memo(function MessageBubble({
                       <ThinkingSweep label={pauseLabel || "Thinking..."} />
                     </div>
                   )}
+
+                  {toolSteps.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {toolSteps.map((step: any, i: number) => {
+                        if (step.type !== "tool-call") return null;
+                        const isDone = toolSteps.some(
+                          (s: any) => s.type === "tool-result" && s.toolName === step.toolName
+                        );
+                        return (
+                          <div
+                            key={`${step.toolName}-${i}`}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono border transition-all duration-300 ${
+                              isDone
+                                ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/50"
+                                : "bg-amber-950/40 text-amber-400 border-amber-800/50"
+                            }`}
+                          >
+                            {isDone ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                            )}
+                            <span className="font-semibold">{step.toolName}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
                 </div>
               ) : (
                 !isStreamActive && (

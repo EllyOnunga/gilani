@@ -39,7 +39,7 @@ export function EmptyState({
   allThreadsPath,
 }: Props) {
   return (
-    <div className="flex flex-col items-center justify-start h-full px-4 sm:px-6 pt-6 sm:pt-10 pb-16 gap-6 sm:gap-8 overflow-y-auto w-full max-w-3xl mx-auto">
+    <div className="flex flex-col items-center justify-start h-full px-4 sm:px-6 pt-6 sm:pt-10 pb-24 sm:pb-28 gap-6 sm:gap-8 overflow-y-auto w-full max-w-3xl mx-auto">
 
       {/* Welcome Section */}
       <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4 animate-in-slide">

@@ -142,51 +142,64 @@ export const Route = createFileRoute("/api/chat")({
             return (msg.content as string) || "";
           };
 
-          if (lastMessage?.role === "user" && !isRetry) {
-            const rawText = extractText(lastMessage);
-            const userText = sanitizeUntrustedInput(rawText.slice(0, 10_000));
-            await supabaseAdmin.from("messages").insert({
-              conversation_id: threadId,
-              role: "user",
-              content: (userText || null) as any,
-              parts: JSON.stringify([{ type: "text", text: userText }]),
-              user_id: userId,
-            });
-          } else if (isRetry) {
-            const { data: lastMsg } = await supabaseAdmin
-              .from("messages")
-              .select("id, role")
-              .eq("conversation_id", threadId)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            if (lastMsg?.role === "assistant") {
-              await supabaseAdmin.from("messages").delete().eq("id", lastMsg.id);
-            }
-          }
-          let cachedProfile = getCachedProfile(userId);
-          if (!cachedProfile) {
-            const { data: profile } = await supabaseAdmin
-              .from("profiles")
-              .select("curriculum, tutor_tone, tutor_style, tutor_depth")
-              .eq("id", userId)
-              .maybeSingle();
-            cachedProfile = {
-              curriculum: sanitizeCurriculum(profile?.curriculum),
-              tutorTone: profile?.tutor_tone || "encouraging",
-              tutorStyle: profile?.tutor_style || "socratic",
-              tutorDepth: profile?.tutor_depth || "standard",
-            };
-            setCachedProfile(userId, cachedProfile);
-          }
-          const { curriculum, tutorTone, tutorStyle, tutorDepth } = cachedProfile;
-
-          // ─── RAG: Vector Search (personal + global pools) ───────────────
+          // ─── Parallelize independent pre-stream work ────────────────────
+          // These three tasks (persisting the user message, loading the
+          // profile, and RAG retrieval) don't depend on each other's
+          // results, but were previously awaited one after another. Running
+          // them concurrently cuts this section's latency from the SUM of
+          // all three down to roughly the SLOWEST one (usually the
+          // embedding call), which is the main fix for the long pre-stream
+          // delay.
           const latestMessageContent = extractText(lastMessage);
-          let notesContext = "";
 
-          if (latestMessageContent) {
-            try {
+          const messageTask = (async () => {
+            if (lastMessage?.role === "user" && !isRetry) {
+              const rawText = extractText(lastMessage);
+              const userText = sanitizeUntrustedInput(rawText.slice(0, 10_000));
+              await supabaseAdmin.from("messages").insert({
+                conversation_id: threadId,
+                role: "user",
+                content: (userText || null) as any,
+                parts: JSON.stringify([{ type: "text", text: userText }]),
+                user_id: userId,
+              });
+            } else if (isRetry) {
+              const { data: lastMsg } = await supabaseAdmin
+                .from("messages")
+                .select("id, role")
+                .eq("conversation_id", threadId)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              if (lastMsg?.role === "assistant") {
+                await supabaseAdmin.from("messages").delete().eq("id", lastMsg.id);
+              }
+            }
+          })();
+
+          const profileTask = (async () => {
+            let profile = getCachedProfile(userId);
+            if (!profile) {
+              const { data: profileRow } = await supabaseAdmin
+                .from("profiles")
+                .select("curriculum, tutor_tone, tutor_style, tutor_depth")
+                .eq("id", userId)
+                .maybeSingle();
+              profile = {
+                curriculum: sanitizeCurriculum(profileRow?.curriculum),
+                tutorTone: profileRow?.tutor_tone || "encouraging",
+                tutorStyle: profileRow?.tutor_style || "socratic",
+                tutorDepth: profileRow?.tutor_depth || "standard",
+              };
+              setCachedProfile(userId, profile);
+            }
+            return profile;
+          })();
+
+          const ragTask = (async () => {
+            let notesContext = "";
+            if (latestMessageContent) {
+              try {
               const geminiKey = (process.env.GEMINI_API_KEY || "").trim();
               if (geminiKey) {
                 const embModel = createGoogleAiProvider().textEmbeddingModel();
@@ -248,14 +261,23 @@ export const Route = createFileRoute("/api/chat")({
               } else {
                 console.log("[RAG] No embedding provider available, skipping RAG");
               }
-            } catch (err: unknown) {
-              if (isRateLimitError(err)) {
-                console.log(`[RAG] Embeddings rate limited, skipping RAG`);
-              } else {
-                console.error("[RAG] Failed:", err instanceof Error ? err.message : String(err));
+              } catch (err: unknown) {
+                if (isRateLimitError(err)) {
+                  console.log(`[RAG] Embeddings rate limited, skipping RAG`);
+                } else {
+                  console.error("[RAG] Failed:", err instanceof Error ? err.message : String(err));
+                }
               }
             }
-          }
+            return notesContext;
+          })();
+
+          const [, cachedProfile, notesContext] = await Promise.all([
+            messageTask,
+            profileTask,
+            ragTask,
+          ]);
+          const { curriculum, tutorTone, tutorStyle, tutorDepth } = cachedProfile;
 
           // ─── Build Prompt ────────────────────────────────────────────────
           const systemPrompt = buildSystemPrompt({

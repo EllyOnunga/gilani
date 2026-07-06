@@ -48,6 +48,7 @@ function TutorIndex() {
   const checkSession = async () => {
     setError(null);
     setLoading(true);
+    setCreatingThread(false);
     let sessionCreationTimeout: ReturnType<typeof setTimeout> | null = null;
     try {
       sessionCreationTimeout = setTimeout(() => {
