@@ -43,6 +43,7 @@ type Props = {
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
   onScanClick?: () => void;
   onVoiceClick?: () => void;
+  isListening?: boolean;
 };
 
 function formatFileSize(bytes: number): string {
@@ -151,6 +152,7 @@ export function ChatInput({
   inputRef: externalInputRef,
   onScanClick,
   onVoiceClick,
+  isListening,
 }: Props) {
   const internalRef = useRef<HTMLTextAreaElement | null>(null);
   const textareaRef = externalInputRef ?? internalRef;
@@ -437,8 +439,12 @@ export function ChatInput({
             <button
               type="button"
               onClick={onVoiceClick}
-              className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90 ${isDisabled ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}`}
-              title="Voice input"
+              className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 active:scale-90 ${
+                isListening
+                  ? "text-destructive bg-destructive/10 animate-pulse"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60"
+              } ${isDisabled ? "opacity-40 cursor-not-allowed pointer-events-none" : ""}`}
+              title={isListening ? "Stop voice input" : "Voice input"}
               disabled={isDisabled}
             >
               <Mic className="h-4 w-4" />

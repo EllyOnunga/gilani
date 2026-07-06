@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       analytics_events: {
@@ -124,6 +149,8 @@ export type Database = {
           conversation_id: string | null
           created_at: string
           detail: string | null
+          draft_answer: string | null
+          draft_updated_at: string | null
           id: string
           reason: string
           reviewer_id: string | null
@@ -135,6 +162,8 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           detail?: string | null
+          draft_answer?: string | null
+          draft_updated_at?: string | null
           id?: string
           reason: string
           reviewer_id?: string | null
@@ -146,6 +175,8 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           detail?: string | null
+          draft_answer?: string | null
+          draft_updated_at?: string | null
           id?: string
           reason?: string
           reviewer_id?: string | null
@@ -373,30 +404,39 @@ export type Database = {
       notes: {
         Row: {
           created_at: string
+          error_message: string | null
+          file_name: string | null
           id: string
           key_concepts: Json | null
           raw_text: string | null
           source_path: string | null
+          status: string
           summary: string | null
           title: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          error_message?: string | null
+          file_name?: string | null
           id?: string
           key_concepts?: Json | null
           raw_text?: string | null
           source_path?: string | null
+          status?: string
           summary?: string | null
           title: string
           user_id: string
         }
         Update: {
           created_at?: string
+          error_message?: string | null
+          file_name?: string | null
           id?: string
           key_concepts?: Json | null
           raw_text?: string | null
           source_path?: string | null
+          status?: string
           summary?: string | null
           title?: string
           user_id?: string
@@ -895,6 +935,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["student", "teacher", "admin"],

@@ -1,5 +1,5 @@
 import React from "react";
-import { Menu, Timer, Plus, MoreVertical, Pencil, Download, CheckCircle2, Clock, ShieldAlert, Trash2 } from "lucide-react";
+import { Menu, Timer, SquarePen, MoreVertical, Pencil, Download, CheckCircle2, Clock, ShieldAlert, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,7 @@ type Thread = {
 };
 
 type Props = {
-  threadId: string;
+  threadId?: string;
   threads: Thread[];
   userId: string | null;
   timerState: { minutes: number; seconds: number; running: boolean } | null;
@@ -68,8 +68,8 @@ export function ThreadHeader({
       <div className="flex-1 flex justify-center min-w-0 px-2">
         <h2 className="text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-[400px]">
           {(() => {
-            const t = threads.find((th) => th.id === threadId)?.title;
-            return t && t !== "New thread" && t !== "New tutor session" ? t : "Untitled Chat";
+            const t = threadId ? threads.find((th) => th.id === threadId)?.title : "";
+            return t || "";
           })()}
         </h2>
       </div>
@@ -80,7 +80,7 @@ export function ThreadHeader({
           className="p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted/60 transition-colors"
           title="New Chat"
         >
-          <Plus className="h-5 w-5" />
+          <SquarePen className="h-5 w-5" />
         </button>
 
         <DropdownMenu>
@@ -90,46 +90,58 @@ export function ThreadHeader({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem
-              onClick={() => {
-                const t = threads.find((th) => th.id === threadId)?.title;
-                requestRenameThread(threadId, t || "Untitled Chat");
-              }}
-            >
-              <Pencil className="h-4 w-4 mr-2" />
-              Rename
-            </DropdownMenuItem>
+            {threadId && (
+              <DropdownMenuItem
+                onClick={() => {
+                  const t = threads.find((th) => th.id === threadId)?.title;
+                  requestRenameThread(threadId, t || "Untitled Chat");
+                }}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Rename
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => setTimerOpen(true)}>
               <Timer className="h-4 w-4 mr-2" />
               Study Timer
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleExportPDF()}>
-              <Download className="h-4 w-4 mr-2" />
-              Export PDF
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setEscalateModalOpen(true)}>
-              {escalationStatus === "resolved" ? (
-                <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-              ) : escalationStatus === "in_review" || escalationStatus === "open" ? (
-                <Clock className="h-4 w-4 mr-2 text-amber-500 animate-pulse" />
-              ) : (
-                <ShieldAlert className="h-4 w-4 mr-2 text-amber-500" />
-              )}
-              {escalationStatus === "resolved"
-                ? "Teacher Reviewed"
-                : escalationStatus === "in_review" || escalationStatus === "open"
-                  ? "Review Pending"
-                  : "Escalate to Teacher"}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => requestDeleteThread(threadId)}
-              className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Chat
-            </DropdownMenuItem>
+            {threadId && (
+              <DropdownMenuItem onClick={() => handleExportPDF()}>
+                <Download className="h-4 w-4 mr-2" />
+                Export PDF
+              </DropdownMenuItem>
+            )}
+            {threadId && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setEscalateModalOpen(true)}>
+                  {escalationStatus === "resolved" ? (
+                    <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                  ) : escalationStatus === "in_review" || escalationStatus === "open" ? (
+                    <Clock className="h-4 w-4 mr-2 text-amber-500 animate-pulse" />
+                  ) : (
+                    <ShieldAlert className="h-4 w-4 mr-2 text-amber-500" />
+                  )}
+                  {escalationStatus === "resolved"
+                    ? "Teacher Reviewed"
+                    : escalationStatus === "in_review" || escalationStatus === "open"
+                      ? "Review Pending"
+                      : "Escalate to Teacher"}
+                </DropdownMenuItem>
+              </>
+            )}
+            {threadId && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => requestDeleteThread(threadId)}
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Chat
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 

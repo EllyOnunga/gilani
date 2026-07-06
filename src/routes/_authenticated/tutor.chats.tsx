@@ -77,16 +77,9 @@ function ChatsPage() {
     });
   }, []);
 
-  const createNewThread = useCallback(async () => {
-    if (!userId) return;
-    const { data, error } = await supabase
-      .from("conversations")
-      .insert([{ title: "New thread", user_id: userId }])
-      .select()
-      .single();
-    if (error) { toast.error("Failed to create chat"); return; }
-    navigate({ to: "/tutor/$threadId", params: { threadId: (data as any).id } } as any);
-  }, [userId, navigate]);
+  const createNewThread = useCallback(() => {
+    navigate({ to: "/tutor", search: { new: "1" } } as any);
+  }, [navigate]);
 
   const deleteThread = useCallback(async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -200,9 +193,7 @@ function ChatsPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">
-                            {t.title && t.title !== "New thread" && t.title !== "New tutor session"
-                              ? t.title
-                              : "Untitled Chat"}
+                            {t.title || ""}
                           </p>
                           {t.updated_at && (
                             <p className="text-xs text-muted-foreground mt-0.5">

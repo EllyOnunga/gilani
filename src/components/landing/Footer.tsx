@@ -28,13 +28,13 @@ export default function Footer() {
     };
 
     return (
-        <footer className="w-full border-t border-white/10 bg-[#121212] py-16">
-            <div className="mx-auto max-w-7xl px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
+        <footer className="w-full border-t border-white/10 bg-[#121212]">
+            <div className="mx-auto max-w-7xl px-6 py-16 md:py-20 grid grid-cols-2 gap-x-8 gap-y-12 md:grid-cols-12">
 
                 {/* Brand & Socials */}
-                <div className="flex flex-col gap-4">
+                <div className="col-span-2 flex flex-col gap-4 md:col-span-4">
                     <Logo to="/" size="md" />
-                    <p className="text-sm text-[rgba(255,255,255,0.75)]">
+                    <p className="max-w-xs text-sm text-[rgba(255,255,255,0.6)]">
                         Your intelligent AI study assistant. Learn smarter, faster, and better.
                     </p>
                     <div className="flex items-center gap-4 text-[#C96A3D] mt-2">
@@ -48,8 +48,8 @@ export default function Footer() {
                 </div>
 
                 {/* Newsletter & Contact */}
-                <div className="flex flex-col gap-4">
-                    <span className="font-bold text-white mb-2">Subscribe to our Newsletter</span>
+                <div className="col-span-2 flex flex-col gap-4 md:col-span-4">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Stay in the loop</span>
                     {subscribed ? (
                         <div className="text-sm text-emerald-500 font-medium">
                             Thanks for subscribing!
@@ -73,7 +73,7 @@ export default function Footer() {
                         </form>
                     )}
 
-                    <div className="flex flex-col gap-2 text-sm text-[rgba(255,255,255,0.75)] mt-4">
+                    <div className="flex flex-col gap-2 text-sm text-[rgba(255,255,255,0.6)] mt-2">
                         <p className="flex items-center gap-2">
                             <Mail className="h-4 w-4 text-[#C96A3D] flex-shrink-0" />
                             support@gilaniai.site
@@ -89,18 +89,28 @@ export default function Footer() {
                     </div>
                 </div>
 
-                {/* Links */}
-                <div className="flex flex-col gap-4 md:items-end">
-                    <span className="font-bold text-white mb-2">Links</span>
-                    <Link to="/about" className="text-sm text-[rgba(255,255,255,0.75)] hover:text-white transition-colors">About Us</Link>
-                    <Link to="/privacy" className="text-sm text-[rgba(255,255,255,0.75)] hover:text-white transition-colors">Privacy Policy</Link>
-                    <Link to="/terms" className="text-sm text-[rgba(255,255,255,0.75)] hover:text-white transition-colors">Terms of Service</Link>
-                    <Link to="/contact" className="text-sm text-[rgba(255,255,255,0.75)] hover:text-white transition-colors">Contact Support</Link>
+                {/* Company */}
+                <div className="flex flex-col gap-3 md:col-span-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Company</span>
+                    <Link to="/about" className="text-sm text-[rgba(255,255,255,0.6)] hover:text-white transition-colors">About Us</Link>
+                    <Link to="/contact" className="text-sm text-[rgba(255,255,255,0.6)] hover:text-white transition-colors">Contact Support</Link>
+                </div>
+
+                {/* Legal */}
+                <div className="flex flex-col gap-3 md:col-span-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Legal</span>
+                    <Link to="/privacy" className="text-sm text-[rgba(255,255,255,0.6)] hover:text-white transition-colors">Privacy Policy</Link>
+                    <Link to="/terms" className="text-sm text-[rgba(255,255,255,0.6)] hover:text-white transition-colors">Terms of Service</Link>
                 </div>
             </div>
 
-            <div className="mt-16 pt-8 border-t border-white/5 text-center text-sm text-white/30">
-                &copy; {new Date().getFullYear()} GilaniAI. All rights reserved.
+            <div className="border-t border-white/5">
+                <div className="mx-auto max-w-7xl px-6 py-6 flex flex-col-reverse items-center gap-2 sm:flex-row sm:justify-between">
+                    <p className="text-xs text-white/30">
+                        &copy; {new Date().getFullYear()} GilaniAI. All rights reserved.
+                    </p>
+                    <p className="text-xs text-white/30">Made in Nairobi 🇰🇪</p>
+                </div>
             </div>
         </footer>
     );

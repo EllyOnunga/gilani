@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { 
   Home, MessageSquare, FileText, PenTool, Calendar, Star, 
-  ShieldAlert, Users, Plus, X, PanelLeft, PanelLeftClose, 
+  ShieldAlert, Users, X, PanelLeft, PanelLeftClose, 
   Pencil, Trash2, Loader2, Settings, Mail, Smartphone, LogOut 
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Logo } from "@/components/ui/logo";
 import { PresetAvatarSVG } from "@/components/settings/PresetAvatarSVG";
+import { ThreadActionSheet } from "@/components/layout/ThreadActionSheet";
+import { EscalateModal } from "@/components/tutor/EscalateModal";
 import type { useAuthedShell } from "@/components/layout/hooks/useAuthedShell";
 import pkg from "../../../package.json";
 
@@ -28,7 +30,10 @@ export function Sidebar({ shell }: Props) {
     handleThreadTouchStart, handleThreadTouchEnd, longPressTriggeredRef,
     deleteConfirmId, setDeleteConfirmId, handleDeleteThread,
     profileName, avatarUrl, currentPlan, user, pwaInstallable, setPwaInstallable,
-    signOut
+    signOut,
+    escalationStatuses, escalateSheetThreadId, setEscalateSheetThreadId,
+    escalateEmail, setEscalateEmail, escalating, escalateError, setEscalateError,
+    handleEscalateThread, exportingThreadId, handleExportThreadPDF,
   } = shell;
 
   return (
@@ -40,19 +45,19 @@ export function Sidebar({ shell }: Props) {
       <div className="flex items-center justify-between mb-6 min-w-0 w-full gap-2">
         <div className={`flex flex-col items-start justify-center min-w-0 flex-1 ${collapsed ? "lg:items-center lg:mx-auto" : ""}`}>
           <Logo to="/tutor" onClick={() => setSidebarOpen(false)} size={collapsed ? "sm" : "md"} className={collapsed ? "mx-auto" : ""} />
-          {!collapsed && <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 pl-0.5">Ethical Learning</p>}
+
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {!isTeacher && !isAdmin && (
             <button
               onClick={createNewThread}
-              className={`flex items-center justify-center rounded-xl border border-dashed border-border/60 text-foreground hover:bg-muted/40 transition-colors ${
-                collapsed ? "lg:h-8 lg:w-8 p-1.5" : "gap-1.5 px-3 py-1.5 text-sm font-semibold"
+              className={`flex items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 text-foreground hover:bg-muted/40 transition-colors ${
+                collapsed ? "lg:h-8 lg:w-8 lg:p-1.5 gap-1.5 px-3 py-1.5 text-sm font-semibold" : "gap-1.5 px-3 py-1.5 text-sm font-semibold"
               }`}
               title="New Chat"
             >
-              <Plus className="h-4 w-4 flex-shrink-0" />
-              {!collapsed && <span>New Chat</span>}
+              <span className={collapsed ? "lg:hidden" : ""}>New Chat</span>
+              <span className={collapsed ? "hidden lg:inline text-xs font-bold" : "hidden"}>New</span>
             </button>
           )}
           <button onClick={() => setSidebarOpen(false)} className="rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent lg:hidden flex-shrink-0" title="Close menu">
@@ -103,9 +108,9 @@ export function Sidebar({ shell }: Props) {
 
             {/* Dashboards */}
             {[
-              { icon: FileText, label: "Documents", to: "/tutor/documents" },
-              { icon: PenTool, label: "Quiz Generator", to: "/tutor/quizzes" },
-              { icon: Calendar, label: "Study Planner", to: "/tutor/planner" },
+              { icon: FileText, label: "Notes", to: "/tutor/documents" },
+              { icon: PenTool, label: "Quizzes", to: "/tutor/quizzes" },
+              { icon: Calendar, label: "Planner", to: "/tutor/planner" },
               { icon: Star, label: "Saved", to: "/tutor/saved" },
             ].map((item) => (
               <Tooltip key={item.label}>
@@ -139,10 +144,10 @@ export function Sidebar({ shell }: Props) {
                   className={`flex w-full items-center rounded-lg text-sm font-medium transition-colors relative text-muted-foreground hover:bg-muted/20 hover:text-foreground ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"}`}
                 >
                   <ShieldAlert className="h-4 w-4 flex-shrink-0" />
-                  <span className={collapsed ? "lg:hidden" : ""}>Escalations</span>
+                  <span className={collapsed ? "lg:hidden" : ""}>Escalate</span>
                 </button>
               </TooltipTrigger>
-              {collapsed && <TooltipContent side="right" className="hidden lg:block">Escalations</TooltipContent>}
+              {collapsed && <TooltipContent side="right" className="hidden lg:block">Escalate</TooltipContent>}
             </Tooltip>
 
             {/* Chat History Grouped */}
@@ -175,6 +180,7 @@ export function Sidebar({ shell }: Props) {
                               onTouchEnd={handleThreadTouchEnd}
                               onTouchMove={handleThreadTouchEnd}
                               onContextMenu={(e) => e.preventDefault()}
+                              style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                               className={`group flex items-center justify-between rounded-lg px-2.5 py-1 text-xs transition-all relative select-none ${
                                 isCurrent ? "bg-muted/40 text-foreground font-semibold" : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
                               }`}
@@ -204,36 +210,35 @@ export function Sidebar({ shell }: Props) {
                                     e.preventDefault();
                                     startRename(t.id, t.title || "Untitled Chat");
                                   }}
+                                  onContextMenu={(e) => e.preventDefault()}
+                                  draggable={false}
+                                  style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none", touchAction: "manipulation" }}
                                   className="truncate flex-1 py-0.5 text-left outline-hidden"
                                 >
-                                  {t.title || "Untitled Chat"}
+                                  {t.title || ""}
                                 </Link>
                               )}
                               {renamingId !== t.id && (
-                                <div className={`flex items-center flex-shrink-0 transition-all duration-200 ${revealedThreadId === t.id ? "gap-1 opacity-100 scale-100" : "gap-0.5 lg:opacity-0 lg:scale-95 group-hover:opacity-100 group-hover:scale-100 focus-within:opacity-100 focus-within:scale-100"}`}>
+                                <div className="hidden lg:flex items-center flex-shrink-0 gap-0.5 opacity-0 scale-95 transition-all duration-200 group-hover:opacity-100 group-hover:scale-100 focus-within:opacity-100 focus-within:scale-100">
                                   <button
                                     onClick={(e) => {
                                       e.preventDefault(); e.stopPropagation();
                                       startRename(t.id, t.title || "Untitled Chat");
-                                      setRevealedThreadId(null);
                                     }}
-                                    className={`flex items-center gap-1 rounded-md hover:bg-muted text-muted-foreground/60 hover:text-foreground cursor-pointer ${revealedThreadId === t.id ? "px-2 py-1 text-[11px] font-semibold" : "p-1"}`}
+                                    className="flex items-center gap-1 rounded-md p-1 hover:bg-muted text-muted-foreground/60 hover:text-foreground cursor-pointer"
                                     title="Rename"
                                   >
                                     <Pencil className="h-3 w-3" />
-                                    {revealedThreadId === t.id && <span>Edit</span>}
                                   </button>
                                   <button
                                     onClick={(e) => {
                                       e.preventDefault(); e.stopPropagation();
                                       setDeleteConfirmId(t.id);
-                                      setRevealedThreadId(null);
                                     }}
-                                    className={`flex items-center gap-1 rounded-md hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive cursor-pointer ${revealedThreadId === t.id ? "px-2 py-1 text-[11px] font-semibold" : "p-1"}`}
+                                    className="flex items-center gap-1 rounded-md p-1 hover:bg-destructive/10 text-muted-foreground/60 hover:text-destructive cursor-pointer"
                                     title="Delete"
                                   >
                                     <Trash2 className="h-3 w-3" />
-                                    {revealedThreadId === t.id && <span>Delete</span>}
                                   </button>
                                 </div>
                               )}
@@ -275,6 +280,34 @@ export function Sidebar({ shell }: Props) {
         )}
       </nav>
 
+      {revealedThreadId && (() => {
+        const activeThread = threads.find((th) => th.id === revealedThreadId);
+        if (!activeThread) return null;
+        return (
+          <ThreadActionSheet
+            thread={activeThread}
+            escalationStatus={escalationStatuses[activeThread.id] ?? null}
+            isExporting={exportingThreadId === activeThread.id}
+            onClose={() => setRevealedThreadId(null)}
+            onRename={() => { startRename(activeThread.id, activeThread.title || "Untitled Chat"); setRevealedThreadId(null); }}
+            onExport={() => { handleExportThreadPDF(activeThread.id); setRevealedThreadId(null); }}
+            onEscalate={() => { setEscalateSheetThreadId(activeThread.id); setRevealedThreadId(null); }}
+            onDelete={() => { setDeleteConfirmId(activeThread.id); setRevealedThreadId(null); }}
+          />
+        );
+      })()}
+
+      {escalateSheetThreadId && (
+        <EscalateModal
+          teacherEmail={escalateEmail}
+          onEmailChange={(val) => { setEscalateEmail(val); setEscalateError(""); }}
+          onConfirm={() => handleEscalateThread(escalateSheetThreadId, escalateEmail)}
+          onCancel={() => { setEscalateSheetThreadId(null); setEscalateEmail(""); setEscalateError(""); }}
+          isEscalating={escalating}
+          error={escalateError}
+        />
+      )}
+
       <div className="mt-auto border-t border-border pt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -287,18 +320,18 @@ export function Sidebar({ shell }: Props) {
                 )}
               </div>
               <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
-                <p className="truncate text-xs font-semibold leading-tight text-foreground" title={profileName || user?.email || ""}>
-                  {profileName || user?.email?.split("@")[0]}
-                </p>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <p className="truncate text-xs font-semibold leading-tight text-foreground" title={profileName || user?.email || ""}>
+                    {profileName || user?.email?.split("@")[0]}
+                  </p>
+                  <span className="inline-flex flex-shrink-0 items-center rounded-full bg-primary/10 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wider text-primary">
+                    {currentPlan}
+                  </span>
+                </div>
               </div>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-60">
-            <DropdownMenuLabel className="flex flex-col gap-1">
-              <span className="truncate font-bold" title={profileName || user?.email || ""}>{profileName || user?.email?.split("@")[0]}</span>
-              <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wider text-primary">{currentPlan}</span>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to="/settings" onClick={() => setSidebarOpen(false)} className="flex w-full items-center gap-2 cursor-pointer">
                 <Settings className="h-4 w-4" /><span>Settings</span>
@@ -309,25 +342,10 @@ export function Sidebar({ shell }: Props) {
                 <Mail className="h-4 w-4" /><span>Contact</span>
               </Link>
             </DropdownMenuItem>
-            {pwaInstallable && (
-              <DropdownMenuItem onClick={async () => {
-                const prompt = (window as any).__pwaInstallPrompt;
-                if (!prompt) return;
-                prompt.prompt();
-                const { outcome } = await prompt.userChoice;
-                if (outcome === "accepted") { setPwaInstallable(false); (window as any).__pwaInstallPrompt = null; }
-              }}>
-                <Smartphone className="h-4 w-4" /> Install GilaniAI App
-              </DropdownMenuItem>
-            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
               <LogOut className="h-4 w-4" /> Logout
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <div className="px-2 py-1.5 text-[9px] text-muted-foreground/50 text-center font-mono select-none">
-              GilaniAI v{pkg.version}
-            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

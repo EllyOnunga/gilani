@@ -1,6 +1,6 @@
 export default function DemoSection() {
     return (
-        <section id="demo" className="w-full bg-[#050505] py-32 relative overflow-hidden">
+        <section id="demo" className="w-full bg-[#050505] py-20 relative overflow-hidden">
             {/* Background glowing orb */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#d9531e]/5 blur-[120px] rounded-full pointer-events-none"></div>
 

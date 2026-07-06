@@ -251,7 +251,7 @@ export const MessageBubble = memo(function MessageBubble({
             );
             return (
               <div
-                key={i}
+                key={`${step.toolName}-${i}`}
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-mono border transition-all duration-300 ${
                   isDone
                     ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/50"
@@ -271,13 +271,13 @@ export const MessageBubble = memo(function MessageBubble({
       )}
       <div
         className={`${
-          isUser ? "max-w-[88%] sm:max-w-[72%]" : "w-full max-w-[96%] sm:max-w-full"
-        } px-4 py-3 text-sm leading-relaxed relative transition-all duration-200 ${
+          isUser ? "max-w-[88%] sm:max-w-[72%] px-4 py-3" : "w-full max-w-[96%] sm:max-w-full px-0 py-1"
+        } text-sm leading-relaxed relative transition-all duration-200 ${
           isUser
             ? "bg-card border border-border text-foreground rounded-2xl rounded-tr-sm shadow-sm"
             : isStreamActive && !showBubbleCard
               ? "opacity-0 pointer-events-none"
-              : "bg-[#1c1714] text-foreground rounded-2xl border border-border/20 shadow-sm px-5"
+              : "bg-transparent text-foreground"
         }`}
       >
         {!isUser ? (
@@ -294,7 +294,7 @@ export const MessageBubble = memo(function MessageBubble({
                         );
                         return (
                           <div
-                            key={i}
+                            key={`${step.toolName}-${i}`}
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono border transition-all duration-300 ${
                               isDone
                                 ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/50"
@@ -325,7 +325,7 @@ export const MessageBubble = memo(function MessageBubble({
                       {showThinkingPanel && (
                         <div className="mt-1.5 space-y-1.5 rounded-lg border border-border/50 bg-muted/20 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
                           {reasoningSteps.map((step: any, i: number) => (
-                            <p key={i} className="italic">{step.text}</p>
+                            <p key={`reasoning-${i}-${(step.text || "").slice(0, 20)}`} className="italic">{step.text}</p>
                           ))}
                         </div>
                       )}

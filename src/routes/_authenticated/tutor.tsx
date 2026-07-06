@@ -1,23 +1,51 @@
 import { createFileRoute, useNavigate, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertCircle, RefreshCw, Loader2 } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { fetchWithTimeout, getErrorMessage, withTimeout } from "@/lib/async";
 import { GilaniLoader } from "@/components/GilaniLoader";
+import { ChatInput } from "@/components/tutor/ChatInput";
+import { EmptyState } from "@/components/tutor/EmptyState";
+import { ThreadHeader } from "@/components/tutor/ThreadHeader";
+import { PomodoroTimer } from "@/components/tutor/PomodoroTimer";
+import { useComposer } from "@/components/tutor/hooks/useComposer";
+import { useThreadsQuery } from "@/lib/hooks/useThreadsQuery";
+import { setPendingMessage } from "@/lib/pending-message";
+import { useLayout } from "@/contexts/layout-context";
 
 export const Route = createFileRoute("/_authenticated/tutor")({
   component: TutorIndex,
+  validateSearch: (s: Record<string, unknown>): { new?: "1" } =>
+    s.new === "1" ? { new: "1" } : {},
 });
 
 function TutorIndex() {
   const navigate = useNavigate();
   const location = useLocation();
+  const composer = useComposer();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [creatingThread, setCreatingThread] = useState(false);
+  const [timerOpen, setTimerOpen] = useState(false);
+  const [timerState, setTimerState] = useState<{ minutes: number; seconds: number; running: boolean } | null>(null);
   const startedRef = useRef(false);
+  const { threads } = useThreadsQuery(userId);
+  const { setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
 
-  const createSession = async () => {
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { minutes, seconds, running } = (e as CustomEvent).detail as any;
+      setTimerState(running ? { minutes, seconds, running } : null);
+    };
+    window.addEventListener("pomodoro:tick", handler);
+    return () => window.removeEventListener("pomodoro:tick", handler);
+  }, []);
+
+  const checkSession = async () => {
     setError(null);
     setLoading(true);
     let sessionCreationTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -47,8 +75,13 @@ function TutorIndex() {
         throw new Error("Authentication timed out. Please refresh and try again.");
       }
 
-      const userId = session?.user?.id;
-      if (userId) {
+      setAuthToken(session?.access_token ?? null);
+      const sessionUserId = session?.user?.id ?? null;
+      setUserId(sessionUserId);
+      const userId = sessionUserId;
+      const forceNew = (location.search as any)?.new === "1";
+
+      if (userId && !forceNew) {
         // Query the most recent existing thread to keep the chat threaded (wrapped in timeout to prevent hangs)
         try {
           const { data: existingThreads } = (await withTimeout(
@@ -84,55 +117,11 @@ function TutorIndex() {
         }
       }
 
-      const token = session?.access_token;
-
-      const res = await fetchWithTimeout(
-        "/api/tutor/threads",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({}),
-        },
-        12000,
-      );
-
-      // Debug: Log response for network issues
-      console.log("[TutorIndex] thread response:", { status: res.status, ok: res.ok });
-
-      let json: any;
-      try {
-        json = await res.json();
-        console.log("[TutorIndex] thread response JSON:", json);
-      } catch (parseErr) {
-        throw new Error("Server returned an invalid response format. Check your API route.");
-      }
-
-      if (!res.ok) {
-        throw new Error(json?.error || `Server returned status ${res.status}`);
-      }
-
-      const id = json?.thread?.id;
-      if (id) {
-        console.log("[TutorIndex] Navigating to thread:", id);
-        try {
-          await navigate({
-            to: "/tutor/$threadId",
-            params: { threadId: id },
-          } as any);
-          console.log("[TutorIndex] Navigation completed");
-        } catch (navErr) {
-          console.error("[TutorIndex] navigation failed:", navErr);
-          // Force redirect as fallback
-          window.location.href = `/tutor/${id}`;
-        }
-      } else {
-        throw new Error("No thread ID returned from server");
-      }
+      // No existing thread (or the user explicitly asked for a new one) — show the composer.
+      // The actual conversation row is only created once the user sends a first message.
+      setLoading(false);
     } catch (err) {
-      setError(getErrorMessage(err, "Failed to create study session"));
+      setError(getErrorMessage(err, "Failed to start tutor chat"));
       setLoading(false);
     } finally {
       if (sessionCreationTimeout) clearTimeout(sessionCreationTimeout);
@@ -143,17 +132,59 @@ function TutorIndex() {
     const isExactTutor = location.pathname === "/tutor" || location.pathname === "/tutor/";
 
     if (!isExactTutor) {
-      // ✅ Reset the guard whenever we're viewing a thread so that the NEXT
+      // Reset the guard whenever we're viewing a thread so that the NEXT
       // time we return to /tutor (e.g. after deleting the current thread)
-      // createSession() fires again instead of being permanently blocked.
+      // checkSession() fires again instead of being permanently blocked.
       startedRef.current = false;
       return;
     }
 
     if (startedRef.current) return;
     startedRef.current = true;
-    createSession();
+    checkSession();
   }, [location.pathname]);
+
+  const handleDraftSubmit = async (event?: { preventDefault?: () => void }) => {
+    event?.preventDefault?.();
+    const trimmedInput = composer.input.trim();
+    if (!composer.hasContent(trimmedInput)) return;
+
+    const finalMessage = composer.buildMessageText(trimmedInput);
+    const titleSeedText =
+      trimmedInput ||
+      (composer.attachedFile ? `Uploaded a document: ${composer.attachedFile.name}` : "Started a new session");
+
+    composer.setInput("");
+    composer.onRemoveFile();
+    setCreatingThread(true);
+    try {
+      const res = await fetchWithTimeout(
+        "/api/tutor/threads",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
+          body: JSON.stringify({}),
+        },
+        12000,
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json?.error || `Server returned status ${res.status}`);
+      }
+      const id = json?.thread?.id;
+      if (!id) {
+        throw new Error("No thread ID returned from server");
+      }
+      setPendingMessage(id, { finalMessage, titleSeedText });
+      await navigate({ to: "/tutor/$threadId", params: { threadId: id } } as any);
+    } catch (err) {
+      setCreatingThread(false);
+      toast.error(getErrorMessage(err, "Failed to start chat. Please try again."));
+    }
+  };
 
   const isExactTutor = location.pathname === "/tutor" || location.pathname === "/tutor/";
   if (!isExactTutor) {
@@ -229,7 +260,7 @@ function TutorIndex() {
           </div>
         )}
         <Button
-          onClick={createSession}
+          onClick={checkSession}
           className="mt-6 flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <RefreshCw className="h-4 w-4" /> Retry
@@ -238,5 +269,63 @@ function TutorIndex() {
     );
   }
 
-  return <GilaniLoader />;
+  if (loading) {
+    return <GilaniLoader />;
+  }
+
+  return (
+    <div className="flex h-full bg-background text-foreground overflow-hidden">
+      <main className="flex flex-col min-w-0 overflow-hidden w-full h-full" style={{ flex: 1, minHeight: 0 }}>
+        <ThreadHeader
+          threadId={undefined}
+          threads={threads}
+          userId={userId}
+          timerState={timerState}
+          escalationStatus={null}
+          setSidebarOpen={setSidebarOpen}
+          createNewThread={() => navigate({ to: "/tutor", search: { new: "1" } } as any)}
+          requestRenameThread={requestRenameThread}
+          requestDeleteThread={requestDeleteThread}
+          setTimerOpen={setTimerOpen}
+          handleExportPDF={() => {}}
+          setEscalateModalOpen={() => {}}
+        />
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <EmptyState
+            onPromptClick={composer.handlePromptClick}
+            onUploadClick={() => {
+              const el = document.getElementById("chat-file-input") as HTMLInputElement | null;
+              el?.click();
+            }}
+            onScanClick={composer.handleScanClick}
+            onVoiceClick={composer.toggleVoiceInput}
+            isListening={composer.isListening}
+            recentThreads={threads.slice(0, 3)}
+            allThreadsPath="/tutor/chats"
+          />
+        </div>
+        <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">
+          <ChatInput
+            input={composer.input}
+            isPending={creatingThread}
+            parsingFile={composer.parsingFile}
+            attachedFile={composer.attachedFile}
+            chatError={null}
+            docUploadError={composer.docUploadError}
+            onClearDocError={composer.onClearDocError}
+            onInputChange={(e) => composer.setInput(e.target.value)}
+            onSubmit={handleDraftSubmit}
+            onFileChange={composer.handleFileChange}
+            inputRef={composer.chatInputRef}
+            onRemoveFile={composer.onRemoveFile}
+            onScanClick={composer.handleScanClick}
+            onVoiceClick={composer.toggleVoiceInput}
+            isListening={composer.isListening}
+          />
+        </div>
+      </main>
+      <PomodoroTimer open={timerOpen} onOpenChange={setTimerOpen} showTrigger={false} />
+    </div>
+  );
 }
+

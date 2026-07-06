@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { withTimeout } from "@/lib/async";
 import { sanitizeCurriculum, sanitizeUntrustedInput } from "@/lib/tutor-prompt";
-import { checkPlanRateLimit } from "@/lib/rate-limit.server";
+import { checkPlanRateLimit, getPlanRateLimitStatus } from "@/lib/rate-limit.server";
 import { getPlanLimits } from "@/lib/plans";
 import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
 
@@ -275,9 +275,48 @@ export const getQuizFormOptionsFn = createServerFn({ method: "GET" }).handler(as
   }
 
   const limits = getPlanLimits(plan);
+
+  let quizzesUsedToday = 0;
+  let quizzesMaxToday = limits.dailyQuizzes;
+  if (userId) {
+    const status = await getPlanRateLimitStatus(userId, "quiz");
+    quizzesUsedToday = status.messagesUsed;
+    quizzesMaxToday = status.messagesMax;
+  }
+
   return {
     plan,
     maxQuestions: limits.maxQuizQuestions,
     difficulties: limits.quizDifficulties,
+    quizzesUsedToday,
+    quizzesMaxToday,
   };
 });
+
+export const deleteQuizFn = createServerFn({ method: "POST" })
+  .validator(z.object({ quizId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    let authResult: Awaited<ReturnType<typeof authenticateRequest>>;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
+    const userId = authResult.userId;
+
+    const { data: quiz } = await supabaseAdmin
+      .from("quizzes")
+      .select("id, user_id")
+      .eq("id", data.quizId)
+      .maybeSingle();
+
+    if (!quiz || quiz.user_id !== userId) {
+      throw new Error("Quiz not found");
+    }
+
+    await supabaseAdmin.from("quiz_attempts").delete().eq("quiz_id", data.quizId);
+    await supabaseAdmin.from("quizzes").delete().eq("id", data.quizId);
+
+    return { success: true };
+  });

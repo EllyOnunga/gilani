@@ -13,6 +13,8 @@ interface QuizResultSummaryProps {
     onRetryAll: () => void;
     onRetryMissed: () => void;
     onExit: () => void;
+    /** "test" mode shows every question's correctness (full review); "practice" (default) shows only missed ones. */
+    mode?: "practice" | "test";
 }
 
 export function QuizResultSummary({
@@ -20,11 +22,13 @@ export function QuizResultSummary({
     onRetryAll,
     onRetryMissed,
     onExit,
+    mode = "practice",
 }: QuizResultSummaryProps) {
     const total = answered.length;
     const correctCount = answered.filter((a) => a.correct).length;
     const score = Math.round((correctCount / Math.max(1, total)) * 100);
     const missed = answered.filter((a) => !a.correct);
+    const reviewList = mode === "test" ? answered : missed;
 
     const scoreColor = score >= 80 ? "text-emerald-500" : score >= 50 ? "text-amber-500" : "text-red-500";
 
@@ -41,25 +45,33 @@ export function QuizResultSummary({
                 </p>
             </div>
 
-            {missed.length > 0 ? (
+            {reviewList.length > 0 ? (
                 <div className="space-y-3">
-                    <h3 className="font-semibold text-foreground">Review what you missed</h3>
-                    {missed.map((a, i) => (
+                    <h3 className="font-semibold text-foreground">
+                        {mode === "test" ? "Answer Review" : "Review what you missed"}
+                    </h3>
+                    {reviewList.map((a, i) => (
                         <div key={i} className="p-4 rounded-2xl border border-border bg-card space-y-2">
                             <div className="flex items-start gap-2">
-                                <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                {a.correct ? (
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                                ) : (
+                                    <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                )}
                                 <div className="font-medium text-sm text-foreground prose prose-sm max-w-none [&>p]:m-0">
                                     <MarkdownRenderer content={a.question.question} />
                                 </div>
                             </div>
-                            <p className="text-xs text-muted-foreground pl-6">
-                                Correct answer:{" "}
-                                <span className="font-medium text-emerald-500">
-                                    <span className="prose prose-sm max-w-none [&>p]:inline [&>p]:m-0">
-                                        <MarkdownRenderer content={a.question.options[a.question.correctIndex]} />
+                            {!a.correct && (
+                                <p className="text-xs text-muted-foreground pl-6">
+                                    Correct answer:{" "}
+                                    <span className="font-medium text-emerald-500">
+                                        <span className="prose prose-sm max-w-none [&>p]:inline [&>p]:m-0">
+                                            <MarkdownRenderer content={a.question.options[a.question.correctIndex]} />
+                                        </span>
                                     </span>
-                                </span>
-                            </p>
+                                </p>
+                            )}
                             <div className="text-sm text-foreground/80 pl-6 prose prose-sm max-w-none [&>p]:m-0">
                                 <MarkdownRenderer content={a.question.explanation} />
                             </div>

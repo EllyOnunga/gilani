@@ -16,7 +16,6 @@ export const Route = createFileRoute("/api/tutor/threads")({
             .from("conversations")
             .insert({
               user_id: userId,
-              title: "New Study Session",
               updated_at: new Date().toISOString(),
             })
             .select("id")

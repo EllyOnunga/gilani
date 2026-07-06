@@ -7,8 +7,10 @@ import { parseDocument } from "@/lib/document-parser";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/async";
 import { generateThreadTitleFn, renameThreadFn } from "@/lib/tutor.server-fns";
+import { consumePendingMessage } from "@/lib/pending-message";
 
 import { useTutorChat } from "@/components/tutor/hooks/useTutorChat";
+import { useComposer } from "@/components/tutor/hooks/useComposer";
 import { ThreadHeader } from "@/components/tutor/ThreadHeader";
 import { ChatInput } from "@/components/tutor/ChatInput";
 import { PlansModal } from "@/components/PlansModal";
@@ -63,18 +65,14 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const { setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
 
   const chatState = useTutorChat({ threadId, userId, authToken });
+  const composer = useComposer();
 
-  const [input, setInput] = useState("");
   const [timerOpen, setTimerOpen] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
   const [escalateModalOpen, setEscalateModalOpen] = useState(false);
   const [teacherEmail, setTeacherEmail] = useState("");
 
-  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string; size: number; } | null>(null);
-  const [parsingFile, setParsingFile] = useState(false);
-  const [docUploadError, setDocUploadError] = useState<string | null>(null);
 
-  const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [timerState, setTimerState] = useState<{ minutes: number; seconds: number; running: boolean } | null>(null);
   useEffect(() => {
@@ -96,91 +94,16 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     return () => window.removeEventListener("custom:trigger-escalation", handleGlobalEscalate);
   }, [chatState.escalationStatus, chatState.escalating, chatState.messagesLoading]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const MAX_FILE_SIZE = 2 * 1024 * 1024;
-    if (file.size > MAX_FILE_SIZE) {
-      setDocUploadError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 2MB.`);
-      return;
-    }
-
-    setParsingFile(true);
-    setDocUploadError(null);
-    const toastId = toast.loading(`Extracting text from ${file.name}...`);
-    try {
-      const parsed = await parseDocument(file);
-      setAttachedFile(parsed);
-      toast.success("Document attached successfully!", { id: toastId });
-    } catch (err: any) {
-      const errMsg = friendlyError(err, "Failed to attach document.");
-      setDocUploadError(errMsg);
-      toast.error(errMsg, { id: toastId });
-    } finally {
-      setParsingFile(false);
-    }
-  };
-
   const handleExportPDF = useCallback(() => {
     const title = chatState.threads.find((t) => t.id === threadId)?.title || "study-session";
     exportAsPDF(chatState.messages, title);
   }, [chatState.threads, threadId, chatState.messages]);
 
-  const handleEditRequest = useCallback(
-    (text: string) => {
-      setInput(text);
-      setTimeout(() => {
-        if (chatInputRef.current) {
-          chatInputRef.current.focus();
-          chatInputRef.current.setSelectionRange(
-            chatInputRef.current.value.length,
-            chatInputRef.current.value.length,
-          );
-        }
-      }, 50);
-    },
-    [setInput],
-  );
-
-  const handlePromptClick = useCallback(
-    (prompt: string) => {
-      setInput(prompt);
-      setTimeout(() => {
-        if (chatInputRef.current) {
-          chatInputRef.current.focus();
-          chatInputRef.current.setSelectionRange(prompt.length, prompt.length);
-        }
-      }, 50);
-    },
-    [setInput],
-  );
-
-  const submit = async (event?: { preventDefault?: () => void }) => {
-    event?.preventDefault?.();
-    const trimmedInput = input.trim();
-    if (!trimmedInput && !attachedFile) return;
+  const sendChatMessage = (finalMessage: string, titleSeedText: string) => {
     try {
-      let finalMessage = trimmedInput;
-      if (attachedFile) {
-        const MAX_DOC_CHARS = 8000;
-        const docText =
-          attachedFile.text.length > MAX_DOC_CHARS
-            ? attachedFile.text.slice(0, MAX_DOC_CHARS) +
-            "\n\n[Document truncated to 8000 characters due to size limits]"
-            : attachedFile.text;
-        finalMessage = `[Document Attached: ${attachedFile.name}]\n\n<DocumentContent name="${attachedFile.name}">\n${docText}\n</DocumentContent>\n\nStudent Query: ${trimmedInput || "(See attached document)"}`;
-      }
-
       const currentThread = chatState.threads.find((t) => t.id === threadId);
-      if (
-        chatState.messages.length === 0 &&
-        (!currentThread?.title ||
-          currentThread.title === "New thread" ||
-          currentThread.title === "New tutor session")
-      ) {
-        const userInputText = trimmedInput || (attachedFile ? `Uploaded a document: ${attachedFile.name}` : "Started a new session");
-        generateThreadTitleFn({ data: userInputText })
+      if (chatState.messages.length === 0 && !currentThread?.title) {
+        generateThreadTitleFn({ data: titleSeedText })
           .then((title) => {
             renameThreadFn({ data: { threadId, title } })
               .then(() => {
@@ -192,9 +115,6 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           })
           .catch(console.error);
       }
-
-      setInput("");
-      setAttachedFile(null);
       chatState.sendMessage({ text: finalMessage }).catch((error: unknown) => {
         console.error("[TutorThread] sendMessage background error:", error);
         toast.error("Failed to send message. Please try again.");
@@ -203,6 +123,28 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
       console.error("[TutorThread] submit error:", error);
     }
   };
+
+  const submit = async (event?: { preventDefault?: () => void }) => {
+    event?.preventDefault?.();
+    const trimmedInput = composer.input.trim();
+    if (!composer.hasContent(trimmedInput)) return;
+    const finalMessage = composer.buildMessageText(trimmedInput);
+    const titleSeedText =
+      trimmedInput ||
+      (composer.attachedFile ? `Uploaded a document: ${composer.attachedFile.name}` : "Started a new session");
+    composer.setInput("");
+    composer.onRemoveFile();
+    sendChatMessage(finalMessage, titleSeedText);
+  };
+
+  useEffect(() => {
+    if (!threadId) return;
+    const pending = consumePendingMessage(threadId);
+    if (pending) {
+      sendChatMessage(pending.finalMessage, pending.titleSeedText);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadId]);
 
   const handleEscalateConfirm = async (email?: string) => {
     const success = await chatState.handleEscalate(email);
@@ -239,9 +181,9 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
             isRateLimited={chatState.isRateLimited}
             chatError={chatState.chatError}
             onReload={chatState.handleReload}
-            onEditRequest={handleEditRequest}
+            onEditRequest={composer.handleEditRequest}
             onDelete={chatState.handleDeleteMessage}
-            onPromptClick={handlePromptClick}
+            onPromptClick={composer.handlePromptClick}
             recentThreads={chatState.threads.slice(0, 3)}
             userId={userId}
             userVotes={chatState.userVotes}
@@ -254,37 +196,28 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
               const el = document.getElementById("chat-file-input") as HTMLInputElement | null;
               el?.click();
             }}
-            onScanClick={() => {
-              const el = document.getElementById("chat-file-input") as HTMLInputElement | null;
-              if (el) {
-                el.setAttribute("capture", "environment");
-                el.click();
-                setTimeout(() => el.removeAttribute("capture"), 500);
-              }
-            }}
-            onVoiceClick={() => chatInputRef.current?.focus()}
+            onScanClick={composer.handleScanClick}
+            onVoiceClick={composer.toggleVoiceInput}
+            isListening={composer.isListening}
             allThreadsPath="/tutor/chats"
           />
         </div>
 
         <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">
           <ChatInput
-            input={input}
+            input={composer.input}
             isPending={chatState.isPending}
-            parsingFile={parsingFile}
-            attachedFile={attachedFile}
+            parsingFile={composer.parsingFile}
+            attachedFile={composer.attachedFile}
             chatError={chatState.chatError}
-            docUploadError={docUploadError}
-            onClearDocError={() => setDocUploadError(null)}
-            onInputChange={(e) => setInput(e.target.value)}
+            docUploadError={composer.docUploadError}
+            onClearDocError={composer.onClearDocError}
+            onInputChange={(e) => composer.setInput(e.target.value)}
             onSubmit={submit}
             onStop={chatState.stop}
-            onFileChange={handleFileChange}
-            inputRef={chatInputRef}
-            onRemoveFile={() => {
-              setAttachedFile(null);
-              setDocUploadError(null);
-            }}
+            onFileChange={composer.handleFileChange}
+            inputRef={composer.chatInputRef}
+            onRemoveFile={composer.onRemoveFile}
             onUpgrade={() => setShowPlans(true)}
             onRateLimitExpired={() => {
               chatState.setChatError(null);
@@ -292,15 +225,9 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
             }}
             messagesUsed={chatState.messagesUsed}
             messagesMax={chatState.messagesMax}
-            onScanClick={() => {
-              const el = document.getElementById("chat-file-input") as HTMLInputElement | null;
-              if (el) {
-                el.setAttribute("capture", "environment");
-                el.click();
-                setTimeout(() => el.removeAttribute("capture"), 500);
-              }
-            }}
-            onVoiceClick={() => chatInputRef.current?.focus()}
+            onScanClick={composer.handleScanClick}
+            onVoiceClick={composer.toggleVoiceInput}
+            isListening={composer.isListening}
           />
         </div>
       </main>

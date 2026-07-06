@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { GilaniLoader } from "@/components/GilaniLoader";
 import { toast } from "sonner";
-import { Flame } from "lucide-react";
+import { Flame, BookOpen, Timer as TimerIcon } from "lucide-react";
 import { TutorPageHeader } from "@/components/tutor/TutorPageHeader";
 import { QuizProgressBar } from "@/components/tutor/quiz/QuizProgressBar";
 import { QuizQuestionCard } from "@/components/tutor/quiz/QuizQuestionCard";
@@ -33,6 +33,7 @@ function QuizTakeRoute() {
   const [showResult, setShowResult] = useState(false);
   const [pendingQuestions, setPendingQuestions] = useState<QuizQuestion[] | null>(null);
   const [hasAnsweredCurrent, setHasAnsweredCurrent] = useState(false);
+  const [mode, setMode] = useState<"practice" | "test" | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -109,6 +110,7 @@ function QuizTakeRoute() {
     setStreak(0);
     setShowResult(false);
     setHasAnsweredCurrent(false);
+    setMode(null);
   };
 
   const handleRetryAll = () => {
@@ -144,6 +146,38 @@ function QuizTakeRoute() {
     );
   }
 
+  if (!mode) {
+    return (
+      <div className="h-full flex flex-col bg-background">
+        <TutorPageHeader title={topic} subtitle="Choose a mode" />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full space-y-4">
+            <button
+              onClick={() => setMode("practice")}
+              className="w-full flex items-start gap-3 p-5 rounded-2xl border-2 border-border bg-card hover:border-primary/50 transition-colors text-left"
+            >
+              <BookOpen className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-foreground">Practice Mode</p>
+                <p className="text-sm text-muted-foreground">See if you're right and read the explanation after each question.</p>
+              </div>
+            </button>
+            <button
+              onClick={() => setMode("test")}
+              className="w-full flex items-start gap-3 p-5 rounded-2xl border-2 border-border bg-card hover:border-primary/50 transition-colors text-left"
+            >
+              <TimerIcon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-foreground">Test Mode</p>
+                <p className="text-sm text-muted-foreground">Answer every question first — see your full results and explanations only at the end, like a real exam.</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col bg-background">
       <TutorPageHeader
@@ -172,6 +206,7 @@ function QuizTakeRoute() {
                 question={currentQuestion}
                 questionNumber={currentIndex + 1}
                 onAnswer={handleAnswer}
+                mode={mode}
               />
               {hasAnsweredCurrent && (
                 <button
@@ -189,6 +224,7 @@ function QuizTakeRoute() {
               onRetryAll={handleRetryAll}
               onRetryMissed={handleRetryMissed}
               onExit={() => navigate({ to: "/tutor/quizzes" })}
+              mode={mode}
             />
           )}
         </div>

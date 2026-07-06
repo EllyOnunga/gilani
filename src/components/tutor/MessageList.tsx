@@ -27,6 +27,7 @@ type Props = {
   onUploadClick?: () => void;
   onScanClick?: () => void;
   onVoiceClick?: () => void;
+  isListening?: boolean;
   allThreadsPath?: string;
 };
 
@@ -53,6 +54,7 @@ export const MessageList = React.memo(function MessageList({
   onUploadClick,
   onScanClick,
   onVoiceClick,
+  isListening,
   allThreadsPath,
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -244,6 +246,7 @@ export const MessageList = React.memo(function MessageList({
             onUploadClick={onUploadClick}
             onScanClick={onScanClick}
             onVoiceClick={onVoiceClick}
+            isListening={isListening}
             allThreadsPath={allThreadsPath}
           />
         )}

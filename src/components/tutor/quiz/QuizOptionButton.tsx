@@ -7,7 +7,9 @@ export type QuizOptionState =
     | "selected-correct"
     | "selected-incorrect"
     | "reveal-correct"
-    | "disabled";
+    | "disabled"
+    | "selected"
+    | "locked";
 
 interface QuizOptionButtonProps {
     label: string;
@@ -33,6 +35,8 @@ export function QuizOptionButton({ label, index, state, onClick }: QuizOptionBut
                 state === "selected-incorrect" && "border-red-500 bg-red-500/10",
                 state === "reveal-correct" && "border-emerald-500 bg-emerald-500/5",
                 state === "disabled" && "border-border bg-card opacity-60 cursor-not-allowed",
+                state === "selected" && "border-primary bg-primary/10",
+                state === "locked" && "border-border bg-card opacity-50 cursor-not-allowed",
             )}
         >
             <span
@@ -43,6 +47,8 @@ export function QuizOptionButton({ label, index, state, onClick }: QuizOptionBut
                     state === "selected-incorrect" && "border-red-500 bg-red-500 text-white",
                     state === "reveal-correct" && "border-emerald-500 text-emerald-500",
                     state === "disabled" && "border-border text-muted-foreground",
+                    state === "selected" && "border-primary bg-primary text-primary-foreground",
+                    state === "locked" && "border-border text-muted-foreground",
                 )}
             >
                 {state === "selected-correct" || state === "reveal-correct" ? (
@@ -52,6 +58,7 @@ export function QuizOptionButton({ label, index, state, onClick }: QuizOptionBut
                 ) : (
                     LETTERS[index]
                 )}
+                {/* "selected" (test mode) and "locked" states intentionally fall through to LETTERS[index] above — no correctness icon shown until results. */}
             </span>
             <div className="text-sm font-medium text-foreground prose prose-sm max-w-none [&>p]:m-0">
                 <MarkdownRenderer content={label} />

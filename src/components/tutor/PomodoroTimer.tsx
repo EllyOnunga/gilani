@@ -7,10 +7,20 @@ type Props = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
+  /** Seed the study countdown with a custom duration (e.g. from a planner task) instead of the 25m default. */
+  initialMinutes?: number;
+  /** Fired the instant a "study" block naturally counts down to zero (not on manual reset/pause). */
+  onStudyComplete?: () => void;
 };
 
-export function PomodoroTimer({ open, onOpenChange, showTrigger = true }: Props) {
-  const [timerMinutes, setTimerMinutes] = useState(25);
+export function PomodoroTimer({
+  open,
+  onOpenChange,
+  showTrigger = true,
+  initialMinutes,
+  onStudyComplete,
+}: Props) {
+  const [timerMinutes, setTimerMinutes] = useState(initialMinutes ?? 25);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerMode, setTimerMode] = useState<"study" | "break">("study");
@@ -21,6 +31,17 @@ export function PomodoroTimer({ open, onOpenChange, showTrigger = true }: Props)
   const setTimerOpen = isControlled ? onOpenChange : setInternalOpen;
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Re-seed the countdown whenever the dialog opens with a caller-supplied duration
+  // (e.g. a planner task's specific durationMinutes), as long as nothing is running.
+  useEffect(() => {
+    if (open && initialMinutes && !timerRunning) {
+      setTimerMode("study");
+      setTimerMinutes(initialMinutes);
+      setTimerSeconds(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialMinutes]);
 
   const dispatchTick = (minutes: number, seconds: number, running: boolean) => {
     window.dispatchEvent(
@@ -50,6 +71,7 @@ export function PomodoroTimer({ open, onOpenChange, showTrigger = true }: Props)
           setTimerRunning(false);
           if (timerMode === "study") {
             toast.success("🎉 Study session complete! Take a 5-minute break.", { duration: 6000 });
+            onStudyComplete?.();
             setTimerMode("break");
             setTimerMinutes(5);
             setTimerSeconds(0);

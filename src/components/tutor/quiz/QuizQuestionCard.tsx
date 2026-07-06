@@ -8,9 +8,11 @@ interface QuizQuestionCardProps {
     question: QuizQuestion;
     questionNumber: number;
     onAnswer: (selectedIndex: number, correct: boolean) => void;
+    /** "practice" reveals correctness + explanation immediately (default). "test" hides both until results. */
+    mode?: "practice" | "test";
 }
 
-export function QuizQuestionCard({ question, questionNumber, onAnswer }: QuizQuestionCardProps) {
+export function QuizQuestionCard({ question, questionNumber, onAnswer, mode = "practice" }: QuizQuestionCardProps) {
     const [selected, setSelected] = useState<number | null>(null);
 
     const handleSelect = (index: number) => {
@@ -20,6 +22,10 @@ export function QuizQuestionCard({ question, questionNumber, onAnswer }: QuizQue
     };
 
     const getState = (index: number): QuizOptionState => {
+        if (mode === "test") {
+            if (selected === null) return "default";
+            return index === selected ? "selected" : "locked";
+        }
         if (selected === null) return "default";
         if (index === selected && index === question.correctIndex) return "selected-correct";
         if (index === selected) return "selected-incorrect";
@@ -51,7 +57,7 @@ export function QuizQuestionCard({ question, questionNumber, onAnswer }: QuizQue
                     />
                 ))}
             </div>
-            {selected !== null && (
+            {selected !== null && mode === "practice" && (
                 <div
                     className={`p-4 rounded-2xl border ${isCorrect ? "bg-emerald-500/10 border-emerald-500/30" : "bg-amber-500/10 border-amber-500/30"
                         }`}

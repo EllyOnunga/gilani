@@ -1,11 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { GilaniLoader } from "@/components/GilaniLoader";
-import { PenTool, Brain, Calendar, CheckCircle2, Sparkles, X } from "lucide-react";
+import { PenTool, Brain, Calendar, CheckCircle2, Sparkles, X, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { TutorPageHeader } from "@/components/tutor/TutorPageHeader";
-import { generateQuizFn, getQuizFormOptionsFn } from "@/lib/quiz.server-fns";
+import { generateQuizFn, getQuizFormOptionsFn, deleteQuizFn } from "@/lib/quiz.server-fns";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+
+const PAGE_SIZE = 10;
 
 export const Route = createFileRoute("/_authenticated/tutor/quizzes")({
   component: QuizzesRoute,
@@ -19,7 +22,18 @@ function QuizzesRoute() {
   const [difficulty, setDifficulty] = useState("mixed");
   const [questionCount, setQuestionCount] = useState(8);
   const [generating, setGenerating] = useState(false);
-  const [formOptions, setFormOptions] = useState<{ maxQuestions: number; difficulties: string[] } | null>(null);
+  const [search, setSearch] = useState("");
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [formOptions, setFormOptions] = useState<{
+    maxQuestions: number;
+    difficulties: string[];
+    quizzesUsedToday: number;
+    quizzesMaxToday: number;
+  } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,7 +42,9 @@ function QuizzesRoute() {
         const opts = await getQuizFormOptionsFn();
         const difficulties = (opts as any).difficulties as string[];
         const maxQuestions = (opts as any).maxQuestions as number;
-        setFormOptions({ maxQuestions, difficulties });
+        const quizzesUsedToday = (opts as any).quizzesUsedToday as number;
+        const quizzesMaxToday = (opts as any).quizzesMaxToday as number;
+        setFormOptions({ maxQuestions, difficulties, quizzesUsedToday, quizzesMaxToday });
         if (!difficulties.includes(difficulty)) {
           setDifficulty(difficulties[difficulties.length - 1] || "medium");
         }
@@ -41,29 +57,67 @@ function QuizzesRoute() {
     })();
   }, []);
 
-  const fetchQuizzes = async () => {
+  const fetchQuizzes = async (searchTerm: string, page: number, append: boolean) => {
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-      const { data, error } = await supabase
+      let query = supabase
         .from("quizzes")
         .select("id, topic, difficulty, questions, created_at, quiz_attempts(score)")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+      if (searchTerm.trim()) {
+        query = query.ilike("topic", `%${searchTerm.trim()}%`);
+      }
+      const { data, error } = await query;
       if (error) throw error;
-      setQuizzes(data || []);
+      const results = data || [];
+      setQuizzes((prev) => (append ? [...prev, ...results] : results));
+      setHasMore(results.length === PAGE_SIZE);
     } catch (err: any) {
       toast.error(err.message || "Failed to load quizzes");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchQuizzes();
+    fetchQuizzes("", 0, false);
   }, []);
+
+  const onSearchChange = (value: string) => {
+    setSearch(value);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      setLoading(true);
+      fetchQuizzes(value, 0, false);
+    }, 350);
+  };
+
+  const onLoadMore = () => {
+    setLoadingMore(true);
+    fetchQuizzes(search, Math.floor(quizzes.length / PAGE_SIZE), true);
+  };
+
+  const onConfirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setDeletingId(id);
+    setConfirmDeleteId(null);
+    try {
+      await deleteQuizFn({ data: { quizId: id } });
+      setQuizzes((prev) => prev.filter((q) => q.id !== id));
+      toast.success("Quiz deleted");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete quiz");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -120,10 +174,17 @@ function QuizzesRoute() {
           {showForm && (
             <div className="border border-border bg-card rounded-2xl shadow-sm p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  New Quiz
-                </h3>
+                <div>
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    New Quiz
+                  </h3>
+                  {formOptions && formOptions.quizzesMaxToday < 999_999 && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {formOptions.quizzesUsedToday}/{formOptions.quizzesMaxToday} quizzes used today
+                    </p>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowForm(false)}
                   className="text-muted-foreground hover:text-foreground"
@@ -223,14 +284,16 @@ function QuizzesRoute() {
                 const qCount = Array.isArray(quiz.questions) ? quiz.questions.length : 0;
 
                 return (
-                  <button
+                  <div
                     key={quiz.id}
-                    onClick={() =>
-                      navigate({ to: "/tutor/quizzes/$quizId", params: { quizId: quiz.id } })
-                    }
-                    className="w-full flex items-center gap-3 p-5 text-left border border-border bg-card rounded-2xl shadow-sm hover:border-primary/40 transition-colors"
+                    className="w-full flex items-center gap-3 p-5 border border-border bg-card rounded-2xl shadow-sm hover:border-primary/40 transition-colors"
                   >
-                    <div className="flex-1 min-w-0">
+                    <button
+                      onClick={() =>
+                        navigate({ to: "/tutor/quizzes/$quizId", params: { quizId: quiz.id } })
+                      }
+                      className="flex-1 min-w-0 text-left"
+                    >
                       <div className="flex items-center gap-3 flex-wrap mb-1">
                         <h3 className="font-semibold text-foreground truncate">
                           {quiz.topic || "Untitled Quiz"}
@@ -250,14 +313,43 @@ function QuizzesRoute() {
                         <Calendar className="h-3 w-3" />
                         {new Date(quiz.created_at).toLocaleDateString()}
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(quiz.id)}
+                      disabled={deletingId === quiz.id}
+                      title="Delete quiz"
+                      className="shrink-0 p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 );
               })}
+              {hasMore && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={onLoadMore}
+                    disabled={loadingMore}
+                    className="px-5 py-2.5 rounded-xl text-sm font-medium border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors disabled:opacity-40"
+                  >
+                    {loadingMore ? "Loading…" : "Load more"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {confirmDeleteId && (
+        <ConfirmDialog
+          title="Delete this quiz?"
+          description="This will permanently remove the quiz and any attempt history. This can't be undone."
+          confirmLabel="Delete"
+          onConfirm={onConfirmDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { GilaniLoader } from "@/components/GilaniLoader";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
@@ -13,6 +14,7 @@ import { authenticateRequest } from "@/lib/api-auth.server";
 
 import { useTeacherEscalations } from "@/components/teacher/hooks/useTeacherEscalations";
 import { EscalationCard } from "@/components/teacher/escalations/EscalationCard";
+import { EscalationDetail } from "@/components/teacher/escalations/EscalationDetail";
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
 
@@ -144,6 +146,44 @@ const resolveEscalation = createServerFn({ method: "POST" })
     }
   });
 
+const saveEscalationDraft = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.string(), draftAnswer: z.string() }))
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    let authResult;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch (err) {
+      throw new Error(err instanceof Response ? (await err.json()).error : "Unauthorized");
+    }
+    const userId = authResult.userId;
+    const { id, draftAnswer } = data;
+
+    const { data: roleCheck } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["teacher", "admin"])
+      .single();
+
+    if (!roleCheck) throw new Error("Forbidden: Teacher access required");
+
+    const { data: esc, error: escErr } = await supabaseAdmin
+      .from("escalations")
+      .select("reviewer_id")
+      .eq("id", id)
+      .single();
+    if (escErr) throw new Error(escErr.message);
+    const isAdmin = roleCheck.role === "admin";
+    if (!isAdmin && esc.reviewer_id !== userId) throw new Error("Forbidden: You are not assigned to this escalation");
+
+    const { error } = await supabaseAdmin
+      .from("escalations")
+      .update({ draft_answer: draftAnswer, draft_updated_at: new Date().toISOString() } as any)
+      .eq("id", id);
+    if (error) throw new Error(error.message);
+  });
+
 const getConversationMessages = createServerFn({ method: "POST" })
   .validator(z.object({ conversationId: z.string() }))
   .handler(async ({ data }) => {
@@ -216,10 +256,16 @@ export const Route = createFileRoute("/_authenticated/teacher/escalations")({
 
 function EscalationsPage() {
   const { setSidebarOpen, user } = useLayout();
-  const esc = useTeacherEscalations({ listEscalations, resolveEscalation, getConversationMessages });
+  const serverFns = useMemo(
+    () => ({ listEscalations, resolveEscalation, getConversationMessages, saveEscalationDraft }),
+    [listEscalations, resolveEscalation, getConversationMessages, saveEscalationDraft]
+  );
+  const esc = useTeacherEscalations(serverFns);
+
+  const activeEscalation = esc.escalations.find((e) => e.id === esc.activeId) || null;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6 lg:p-10">
+    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-10">
       {/* ── Header ── */}
       <div className="flex lg:hidden items-center justify-between h-14 -mx-4 sm:-mx-6 px-4 sm:px-6 mb-2 border-b border-border/60">
         <button
@@ -286,11 +332,46 @@ function EscalationsPage() {
         </div>
       )}
 
-      {/* ── Loading ── */}
-      {esc.loading && <GilaniLoader fullScreen={false} />}
+      <div className="lg:grid lg:grid-cols-[1fr_420px] lg:gap-6 lg:items-start">
+      <div className="space-y-6 min-w-0">
+
+      {/* ── Loading skeleton ── */}
+      {esc.loading && (
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="rounded-xl border border-border p-4 sm:p-5 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-muted/60" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-1/3 rounded bg-muted/60" />
+                  <div className="h-2.5 w-1/2 rounded bg-muted/40" />
+                </div>
+                <div className="h-5 w-16 rounded-full bg-muted/40" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Error state ── */}
+      {!esc.loading && esc.error && esc.escalations.length === 0 && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/[0.03] p-6 sm:p-12 text-center">
+          <div className="mx-auto h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+            <AlertTriangle className="h-7 w-7 text-destructive/70" />
+          </div>
+          <p className="font-serif text-xl font-medium text-foreground">Couldn't load escalations</p>
+          <p className="text-sm text-muted-foreground mt-1">{esc.error}</p>
+          <button
+            onClick={() => esc.loadEscalations()}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-semibold hover:bg-accent transition-colors cursor-pointer"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Retry
+          </button>
+        </div>
+      )}
 
       {/* ── Empty state ── */}
-      {!esc.loading && esc.filteredEscalations.length === 0 && (
+      {!esc.loading && !esc.error && esc.filteredEscalations.length === 0 && (
         <div className="rounded-xl border border-dashed border-border p-6 sm:p-12 text-center">
           <div className="mx-auto h-14 w-14 rounded-full bg-muted/50 flex items-center justify-center mb-4">
             <ShieldAlert className="h-7 w-7 text-muted-foreground/50" />
@@ -352,6 +433,37 @@ function EscalationsPage() {
           </div>
         </section>
       )}
+
+      </div>
+
+      {/* ── Desktop detail panel ── */}
+      <div className="hidden lg:block lg:sticky lg:top-6">
+        {activeEscalation ? (
+          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-border bg-muted/20 flex items-center justify-between">
+              <p className="font-sans text-sm font-bold text-foreground">{activeEscalation.student_name || "Student"}</p>
+              <button onClick={() => esc.setActiveId(null)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Close</button>
+            </div>
+            <EscalationDetail
+              esc={activeEscalation}
+              convoMessages={esc.convoMessages}
+              loadingMessages={esc.loadingMessages}
+              answer={esc.answer}
+              setAnswer={esc.handleAnswerChange}
+              saving={esc.saving}
+              onResolve={esc.handleResolve}
+              onCancel={() => esc.setActiveId(null)}
+              variant="panel"
+            />
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+            Select an escalation to respond.
+          </div>
+        )}
+      </div>
+
+      </div>
     </div>
   );
 }

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { toast } from "sonner";
-import { withTimeout, friendlyError } from "@/lib/async";
+import { friendlyError } from "@/lib/async";
 import { getRateLimitStatus } from "@/lib/rate-limit.server";
 import {
   createEscalationNotification,
@@ -12,46 +11,10 @@ import {
   lookupTeacherByEmail,
   createEscalationFn,
 } from "@/lib/tutor.server-fns";
-
-type Thread = {
-  id: string;
-  title?: string | null;
-  updated_at?: string | null;
-};
+import { useThreadsQuery } from "@/lib/hooks/useThreadsQuery";
 
 export function useTutorChat({ threadId, userId, authToken }: { threadId?: string; userId: string | null; authToken: string | null }) {
-  const queryClient = useQueryClient();
-
-  const threadsQuery = useQuery({
-    queryKey: ["threads", userId],
-    queryFn: async () => {
-      const { data, error } = (await withTimeout(
-        Promise.resolve(
-          supabase
-            .from("conversations")
-            .select("id,title,updated_at")
-            .eq("user_id", userId as string)
-            .order("updated_at", { ascending: false }),
-        ),
-        8000,
-        "Database connection timed out",
-      )) as any;
-      if (error) throw new Error(`Failed to load sessions: ${error.message}`);
-      return (data ?? []) as Thread[];
-    },
-    enabled: !!userId,
-    staleTime: 0,
-  });
-
-  const threads = threadsQuery.data ?? [];
-  const threadsLoading = !!userId && threadsQuery.isPending;
-  const threadsLoadError = threadsQuery.error ? (threadsQuery.error as Error).message : null;
-  
-  const setThreads = (updater: Thread[] | ((prev: Thread[]) => Thread[])) => {
-    queryClient.setQueryData(["threads", userId], (prev: Thread[] = []) =>
-      typeof updater === "function" ? updater(prev) : updater,
-    );
-  };
+  const { threads, threadsLoading, threadsLoadError, setThreads, invalidateThreads } = useThreadsQuery(userId);
 
   const [chatError, setChatError] = useState<string | null>(null);
   const [messagesUsed, setMessagesUsed] = useState<number>(0);
@@ -510,20 +473,7 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
   };
 
   const createNewThread = async (navigate: any) => {
-    if (!userId) return;
-    const { data, error } = await supabase
-      .from("conversations")
-      .insert([{ title: "New thread", user_id: userId }])
-      .select()
-      .single();
-    if (error) {
-      console.error("[TutorThread] create thread error:", error);
-      return;
-    }
-    const newId = (data as any).id;
-    setThreads((prev) => [{ id: newId, title: "New thread" }, ...prev]);
-    setMessages([]);
-    navigate({ to: "/tutor/$threadId", params: { threadId: newId } });
+    navigate({ to: "/tutor", search: { new: "1" } });
   };
 
   return {
