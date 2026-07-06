@@ -16,6 +16,12 @@ const consumeVerifyToken = createServerFn({ method: "GET" })
 
     if (!profile) return { success: false };
 
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", profile.id)
+      .maybeSingle();
+
     // Intentionally keep email_verify_token in place — this verification is
     // informational only and never gates access, so it's safe (and necessary)
     // to make the link idempotent. Nulling it caused false "expired" screens
@@ -25,7 +31,7 @@ const consumeVerifyToken = createServerFn({ method: "GET" })
       .update({ email_verified: true })
       .eq("id", profile.id);
 
-    return { success: true };
+    return { success: true, role: roleRow?.role ?? "student" };
   });
 
 export const Route = createFileRoute("/verify-email")({
@@ -47,7 +53,7 @@ export const Route = createFileRoute("/verify-email")({
 });
 
 function VerifyEmailPage() {
-  const { success } = Route.useLoaderData();
+  const { success, role } = Route.useLoaderData() as { success: boolean; role?: string };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0f1117] text-[#e2e4f0] px-4 py-12">
@@ -71,7 +77,7 @@ function VerifyEmailPage() {
           </>
         )}
         <Link
-          to="/tutor"
+          to={role === "admin" ? "/admin/users" : role === "teacher" ? "/teacher/escalations" : "/tutor"}
           className="inline-block w-full rounded-xl bg-[#d9531e] py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#c44819] transition-all"
         >
           Go to GilaniAI

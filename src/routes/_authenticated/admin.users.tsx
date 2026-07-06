@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
@@ -204,11 +204,15 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
 function AdminUsersPage() {
   const { setSidebarOpen, user } = useLayout();
 
-  const dashboard = useAdminDashboard({
-    listProfiles, listEscalations, listPlatformStats, listContactMessages,
-    listFeedback, listNewsletterSubscribers, listRateLimits, listPayments,
-    updateRole, updateMessageStatus, updateUserPlan, resetUserRateLimit,
-  });
+  const serverFns = useMemo(
+    () => ({
+      listProfiles, listEscalations, listPlatformStats, listContactMessages,
+      listFeedback, listNewsletterSubscribers, listRateLimits, listPayments,
+      updateRole, updateMessageStatus, updateUserPlan, resetUserRateLimit,
+    }),
+    [],
+  );
+  const dashboard = useAdminDashboard(serverFns);
 
   useEffect(() => { dashboard.loadDashboardData(); }, [dashboard.loadDashboardData]);
 

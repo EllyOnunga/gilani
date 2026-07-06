@@ -1,4 +1,5 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthedShell() {
   const shell = useAuthedShell();
+  const navigate = useNavigate();
 
   if (shell.loading || !shell.user || shell.roles.length === 0) {
     return <GilaniLoader />;
@@ -46,6 +48,16 @@ function AuthedShell() {
 
   const studentOnlyPaths = ["/tutor", "/tutor"];
   const isOnStudentRoute = studentOnlyPaths.some((p) => shell.path === p || shell.path.startsWith(p + "/"));
+
+  useEffect(() => {
+    if ((shell.isAdmin || shell.isTeacher) && isOnStudentRoute) {
+      navigate({
+        to: shell.isAdmin ? "/admin/users" : "/teacher/escalations",
+        replace: true,
+      } as any);
+    }
+  }, [shell.isAdmin, shell.isTeacher, isOnStudentRoute]);
+
   if ((shell.isAdmin || shell.isTeacher) && isOnStudentRoute) {
     return <GilaniLoader />;
   }
