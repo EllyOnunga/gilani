@@ -51,7 +51,7 @@ function AuthedShell() {
   }
 
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden lg:flex-row bg-background text-foreground">
+    <div className="fixed inset-0 flex h-dvh w-full flex-col overflow-hidden overscroll-none lg:flex-row bg-background text-foreground">
       <DisclaimerModal />
       {shell.showPlans && <PlansModal onClose={() => shell.setShowPlans(false)} currentPlan={shell.currentPlan} />}
 
