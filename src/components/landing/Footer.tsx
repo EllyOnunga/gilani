@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { Logo } from "../ui/logo";
+import pkg from "../../../package.json";
 
 export default function Footer() {
     const [subEmail, setSubEmail] = useState("");
@@ -107,7 +108,7 @@ export default function Footer() {
             <div className="border-t border-white/5">
                 <div className="mx-auto max-w-7xl px-6 py-6 flex flex-col-reverse items-center gap-2 sm:flex-row sm:justify-between">
                     <p className="text-xs text-white/30">
-                        &copy; {new Date().getFullYear()} GilaniAI. All rights reserved.
+                        &copy; {new Date().getFullYear()} GilaniAI. All rights reserved. · v{pkg.version}
                     </p>
                     <p className="text-xs text-white/30">Made in Nairobi 🇰🇪</p>
                 </div>
