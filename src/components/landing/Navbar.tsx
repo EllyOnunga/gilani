@@ -66,7 +66,7 @@ export default function Navbar() {
                         </SheetTrigger>
                         <SheetContent
                             side="right"
-                            className="bg-[#161210] border-white/10 text-white w-4/5"
+                            className="bg-[#161210]/80 backdrop-blur-md border-white/10 text-white w-4/5 h-fit top-0 bottom-auto"
                         >
                             <div className="mt-10 flex flex-col gap-1">
                                 {NAV_LINKS.map((link) => (

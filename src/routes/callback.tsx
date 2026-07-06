@@ -31,6 +31,18 @@ function AuthCallback() {
   // Sanitize next — prevent open redirect attacks
   const safePath = next.startsWith("/") ? next : "/tutor";
 
+  // Fresh sign-ins should land on the true empty-state home, not wherever
+  // tutor.tsx's own logic would otherwise auto-jump a returning visitor to
+  // (their most recently active thread) — "new=1" is the existing escape
+  // hatch tutor.tsx already checks for that.
+  const navigateToDestination = (path: string) => {
+    if (path === "/tutor") {
+      navigate({ to: "/tutor", search: { new: "1" } } as any);
+    } else {
+      navigate({ to: path } as any);
+    }
+  };
+
   useEffect(() => {
     if (processedRef.current) return;
     processedRef.current = true;
@@ -138,7 +150,7 @@ function AuthCallback() {
         } else if (roleRow?.role === "teacher") {
           navigate({ to: "/teacher/escalations" });
         } else {
-          navigate({ to: safePath });
+          navigateToDestination(safePath);
         }
         return;
       }
@@ -152,7 +164,7 @@ function AuthCallback() {
           const urlParams = new URLSearchParams(window.location.search);
           const type = urlParams.get("type");
           if (type !== "recovery") {
-            navigate({ to: safePath });
+            navigateToDestination(safePath);
           }
         }
       });
@@ -179,7 +191,7 @@ function AuthCallback() {
       if (pendingRole === "teacher") {
         navigate({ to: "/teacher/escalations" as any });
       } else {
-        navigate({ to: safePath });
+        navigateToDestination(safePath);
       }
     } catch (err) {
       console.error("[Callback] Failed to save display name:", err);

@@ -52,7 +52,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
     // Mirror callback.tsx's routing for existing users: fetch their real role.
     const { data: session } = await supabase.auth.getSession();
     const userId = session.session?.user.id;
-    if (!userId) return navigate({ to: "/tutor" as any });
+    if (!userId) return navigate({ to: "/tutor" as any, search: { new: "1" } as any });
 
     const { data: roleRow } = await supabase
       .from("user_roles")
@@ -65,7 +65,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
     } else if (roleRow?.role === "teacher") {
       navigate({ to: "/teacher/escalations" as any });
     } else {
-      navigate({ to: "/tutor" as any });
+      navigate({ to: "/tutor" as any, search: { new: "1" } as any });
     }
   };
 
@@ -118,7 +118,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
       if (role === "teacher") {
         navigate({ to: "/teacher/escalations" as any });
       } else {
-        navigate({ to: "/tutor" as any });
+        navigate({ to: "/tutor" as any, search: { new: "1" } as any });
       }
       onClose();
     } catch (err) {

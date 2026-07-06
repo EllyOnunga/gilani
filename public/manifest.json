@@ -2,7 +2,7 @@
   "name": "GilaniAI Study Assistant",
   "short_name": "GilaniAI",
   "description": "Curriculum-grounded AI Socratic learning and study assistant for KCSE & CBC.",
-  "start_url": "/dashboard",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0f1117",
