@@ -45,7 +45,7 @@ export async function finalizeSummary(
       schema: FinalSummarySchema,
       prompt,
     } as any),
-    8000,
+    30000,
     "Summary finalization timed out",
   );
 

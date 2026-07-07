@@ -51,7 +51,7 @@ export async function summarizeChunk(
       schema: ChunkSummarySchema,
       prompt,
     } as any),
-    7000,
+    30000,
     "Chunk summarization timed out",
   );
 

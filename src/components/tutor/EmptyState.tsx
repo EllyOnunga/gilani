@@ -2,8 +2,6 @@ import React from "react";
 import { Link } from "@tanstack/react-router";
 import {
   FileUp,
-  Camera,
-  Mic,
   ArrowRight,
   MessageSquare,
 } from "lucide-react";
@@ -56,40 +54,16 @@ export function EmptyState({
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full animate-in-slide" style={{ animationDelay: "100ms" }}>
+      <div className="flex justify-center gap-2 sm:gap-3 w-full animate-in-slide" style={{ animationDelay: "100ms" }}>
         <button
           onClick={onUploadClick}
-          className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 bg-card border border-border rounded-2xl p-3 sm:p-4 hover:border-primary/50 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all text-xs sm:text-sm font-medium text-foreground active:scale-[0.97] min-w-0"
+          className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 bg-card border border-border rounded-2xl p-3 sm:p-4 hover:border-primary/50 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all text-xs sm:text-sm font-medium text-foreground active:scale-[0.97] min-w-[120px]"
           title="Upload a document (PDF, DOCX, TXT)"
         >
           <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
             <FileUp className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
-          <span className="truncate w-full text-center">Upload</span>
-        </button>
-        <button
-          onClick={onScanClick}
-          className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 bg-primary text-primary-foreground rounded-2xl p-3 sm:p-4 shadow-lg shadow-primary/20 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all text-xs sm:text-sm font-bold active:scale-[0.97] min-w-0"
-          title="Scan a question with your camera"
-        >
-          <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-black/20 flex items-center justify-center flex-shrink-0">
-            <Camera className="h-4 w-4 sm:h-5 sm:w-5" />
-          </div>
-          <span className="truncate w-full text-center">Scan</span>
-        </button>
-        <button
-          onClick={onVoiceClick}
-          className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 rounded-2xl p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-all text-xs sm:text-sm font-medium active:scale-[0.97] min-w-0 ${
-            isListening
-              ? "bg-destructive/10 border border-destructive text-destructive animate-pulse"
-              : "bg-card border border-border text-foreground hover:border-primary/50 hover:bg-muted/40"
-          }`}
-          title={isListening ? "Stop voice input" : "Voice input"}
-        >
-          <div className={`h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center flex-shrink-0 ${isListening ? "bg-destructive/20 text-destructive" : "bg-accent/20 text-accent"}`}>
-            <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
-          </div>
-          <span className="truncate w-full text-center">{isListening ? "Listening..." : "Voice"}</span>
+          <span className="truncate w-full text-center">Upload Document</span>
         </button>
       </div>
 
