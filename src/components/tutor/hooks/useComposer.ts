@@ -46,7 +46,11 @@ export function useComposer() {
     recognition.onerror = (event: any) => {
       if (event.error !== "no-speech" && event.error !== "aborted") {
         if (event.error === "not-allowed") {
-          toast.error("Microphone access denied. Please check your browser settings.");
+          if (!window.isSecureContext) {
+            toast.error("Microphone access requires a secure connection (HTTPS) on mobile. Please use HTTPS or localhost.");
+          } else {
+            toast.error("Microphone access denied. Please check your browser settings or permissions.");
+          }
         } else {
           toast.error(`Voice input error (${event.error}). Please try again.`);
         }
