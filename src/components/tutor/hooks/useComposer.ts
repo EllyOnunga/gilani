@@ -32,15 +32,29 @@ export function useComposer() {
       return;
     }
 
-    // Pre-warm the microphone. iOS Safari often throws "not-allowed" immediately
-    // if we don't explicitly request getUserMedia permission first.
+    // Pre-warm the microphone only if permission hasn't been granted yet.
+    // On browsers that already have permission, getUserMedia() would trigger
+    // an unnecessary permission prompt or fail silently on some mobile browsers.
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("getUserMedia not supported");
       }
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Instantly stop the stream — SpeechRecognition will manage its own audio capture
-      stream.getTracks().forEach((track) => track.stop());
+      // Check permission status first — only request if still in 'prompt' state
+      let needsPrompt = true;
+      try {
+        const permStatus = await navigator.permissions.query({ name: "microphone" as PermissionName });
+        needsPrompt = permStatus.state === "prompt";
+        if (permStatus.state === "denied") {
+          toast.error("Microphone access denied. Please enable it in your browser settings.");
+          return;
+        }
+      } catch { /* permissions API not supported, fall through to getUserMedia */ }
+
+      if (needsPrompt) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Instantly stop the stream — SpeechRecognition will manage its own audio capture
+        stream.getTracks().forEach((track) => track.stop());
+      }
     } catch (err: any) {
       if (!window.isSecureContext) {
         toast.error("Microphone access requires a secure connection (HTTPS) on mobile.");

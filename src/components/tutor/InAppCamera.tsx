@@ -35,10 +35,15 @@ export function InAppCamera({ onCapture, onClose }: Props) {
       }
     } catch (err: any) {
       console.error("Camera error:", err);
+      const code = err?.name || err?.message || "";
       if (!window.isSecureContext) {
-        toast.error("Camera requires a secure connection (HTTPS) on mobile.");
+        toast.error("Camera requires a secure (HTTPS) connection on mobile. Please use your production URL.");
+      } else if (code === "NotAllowedError" || code.includes("not-allowed")) {
+        toast.error("Camera access denied. Please allow camera permissions in your browser settings and try again.");
+      } else if (code === "NotFoundError") {
+        toast.error("No camera found on this device.");
       } else {
-        toast.error("Camera access denied. Please allow permissions in your browser settings.");
+        toast.error("Could not open camera. Please try again.");
       }
       onClose();
     } finally {

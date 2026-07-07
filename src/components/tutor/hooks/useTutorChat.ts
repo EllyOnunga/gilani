@@ -196,6 +196,16 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
   const messagesRef = useRef<UIMessage[]>(messages);
   useEffect(() => { messagesRef.current = messages; }, [messages]);
 
+  // When sendMessage fires optimistically, useChat immediately adds the user
+  // message to messagesRaw. If messagesLoading is still true at that point,
+  // the MessageList stays hidden behind a spinner. Clearing it here makes the
+  // chat list appear instantly as soon as the first message is added.
+  useEffect(() => {
+    if (messagesRaw.length > 0 && messagesLoading) {
+      setMessagesLoading(false);
+    }
+  }, [messagesRaw.length, messagesLoading]);
+
   const handleReload = useCallback(() => regenerate({ body: { isRetry: true } }), [regenerate]);
 
   const handleVote = useCallback(
