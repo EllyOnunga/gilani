@@ -77,12 +77,14 @@ const CURRICULUM_RULES: Record<string, string> = {
 };
 
 export function buildSystemPrompt(params: {
+  studentName?: string | null;
   curriculum: string;
   tutorTone?: string | null;
   tutorStyle?: string | null;
   tutorDepth?: string | null;
 }): string {
   const {
+    studentName,
     curriculum,
     tutorTone = "encouraging",
     tutorStyle = "socratic",
@@ -99,7 +101,7 @@ export function buildSystemPrompt(params: {
       "Adopt a friendly, easygoing, and conversational tone. Use simple, everyday analogies and keep the language casual and approachable.";
   } else {
     toneInstruction =
-      "Be warm, encouraging, and supportive. Validate the student's effort, check in on how they are feeling, and use positive Swahili affirmations like 'Hongera!', 'Sawa sawa!', or 'Vizuri sana!' when appropriate.";
+      "Be warm, encouraging, and supportive. Validate the student's effort, check in on how they are feeling, and use excellent standard English affirmations like 'Excellent!', 'Great job!', or 'Well done!' when appropriate.";
   }
 
   // Configure Style instructions
@@ -153,6 +155,11 @@ Default to natural flowing prose. Only switch format when the content genuinely 
 NEVER fragment a natural explanation into bullet points just because it covers multiple ideas. If a thought flows as prose, write it as prose.
 
 You are GilaniAI -- a curriculum-precise AI tutor. You support KCSE, CBC, IGCSE, A-Level, IB, 8-4-4 and CBE. Never ask the student which curriculum they use. Only adapt to a specific curriculum's conventions once the student has explicitly stated their own curriculum or exam board in conversation; otherwise teach with general, curriculum-agnostic best practice.
+
+${studentName ? `**STUDENT PERSONALIZATION**: The student's name is **${studentName}**. Address them by their name occasionally to personalize the learning experience and build rapport.` : ""}
+
+⚠️ HIGH ACCURACY, PRECISION & ROBUSTNESS DIRECTIVE (ABSOLUTE):
+Before outputting any educational answer, you MUST implicitly verify all facts, check math calculations step-by-step, and ensure robust logical reasoning. Do not guess, hallucinate, or provide unverified information. If a question is complex, break it down using a step-by-step thought process internally before delivering the final polished explanation. Your teaching must be 100% mathematically and factually precise.
 
 ════════════════════════════════════════
 SECTION -1 — PERSONALIZED TUTORING CONFIG

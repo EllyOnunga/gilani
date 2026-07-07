@@ -13,7 +13,7 @@ import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
 const _profileCache = new Map<
   string,
   {
-    data: { curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string };
+    data: { studentName?: string | null; curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string };
     expiresAt: number;
   }
 >();
@@ -24,7 +24,7 @@ function getCachedProfile(userId: string) {
 }
 function setCachedProfile(
   userId: string,
-  data: { curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string },
+  data: { studentName?: string | null; curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string },
 ) {
   _profileCache.set(userId, { data, expiresAt: Date.now() + 10_000 });
 }
@@ -188,10 +188,11 @@ export const Route = createFileRoute("/api/chat")({
             if (!profile) {
               const { data: profileRow } = await supabaseAdmin
                 .from("profiles")
-                .select("curriculum, tutor_tone, tutor_style, tutor_depth")
+                .select("display_name, curriculum, tutor_tone, tutor_style, tutor_depth")
                 .eq("id", userId)
                 .maybeSingle();
               profile = {
+                studentName: profileRow?.display_name || null,
                 curriculum: sanitizeCurriculum(profileRow?.curriculum),
                 tutorTone: profileRow?.tutor_tone || "encouraging",
                 tutorStyle: profileRow?.tutor_style || "socratic",
@@ -283,10 +284,11 @@ export const Route = createFileRoute("/api/chat")({
             profileTask,
             ragTask,
           ]);
-          const { curriculum, tutorTone, tutorStyle, tutorDepth } = cachedProfile;
+          const { studentName, curriculum, tutorTone, tutorStyle, tutorDepth } = cachedProfile;
 
           // ─── Build Prompt ────────────────────────────────────────────────
           const systemPrompt = buildSystemPrompt({
+            studentName,
             curriculum,
             tutorTone,
             tutorStyle,
