@@ -312,27 +312,27 @@ function extractCallout(children: React.ReactNode): { type: string | null; newCh
 
 const buildComponents = (isStreaming: boolean): any => ({
   h1: ({ children }: any) => (
-    <h1 className="text-xl font-extrabold mt-5 mb-2 text-primary border-b border-primary/20 pb-1.5 leading-tight tracking-tight">{children}</h1>
+    <h1 className="text-2xl font-extrabold mt-8 mb-4 text-primary border-b border-primary/20 pb-2 leading-tight tracking-tight">{children}</h1>
   ),
   h2: ({ children }: any) => (
-    <h2 className="text-lg font-bold mt-4 mb-1.5 text-blue-400 leading-snug">{children}</h2>
+    <h2 className="text-xl font-bold mt-7 mb-3 text-blue-400 leading-snug">{children}</h2>
   ),
   h3: ({ children }: any) => (
-    <h3 className="text-base font-bold mt-3 mb-1 text-purple-400 leading-snug">{children}</h3>
+    <h3 className="text-lg font-bold mt-6 mb-2 text-purple-400 leading-snug">{children}</h3>
   ),
   h4: ({ children }: any) => (
-    <h4 className="text-sm font-semibold mt-2.5 mb-0.5 text-teal-400">{children}</h4>
+    <h4 className="text-base font-semibold mt-5 mb-1.5 text-teal-400">{children}</h4>
   ),
   h5: ({ children }: any) => (
-    <h5 className="text-sm font-semibold mt-2 mb-0.5 text-cyan-400">{children}</h5>
+    <h5 className="text-sm font-semibold mt-4 mb-1 text-cyan-400">{children}</h5>
   ),
   h6: ({ children }: any) => (
-    <h6 className="text-xs font-semibold uppercase tracking-widest mt-2 mb-0.5 text-muted-foreground">{children}</h6>
+    <h6 className="text-xs font-semibold uppercase tracking-widest mt-4 mb-1 text-muted-foreground">{children}</h6>
   ),
   p: ({ children }: any) => {
     const { type, newChildren } = extractCallout(children);
     if (type) return <CustomCallout type={type}>{newChildren}</CustomCallout>;
-    return <p className="text-sm leading-relaxed mb-2 last:mb-0">{children}</p>;
+    return <p className="text-[15px] sm:text-base leading-8 sm:leading-loose mb-5 last:mb-0 text-foreground/90">{children}</p>;
   },
   del: ({ children }: any) => (
     <del className="line-through text-muted-foreground/60">{children}</del>
@@ -384,28 +384,28 @@ const buildComponents = (isStreaming: boolean): any => ({
     </figure>
   ),
   ul: ({ children }: any) => (
-    <ul className="list-disc pl-5 my-2 space-y-1 block w-full">{children}</ul>
+    <ul className="list-disc pl-6 my-5 space-y-2.5 block w-full marker:text-muted-foreground/70">{children}</ul>
   ),
   ol: ({ children }: any) => (
-    <ol className="list-decimal pl-5 my-2 space-y-1 block w-full">{children}</ol>
+    <ol className="list-decimal pl-6 my-5 space-y-2.5 block w-full marker:text-muted-foreground marker:font-medium [&_ol]:list-[lower-alpha] [&_ol_ol]:list-[lower-roman]">{children}</ol>
   ),
   li: ({ children, checked }: any) => {
     // Task-list checkbox support
     if (checked !== null && checked !== undefined) {
       return (
-        <li className="flex items-start gap-2 text-sm leading-relaxed list-none -ml-1">
+        <li className="flex items-start gap-3 text-[15px] sm:text-base leading-8 sm:leading-loose list-none -ml-2">
           <input
             type="checkbox"
             checked={checked}
             readOnly
-            className="mt-0.5 h-4 w-4 rounded border-border accent-primary flex-shrink-0 cursor-default"
+            className="mt-2 h-4 w-4 rounded border-border accent-primary flex-shrink-0 cursor-default"
           />
           <span>{children}</span>
         </li>
       );
     }
     return (
-      <li className="text-sm leading-relaxed" style={{ display: "list-item" }}>
+      <li className="text-[15px] sm:text-base leading-8 sm:leading-loose" style={{ display: "list-item" }}>
         {children}
       </li>
     );
@@ -419,28 +419,28 @@ const buildComponents = (isStreaming: boolean): any => ({
       </blockquote>
     );
   },
-  hr: () => <hr className="my-3 border-border/60" />,
+  hr: () => <hr className="my-6 border-border/60" />,
   table: ({ children }: any) => (
-    <div className="my-4 overflow-x-auto rounded-xl border border-border/60 shadow-sm">
-      <table className="min-w-full text-sm border-collapse">{children}</table>
+    <div className="my-6 w-full max-w-full overflow-x-auto rounded-xl border border-border shadow-sm">
+      <table className="min-w-full text-[15px] border-collapse bg-card">{children}</table>
     </div>
   ),
   thead: ({ children }: any) => (
-    <thead className="bg-primary/10 text-xs uppercase tracking-wider font-bold border-b border-border/60">
+    <thead className="bg-primary/5 text-xs uppercase tracking-wider font-bold border-b-2 border-border/80">
       {children}
     </thead>
   ),
   tbody: ({ children }: any) => (
-    <tbody className="divide-y divide-border/40">{children}</tbody>
+    <tbody className="divide-y divide-border/50">{children}</tbody>
   ),
   tr: ({ children }: any) => (
-    <tr className="hover:bg-muted/20 transition-colors even:bg-muted/10">{children}</tr>
+    <tr className="hover:bg-muted/30 transition-colors even:bg-muted/10">{children}</tr>
   ),
   th: ({ children }: any) => (
-    <th className="px-4 py-2.5 text-left text-xs font-bold text-primary tracking-wide">{children}</th>
+    <th className="px-5 py-3.5 text-left text-[13px] font-bold text-primary tracking-wide border-r border-border/40 last:border-r-0">{children}</th>
   ),
   td: ({ children }: any) => (
-    <td className="px-4 py-2.5 text-sm leading-relaxed">{children}</td>
+    <td className="px-5 py-3.5 text-[15px] leading-relaxed border-r border-border/40 last:border-r-0">{children}</td>
   ),
 
   // ── Code blocks (react-markdown v10: no `inline` prop; use parent context) ──

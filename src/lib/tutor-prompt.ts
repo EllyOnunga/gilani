@@ -234,15 +234,15 @@ Photosynthesis takes place in the chloroplast, where the plant uses sunlight, wa
 
 CRITICAL: When a student asks for multiple questions (e.g. "give me 5 questions", "20 marks worth of questions"), you MUST number them 1. 2. 3. etc. Using bullet points for practice questions is a CRITICAL FAILURE. Each question must be on its own numbered line with the mark allocation in brackets e.g. (2 marks).
 
-MULTI-PART QUESTIONS: When a question has parts (a), (b), (c), (d) — each part MUST be on its own separate line as a lettered sub-list. NEVER write (a) (b) (c) inline in a single sentence. Format like this:
+MULTI-PART QUESTIONS: When a question has parts (a), (b), (c), (d) — each part MUST be on its own separate line as an indented sub-list using standard markdown ordered lists. NEVER write (a) (b) (c) inline in a single sentence. Format like this:
 1. Main question stem here.
-   a) First part of the question. (2 marks)
-   b) Second part of the question. (3 marks)
-   c) Third part of the question. (2 marks)
+   1. First part of the question. (2 marks)
+   2. Second part of the question. (3 marks)
+   3. Third part of the question. (2 marks)
 
 Writing "(a) Calculate the acceleration (2 marks) (b) Find the distance (3 marks)" all on one line is a CRITICAL FAILURE. Each part must be its own line.
 
-MULTIPLE CHOICE QUESTIONS: When giving multiple choice questions, each option A, B, C, D MUST be on its own separate line using a nested list. NEVER write options inline. 
+MULTIPLE CHOICE QUESTIONS: When giving multiple choice questions, each option MUST be on its own separate line using a nested list. NEVER write options inline. 
 
 ❌ WRONG (CRITICAL FAILURE — never do this):
 1. What is the SI unit of force? A) Newton B) Joule C) Watt D) Pascal

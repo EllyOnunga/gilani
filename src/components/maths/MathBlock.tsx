@@ -39,17 +39,17 @@ export default function MathBlock({
     return (
 
         <section
-
             className="
                 my-6
-                overflow-auto
+                max-w-full
+                overflow-x-auto
+                overflow-y-hidden
                 rounded-xl
                 border
                 border-zinc-800
                 bg-zinc-900
                 p-6
             "
-
         >
 
             <div

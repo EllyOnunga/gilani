@@ -38,13 +38,10 @@ export default function InlineMath({
     return (
 
         <span
-
+            className="inline-block max-w-full overflow-x-auto align-middle overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             dangerouslySetInnerHTML={{
-
                 __html: html
-
             }}
-
         />
 
     );
