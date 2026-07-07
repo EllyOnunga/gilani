@@ -26,3 +26,8 @@ export function consumePendingMessage(threadId: string): PendingMessage | null {
   }
   return null;
 }
+
+/** Non-destructive peek — returns true if a pending message exists for this thread. */
+export function hasPendingMessage(threadId: string): boolean {
+  return !!pending && pending.threadId === threadId;
+}

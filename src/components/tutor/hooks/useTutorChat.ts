@@ -12,6 +12,7 @@ import {
   createEscalationFn,
 } from "@/lib/tutor.server-fns";
 import { useThreadsQuery } from "@/lib/hooks/useThreadsQuery";
+import { hasPendingMessage } from "@/lib/pending-message";
 
 export function useTutorChat({ threadId, userId, authToken }: { threadId?: string; userId: string | null; authToken: string | null }) {
   const { threads, threadsLoading, threadsLoadError, setThreads, invalidateThreads } = useThreadsQuery(userId);
@@ -28,7 +29,10 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
   );
 
   const [currentPlan, setCurrentPlan] = useState("free");
-  const [messagesLoading, setMessagesLoading] = useState(true);
+  // If a pending message exists for this thread it's brand-new: skip
+  // the initial DB load and start immediately in a ready (not loading) state.
+  const isBrandNewThread = !!threadId && hasPendingMessage(threadId);
+  const [messagesLoading, setMessagesLoading] = useState(!isBrandNewThread);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
   const [userVotes, setUserVotes] = useState<Record<string, 1 | -1>>({});
   
@@ -397,8 +401,11 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
   );
 
   useEffect(() => {
+    // Brand-new threads have no DB messages yet — skip the initial load
+    // so the spinner never appears as the first optimistic message goes in.
+    if (isBrandNewThread) return;
     loadMessages(false);
-  }, [loadMessages]);
+  }, [loadMessages, isBrandNewThread]);
 
   const prevPendingRef = useRef(isPending);
   useEffect(() => {
