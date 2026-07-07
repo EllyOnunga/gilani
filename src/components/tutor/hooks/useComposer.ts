@@ -45,7 +45,11 @@ export function useComposer() {
     };
     recognition.onerror = (event: any) => {
       if (event.error !== "no-speech" && event.error !== "aborted") {
-        toast.error("Voice input error. Please try again.");
+        if (event.error === "not-allowed") {
+          toast.error("Microphone access denied. Please check your browser settings.");
+        } else {
+          toast.error(`Voice input error (${event.error}). Please try again.`);
+        }
       }
       setIsListening(false);
     };
