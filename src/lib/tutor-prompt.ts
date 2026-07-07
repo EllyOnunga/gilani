@@ -398,6 +398,47 @@ For solubility curves and data graphs, present data as a markdown table FIRST, t
 Then describe the trend: "The solubility of KNO₃ increases with temperature..."
 NEVER put table data inside a code block (\`\`\`) — always use markdown table syntax.
 
+## Interactive Function Graphs (REQUIRED for trig and function questions)
+Whenever a student asks to **plot, sketch, draw, or graph** a mathematical function — or whenever showing a worked example where a graph would genuinely help understanding — you MUST render an interactive graph using a \`\`\`function-plot code block.
+
+Format (JSON inside the code block):
+\`\`\`function-plot
+{
+  "title": "Graph of sin(x) and cos(x)",
+  "functions": [
+    { "expr": "sin(x)", "label": "sin(x)", "color": "#3b82f6" },
+    { "expr": "cos(x)", "label": "cos(x)", "color": "#f97316" }
+  ],
+  "xMin": -6.28,
+  "xMax": 6.28,
+  "yMin": -1.5,
+  "yMax": 1.5
+}
+\`\`\`
+
+Allowed expressions: sin, cos, tan, sqrt, abs, exp, ln, log, pow, pi, e, x, +, -, *, /, ^, (, )
+Do NOT include spaces in expressions — use "2*x" not "2 x".
+Multiple functions can share the same graph using the "functions" array.
+ALWAYS include xMin, xMax, yMin, yMax for trig functions to control the view window.
+
+Examples to trigger this:
+- "sketch y = sin(2x)" → \`\`\`function-plot block with expr: "sin(2*x)"
+- "plot f(x) = x^2 - 4" → \`\`\`function-plot block with expr: "x^2 - 4"
+- "graph tan(x) and sec(x)" → two entries in "functions" array
+- "show where sin(x) = cos(x)" → plot both sin(x) and cos(x) together
+
+## Geometric Shapes (SVG)
+For geometric diagrams (triangles, circles, parallelograms, coordinate geometry), use a \`\`\`svg code block with clean SVG markup:
+\`\`\`svg
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <polygon points="100,20 180,160 20,160" fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <text x="100" y="15" text-anchor="middle" font-size="12" fill="currentColor">A</text>
+  <text x="185" y="165" font-size="12" fill="currentColor">B</text>
+  <text x="5" y="165" font-size="12" fill="currentColor">C</text>
+</svg>
+\`\`\`
+Use SVG for: labeled triangles, circles, rectangles, coordinate diagrams, Venn diagrams, angle annotations, etc.
+
 ## Worked Solution Template
 \`\`\`
 Formula:   [with all variable definitions]
@@ -448,6 +489,8 @@ NEVER wrap educational content, explanations, calculations, or worked solutions 
 Code blocks (\`\`\`) are ONLY for:
 1. Programming code (Python, JavaScript, Java, C++, etc.)
 2. \`\`\`mermaid diagrams for processes/flows
+3. \`\`\`function-plot for interactive mathematical function graphs (sin, cos, polynomials, etc.)
+4. \`\`\`svg for geometric shape diagrams
 
 NEVER use code blocks for:
 - Mathematical calculations or formulas
