@@ -26,6 +26,10 @@ import { Route as AuthenticatedTutorRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as ApiTutorThreadsRouteImport } from './routes/api/tutor/threads'
 import { Route as ApiSettingsEventsRouteImport } from './routes/api/settings/events'
+import { Route as ApiNotificationsPushSubscribeRouteImport } from './routes/api/notifications/push-subscribe'
+import { Route as ApiNotificationsPushSendRouteImport } from './routes/api/notifications/push-send'
+import { Route as ApiNotificationsEmailRouteImport } from './routes/api/notifications/email'
+import { Route as ApiNotificationsDigestRouteImport } from './routes/api/notifications/digest'
 import { Route as ApiNewsletterSubscribeRouteImport } from './routes/api/newsletter/subscribe'
 import { Route as ApiNewsletterSendRouteImport } from './routes/api/newsletter/send'
 import { Route as ApiMpesaInitiateRouteImport } from './routes/api/mpesa/initiate'
@@ -122,6 +126,28 @@ const ApiTutorThreadsRoute = ApiTutorThreadsRouteImport.update({
 const ApiSettingsEventsRoute = ApiSettingsEventsRouteImport.update({
   id: '/api/settings/events',
   path: '/api/settings/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNotificationsPushSubscribeRoute =
+  ApiNotificationsPushSubscribeRouteImport.update({
+    id: '/api/notifications/push-subscribe',
+    path: '/api/notifications/push-subscribe',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiNotificationsPushSendRoute =
+  ApiNotificationsPushSendRouteImport.update({
+    id: '/api/notifications/push-send',
+    path: '/api/notifications/push-send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiNotificationsEmailRoute = ApiNotificationsEmailRouteImport.update({
+  id: '/api/notifications/email',
+  path: '/api/notifications/email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNotificationsDigestRoute = ApiNotificationsDigestRouteImport.update({
+  id: '/api/notifications/digest',
+  path: '/api/notifications/digest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiNewsletterSubscribeRoute = ApiNewsletterSubscribeRouteImport.update({
@@ -223,6 +249,10 @@ export interface FileRoutesByFullPath {
   '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
   '/api/newsletter/send': typeof ApiNewsletterSendRoute
   '/api/newsletter/subscribe': typeof ApiNewsletterSubscribeRoute
+  '/api/notifications/digest': typeof ApiNotificationsDigestRoute
+  '/api/notifications/email': typeof ApiNotificationsEmailRoute
+  '/api/notifications/push-send': typeof ApiNotificationsPushSendRoute
+  '/api/notifications/push-subscribe': typeof ApiNotificationsPushSubscribeRoute
   '/api/settings/events': typeof ApiSettingsEventsRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
   '/tutor/quizzes/$quizId': typeof AuthenticatedTutorQuizzesQuizIdRoute
@@ -254,6 +284,10 @@ export interface FileRoutesByTo {
   '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
   '/api/newsletter/send': typeof ApiNewsletterSendRoute
   '/api/newsletter/subscribe': typeof ApiNewsletterSubscribeRoute
+  '/api/notifications/digest': typeof ApiNotificationsDigestRoute
+  '/api/notifications/email': typeof ApiNotificationsEmailRoute
+  '/api/notifications/push-send': typeof ApiNotificationsPushSendRoute
+  '/api/notifications/push-subscribe': typeof ApiNotificationsPushSubscribeRoute
   '/api/settings/events': typeof ApiSettingsEventsRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
   '/tutor/quizzes/$quizId': typeof AuthenticatedTutorQuizzesQuizIdRoute
@@ -287,6 +321,10 @@ export interface FileRoutesById {
   '/api/mpesa/initiate': typeof ApiMpesaInitiateRoute
   '/api/newsletter/send': typeof ApiNewsletterSendRoute
   '/api/newsletter/subscribe': typeof ApiNewsletterSubscribeRoute
+  '/api/notifications/digest': typeof ApiNotificationsDigestRoute
+  '/api/notifications/email': typeof ApiNotificationsEmailRoute
+  '/api/notifications/push-send': typeof ApiNotificationsPushSendRoute
+  '/api/notifications/push-subscribe': typeof ApiNotificationsPushSubscribeRoute
   '/api/settings/events': typeof ApiSettingsEventsRoute
   '/api/tutor/threads': typeof ApiTutorThreadsRoute
   '/_authenticated/tutor/quizzes_/$quizId': typeof AuthenticatedTutorQuizzesQuizIdRoute
@@ -320,6 +358,10 @@ export interface FileRouteTypes {
     | '/api/mpesa/initiate'
     | '/api/newsletter/send'
     | '/api/newsletter/subscribe'
+    | '/api/notifications/digest'
+    | '/api/notifications/email'
+    | '/api/notifications/push-send'
+    | '/api/notifications/push-subscribe'
     | '/api/settings/events'
     | '/api/tutor/threads'
     | '/tutor/quizzes/$quizId'
@@ -351,6 +393,10 @@ export interface FileRouteTypes {
     | '/api/mpesa/initiate'
     | '/api/newsletter/send'
     | '/api/newsletter/subscribe'
+    | '/api/notifications/digest'
+    | '/api/notifications/email'
+    | '/api/notifications/push-send'
+    | '/api/notifications/push-subscribe'
     | '/api/settings/events'
     | '/api/tutor/threads'
     | '/tutor/quizzes/$quizId'
@@ -383,6 +429,10 @@ export interface FileRouteTypes {
     | '/api/mpesa/initiate'
     | '/api/newsletter/send'
     | '/api/newsletter/subscribe'
+    | '/api/notifications/digest'
+    | '/api/notifications/email'
+    | '/api/notifications/push-send'
+    | '/api/notifications/push-subscribe'
     | '/api/settings/events'
     | '/api/tutor/threads'
     | '/_authenticated/tutor/quizzes_/$quizId'
@@ -406,6 +456,10 @@ export interface RootRouteChildren {
   ApiMpesaInitiateRoute: typeof ApiMpesaInitiateRoute
   ApiNewsletterSendRoute: typeof ApiNewsletterSendRoute
   ApiNewsletterSubscribeRoute: typeof ApiNewsletterSubscribeRoute
+  ApiNotificationsDigestRoute: typeof ApiNotificationsDigestRoute
+  ApiNotificationsEmailRoute: typeof ApiNotificationsEmailRoute
+  ApiNotificationsPushSendRoute: typeof ApiNotificationsPushSendRoute
+  ApiNotificationsPushSubscribeRoute: typeof ApiNotificationsPushSubscribeRoute
   ApiSettingsEventsRoute: typeof ApiSettingsEventsRoute
   ApiTutorThreadsRoute: typeof ApiTutorThreadsRoute
 }
@@ -529,6 +583,34 @@ declare module '@tanstack/react-router' {
       path: '/api/settings/events'
       fullPath: '/api/settings/events'
       preLoaderRoute: typeof ApiSettingsEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/notifications/push-subscribe': {
+      id: '/api/notifications/push-subscribe'
+      path: '/api/notifications/push-subscribe'
+      fullPath: '/api/notifications/push-subscribe'
+      preLoaderRoute: typeof ApiNotificationsPushSubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/notifications/push-send': {
+      id: '/api/notifications/push-send'
+      path: '/api/notifications/push-send'
+      fullPath: '/api/notifications/push-send'
+      preLoaderRoute: typeof ApiNotificationsPushSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/notifications/email': {
+      id: '/api/notifications/email'
+      path: '/api/notifications/email'
+      fullPath: '/api/notifications/email'
+      preLoaderRoute: typeof ApiNotificationsEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/notifications/digest': {
+      id: '/api/notifications/digest'
+      path: '/api/notifications/digest'
+      fullPath: '/api/notifications/digest'
+      preLoaderRoute: typeof ApiNotificationsDigestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/newsletter/subscribe': {
@@ -684,6 +766,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMpesaInitiateRoute: ApiMpesaInitiateRoute,
   ApiNewsletterSendRoute: ApiNewsletterSendRoute,
   ApiNewsletterSubscribeRoute: ApiNewsletterSubscribeRoute,
+  ApiNotificationsDigestRoute: ApiNotificationsDigestRoute,
+  ApiNotificationsEmailRoute: ApiNotificationsEmailRoute,
+  ApiNotificationsPushSendRoute: ApiNotificationsPushSendRoute,
+  ApiNotificationsPushSubscribeRoute: ApiNotificationsPushSubscribeRoute,
   ApiSettingsEventsRoute: ApiSettingsEventsRoute,
   ApiTutorThreadsRoute: ApiTutorThreadsRoute,
 }
