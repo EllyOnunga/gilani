@@ -2,7 +2,7 @@ import { createStart, createMiddleware } from "@tanstack/react-start";
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
-const CSRF_EXEMPT_PATHS = ["/api/mpesa/callback"];
+const CSRF_EXEMPT_PATHS = ["/api/mpesa/callback", "/api/notifications/digest"];
 
 const UNSAFE_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
 
