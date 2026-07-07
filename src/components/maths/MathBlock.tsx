@@ -9,7 +9,8 @@ interface Props {
 export default function MathBlock({
     block
 }: Props) {
-    const latex = (block.data as any)?.latex || block.content || "";
+    let latex = (block.data as any)?.latex || block.content || "";
+    
     const macros = {
         "\\vec": "\\overrightarrow{#1}",
         "\\unit": "\\mathrm{#1}",
@@ -26,6 +27,11 @@ export default function MathBlock({
         "\\pdiff": "\\partial",
     };
 
+    // Auto-wrap multi-line equations in aligned environment if not already wrapped
+    if (latex.includes('\n') && !latex.match(/\\begin\{.*?\}/)) {
+        latex = `\\begin{aligned}\n${latex.split('\n').filter((l: string) => l.trim()).join(' \\\\\n')}\n\\end{aligned}`;
+    }
+
     const html = katex.renderToString(
         latex,
         {
@@ -37,33 +43,18 @@ export default function MathBlock({
     );
 
     return (
-
         <section
             className="
                 my-6
+                w-full
                 max-w-full
                 overflow-x-auto
                 overflow-y-hidden
-                rounded-xl
-                border
-                border-zinc-800
-                bg-zinc-900
-                p-6
+                py-2
+                text-lg
             "
         >
-
-            <div
-
-                dangerouslySetInnerHTML={{
-
-                    __html: html
-
-                }}
-
-            />
-
+            <div dangerouslySetInnerHTML={{ __html: html }} />
         </section>
-
     );
-
 }

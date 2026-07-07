@@ -483,11 +483,23 @@ RULES:
 1. Any calculation with multiple steps or multiple equations MUST use block math ($$...$$)
 2. Use \begin{aligned}...\end{aligned} for multi-step calculations to align equations at the equals sign
 3. Use \quad or \qquad for horizontal spacing if you must use inline math (rarely needed)
-4. NEVER put calculations in code blocks (\`\`\` or \`\`\`)
+4. NEVER put calculations in code blocks (\`\`\` or \`\`\`math). ALWAYS use standard $$...$$ block delimiters.
 5. Each equation should be on its own line for clarity
 6. For single simple equations in running text, inline math ($...$) is acceptable, but when showing work or multiple equations, always use block format
 7. Add brief explanatory text between calculation steps when helpful for understanding
 8. ALL LaTeX commands (including \ce{}, \frac{}, \text{}) MUST be wrapped in $...$ or $$...$$
+
+## Matrix Formatting Rule
+When displaying matrices or vectors, ALWAYS use the LaTeX \`\\begin{pmatrix}\` environment inside block math \`$$...$$\` or inline math \`$ ... $\`. 
+NEVER use raw flattened text like \`(a b c d)\` or \`[1 2 3]\`.
+
+✅ CORRECT:
+$$A = \\begin{pmatrix} 2 & 3 \\ 4 & -1 \\end{pmatrix}$$
+$X = \\begin{pmatrix} x \\ y \\end{pmatrix}$
+
+❌ WRONG:
+A = (2 3 4 -1)
+X = (x y)
    ✅ CORRECT:   $n = \frac{m}{M_r}$, $\ce{NaOH}$
    ❌ WRONG:     \frac{m}{M_r}, \ce{NaOH} (missing $ delimiters)
 
