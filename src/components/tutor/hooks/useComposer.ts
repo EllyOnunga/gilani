@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { parseDocument } from "@/lib/document-parser";
 import { friendlyError } from "@/lib/async";
+import { supabase } from "@/integrations/supabase/client";
 
-export type AttachedFile = { name: string; text: string; size: number };
+export type AttachedFile = { name: string; text: string; size: number; storageUrl?: string; mimeType?: string };
 
 const MAX_DOC_CHARS = 8000;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -103,11 +104,31 @@ export function useComposer() {
 
     setParsingFile(true);
     setDocUploadError(null);
-    const toastId = toast.loading(`Extracting text from ${file.name}...`);
+    const toastId = toast.loading(`Uploading ${file.name}...`);
     try {
+      // 1. Upload raw file to Supabase Storage (silent fail — text extraction still works without it)
+      let storageUrl: string | undefined;
+      try {
+        const ext = file.name.split(".").pop() ?? "bin";
+        const path = `chat-attachments/${crypto.randomUUID()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("chat-attachments")
+          .upload(path, file, { cacheControl: "3600", upsert: false });
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage.from("chat-attachments").getPublicUrl(path);
+          storageUrl = urlData?.publicUrl;
+        } else {
+          console.warn("[Storage] Upload skipped:", uploadErr.message);
+        }
+      } catch (storageErr) {
+        console.warn("[Storage] Storage unavailable, proceeding without file URL:", storageErr);
+      }
+
+      // 2. Extract text for AI context
+      toast.loading(`Extracting text from ${file.name}...`, { id: toastId });
       const parsed = await parseDocument(file);
-      setAttachedFile(parsed);
-      toast.success("Document attached successfully!", { id: toastId });
+      setAttachedFile({ ...parsed, storageUrl, mimeType: file.type });
+      toast.success("Document attached!", { id: toastId });
     } catch (err: any) {
       const errMsg = friendlyError(err, "Failed to attach document.");
       setDocUploadError(errMsg);

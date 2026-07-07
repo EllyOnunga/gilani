@@ -64,10 +64,11 @@ export const Route = createFileRoute("/api/chat")({
           const { userId } = authResult;
 
           const body = await request.json().catch(() => ({}));
-          const { threadId, messages, isRetry } = body as {
+          const { threadId, messages, isRetry, attachmentMeta } = body as {
             threadId?: string;
             messages?: any[];
             isRetry?: boolean;
+            attachmentMeta?: { storageUrl?: string; mimeType?: string; fileName?: string };
           };
 
           const rlResult = await checkPlanRateLimit(userId, "chat", !!isRetry);
@@ -162,7 +163,12 @@ export const Route = createFileRoute("/api/chat")({
                 content: (userText || null) as any,
                 parts: JSON.stringify([{ type: "text", text: userText }]),
                 user_id: userId,
-              });
+                ...(attachmentMeta?.storageUrl ? {
+                  file_url: attachmentMeta.storageUrl,
+                  file_type: attachmentMeta.mimeType ?? null,
+                  file_name: attachmentMeta.fileName ?? null,
+                } : {}),
+              } as any);
             } else if (isRetry) {
               const { data: lastMsg } = await supabaseAdmin
                 .from("messages")

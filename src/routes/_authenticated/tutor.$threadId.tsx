@@ -100,7 +100,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     exportAsPDF(chatState.messages, title);
   }, [chatState.threads, threadId, chatState.messages]);
 
-  const sendChatMessage = (finalMessage: string, titleSeedText: string) => {
+  const sendChatMessage = (finalMessage: string, titleSeedText: string, attachmentMeta?: { storageUrl?: string; mimeType?: string; fileName?: string }) => {
     try {
       const currentThread = chatState.threads.find((t) => t.id === threadId);
       if (chatState.messages.length === 0 && !currentThread?.title) {
@@ -116,7 +116,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           })
           .catch(console.error);
       }
-      chatState.sendMessage({ text: finalMessage }).catch((error: unknown) => {
+      chatState.sendMessage({ text: finalMessage }, attachmentMeta).catch((error: unknown) => {
         console.error("[TutorThread] sendMessage background error:", error);
         toast.error("Failed to send message. Please try again.");
       });
@@ -133,9 +133,12 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     const titleSeedText =
       trimmedInput ||
       (composer.attachedFile ? `Uploaded a document: ${composer.attachedFile.name}` : "Started a new session");
+    const attachmentMeta = composer.attachedFile
+      ? { storageUrl: composer.attachedFile.storageUrl, mimeType: composer.attachedFile.mimeType, fileName: composer.attachedFile.name }
+      : undefined;
     composer.setInput("");
     composer.onRemoveFile();
-    sendChatMessage(finalMessage, titleSeedText);
+    sendChatMessage(finalMessage, titleSeedText, attachmentMeta);
   };
 
   useEffect(() => {

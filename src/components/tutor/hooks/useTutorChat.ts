@@ -116,6 +116,8 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
     return () => clearTimeout(safety);
   }, []);
 
+  const attachmentMetaRef = useRef<{ storageUrl?: string; mimeType?: string; fileName?: string } | null>(null);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -123,6 +125,15 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
         body: { threadId },
         headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
         fetch: async (input, init) => {
+          // Inject attachment metadata into the request body for the current message
+          if (attachmentMetaRef.current && init?.body) {
+            try {
+              const parsed = JSON.parse(init.body as string);
+              parsed.attachmentMeta = attachmentMetaRef.current;
+              attachmentMetaRef.current = null;
+              init = { ...init, body: JSON.stringify(parsed) };
+            } catch { /* ignore parse errors */ }
+          }
           const res = await fetch(input, init);
           if (!res.ok) {
             let errText = "";
@@ -502,7 +513,10 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
     setEscalateEmailError,
     messages,
     setMessages,
-    sendMessage,
+    sendMessage: (msg: any, attachmentMeta?: { storageUrl?: string; mimeType?: string; fileName?: string }) => {
+      if (attachmentMeta) attachmentMetaRef.current = attachmentMeta;
+      return sendMessage(msg);
+    },
     stop,
     status,
     isPending,
