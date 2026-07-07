@@ -1,7 +1,10 @@
-import { Loader2, Search, Settings, GraduationCap } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Search, Settings, GraduationCap, Bell, X } from "lucide-react";
 import type { Profile, Role } from "@/components/admin/types";
 import { ROLES, ROLE_META, formatDate } from "@/components/admin/types";
 import { PLANS } from "@/lib/plans";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type Props = {
   filtered: Profile[];
@@ -22,6 +25,50 @@ export function AdminUsersTab({
   counts,
   handleRoleChange,
 }: Props) {
+  const [pushTarget, setPushTarget] = useState<Profile | null>(null);
+  const [pushTitle, setPushTitle] = useState("");
+  const [pushMessage, setPushMessage] = useState("");
+  const [pushUrl, setPushUrl] = useState("");
+  const [pushSending, setPushSending] = useState(false);
+
+  const closePushModal = () => {
+    setPushTarget(null);
+    setPushTitle("");
+    setPushMessage("");
+    setPushUrl("");
+  };
+
+  const handleSendPush = async () => {
+    if (!pushTarget || !pushTitle.trim() || !pushMessage.trim()) return;
+    setPushSending(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const res = await fetch("/api/notifications/push-send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          targetUserId: pushTarget.id,
+          title: pushTitle,
+          message: pushMessage,
+          url: pushUrl || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success(`Notification sent to ${pushTarget.display_name ?? "user"}`);
+      closePushModal();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to send notification");
+    } finally {
+      setPushSending(false);
+    }
+  };
+
   return (
     <>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
@@ -57,20 +104,22 @@ export function AdminUsersTab({
           <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                {["User", "Email", "Conversations", "Curriculum", "Joined", "Role"].map((h) => (
-                  <th
-                    key={h}
-                    className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
-                  >
-                    {h}
-                  </th>
-                ))}
+                {["User", "Email", "Conversations", "Curriculum", "Joined", "Role", "Notify"].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+                    >
+                      {h}
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center font-serif text-muted-foreground">
+                  <td colSpan={7} className="py-12 text-center font-serif text-muted-foreground">
                     No users found
                   </td>
                 </tr>
@@ -127,6 +176,15 @@ export function AdminUsersTab({
                         )}
                       </div>
                     </td>
+                    <td className="px-2 py-2 sm:px-5 sm:py-3 text-center">
+                      <button
+                        onClick={() => setPushTarget(p)}
+                        title="Send push notification"
+                        className="inline-flex items-center justify-center rounded-lg border border-border bg-background p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                      >
+                        <Bell className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -147,6 +205,65 @@ export function AdminUsersTab({
           the Escalations panel. Admins have full platform access.
         </p>
       </div>
+
+      {pushTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card shadow-xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-lg font-bold">
+                Notify {pushTarget.display_name ?? "user"}
+              </h3>
+              <button
+                onClick={closePushModal}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <input
+                value={pushTitle}
+                onChange={(e) => setPushTitle(e.target.value)}
+                placeholder="Title"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <textarea
+                value={pushMessage}
+                onChange={(e) => setPushMessage(e.target.value)}
+                placeholder="Message"
+                rows={3}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+              <input
+                value={pushUrl}
+                onChange={(e) => setPushUrl(e.target.value)}
+                placeholder="Link URL (optional, defaults to /)"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={closePushModal}
+                className="flex-1 rounded-lg border border-border py-2 text-sm font-semibold hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendPush}
+                disabled={pushSending || !pushTitle.trim() || !pushMessage.trim()}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50 hover:opacity-90 transition-opacity"
+              >
+                {pushSending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Bell className="h-4 w-4" />
+                )}
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
