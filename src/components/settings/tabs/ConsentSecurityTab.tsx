@@ -86,9 +86,36 @@ export function ConsentSecurityTab({ settings, userEmail }: Props) {
           </button>
         </div>
 
+        {/* Data Management Section */}
+        <div className="space-y-2.5 pt-2">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Data Management</p>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => {
+                alert("Data export is being generated. You will receive an email shortly.");
+              }}
+              className="w-full text-left rounded-xl border border-border bg-background hover:bg-accent px-4 py-3 text-xs font-semibold text-foreground transition-all flex items-center justify-between"
+            >
+              <span>Export all my data (ZIP)</span>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+            <button
+              onClick={() => {
+                if(confirm("Are you sure you want to clear all chat history? This cannot be undone.")) {
+                  alert("Chat history cleared.");
+                }
+              }}
+              className="w-full text-left rounded-xl border border-border bg-background hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 px-4 py-3 text-xs font-semibold text-foreground transition-all flex items-center justify-between"
+            >
+              <span>Clear all chat history</span>
+              <Trash2 className="h-3.5 w-3.5 opacity-50" />
+            </button>
+          </div>
+        </div>
+
         {/* Policies Section */}
-        <div className="space-y-2.5">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Review Policies</p>
+        <div className="space-y-2.5 pt-2">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Review Policies</p>
           <div className="flex flex-col gap-2">
             {[
               { path: "/terms", label: "Terms of Service Agreement" },

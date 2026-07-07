@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, User, Sun, Shield, CreditCard, Brain, ChevronRight, ChevronLeft } from "lucide-react";
+import { X, User, Sun, Shield, CreditCard, Brain, ChevronRight, ChevronLeft, Settings, Bell, Globe, Monitor, Keyboard } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSettings } from "@/components/settings/hooks/useSettings";
 import { PresetAvatarSVG } from "@/components/settings/PresetAvatarSVG";
@@ -9,6 +9,10 @@ import { DisplayThemeTab } from "@/components/settings/tabs/DisplayThemeTab";
 import { PlanUsageTab } from "@/components/settings/tabs/PlanUsageTab";
 import { ConsentSecurityTab } from "@/components/settings/tabs/ConsentSecurityTab";
 import { AccountCredentialsTab } from "@/components/settings/tabs/AccountCredentialsTab";
+import { NotificationsTab } from "@/components/settings/tabs/NotificationsTab";
+import { LanguageRegionTab } from "@/components/settings/tabs/LanguageRegionTab";
+import { AccessibilityTab } from "@/components/settings/tabs/AccessibilityTab";
+import { ShortcutsTab } from "@/components/settings/tabs/ShortcutsTab";
 import { PlansModal } from "@/components/PlansModal";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
@@ -42,7 +46,11 @@ const deleteAccount = createServerFn({ method: "POST" })
 
 const TABS = [
   { id: "profile" as const, label: "Profile Details", icon: User, description: "Name, avatar and account credentials" },
+  { id: "notifications" as const, label: "Notifications", icon: Bell, description: "Email and push alerts" },
+  { id: "language" as const, label: "Language & Region", icon: Globe, description: "Locale and time settings" },
   { id: "tutor" as const, label: "Tutor Preferences", icon: Brain, description: "Teaching style and personality" },
+  { id: "accessibility" as const, label: "Accessibility", icon: Monitor, description: "Font size and contrast" },
+  { id: "shortcuts" as const, label: "Keyboard Shortcuts", icon: Keyboard, description: "App navigation hotkeys" },
   { id: "theme" as const, label: "Display Theme", icon: Sun, description: "Light, dark and appearance" },
   { id: "plan" as const, label: "Plan & Usage", icon: CreditCard, description: "Subscription and message limits" },
   { id: "consent" as const, label: "Consent & Security", icon: Shield, description: "Privacy, consent and data" },
@@ -56,130 +64,101 @@ type Props = {
 export function SettingsDrawer({ open, onClose }: Props) {
   const { user } = useAuth();
   const settings = useSettings(user, { deleteAccount });
-  const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
-  // Reset to menu view when drawer closes
+  // On mount, sync settings active tab to default "profile" if empty
   useEffect(() => {
-    if (!open) {
-      const t = setTimeout(() => setActiveTabId(null), 300);
-      return () => clearTimeout(t);
+    if (open && !settings.activeTab) {
+      settings.setActiveTab("profile");
     }
-  }, [open]);
-
-  const activeTab = TABS.find((t) => t.id === activeTabId);
+  }, [open, settings.activeTab]);
 
   return (
     <>
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       />
 
-      {/* Drawer */}
-      <aside
-        className={`fixed inset-y-0 right-0 z-[70] flex flex-col w-full max-w-md bg-sidebar border-l border-border shadow-2xl transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}
+      {/* Centered Modal / Fullscreen on Mobile */}
+      <div
+        className={`fixed inset-0 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-[70] flex flex-col md:w-[90vw] md:max-w-5xl md:h-[85vh] bg-background md:rounded-2xl md:border md:border-border shadow-2xl transition-all duration-300 ease-in-out ${
+          open ? "opacity-100 scale-100 translate-y-0" : "opacity-0 md:scale-95 translate-y-4 md:translate-y-[calc(-50%+1rem)] pointer-events-none"
+        }`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border/60 bg-sidebar/80 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            {activeTabId && (
-              <button
-                onClick={() => setActiveTabId(null)}
-                className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
-                title="Back"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-            )}
-            <div>
-              <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-primary">
-                {activeTabId ? "Settings" : "Preferences"}
-              </p>
-              <h2 className="font-serif text-base font-bold text-foreground leading-tight">
-                {activeTab?.label ?? "App Settings"}
-              </h2>
-            </div>
+        {/* Mobile Header (Only visible on mobile) */}
+        <header className="md:hidden flex h-14 items-center justify-between border-b border-border px-4 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Settings className="h-5 w-5 text-primary" />
+            <h1 className="text-sm font-semibold text-foreground">App Settings</h1>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
-            title="Close Settings"
+          <button 
+            onClick={onClose} 
+            className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" strokeWidth={2.25} />
           </button>
-        </div>
+        </header>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Menu view */}
-          <div className={`transition-all duration-200 ${activeTabId ? "opacity-0 pointer-events-none absolute inset-0" : "opacity-100"}`}>
-            {/* User card */}
-            <div className="mx-4 mt-5 mb-4 flex items-center gap-3 rounded-2xl bg-muted/30 border border-border/40 p-3.5">
-              <div className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border-2 border-primary/30 bg-background/60 shadow-inner">
-                {settings.avatarUrl ? (
-                  settings.avatarUrl.startsWith("preset:") ? (
-                    <PresetAvatarSVG preset={settings.avatarUrl.substring(7)} />
-                  ) : (
-                    <img src={settings.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                  )
-                ) : (
-                  <span className="font-serif text-sm font-bold text-foreground">
-                    {(settings.displayName || user?.email || "U").substring(0, 2).toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-foreground">{settings.displayName || user?.email?.split("@")[0] || "User"}</p>
-                <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-primary border border-primary/20">
-                {settings.currentPlan}
-              </span>
+        {/* Layout: Sidebar + Content */}
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <div className="md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border bg-sidebar/50 flex flex-col">
+            {/* Desktop Header area */}
+            <div className="hidden md:flex items-center justify-between p-5 border-b border-border/40">
+              <h2 className="font-serif text-lg font-bold text-foreground">Settings</h2>
+              <button 
+                onClick={onClose} 
+                className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-
-            {/* Tab buttons */}
-            <nav className="px-4 space-y-1.5 pb-6">
+            
+            {/* Tab navigation */}
+            <nav className="flex-1 overflow-y-auto p-2 md:p-3 flex flex-row md:flex-col gap-1 overflow-x-auto scrollbar-none">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
+                const isSelected = settings.activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => {
-                      settings.setActiveTab(tab.id);
-                      setActiveTabId(tab.id);
-                    }}
-                    className="group flex w-full items-center gap-3.5 rounded-2xl border border-border/30 bg-card/40 px-4 py-3.5 text-left transition-all duration-200 hover:bg-muted/40 hover:border-border/60 hover:shadow-sm active:scale-[0.98]"
+                    onClick={() => settings.setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all duration-200 whitespace-nowrap md:whitespace-normal group ${
+                      isSelected 
+                        ? "bg-muted text-foreground shadow-sm" 
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    }`}
                   >
-                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted/60 border border-border/40 text-foreground group-hover:bg-primary/10 group-hover:border-primary/30 group-hover:text-primary transition-all duration-200">
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground leading-tight">{tab.label}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{tab.description}</p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors flex-shrink-0" />
+                    <Icon className={`h-4 w-4 flex-shrink-0 ${isSelected ? "text-primary" : ""}`} />
+                    <span className="text-sm font-medium">{tab.label}</span>
                   </button>
                 );
               })}
             </nav>
           </div>
 
-          {/* Tab content view */}
-          <div className={`transition-all duration-200 ${!activeTabId ? "opacity-0 pointer-events-none absolute inset-0" : "opacity-100 p-5 space-y-5"}`}>
-            {activeTabId === "profile" && (
-              <>
-                <ProfileDetailsTab settings={settings} userEmail={user?.email} PresetAvatarSVG={PresetAvatarSVG} />
-                <AccountCredentialsTab settings={settings} userEmail={user?.email} />
-              </>
-            )}
-            {activeTabId === "tutor" && <TutorPreferencesTab settings={settings} />}
-            {activeTabId === "theme" && <DisplayThemeTab settings={settings} />}
-            {activeTabId === "plan" && <PlanUsageTab settings={settings} />}
-            {activeTabId === "consent" && <ConsentSecurityTab settings={settings} userEmail={user?.email} />}
+          {/* Content Area */}
+          <div className="flex-1 overflow-y-auto bg-background p-4 md:p-8">
+            <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              {settings.activeTab === "profile" && (
+                <>
+                  <ProfileDetailsTab settings={settings} userEmail={user?.email} PresetAvatarSVG={PresetAvatarSVG} />
+                  <AccountCredentialsTab settings={settings} userEmail={user?.email} />
+                </>
+              )}
+              {settings.activeTab === "notifications" && <NotificationsTab settings={settings} />}
+              {settings.activeTab === "language" && <LanguageRegionTab settings={settings} />}
+              {settings.activeTab === "tutor" && <TutorPreferencesTab settings={settings} />}
+              {settings.activeTab === "accessibility" && <AccessibilityTab settings={settings} />}
+              {settings.activeTab === "shortcuts" && <ShortcutsTab settings={settings} />}
+              {settings.activeTab === "theme" && <DisplayThemeTab settings={settings} />}
+              {settings.activeTab === "plan" && <PlanUsageTab settings={settings} />}
+              {settings.activeTab === "consent" && <ConsentSecurityTab settings={settings} userEmail={user?.email} />}
+            </div>
           </div>
         </div>
-      </aside>
+      </div>
 
       {settings.showPlans && <PlansModal onClose={() => settings.setShowPlans(false)} currentPlan={settings.currentPlan} />}
     </>

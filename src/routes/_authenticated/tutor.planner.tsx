@@ -375,9 +375,9 @@ function PlannerRoute() {
                   key={plan.id}
                   className="border border-border bg-card rounded-2xl shadow-sm overflow-hidden hover:border-primary/40 transition-colors"
                 >
-                  <button
+                  <div
                     onClick={() => setExpanded(isOpen ? null : plan.id)}
-                    className="w-full flex items-center gap-3 p-5 text-left"
+                    className="w-full flex items-center gap-3 p-5 text-left cursor-pointer hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-1.5 flex-wrap">
@@ -419,7 +419,7 @@ function PlannerRoute() {
                     ) : (
                       <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                     )}
-                  </button>
+                  </div>
 
                   {isOpen && (
                     <div className="px-5 pb-5 pt-1 border-t border-border/50 space-y-5">

@@ -115,7 +115,7 @@ export const Route = createFileRoute("/api/chat")({
           console.log(`[API Chat] Using provider: google (gemini), with fallback`);
 
           // ─── Database Checks ─────────────────────────────────────────────
-          const { data: thread } = await supabaseAdmin
+          let { data: thread } = await supabaseAdmin
             .from("conversations")
             .select("*")
             .eq("id", threadId)
@@ -123,10 +123,24 @@ export const Route = createFileRoute("/api/chat")({
             .maybeSingle();
 
           if (!thread) {
-            return new Response(JSON.stringify({ error: "thread not found" }), {
-              status: 404,
-              headers: { "Content-Type": "application/json" },
-            });
+            // Auto-create thread for instant client-side transitions
+            const { data: newThread, error: createError } = await supabaseAdmin
+              .from("conversations")
+              .insert({
+                id: threadId,
+                user_id: userId,
+                updated_at: new Date().toISOString(),
+              })
+              .select("*")
+              .single();
+              
+            if (createError) {
+              return new Response(JSON.stringify({ error: "Failed to create thread" }), {
+                status: 500,
+                headers: { "Content-Type": "application/json" },
+              });
+            }
+            thread = newThread;
           }
 
           const lastMessage = messages?.[messages.length - 1];

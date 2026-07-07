@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
-import { User, Sun, Shield, CreditCard, Brain, Menu } from "lucide-react";
+import { User, Sun, Shield, CreditCard, Brain, Menu, Bell, Globe, Monitor, Keyboard } from "lucide-react";
 import { useLayout } from "@/contexts/layout-context";
 import { NotificationBell } from "@/components/notifications";
+import { TutorPageHeader } from "@/components/tutor/TutorPageHeader";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -16,6 +17,10 @@ import { DisplayThemeTab } from "@/components/settings/tabs/DisplayThemeTab";
 import { PlanUsageTab } from "@/components/settings/tabs/PlanUsageTab";
 import { ConsentSecurityTab } from "@/components/settings/tabs/ConsentSecurityTab";
 import { AccountCredentialsTab } from "@/components/settings/tabs/AccountCredentialsTab";
+import { NotificationsTab } from "@/components/settings/tabs/NotificationsTab";
+import { LanguageRegionTab } from "@/components/settings/tabs/LanguageRegionTab";
+import { AccessibilityTab } from "@/components/settings/tabs/AccessibilityTab";
+import { ShortcutsTab } from "@/components/settings/tabs/ShortcutsTab";
 
 const deleteAccount = createServerFn({ method: "POST" })
   .validator((data: { otp: string }) => data)
@@ -58,7 +63,11 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 const TABS = [
   { id: "profile", label: "Profile Details", icon: User },
+  { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "language", label: "Language & Region", icon: Globe },
   { id: "tutor", label: "Tutor Preferences", icon: Brain },
+  { id: "accessibility", label: "Accessibility", icon: Monitor },
+  { id: "shortcuts", label: "Keyboard Shortcuts", icon: Keyboard },
   { id: "theme", label: "Display Theme", icon: Sun },
   { id: "plan", label: "Plan & Usage", icon: CreditCard },
   { id: "consent", label: "Consent & Security", icon: Shield },
@@ -71,23 +80,14 @@ function SettingsPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-5xl space-y-6 p-3 sm:p-6 lg:p-10 animate-in-slide">
-        {/* Header */}
-        <div className="flex lg:hidden items-center justify-between h-14 -mx-4 sm:-mx-6 px-4 sm:px-6 mb-2 border-b border-border/60">
-          <button onClick={() => setSidebarOpen(true)} className="rounded-full p-2 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors active:scale-95" title="Open Menu">
-            <Menu className="h-5 w-5" />
-          </button>
-          {user?.id ? <NotificationBell userId={user.id} /> : null}
-        </div>
-        <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-border/60 pb-5 text-center sm:text-left">
-          <div>
-            <p className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Preferences</p>
-            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-bold">App Settings</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Customize your tutor's persona, change your profile appearance, and oversee subscription parameters.
-            </p>
-          </div>
-        </header>
+      <div className="flex-1 overflow-y-auto">
+        <TutorPageHeader 
+          title="App Settings" 
+          subtitle="Customize your tutor's persona, change your profile appearance, and oversee subscription parameters." 
+          actions={user?.id ? <NotificationBell userId={user.id} /> : null}
+        />
+        
+        <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8 animate-in-slide">
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
           {/* Navigation Sidebar */}
@@ -118,12 +118,17 @@ function SettingsPage() {
                 <AccountCredentialsTab settings={settings} userEmail={user?.email} />
               </>
             )}
+            {settings.activeTab === "notifications" && <NotificationsTab settings={settings} />}
+            {settings.activeTab === "language" && <LanguageRegionTab settings={settings} />}
             {settings.activeTab === "tutor" && <TutorPreferencesTab settings={settings} />}
+            {settings.activeTab === "accessibility" && <AccessibilityTab settings={settings} />}
+            {settings.activeTab === "shortcuts" && <ShortcutsTab settings={settings} />}
             {settings.activeTab === "theme" && <DisplayThemeTab settings={settings} />}
             {settings.activeTab === "plan" && <PlanUsageTab settings={settings} />}
             {settings.activeTab === "consent" && <ConsentSecurityTab settings={settings} userEmail={user?.email} />}
           </div>
         </div>
+      </div>
       </div>
 
       {settings.showPlans && <PlansModal onClose={() => settings.setShowPlans(false)} currentPlan={settings.currentPlan} />}

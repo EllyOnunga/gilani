@@ -87,7 +87,8 @@ export type AdminTab =
   | "subscriptions"
   | "escalations"
   | "newsletter"
-  | "globalnotes";
+  | "globalnotes"
+  | "settings_analytics";
 
 // ─── Shared helpers ─────────────────────────────────────────────────────────────
 

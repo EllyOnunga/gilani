@@ -34,6 +34,7 @@ import { AdminRateLimitsTab } from "@/components/admin/tabs/AdminRateLimitsTab";
 import { AdminEscalationsTab } from "@/components/admin/tabs/AdminEscalationsTab";
 import { AdminSubscriptionsTab } from "@/components/admin/tabs/AdminSubscriptionsTab";
 import { AdminNewsletterTab } from "@/components/admin/tabs/AdminNewsletterTab";
+import { AdminSettingsAnalyticsTab } from "@/components/admin/tabs/AdminSettingsAnalyticsTab";
 import type {
   Profile, Escalation, PlatformStats, ContactMessage, MessageFeedback,
   NewsletterSubscriber, RateLimitRow, Payment,
@@ -227,6 +228,7 @@ function AdminUsersPage() {
     { id: "subscriptions", label: "Subs", icon: CreditCard },
     { id: "newsletter", label: "Newsletter", icon: Mail },
     { id: "globalnotes", label: "Notes", icon: BookOpen },
+    { id: "settings_analytics", label: "Settings", icon: Settings },
   ] as const;
 
   return (
@@ -370,6 +372,7 @@ function AdminUsersPage() {
       )}
       {dashboard.tab === "newsletter" && <AdminNewsletterTab newsletter={dashboard.newsletter} />}
       {dashboard.tab === "globalnotes" && <AdminGlobalNotes />}
+      {dashboard.tab === "settings_analytics" && <AdminSettingsAnalyticsTab />}
     </div>
   );
 }

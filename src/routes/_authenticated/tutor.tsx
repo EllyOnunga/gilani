@@ -126,34 +126,12 @@ function TutorIndex() {
 
     composer.setInput("");
     composer.onRemoveFile();
-    setCreatingThread(true);
-    try {
-      const res = await fetchWithTimeout(
-        "/api/tutor/threads",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-          },
-          body: JSON.stringify({}),
-        },
-        12000,
-      );
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(json?.error || `Server returned status ${res.status}`);
-      }
-      const id = json?.thread?.id;
-      if (!id) {
-        throw new Error("No thread ID returned from server");
-      }
-      setPendingMessage(id, { finalMessage, titleSeedText });
-      await navigate({ to: "/tutor/$threadId", params: { threadId: id } } as any);
-    } catch (err) {
-      setCreatingThread(false);
-      toast.error(getErrorMessage(err, "Failed to start chat. Please try again."));
-    }
+    
+    // Generate an ID locally for instant transition. The server will auto-create
+    // the row when the first message hits the chat API.
+    const id = crypto.randomUUID();
+    setPendingMessage(id, { finalMessage, titleSeedText });
+    await navigate({ to: "/tutor/$threadId", params: { threadId: id } } as any);
   };
 
   if (error) {

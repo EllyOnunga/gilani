@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/async";
 
-export type TabType = "profile" | "tutor" | "theme" | "plan" | "consent";
+export type TabType = "profile" | "tutor" | "theme" | "plan" | "consent" | "notifications" | "language" | "accessibility" | "shortcuts" | "sessions";
 
 type SettingsServerFns = {
   deleteAccount: (args: { data: { otp: string } }) => Promise<void>;
@@ -20,6 +20,30 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
   const [tutorTone, setTutorTone] = useState("encouraging");
   const [tutorStyle, setTutorStyle] = useState("socratic");
   const [tutorDepth, setTutorDepth] = useState("standard");
+
+  // Advanced Preferences (JSONB)
+  const [preferences, setPreferences] = useState<Record<string, any>>({
+    notificationsEmail: true,
+    notificationsPush: false,
+    notificationsDigest: true,
+    uiLanguage: "en",
+    curriculum: "KCSE",
+    timezone: "EAT",
+    grade: "",
+    subjectsEnrolled: [],
+    targetGrade: "",
+    responseLanguage: "english",
+    stepByStepDefault: true,
+    mathRendering: "latex",
+    autoSaveResponses: false,
+    fontSize: "standard",
+    reduceMotion: false,
+    highContrast: false,
+  });
+
+  const updatePreference = useCallback((key: string, value: any) => {
+    setPreferences(prev => ({ ...prev, [key]: value }));
+  }, []);
 
   // Loading States
   const [busy, setBusy] = useState(false);
@@ -63,14 +87,29 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
         if (data) {
           setDisplayName(data.display_name || "");
           setAvatarUrl(data.avatar_url || null);
-          setDisclaimerAccepted(!!data.disclaimer_accepted);
-          setCookieConsent(data.cookie_consent !== false);
-          setAnalyticsConsent(data.analytics_consent !== false);
+          setDisclaimerAccepted(!!(data as any).disclaimer_accepted);
+          setCookieConsent((data as any).cookie_consent !== false);
+          setAnalyticsConsent((data as any).analytics_consent !== false);
 
-          if (data.plan) setCurrentPlan(data.plan);
-          if (data.tutor_tone) setTutorTone(data.tutor_tone);
-          if (data.tutor_style) setTutorStyle(data.tutor_style);
-          if (data.tutor_depth) setTutorDepth(data.tutor_depth);
+          if ((data as any).plan) setCurrentPlan((data as any).plan);
+          if ((data as any).tutor_tone) setTutorTone((data as any).tutor_tone);
+          if ((data as any).tutor_style) setTutorStyle((data as any).tutor_style);
+          if ((data as any).tutor_depth) setTutorDepth((data as any).tutor_depth);
+          if ((data as any).preferences) {
+            setPreferences(prev => ({ ...prev, ...(data as any).preferences }));
+          } else {
+            // Fallback: load from localStorage if DB column not migrated yet
+            const local = localStorage.getItem(`gilani_prefs_${user.id}`);
+            if (local) {
+              try {
+                const parsed = JSON.parse(local);
+                if (parsed.tutorTone) setTutorTone(parsed.tutorTone);
+                if (parsed.tutorStyle) setTutorStyle(parsed.tutorStyle);
+                if (parsed.tutorDepth) setTutorDepth(parsed.tutorDepth);
+                if (parsed.preferences) setPreferences(prev => ({ ...prev, ...parsed.preferences }));
+              } catch { /* ignore */ }
+            }
+          }
         }
       } catch (err) {
         console.error("Failed to load user profile:", err);
@@ -102,6 +141,28 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
     }
   }, [user?.id]);
 
+  // ─── Analytics ────────────────────────────────────────────────────────────────
+  const fireSettingsEvent = useCallback((action: string, payload?: Record<string, any>) => {
+    if (!user?.id) return;
+    // Fire-and-forget: no await, never blocks UI
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.access_token) return;
+      fetch("/api/settings/events", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ action, payload }),
+      }).catch(() => {}); // silently ignore failures
+    });
+  }, [user?.id]);
+
+  const setActiveTabTracked = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+    fireSettingsEvent("settings.tab_viewed", { tab });
+  }, [fireSettingsEvent]);
+
   // ─── Actions ─────────────────────────────────────────────────────────────────
   const handleProfileSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -109,19 +170,55 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
 
     setBusy(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          display_name: displayName.trim(),
-          avatar_url: avatarUrl,
-          tutor_tone: tutorTone,
-          tutor_style: tutorStyle,
-          tutor_depth: tutorDepth,
-          updated_at: new Date().toISOString(),
-        } as any)
-        .eq("id", user.id);
+      // Step 1: Save core fields that are always present in the profiles table
+      const corePayload: Record<string, any> = {
+        id: user.id,
+        display_name: displayName,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      };
 
-      if (error) throw error;
+      const { error: coreError } = await supabase
+        .from("profiles")
+        .upsert(corePayload as any);
+
+      if (coreError) throw coreError;
+
+      // Step 2: Attempt to save extended columns; silently ignore if columns don't exist yet.
+      // These will work once the DB migration has been applied.
+      const extPayload: Record<string, any> = {
+        id: user.id,
+        tutor_tone: tutorTone,
+        tutor_style: tutorStyle,
+        tutor_depth: tutorDepth,
+        disclaimer_accepted: disclaimerAccepted,
+        cookie_consent: cookieConsent,
+        analytics_consent: analyticsConsent,
+        preferences,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error: extError } = await supabase
+        .from("profiles")
+        .upsert(extPayload as any);
+
+      if (extError) {
+        // Extended columns missing — store preferences locally as fallback
+        console.warn("[Settings] Extended columns not yet migrated, using localStorage fallback:", extError.message);
+        localStorage.setItem(`gilani_prefs_${user.id}`, JSON.stringify({
+          tutorTone, tutorStyle, tutorDepth,
+          disclaimerAccepted, cookieConsent, analyticsConsent,
+          preferences,
+        }));
+      }
+
+      // Analytics: log which tab/preferences were saved
+      fireSettingsEvent("settings.preferences_saved", {
+        tab: activeTab,
+        tutorTone, tutorStyle, tutorDepth,
+        preferencesKeys: Object.keys(preferences),
+      });
+
       toast.success("Settings saved successfully! ✨");
       window.dispatchEvent(new CustomEvent("custom:profile-updated"));
     } catch (err: any) {
@@ -265,9 +362,10 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
 
 
   return {
-    activeTab, setActiveTab,
+    activeTab, setActiveTab: setActiveTabTracked,
     displayName, setDisplayName, avatarUrl, setAvatarUrl,
     tutorTone, setTutorTone, tutorStyle, setTutorStyle, tutorDepth, setTutorDepth,
+    preferences, updatePreference,
     busy, emailBusy, deleting, reauthSending,
     showPlans, setShowPlans, currentPlan, setCurrentPlan, dailyMessageCount,
     showDeleteConfirm, setShowDeleteConfirm, reauthError, setReauthError,

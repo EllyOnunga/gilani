@@ -77,7 +77,7 @@ function AuthedShell() {
 
       <Sidebar shell={shell} />
 
-      <main className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-x-hidden ${shell.path.startsWith("/tutor") ? "overflow-hidden h-full" : "overflow-y-auto scroll-smooth"}`}>
+      <main className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-x-hidden pb-16 lg:pb-0 ${shell.path.startsWith("/tutor") ? "overflow-hidden h-full" : "overflow-y-auto scroll-smooth"}`}>
         {!shell.path.startsWith("/tutor") && <Breadcrumb />}
         <div className="w-full flex-1 flex flex-col min-h-0">
           <LayoutContext.Provider

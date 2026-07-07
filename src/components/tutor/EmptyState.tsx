@@ -6,6 +6,7 @@ import {
   Mic,
   ArrowRight,
   MessageSquare,
+  FileText,
 } from "lucide-react";
 
 const SUBJECTS = [
@@ -112,11 +113,11 @@ export function EmptyState({
           ))}
           <Link
             to="/tutor/documents"
-            className="flex items-center gap-3 rounded-2xl border border-border bg-card px-3.5 sm:px-4 py-3.5 sm:py-4 text-left transition-all hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] min-w-0"
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card px-3.5 sm:px-4 py-3.5 sm:py-4 text-left transition-all hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] min-w-0 group"
           >
-            <span className="text-xl flex-shrink-0">📄</span>
-            <span className="font-semibold text-foreground text-sm truncate">
-              Summarize a Document
+            <FileText className="h-[22px] w-[22px] group-hover:scale-110 transition-transform" />
+            <span className="font-semibold text-sm">
+              Summarize Notes
             </span>
           </Link>
         </div>
