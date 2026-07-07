@@ -604,7 +604,7 @@ ${finalContent}`;
                     conversation_id: threadId,
                     role: "assistant",
                     content: safeText,
-                    parts: assistantParts,
+                    parts: JSON.stringify(assistantParts) as any,
                     confidence: 0.9,
                     user_id: userId,
                     thought_signature: thoughtSignature,

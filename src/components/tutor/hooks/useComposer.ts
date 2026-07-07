@@ -6,7 +6,7 @@ import { friendlyError } from "@/lib/async";
 export type AttachedFile = { name: string; text: string; size: number };
 
 const MAX_DOC_CHARS = 8000;
-const MAX_FILE_SIZE = 2 * 1024 * 1024;
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export function useComposer() {
   const [input, setInput] = useState("");
@@ -31,7 +31,8 @@ export function useComposer() {
     }
     baseInputRef.current = input;
     const recognition = new SpeechRecognitionCtor();
-    recognition.continuous = true;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    recognition.continuous = !isIOS;
     recognition.interimResults = true;
     recognition.lang = "en-US";
     recognition.onresult = (event: any) => {
@@ -63,16 +64,9 @@ export function useComposer() {
   }, []);
 
   const handleScanClick = () => {
-    const el = document.getElementById("chat-file-input") as HTMLInputElement | null;
+    const el = document.getElementById("chat-camera-input") as HTMLInputElement | null;
     if (!el) return;
-    const originalAccept = el.getAttribute("accept");
-    el.setAttribute("accept", "image/*");
-    el.setAttribute("capture", "environment");
     el.click();
-    setTimeout(() => {
-      el.removeAttribute("capture");
-      if (originalAccept) el.setAttribute("accept", originalAccept);
-    }, 500);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
