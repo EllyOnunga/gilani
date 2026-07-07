@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/notifications/email")({
           }
 
           // Fetch target user's profile and preferences
-          const { data: profile } = await supabaseAdmin
+          const { data: profile } = await (supabaseAdmin as any)
             .from("profiles")
             .select("display_name, preferences")
             .eq("id", targetUserId)
@@ -106,7 +106,7 @@ export const Route = createFileRoute("/api/notifications/email")({
           // Log to notification_logs best-effort
           if (sent) {
             try {
-              await (supabaseAdmin.from("notification_logs") as any).insert({
+              await (supabaseAdmin as any).from("notification_logs").insert({
                 user_id: targetUserId,
                 type: "email",
                 subject,

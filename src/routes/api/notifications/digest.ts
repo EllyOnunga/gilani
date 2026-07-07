@@ -29,14 +29,15 @@ export const Route = createFileRoute("/api/notifications/digest")({
 
           // Fetch all users with digest enabled
           // Cast to any to bypass strict TS checking for the unmigrated preferences column
-          const { data: profiles, error: profilesError } = await (supabaseAdmin.from("profiles") as any)
+          const { data: profiles, error: profilesError } = await (supabaseAdmin as any)
+            .from("profiles")
             .select("id, display_name, preferences")
             .not("preferences", "is", null);
 
           if (profilesError) throw profilesError;
 
           const digestUsers = (profiles ?? []).filter(
-            (p) => (p.preferences as any)?.notificationsDigest === true,
+            (p: any) => (p.preferences as any)?.notificationsDigest === true,
           );
 
           if (!digestUsers.length) {
@@ -116,7 +117,7 @@ export const Route = createFileRoute("/api/notifications/digest")({
 
               // Log to notification_logs if table exists (best-effort)
               try {
-                await (supabaseAdmin.from("notification_logs") as any).insert({
+                await (supabaseAdmin as any).from("notification_logs").insert({
                   user_id: profile.id,
                   type: "digest",
                   subject: `Weekly digest — ${weekOf}`,
