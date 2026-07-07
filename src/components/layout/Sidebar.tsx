@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { 
   Home, MessageSquare, FileText, PenTool, Calendar, Star, 
   ShieldAlert, Users, X, PanelLeft, PanelLeftClose, 
@@ -13,6 +14,7 @@ import { Logo } from "@/components/ui/logo";
 import { PresetAvatarSVG } from "@/components/settings/PresetAvatarSVG";
 import { ThreadActionSheet } from "@/components/layout/ThreadActionSheet";
 import { EscalateModal } from "@/components/tutor/EscalateModal";
+import { SettingsDrawer } from "@/components/settings/SettingsDrawer";
 import type { useAuthedShell } from "@/components/layout/hooks/useAuthedShell";
 import pkg from "../../../package.json";
 
@@ -21,6 +23,7 @@ type Props = {
 };
 
 export function Sidebar({ shell }: Props) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const {
     sidebarOpen, setSidebarOpen, collapsed, toggleCollapsed,
     isStudent, isTeacher, isAdmin,
@@ -37,10 +40,11 @@ export function Sidebar({ shell }: Props) {
   } = shell;
 
   return (
+    <>
     <aside
       className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-sidebar p-4 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden rounded-r-2xl ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      } ${collapsed ? "w-80 lg:w-[60px] lg:p-2" : "w-80"}`}
+      } ${collapsed ? "w-[340px] lg:w-[64px] lg:p-2" : "w-[340px]"}`}
     >
       <div className="flex items-center justify-between mb-6 min-w-0 w-full gap-2">
         <div className={`flex flex-col items-start justify-center min-w-0 flex-1 ${collapsed ? "lg:items-center lg:mx-auto" : ""}`}>
@@ -78,11 +82,11 @@ export function Sidebar({ shell }: Props) {
                 <Link
                   to="/tutor"
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center rounded-lg text-sm font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"} ${
+                  className={`flex items-center rounded-lg text-[15px] font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2.5" : "gap-3 px-3 py-2.5"} ${
                     path === "/tutor" ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r" : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
                   }`}
                 >
-                  <Home className="h-4 w-4 flex-shrink-0" />
+                  <Home className="h-[18px] w-[18px] flex-shrink-0" />
                   <span className={collapsed ? "lg:hidden" : ""}>Home</span>
                 </Link>
               </TooltipTrigger>
@@ -95,11 +99,11 @@ export function Sidebar({ shell }: Props) {
                 <Link
                   to="/tutor/chats"
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex w-full items-center rounded-lg text-sm font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"} ${
+                  className={`flex w-full items-center rounded-lg text-[15px] font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2.5" : "gap-3 px-3 py-2.5"} ${
                     path === "/tutor/chats" || path.startsWith("/tutor/chats") ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r" : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
                   }`}
                 >
-                  <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                  <MessageSquare className="h-[18px] w-[18px] flex-shrink-0" />
                   <span className={collapsed ? "lg:hidden" : ""}>Chats</span>
                 </Link>
               </TooltipTrigger>
@@ -118,11 +122,11 @@ export function Sidebar({ shell }: Props) {
                   <Link
                     to={item.to as any}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex w-full items-center rounded-lg text-sm font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"} ${
+                    className={`flex w-full items-center rounded-lg text-[15px] font-medium transition-colors relative ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2.5" : "gap-3 px-3 py-2.5"} ${
                       path.startsWith(item.to) ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r" : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
                     }`}
                   >
-                    <item.icon className="h-4 w-4 flex-shrink-0" />
+                    <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
                     <span className={collapsed ? "lg:hidden" : ""}>{item.label}</span>
                   </Link>
                 </TooltipTrigger>
@@ -141,9 +145,9 @@ export function Sidebar({ shell }: Props) {
                       window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
                     }
                   }}
-                  className={`flex w-full items-center rounded-lg text-sm font-medium transition-colors relative text-muted-foreground hover:bg-muted/20 hover:text-foreground ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2" : "gap-3 px-3 py-2"}`}
+                  className={`flex w-full items-center rounded-lg text-[15px] font-medium transition-colors relative text-muted-foreground hover:bg-muted/20 hover:text-foreground ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2.5" : "gap-3 px-3 py-2.5"}`}
                 >
-                  <ShieldAlert className="h-4 w-4 flex-shrink-0" />
+                  <ShieldAlert className="h-[18px] w-[18px] flex-shrink-0" />
                   <span className={collapsed ? "lg:hidden" : ""}>Escalate</span>
                 </button>
               </TooltipTrigger>
@@ -332,10 +336,11 @@ export function Sidebar({ shell }: Props) {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-60">
-            <DropdownMenuItem asChild>
-              <Link to="/settings" onClick={() => setSidebarOpen(false)} className="flex w-full items-center gap-2 cursor-pointer">
-                <Settings className="h-4 w-4" /><span>Settings</span>
-              </Link>
+            <DropdownMenuItem
+              onClick={() => { setSidebarOpen(false); setSettingsOpen(true); }}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Settings className="h-4 w-4" /><span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/contact" onClick={() => setSidebarOpen(false)} className="flex w-full items-center gap-2 cursor-pointer">
@@ -350,5 +355,8 @@ export function Sidebar({ shell }: Props) {
         </DropdownMenu>
       </div>
     </aside>
+
+    <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </>
   );
 }
