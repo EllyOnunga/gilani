@@ -1,4 +1,4 @@
-import { Menu } from "lucide-react";
+import { Menu, PanelLeft } from "lucide-react";
 import { useLayout } from "@/contexts/layout-context";
 
 interface TutorPageHeaderProps {
@@ -18,7 +18,7 @@ export function TutorPageHeader({ title, subtitle, actions }: TutorPageHeaderPro
           className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0 lg:hidden"
           title="Open Menu"
         >
-          <Menu className="h-5 w-5" strokeWidth={2.25} />
+          <PanelLeft className="h-5 w-5" strokeWidth={2.25} />
         </button>
         <div className="min-w-0">
           <h1 className="text-sm font-semibold text-foreground truncate">{title}</h1>

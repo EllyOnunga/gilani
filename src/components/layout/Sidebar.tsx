@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Home,
   MessageSquare,
@@ -43,6 +43,36 @@ type Props = {
 
 export function Sidebar({ shell }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(340);
+  const [isResizing, setIsResizing] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      // Define min and max widths (e.g. 260px to 600px)
+      const newWidth = Math.min(Math.max(260, e.clientX), 600);
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "col-resize";
+    } else {
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
   const {
     sidebarOpen,
     setSidebarOpen,
@@ -94,10 +124,23 @@ export function Sidebar({ shell }: Props) {
   return (
     <>
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-sidebar p-4 transition-[transform,width] duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen overflow-hidden rounded-r-2xl ${
+        style={{ width: collapsed ? undefined : sidebarWidth }}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border/50 bg-sidebar/95 backdrop-blur-xl p-4 shadow-xl lg:shadow-[4px_0_24px_-4px_rgba(0,0,0,0.05)] overflow-hidden ${
+          !isResizing ? "transition-[transform,width] duration-300 ease-in-out" : ""
+        } lg:translate-x-0 lg:static lg:h-screen ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${collapsed ? "w-[340px] lg:w-[64px] lg:p-2" : "w-[340px]"}`}
+        } ${collapsed ? "w-[340px] lg:w-[72px] lg:p-3" : "w-[340px] lg:w-auto"}`}
       >
+        {/* Resize Handle */}
+        {!collapsed && (
+          <div
+            className="hidden lg:block absolute right-0 top-0 w-1.5 h-full cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-50 group"
+            onMouseDown={() => setIsResizing(true)}
+          >
+            {/* Visual indicator on hover */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-1 rounded-full bg-border group-hover:bg-primary/50 transition-colors" />
+          </div>
+        )}
         <div className="flex items-center justify-between mb-6 min-w-0 w-full gap-2">
           <div
             className={`flex flex-col items-start justify-center min-w-0 flex-1 ${collapsed ? "lg:items-center lg:mx-auto" : ""}`}
@@ -461,11 +504,11 @@ export function Sidebar({ shell }: Props) {
           />
         )}
 
-        <div className="mt-auto border-t border-border pt-3">
+        <div className="mt-auto border-t border-border/50 pt-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className={`flex w-full items-center rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer text-left outline-hidden ${collapsed ? "lg:justify-center lg:p-1 gap-2 p-2" : "gap-2 p-2"}`}
+                className={`flex w-fit items-center rounded-full bg-card border border-border shadow-sm hover:bg-accent hover:text-accent-foreground transition-all cursor-pointer text-left outline-hidden ${collapsed ? "lg:justify-center lg:p-1 gap-2 p-1.5 pr-2" : "gap-2 p-1.5 pr-3"}`}
               >
                 <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-border bg-background/50 shadow-inner">
                   {avatarUrl ? (
@@ -480,55 +523,59 @@ export function Sidebar({ shell }: Props) {
                     </span>
                   )}
                 </div>
-                <div className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : ""}`}>
-                  <div className="flex items-center gap-1.5 min-w-0">
+                <div className={`min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
+                  <div className="flex items-center gap-2">
                     <p
-                      className="truncate text-xs font-semibold leading-tight text-foreground"
+                      className="truncate text-sm font-semibold leading-tight text-foreground"
                       title={profileName || user?.email || ""}
                     >
                       {profileName || user?.email?.split("@")[0]}
                     </p>
-                    <span className="inline-flex flex-shrink-0 items-center rounded-full bg-primary/10 px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wider text-primary">
+                    <span className="inline-flex flex-shrink-0 items-center rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-primary">
                       {currentPlan}
                     </span>
                   </div>
                 </div>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start" className="w-60">
+            <DropdownMenuContent side="top" align="start" className="w-64 p-2 shadow-lg rounded-xl">
               <DropdownMenuItem
                 onClick={() => {
                   setSidebarOpen(false);
                   setSettingsOpen(true);
                 }}
-                className="flex items-center gap-2 cursor-pointer"
+                className="flex items-center gap-3 cursor-pointer p-3 text-sm font-medium rounded-lg"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-5 w-5 text-muted-foreground" />
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link
                   to="/contact"
                   onClick={() => setSidebarOpen(false)}
-                  className="flex w-full items-center gap-2 cursor-pointer"
+                  className="flex w-full items-center gap-3 cursor-pointer p-3 text-sm font-medium rounded-lg"
                 >
-                  <Mail className="h-4 w-4" />
+                  <Mail className="h-5 w-5 text-muted-foreground" />
                   <span>Contact</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="my-2" />
               <DropdownMenuItem
                 onClick={signOut}
-                className="text-destructive focus:text-destructive"
+                className="text-destructive focus:text-destructive flex items-center gap-3 cursor-pointer p-3 text-sm font-medium rounded-lg"
               >
-                <LogOut className="h-4 w-4" /> Logout
+                <LogOut className="h-5 w-5" /> <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </aside>
 
-      <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsDrawer
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onOpenSidebar={() => setSidebarOpen(true)}
+      />
     </>
   );
 }

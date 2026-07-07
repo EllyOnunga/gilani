@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu } from "lucide-react";
+import { PanelRight } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -53,7 +53,7 @@ export default function Navbar() {
                 aria-label="Open menu"
                 className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-white/80 hover:text-white hover:bg-white/5 transition-colors"
               >
-                <Menu className="h-5 w-5" />
+                <PanelRight className="h-5 w-5" />
               </button>
             </SheetTrigger>
             <SheetContent

@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  Menu,
+  PanelLeft,
   Timer,
   SquarePen,
   MoreVertical,
@@ -63,7 +63,7 @@ export function ThreadHeader({
           className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
           title="Open Menu"
         >
-          <Menu className="h-5 w-5" strokeWidth={2.25} />
+          <PanelLeft className="h-5 w-5" strokeWidth={2.25} />
         </button>
         {timerState ? (
           <div className="flex items-center gap-1.5 rounded-lg border border-primary bg-primary/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-primary flex-shrink-0">

@@ -13,6 +13,7 @@ import {
   Globe,
   Monitor,
   Keyboard,
+  PanelLeft,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSettings } from "@/components/settings/hooks/useSettings";
@@ -133,9 +134,10 @@ const TABS = [
 type Props = {
   open: boolean;
   onClose: () => void;
+  onOpenSidebar?: () => void;
 };
 
-export function SettingsDrawer({ open, onClose }: Props) {
+export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
   const { user } = useAuth();
   const settings = useSettings(user, { deleteAccount });
 
@@ -163,10 +165,19 @@ export function SettingsDrawer({ open, onClose }: Props) {
         }`}
       >
         {/* Mobile Header (Only visible on mobile) */}
-        <header className="md:hidden flex h-14 items-center justify-between border-b border-border px-4 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-primary" />
-            <h1 className="text-sm font-semibold text-foreground">App Settings</h1>
+        <header className="md:hidden flex h-14 items-center justify-between border-b border-border px-2 flex-shrink-0">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                onClose();
+                if (onOpenSidebar) onOpenSidebar();
+              }}
+              className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
+              title="Open Menu"
+            >
+              <PanelLeft className="h-5 w-5" strokeWidth={2.25} />
+            </button>
+            <h1 className="text-sm font-semibold text-foreground ml-1">Settings</h1>
           </div>
           <button
             onClick={onClose}
