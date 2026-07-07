@@ -138,7 +138,7 @@ export const generateStudyPlanFn = createServerFn({ method: "POST" })
           schema: StudyPlanGenerationSchema,
           prompt,
         } as any),
-        30000,
+        120000,
         "Study plan generation timed out",
       );
     } catch (err) {

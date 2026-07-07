@@ -169,7 +169,7 @@ export const generateQuizFn = createServerFn({ method: "POST" })
                     schema: QuizGenerationSchema,
                     prompt,
                 } as any),
-                30000,
+                120000,
                 "Quiz generation timed out",
             );
         } catch (err) {

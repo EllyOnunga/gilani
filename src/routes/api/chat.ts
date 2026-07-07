@@ -218,7 +218,7 @@ export const Route = createFileRoute("/api/chat")({
                     maxRetries: 0,
                     providerOptions: { google: { outputDimensionality: 768 } },
                   }),
-                  15000,
+                  60000,
                   "Embedding generation timed out",
                 );
 

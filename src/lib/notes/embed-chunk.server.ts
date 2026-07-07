@@ -17,7 +17,7 @@ export async function embedChunk(text: string): Promise<number[]> {
       maxRetries: 1,
       providerOptions: { google: { outputDimensionality: 768 } },
     } as any),
-    6000,
+    60000,
     "Embedding generation timed out",
   );
 
