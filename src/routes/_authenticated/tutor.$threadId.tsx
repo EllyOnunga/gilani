@@ -17,6 +17,7 @@ import { PlansModal } from "@/components/PlansModal";
 import { EscalateModal } from "@/components/tutor/EscalateModal";
 import { MessageList } from "@/components/tutor/MessageList";
 import { PomodoroTimer } from "@/components/tutor/PomodoroTimer";
+import { InAppCamera } from "@/components/tutor/InAppCamera";
 
 export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
   component: TutorThread,
@@ -231,6 +232,16 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
           />
         </div>
       </main>
+
+      {composer.isCameraOpen && (
+        <InAppCamera
+          onCapture={(file) => {
+            composer.setIsCameraOpen(false);
+            composer.handleRawFile(file);
+          }}
+          onClose={() => composer.setIsCameraOpen(false)}
+        />
+      )}
 
       {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={chatState.currentPlan} />}
 

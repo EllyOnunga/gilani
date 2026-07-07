@@ -13,6 +13,7 @@ export function useComposer() {
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [parsingFile, setParsingFile] = useState(false);
   const [docUploadError, setDocUploadError] = useState<string | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -91,17 +92,12 @@ export function useComposer() {
   }, []);
 
   const handleScanClick = () => {
-    const el = document.getElementById("chat-camera-input") as HTMLInputElement | null;
-    if (!el) return;
-    el.click();
+    setIsCameraOpen(true);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleRawFile = async (file: File) => {
     if (file.size > MAX_FILE_SIZE) {
-      setDocUploadError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 2MB.`);
+      setDocUploadError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 10MB.`);
       return;
     }
 
@@ -119,6 +115,14 @@ export function useComposer() {
     } finally {
       setParsingFile(false);
     }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await handleRawFile(file);
+    }
+    e.target.value = "";
   };
 
   const onRemoveFile = () => {
@@ -170,6 +174,7 @@ export function useComposer() {
     isListening,
     toggleVoiceInput,
     handleFileChange,
+    handleRawFile,
     handleScanClick,
     onRemoveFile,
     onClearDocError,
@@ -177,5 +182,7 @@ export function useComposer() {
     handleEditRequest,
     buildMessageText,
     hasContent,
+    isCameraOpen,
+    setIsCameraOpen,
   };
 }

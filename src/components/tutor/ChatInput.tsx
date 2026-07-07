@@ -384,19 +384,6 @@ export function ChatInput({
             }}
             disabled={isDisabled}
           />
-          {/* Camera input: dedicated to prevent mobile attribute reset timeouts from glitching the picker */}
-          <input
-            id="chat-camera-input"
-            type="file"
-            className="hidden"
-            accept="image/*"
-            capture="environment"
-            onChange={onFileChange}
-            onClick={(e) => {
-              (e.target as HTMLInputElement).value = "";
-            }}
-            disabled={isDisabled}
-          />
           {/* label+htmlFor: native OS command — no JS click() required */}
           <div className="pb-2 pl-2 pt-2 flex items-center justify-center">
             <label
