@@ -42,23 +42,24 @@ function AuthedShell() {
   const shell = useAuthedShell();
   const navigate = useNavigate();
 
-  if (shell.loading || !shell.user || shell.roles.length === 0) {
-    return <GilaniLoader />;
-  }
-
   const studentOnlyPaths = ["/tutor", "/tutor"];
   const isOnStudentRoute = studentOnlyPaths.some((p) => shell.path === p || shell.path.startsWith(p + "/"));
+  const shouldRedirectOffStudentRoute = (shell.isAdmin || shell.isTeacher) && isOnStudentRoute;
 
   useEffect(() => {
-    if ((shell.isAdmin || shell.isTeacher) && isOnStudentRoute) {
+    if (shouldRedirectOffStudentRoute) {
       navigate({
         to: shell.isAdmin ? "/admin/users" : "/teacher/escalations",
         replace: true,
       } as any);
     }
-  }, [shell.isAdmin, shell.isTeacher, isOnStudentRoute]);
+  }, [shouldRedirectOffStudentRoute, shell.isAdmin]);
 
-  if ((shell.isAdmin || shell.isTeacher) && isOnStudentRoute) {
+  if (shell.loading || !shell.user || shell.roles.length === 0) {
+    return <GilaniLoader />;
+  }
+
+  if (shouldRedirectOffStudentRoute) {
     return <GilaniLoader />;
   }
 
