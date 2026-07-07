@@ -18,7 +18,7 @@ export function useComposer() {
   const recognitionRef = useRef<any>(null);
   const baseInputRef = useRef("");
 
-  const toggleVoiceInput = () => {
+  const toggleVoiceInput = async () => {
     const SpeechRecognitionCtor =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognitionCtor) {
@@ -29,6 +29,25 @@ export function useComposer() {
       recognitionRef.current?.stop();
       return;
     }
+
+    // Pre-warm the microphone. iOS Safari often throws "not-allowed" immediately
+    // if we don't explicitly request getUserMedia permission first.
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("getUserMedia not supported");
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Instantly stop the stream — SpeechRecognition will manage its own audio capture
+      stream.getTracks().forEach((track) => track.stop());
+    } catch (err: any) {
+      if (!window.isSecureContext) {
+        toast.error("Microphone access requires a secure connection (HTTPS) on mobile.");
+      } else {
+        toast.error("Microphone access denied. Please allow microphone permissions in your browser settings.");
+      }
+      return;
+    }
+
     baseInputRef.current = input;
     const recognition = new SpeechRecognitionCtor();
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
