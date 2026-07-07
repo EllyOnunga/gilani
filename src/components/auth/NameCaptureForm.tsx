@@ -21,7 +21,9 @@ export function NameCaptureForm({
         <div className="text-center space-y-2">
           <Logo to="/" size="md" className="mx-auto" />
           <h1 className="font-serif text-2xl font-black text-white pt-2">Almost there!</h1>
-          <p className="text-xs text-[#9ca3af]">What should we call you? This will be your display name.</p>
+          <p className="text-xs text-[#9ca3af]">
+            What should we call you? This will be your display name.
+          </p>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">

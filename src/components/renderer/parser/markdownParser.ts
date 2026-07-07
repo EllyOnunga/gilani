@@ -7,15 +7,12 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 
 export function parseMarkdown(markdown: string) {
+  return unified()
+    .use(remarkParse)
 
-    return unified()
+    .use(remarkGfm)
 
-        .use(remarkParse)
+    .use(remarkMath)
 
-        .use(remarkGfm)
-
-        .use(remarkMath)
-
-        .parse(markdown);
-
+    .parse(markdown);
 }

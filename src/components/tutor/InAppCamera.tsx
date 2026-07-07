@@ -37,9 +37,13 @@ export function InAppCamera({ onCapture, onClose }: Props) {
       console.error("Camera error:", err);
       const code = err?.name || err?.message || "";
       if (!window.isSecureContext) {
-        toast.error("Camera requires a secure (HTTPS) connection on mobile. Please use your production URL.");
+        toast.error(
+          "Camera requires a secure (HTTPS) connection on mobile. Please use your production URL.",
+        );
       } else if (code === "NotAllowedError" || code.includes("not-allowed")) {
-        toast.error("Camera access denied. Please allow camera permissions in your browser settings and try again.");
+        toast.error(
+          "Camera access denied. Please allow camera permissions in your browser settings and try again.",
+        );
       } else if (code === "NotFoundError") {
         toast.error("No camera found on this device.");
       } else {
@@ -74,15 +78,19 @@ export function InAppCamera({ onCapture, onClose }: Props) {
       ctx.scale(-1, 1);
     }
     ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        toast.error("Failed to capture image.");
-        return;
-      }
-      const file = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
-      onCapture(file);
-    }, "image/jpeg", 0.9);
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          toast.error("Failed to capture image.");
+          return;
+        }
+        const file = new File([blob], `capture-${Date.now()}.jpg`, { type: "image/jpeg" });
+        onCapture(file);
+      },
+      "image/jpeg",
+      0.9,
+    );
   };
 
   const toggleCamera = () => {
@@ -92,14 +100,20 @@ export function InAppCamera({ onCapture, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-black">
       <div className="flex h-16 items-center justify-between px-4 bg-black/40 text-white z-10 absolute top-0 left-0 right-0">
-        <button onClick={onClose} className="p-3 active:scale-90 transition-transform bg-black/40 rounded-full backdrop-blur-md">
+        <button
+          onClick={onClose}
+          className="p-3 active:scale-90 transition-transform bg-black/40 rounded-full backdrop-blur-md"
+        >
           <X className="w-6 h-6" />
         </button>
-        <button onClick={toggleCamera} className="p-3 active:scale-90 transition-transform bg-black/40 rounded-full backdrop-blur-md">
+        <button
+          onClick={toggleCamera}
+          className="p-3 active:scale-90 transition-transform bg-black/40 rounded-full backdrop-blur-md"
+        >
           <RefreshCcw className="w-6 h-6" />
         </button>
       </div>
-      
+
       <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
         {isInitializing && (
           <div className="absolute inset-0 flex items-center justify-center text-white">

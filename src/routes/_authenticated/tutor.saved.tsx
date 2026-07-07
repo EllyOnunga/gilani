@@ -19,7 +19,9 @@ function SavedRoute() {
     let mounted = true;
     const fetchSaved = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
 
         const { data: feedbackData, error: feedbackError } = await supabase
@@ -51,15 +53,20 @@ function SavedRoute() {
       }
     };
     fetchSaved();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  if (loading) return (
-    <div className="h-full flex flex-col">
-      <TutorPageHeader title="Saved Explanations" subtitle="Your bookmarked AI responses" />
-      <div className="flex-1 flex items-center justify-center"><GilaniLoader /></div>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="h-full flex flex-col">
+        <TutorPageHeader title="Saved Explanations" subtitle="Your bookmarked AI responses" />
+        <div className="flex-1 flex items-center justify-center">
+          <GilaniLoader />
+        </div>
+      </div>
+    );
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -69,7 +76,6 @@ function SavedRoute() {
       />
       <div className="flex-1 overflow-y-auto p-4 lg:p-8">
         <div className="max-w-5xl mx-auto">
-
           {savedMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-border rounded-2xl bg-muted/20 mt-8">
               <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
@@ -77,16 +83,22 @@ function SavedRoute() {
               </div>
               <h3 className="text-lg font-bold text-foreground mb-2">No saved items yet</h3>
               <p className="text-muted-foreground max-w-sm">
-                Click the <span className="text-primary font-medium">thumbs up</span> icon on any AI response in your chats to save it here for quick review.
+                Click the <span className="text-primary font-medium">thumbs up</span> icon on any AI
+                response in your chats to save it here for quick review.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {savedMessages.map((msg) => (
-                <div key={msg.id} className="p-6 border border-border bg-card rounded-2xl shadow-sm flex flex-col overflow-hidden hover:border-primary/40 transition-colors">
+                <div
+                  key={msg.id}
+                  className="p-6 border border-border bg-card rounded-2xl shadow-sm flex flex-col overflow-hidden hover:border-primary/40 transition-colors"
+                >
                   <div className="flex items-center gap-2 mb-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400 shrink-0" />
-                    <span className="truncate">From: {(msg.conversations as any)?.title || "Unknown Chat"}</span>
+                    <span className="truncate">
+                      From: {(msg.conversations as any)?.title || "Unknown Chat"}
+                    </span>
                   </div>
                   <div className="text-sm text-foreground flex-1 overflow-y-auto pr-1 markdown-content max-h-[280px]">
                     <MarkdownRenderer content={msg.content || ""} />

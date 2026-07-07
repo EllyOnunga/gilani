@@ -32,7 +32,7 @@ export function useAuth(): AuthState {
             typeof window !== "undefined" ? localStorage.getItem("pending_role") : null;
           const pendingDisplayName =
             typeof window !== "undefined" ? localStorage.getItem("pending_display_name") : null;
-          
+
           if (pendingRole && ["student", "teacher"].includes(pendingRole)) {
             // Check if role already assigned before trying to assign
             const { data: existing } = await supabase
@@ -44,11 +44,11 @@ export function useAuth(): AuthState {
                 localStorage.removeItem("pending_role");
                 localStorage.removeItem("pending_display_name");
                 const { assignUserRole } = await import("@/lib/auth-actions.server-fns");
-                await assignUserRole({ 
-                  data: { 
+                await assignUserRole({
+                  data: {
                     role: pendingRole as AppRole,
-                    displayName: pendingDisplayName || undefined
-                  } 
+                    displayName: pendingDisplayName || undefined,
+                  },
                 });
                 return [pendingRole as AppRole];
               } catch {

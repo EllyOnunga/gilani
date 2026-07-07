@@ -11,7 +11,9 @@ import type { Thread } from "@/lib/hooks/useThreadsQuery";
 export type EscalationStatus = "open" | "in_review" | "resolved" | null;
 
 export function useEscalation(userId: string | null | undefined, threads: Thread[]) {
-  const [escalationStatuses, setEscalationStatuses] = useState<Record<string, EscalationStatus>>({});
+  const [escalationStatuses, setEscalationStatuses] = useState<Record<string, EscalationStatus>>(
+    {},
+  );
   const [escalateSheetThreadId, setEscalateSheetThreadId] = useState<string | null>(null);
   const [escalateEmail, setEscalateEmail] = useState("");
   const [escalating, setEscalating] = useState(false);
@@ -75,7 +77,9 @@ export function useEscalation(userId: string | null | undefined, threads: Thread
         setEscalating(false);
         return;
       }
-      await createEscalationNotification({ data: { conversationId: threadId, reviewerId: reviewerId ?? null } });
+      await createEscalationNotification({
+        data: { conversationId: threadId, reviewerId: reviewerId ?? null },
+      });
       setEscalationStatuses((prev) => ({ ...prev, [threadId]: "open" }));
       setEscalateError("");
       setEscalateSheetThreadId(null);

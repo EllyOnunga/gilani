@@ -22,16 +22,10 @@ export function TutorPageHeader({ title, subtitle, actions }: TutorPageHeaderPro
         </button>
         <div className="min-w-0">
           <h1 className="text-sm font-semibold text-foreground truncate">{title}</h1>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
         </div>
       </div>
-      {actions && (
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {actions}
-        </div>
-      )}
+      {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
     </header>
   );
 }

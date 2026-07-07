@@ -1,21 +1,13 @@
 export function extractText(node: any): string {
+  if (!node) return "";
 
-    if (!node)
+  if (node.value) return node.value;
 
-        return "";
+  if (!node.children) return "";
 
-    if (node.value)
+  return node.children
 
-        return node.value;
+    .map(extractText)
 
-    if (!node.children)
-
-        return "";
-
-    return node.children
-
-        .map(extractText)
-
-        .join("");
-
+    .join("");
 }

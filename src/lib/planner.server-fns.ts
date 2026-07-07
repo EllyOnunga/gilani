@@ -41,7 +41,10 @@ export const generateStudyPlanFn = createServerFn({ method: "POST" })
   .validator(
     z.object({
       examName: z.string().trim().min(2).max(200),
-      examDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      examDate: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .optional(),
       subjects: z.string().trim().min(2).max(500),
       hoursPerDay: z.number().min(0.5).max(8).default(2),
     }),
@@ -148,7 +151,9 @@ export const generateStudyPlanFn = createServerFn({ method: "POST" })
 
     const itemsWithIds: StudyPlanItem[] = (result as any).object.items
       .map((it: any) => ({ ...it, id: crypto.randomUUID(), completed: false }))
-      .sort((a: StudyPlanItem, b: StudyPlanItem) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+      .sort((a: StudyPlanItem, b: StudyPlanItem) =>
+        a.date < b.date ? -1 : a.date > b.date ? 1 : 0,
+      );
 
     const { data: plan, error } = await supabaseAdmin
       .from("study_plans")
@@ -225,7 +230,6 @@ export const deleteStudyPlanFn = createServerFn({ method: "POST" })
     if (error) throw error;
     return { success: true };
   });
-
 
 // ─── Planner form options + weak-topic preview (for display before generating) ───
 export const getPlannerFormOptionsFn = createServerFn({ method: "GET" }).handler(async () => {

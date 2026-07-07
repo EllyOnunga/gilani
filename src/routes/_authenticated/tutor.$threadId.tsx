@@ -24,7 +24,9 @@ export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
 });
 
 // Export utils loaded lazily
-const exportAsPDF = async (...args: Parameters<typeof import("@/lib/export-utils").exportAsPDF>) => {
+const exportAsPDF = async (
+  ...args: Parameters<typeof import("@/lib/export-utils").exportAsPDF>
+) => {
   try {
     const { exportAsPDF: fn } = await import("@/lib/export-utils");
     return fn(...args);
@@ -42,17 +44,22 @@ function TutorThread() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then((res) => {
-      if (!active) return;
-      const session = res?.data?.session;
-      if (session?.access_token) setAuthToken(session.access_token);
-      if (session?.user?.id) setUserId(session.user.id);
-      setAuthLoading(false);
-    }).catch((err) => {
-      console.error("[TutorThread] Failed to get auth session:", err);
-      if (active) setAuthLoading(false);
-    });
-    return () => { active = false; };
+    supabase.auth
+      .getSession()
+      .then((res) => {
+        if (!active) return;
+        const session = res?.data?.session;
+        if (session?.access_token) setAuthToken(session.access_token);
+        if (session?.user?.id) setUserId(session.user.id);
+        setAuthLoading(false);
+      })
+      .catch((err) => {
+        console.error("[TutorThread] Failed to get auth session:", err);
+        if (active) setAuthLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (authLoading) return <GilaniLoader />;
@@ -60,7 +67,13 @@ function TutorThread() {
   return <TutorThreadInner key={threadId} authToken={authToken} userId={userId} />;
 }
 
-function TutorThreadInner({ authToken, userId }: { authToken: string | null; userId: string | null }) {
+function TutorThreadInner({
+  authToken,
+  userId,
+}: {
+  authToken: string | null;
+  userId: string | null;
+}) {
   const { threadId } = Route.useParams();
   const navigate = useNavigate({ from: "/tutor/$threadId" });
   const { setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
@@ -73,9 +86,11 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
   const [escalateModalOpen, setEscalateModalOpen] = useState(false);
   const [teacherEmail, setTeacherEmail] = useState("");
 
-
-
-  const [timerState, setTimerState] = useState<{ minutes: number; seconds: number; running: boolean } | null>(null);
+  const [timerState, setTimerState] = useState<{
+    minutes: number;
+    seconds: number;
+    running: boolean;
+  } | null>(null);
   useEffect(() => {
     const handler = (e: Event) => {
       const { minutes, seconds, running } = (e as CustomEvent).detail as any;
@@ -100,7 +115,11 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     exportAsPDF(chatState.messages, title);
   }, [chatState.threads, threadId, chatState.messages]);
 
-  const sendChatMessage = (finalMessage: string, titleSeedText: string, attachmentMeta?: { storageUrl?: string; mimeType?: string; fileName?: string }) => {
+  const sendChatMessage = (
+    finalMessage: string,
+    titleSeedText: string,
+    attachmentMeta?: { storageUrl?: string; mimeType?: string; fileName?: string },
+  ) => {
     try {
       const currentThread = chatState.threads.find((t) => t.id === threadId);
       if (chatState.messages.length === 0 && !currentThread?.title) {
@@ -109,7 +128,7 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
             renameThreadFn({ data: { threadId, title } })
               .then(() => {
                 chatState.setThreads((prev: any[]) =>
-                  prev.map((t) => (t.id === threadId ? { ...t, title } : t))
+                  prev.map((t) => (t.id === threadId ? { ...t, title } : t)),
                 );
               })
               .catch(console.error);
@@ -132,9 +151,15 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
     const finalMessage = composer.buildMessageText(trimmedInput);
     const titleSeedText =
       trimmedInput ||
-      (composer.attachedFile ? `Uploaded a document: ${composer.attachedFile.name}` : "Started a new session");
+      (composer.attachedFile
+        ? `Uploaded a document: ${composer.attachedFile.name}`
+        : "Started a new session");
     const attachmentMeta = composer.attachedFile
-      ? { storageUrl: composer.attachedFile.storageUrl, mimeType: composer.attachedFile.mimeType, fileName: composer.attachedFile.name }
+      ? {
+          storageUrl: composer.attachedFile.storageUrl,
+          mimeType: composer.attachedFile.mimeType,
+          fileName: composer.attachedFile.name,
+        }
       : undefined;
     composer.setInput("");
     composer.onRemoveFile();
@@ -160,7 +185,10 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
 
   return (
     <div className="flex h-full bg-background text-foreground overflow-hidden">
-      <main className="flex flex-col min-w-0 overflow-hidden w-full h-full" style={{ flex: 1, minHeight: 0 }}>
+      <main
+        className="flex flex-col min-w-0 overflow-hidden w-full h-full"
+        style={{ flex: 1, minHeight: 0 }}
+      >
         <ThreadHeader
           threadId={threadId as string}
           threads={chatState.threads}
@@ -246,7 +274,9 @@ function TutorThreadInner({ authToken, userId }: { authToken: string | null; use
         />
       )}
 
-      {showPlans && <PlansModal onClose={() => setShowPlans(false)} currentPlan={chatState.currentPlan} />}
+      {showPlans && (
+        <PlansModal onClose={() => setShowPlans(false)} currentPlan={chatState.currentPlan} />
+      )}
 
       {escalateModalOpen && (
         <EscalateModal

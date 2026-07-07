@@ -13,7 +13,18 @@ export function useRoleRedirect(params: {
   navigate: ReturnType<typeof useNavigate>;
   router: ReturnType<typeof useRouter>;
 }) {
-  const { loading, user, roles, path, isAdmin, isTeacher, isStudent, signingOutRef, navigate, router } = params;
+  const {
+    loading,
+    user,
+    roles,
+    path,
+    isAdmin,
+    isTeacher,
+    isStudent,
+    signingOutRef,
+    navigate,
+    router,
+  } = params;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -30,7 +41,8 @@ export function useRoleRedirect(params: {
     const isOnStudentRoute = studentOnlyPaths.some((p) => path === p || path.startsWith(p + "/"));
     if (isAdmin && isOnStudentRoute) navigate({ to: "/admin/users" as any });
     else if (isTeacher && isOnStudentRoute) navigate({ to: "/teacher/escalations" as any });
-    else if (isStudent && (path.startsWith("/admin") || path.startsWith("/teacher"))) navigate({ to: "/tutor" as any });
+    else if (isStudent && (path.startsWith("/admin") || path.startsWith("/teacher")))
+      navigate({ to: "/tutor" as any });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user, roles, path]);
 }

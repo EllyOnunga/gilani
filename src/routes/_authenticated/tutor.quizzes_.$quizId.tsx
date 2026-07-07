@@ -159,7 +159,9 @@ function QuizTakeRoute() {
               <BookOpen className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-foreground">Practice Mode</p>
-                <p className="text-sm text-muted-foreground">See if you're right and read the explanation after each question.</p>
+                <p className="text-sm text-muted-foreground">
+                  See if you're right and read the explanation after each question.
+                </p>
               </div>
             </button>
             <button
@@ -169,7 +171,10 @@ function QuizTakeRoute() {
               <TimerIcon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-foreground">Test Mode</p>
-                <p className="text-sm text-muted-foreground">Answer every question first — see your full results and explanations only at the end, like a real exam.</p>
+                <p className="text-sm text-muted-foreground">
+                  Answer every question first — see your full results and explanations only at the
+                  end, like a real exam.
+                </p>
               </div>
             </button>
           </div>

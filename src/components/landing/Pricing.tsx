@@ -21,7 +21,8 @@ export default function Pricing() {
           </h2>
           <p className="text-[#a1a1aa] text-lg font-light">
             Start for free. Upgrade to Pro for unlimited access — just{" "}
-            <span className="text-white font-bold">Ksh {pro.price.toLocaleString()} per month</span>.
+            <span className="text-white font-bold">Ksh {pro.price.toLocaleString()} per month</span>
+            .
           </p>
         </div>
 
@@ -33,7 +34,9 @@ export default function Pricing() {
               <h3 className="text-2xl font-bold text-white mb-2">Free</h3>
               <p className="text-[#a1a1aa] text-sm mb-6">{free.description}</p>
               <div className="flex items-end gap-1">
-                <span className="text-5xl font-black text-white tracking-tighter">Ksh {free.price}</span>
+                <span className="text-5xl font-black text-white tracking-tighter">
+                  Ksh {free.price}
+                </span>
                 <span className="text-[#71717a] text-sm mb-1.5 font-medium">/month</span>
               </div>
             </div>
@@ -74,15 +77,22 @@ export default function Pricing() {
               </h3>
               <p className="text-[#a1a1aa] text-sm mb-6">{pro.description}</p>
               <div className="flex items-end gap-1">
-                <span className="text-5xl font-black text-white tracking-tighter">Ksh {pro.price.toLocaleString()}</span>
+                <span className="text-5xl font-black text-white tracking-tighter">
+                  Ksh {pro.price.toLocaleString()}
+                </span>
                 <span className="text-[#71717a] text-sm mb-1.5 font-medium">/month</span>
               </div>
-              <p className="text-xs text-[#71717a] mt-2 font-medium">Billed monthly via M-Pesa · Cancel anytime</p>
+              <p className="text-xs text-[#71717a] mt-2 font-medium">
+                Billed monthly via M-Pesa · Cancel anytime
+              </p>
             </div>
 
             <ul className="flex-1 space-y-4 mb-10 relative z-10">
               {pro.features.map((f, i) => (
-                <li key={f} className={`flex items-center gap-3 text-sm ${i === 0 ? "text-[#a1a1aa]" : "text-white font-medium"}`}>
+                <li
+                  key={f}
+                  className={`flex items-center gap-3 text-sm ${i === 0 ? "text-[#a1a1aa]" : "text-white font-medium"}`}
+                >
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-[#d9531e] to-[#f59e0b] flex items-center justify-center text-white text-xs shadow-lg shadow-[#d9531e]/30">
                     ✓
                   </span>

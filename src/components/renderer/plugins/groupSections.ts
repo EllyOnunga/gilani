@@ -1,41 +1,27 @@
 interface Section {
+  heading: any;
 
-    heading: any;
-
-    children: any[];
-
+  children: any[];
 }
 
 export function groupSections(children: any[]) {
+  const sections: Section[] = [];
 
-    const sections: Section[] = [];
+  let current: Section | null = null;
 
-    let current: Section | null = null;
+  children.forEach((node) => {
+    if (node.type === "heading") {
+      current = {
+        heading: node,
 
-    children.forEach(node => {
+        children: [],
+      };
 
-        if (node.type === "heading") {
+      sections.push(current);
+    } else {
+      current?.children.push(node);
+    }
+  });
 
-            current = {
-
-                heading: node,
-
-                children: []
-
-            };
-
-            sections.push(current);
-
-        }
-
-        else {
-
-            current?.children.push(node);
-
-        }
-
-    });
-
-    return sections;
-
+  return sections;
 }

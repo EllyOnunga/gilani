@@ -15,7 +15,9 @@ export function AccountCredentialsTab({ settings, userEmail }: Props) {
       </div>
 
       <form onSubmit={settings.handleEmailChange} className="space-y-2">
-        <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block">Change Email</label>
+        <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground block">
+          Change Email
+        </label>
         <input
           type="email"
           placeholder="Current email address"
@@ -39,8 +41,6 @@ export function AccountCredentialsTab({ settings, userEmail }: Props) {
           <Mail className="h-3.5 w-3.5" /> {settings.emailBusy ? "Sending…" : "Update Email"}
         </button>
       </form>
-
-
     </section>
   );
 }

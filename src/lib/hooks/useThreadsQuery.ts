@@ -8,7 +8,10 @@ export interface Thread {
   updated_at?: string | null;
 }
 
-export function useThreadsQuery(userId: string | null | undefined, options?: { enabled?: boolean }) {
+export function useThreadsQuery(
+  userId: string | null | undefined,
+  options?: { enabled?: boolean },
+) {
   const queryClient = useQueryClient();
   const enabled = (options?.enabled ?? true) && !!userId;
 

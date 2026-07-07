@@ -14,20 +14,36 @@ type Props = {
 };
 
 export function ThreadActionSheet({
-  thread, escalationStatus, isExporting, onClose, onRename, onExport, onEscalate, onDelete,
+  thread,
+  escalationStatus,
+  isExporting,
+  onClose,
+  onRename,
+  onExport,
+  onEscalate,
+  onDelete,
 }: Props) {
   const escalateLabel =
-    escalationStatus === "resolved" ? "Teacher Reviewed"
-    : escalationStatus === "in_review" || escalationStatus === "open" ? "Review Pending"
-    : "Escalate to Teacher";
+    escalationStatus === "resolved"
+      ? "Teacher Reviewed"
+      : escalationStatus === "in_review" || escalationStatus === "open"
+        ? "Review Pending"
+        : "Escalate to Teacher";
 
   const EscalateIcon =
-    escalationStatus === "resolved" ? CheckCircle2
-    : escalationStatus === "in_review" || escalationStatus === "open" ? Clock
-    : ShieldAlert;
+    escalationStatus === "resolved"
+      ? CheckCircle2
+      : escalationStatus === "in_review" || escalationStatus === "open"
+        ? Clock
+        : ShieldAlert;
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="max-w-xs rounded-2xl">
         <DialogHeader className="text-left">
           <DialogTitle className="truncate text-sm font-semibold">
@@ -39,7 +55,9 @@ export function ThreadActionSheet({
             onClick={onEscalate}
             className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground hover:bg-muted/40 transition-colors"
           >
-            <EscalateIcon className={`h-4 w-4 ${escalationStatus === "resolved" ? "text-green-500" : "text-amber-500"} ${escalationStatus === "in_review" || escalationStatus === "open" ? "animate-pulse" : ""}`} />
+            <EscalateIcon
+              className={`h-4 w-4 ${escalationStatus === "resolved" ? "text-green-500" : "text-amber-500"} ${escalationStatus === "in_review" || escalationStatus === "open" ? "animate-pulse" : ""}`}
+            />
             {escalateLabel}
           </button>
           <button
@@ -53,7 +71,11 @@ export function ThreadActionSheet({
             disabled={isExporting}
             className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-foreground hover:bg-muted/40 transition-colors disabled:opacity-50"
           >
-            {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
             {isExporting ? "Exporting..." : "Export as PDF"}
           </button>
           <button

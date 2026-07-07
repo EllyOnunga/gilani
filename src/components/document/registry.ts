@@ -9,15 +9,13 @@ import FormulaCard from "../cards/FormulaCard";
 import StudyTipCard from "../cards/StudyTipCard";
 
 export const registry = {
+  definition: DefinitionCard,
 
-    definition: DefinitionCard,
+  example: ExampleCard,
 
-    example: ExampleCard,
+  summary: SummaryCard,
 
-    summary: SummaryCard,
+  formula: FormulaCard,
 
-    formula: FormulaCard,
-
-    studyTip: StudyTipCard
-
+  studyTip: StudyTipCard,
 };

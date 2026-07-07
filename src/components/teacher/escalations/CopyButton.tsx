@@ -20,7 +20,15 @@ export function CopyButton({ text }: { text: string }) {
       title="Copy to clipboard"
       className="flex items-center gap-1 rounded-lg border border-border px-2 py-1.5 text-[10px] font-medium text-muted-foreground hover:bg-accent transition-colors"
     >
-      {copied ? <><Check className="h-3 w-3 text-green-500" /> Copied</> : <><Copy className="h-3 w-3" /> Copy</>}
+      {copied ? (
+        <>
+          <Check className="h-3 w-3 text-green-500" /> Copied
+        </>
+      ) : (
+        <>
+          <Copy className="h-3 w-3" /> Copy
+        </>
+      )}
     </button>
   );
 }

@@ -1,21 +1,18 @@
 interface Props {
-    code: string;
-    language?: string;
+  code: string;
+  language?: string;
 }
 
-export default function CodeFooter({
-    code,
-    language,
-}: Props) {
-    const lines = code.split("\n").length;
+export default function CodeFooter({ code, language }: Props) {
+  const lines = code.split("\n").length;
 
-    const size = new Blob([code]).size;
+  const size = new Blob([code]).size;
 
-    const kb = (size / 1024).toFixed(1);
+  const kb = (size / 1024).toFixed(1);
 
-    return (
-        <div
-            className="
+  return (
+    <div
+      className="
         flex
         items-center
         justify-between
@@ -27,12 +24,12 @@ export default function CodeFooter({
         text-xs
         text-zinc-400
       "
-        >
-            <span>{lines} lines</span>
+    >
+      <span>{lines} lines</span>
 
-            <span>{language ?? "Text"}</span>
+      <span>{language ?? "Text"}</span>
 
-            <span>{kb} KB</span>
-        </div>
-    );
+      <span>{kb} KB</span>
+    </div>
+  );
 }

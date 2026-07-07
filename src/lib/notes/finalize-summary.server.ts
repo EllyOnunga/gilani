@@ -12,9 +12,7 @@ const FinalSummarySchema = z.object({
     ),
   key_concepts: z
     .array(z.string())
-    .describe(
-      "The deduplicated, complete list of every keyword/concept across all segments.",
-    ),
+    .describe("The deduplicated, complete list of every keyword/concept across all segments."),
 });
 
 /**

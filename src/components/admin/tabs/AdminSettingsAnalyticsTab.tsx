@@ -54,7 +54,10 @@ export function AdminSettingsAnalyticsTab() {
           .order("created_at", { ascending: false })
           .limit(500);
 
-        if (!events) { setLoading(false); return; }
+        if (!events) {
+          setLoading(false);
+          return;
+        }
 
         // Aggregate tab views
         const viewMap: Record<string, number> = {};
@@ -111,10 +114,18 @@ export function AdminSettingsAnalyticsTab() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: "Tab Views (90d)", value: totalViews, icon: Eye, color: "text-blue-500" },
-          { label: "Preference Saves (90d)", value: totalSaves, icon: Save, color: "text-emerald-500" },
+          {
+            label: "Preference Saves (90d)",
+            value: totalSaves,
+            icon: Save,
+            color: "text-emerald-500",
+          },
           { label: "Unique Users", value: uniqueUsers, icon: Users, color: "text-primary" },
         ].map((s) => (
-          <div key={s.label} className="rounded-2xl border border-border/40 bg-card p-5 flex items-center gap-4">
+          <div
+            key={s.label}
+            className="rounded-2xl border border-border/40 bg-card p-5 flex items-center gap-4"
+          >
             <div className={`rounded-xl bg-muted/40 p-3 ${s.color}`}>
               <s.icon className="h-5 w-5" />
             </div>
@@ -130,16 +141,22 @@ export function AdminSettingsAnalyticsTab() {
       <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-primary" />
-          <h3 className="font-serif text-base font-bold text-foreground">Settings Tab Popularity</h3>
+          <h3 className="font-serif text-base font-bold text-foreground">
+            Settings Tab Popularity
+          </h3>
         </div>
         {tabStats.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No data yet. Events will appear as users access Settings.</p>
+          <p className="text-sm text-muted-foreground text-center py-8">
+            No data yet. Events will appear as users access Settings.
+          </p>
         ) : (
           <div className="space-y-3">
             {tabStats.map((s) => (
               <div key={s.tab} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-foreground">{TAB_LABELS[s.tab] ?? s.tab}</span>
+                  <span className="font-semibold text-foreground">
+                    {TAB_LABELS[s.tab] ?? s.tab}
+                  </span>
                   <span className="font-mono text-muted-foreground">
                     <span className="text-blue-500">{s.views} views</span>
                     {s.saves > 0 && (
@@ -163,7 +180,9 @@ export function AdminSettingsAnalyticsTab() {
       <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-primary" />
-          <h3 className="font-serif text-base font-bold text-foreground">Recent Settings Activity</h3>
+          <h3 className="font-serif text-base font-bold text-foreground">
+            Recent Settings Activity
+          </h3>
         </div>
         {recentEvents.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">No recent events.</p>
@@ -173,11 +192,13 @@ export function AdminSettingsAnalyticsTab() {
               <div key={e.id} className="flex items-start justify-between py-2.5 gap-4 text-xs">
                 <div className="min-w-0 space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className={`inline-flex rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider font-bold ${
-                      e.action === "settings.tab_viewed"
-                        ? "bg-blue-500/10 text-blue-500"
-                        : "bg-emerald-500/10 text-emerald-600"
-                    }`}>
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider font-bold ${
+                        e.action === "settings.tab_viewed"
+                          ? "bg-blue-500/10 text-blue-500"
+                          : "bg-emerald-500/10 text-emerald-600"
+                      }`}
+                    >
                       {e.action === "settings.tab_viewed" ? "Viewed" : "Saved"}
                     </span>
                     <span className="font-semibold text-foreground">
@@ -197,8 +218,9 @@ export function AdminSettingsAnalyticsTab() {
 
       <div className="rounded-xl border border-border/40 bg-muted/20 p-4 text-xs text-muted-foreground leading-relaxed">
         <TrendingUp className="h-3.5 w-3.5 inline mr-1.5" />
-        Events are logged anonymously whenever a user opens a settings tab or saves preferences. Data covers the last 90 days.
-        Individual preference values are <strong>not</strong> stored — only the tab name is recorded.
+        Events are logged anonymously whenever a user opens a settings tab or saves preferences.
+        Data covers the last 90 days. Individual preference values are <strong>not</strong> stored —
+        only the tab name is recorded.
       </div>
     </div>
   );

@@ -530,7 +530,8 @@ export function teacherReplyEmailTemplate({
     `,
     buttonText: "View Reply →",
     buttonUrl: threadUrl,
-    footerNote: "You are receiving this because email notifications are enabled. You can turn them off in Settings.",
+    footerNote:
+      "You are receiving this because email notifications are enabled. You can turn them off in Settings.",
   });
 }
 
@@ -557,7 +558,8 @@ export function studyReminderEmailTemplate({
     `,
     buttonText: "Continue Studying →",
     buttonUrl: `${APP_URL}/tutor`,
-    footerNote: "You are receiving this because push reminders are enabled. Turn off in Settings → Notifications.",
+    footerNote:
+      "You are receiving this because push reminders are enabled. Turn off in Settings → Notifications.",
   });
 }
 
@@ -623,7 +625,7 @@ export function weeklyDigestEmailTemplate({
     `,
     buttonText: "Start Studying →",
     buttonUrl: `${APP_URL}/tutor`,
-    footerNote: "You are receiving this weekly digest because it is enabled in your notification preferences.",
+    footerNote:
+      "You are receiving this weekly digest because it is enabled in your notification preferences.",
   });
 }
-

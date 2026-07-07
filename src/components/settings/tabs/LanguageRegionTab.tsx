@@ -15,7 +15,8 @@ export function LanguageRegionTab({ settings }: Props) {
         <h3 className="font-serif text-xl font-bold text-foreground">Language & Region</h3>
       </div>
       <p className="text-xs text-muted-foreground">
-        Set your preferred language and regional context to help the tutor provide more relevant examples.
+        Set your preferred language and regional context to help the tutor provide more relevant
+        examples.
       </p>
 
       <div className="space-y-4">

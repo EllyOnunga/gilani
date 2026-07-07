@@ -5,8 +5,8 @@ import { ExternalLink, AlertCircle, Lightbulb, AlertTriangle, Info } from "lucid
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import "katex/contrib/mhchem/mhchem.js";
@@ -19,8 +19,15 @@ import SummaryCard from "@/components/cards/SummaryCard";
 
 import { FreeBodyDiagram, CircuitDiagram, KinematicsEquation } from "@/components/physics";
 import { ChemicalReaction, MolecularStructure, PeriodicTable } from "@/components/chemistry";
-import { MathBlock, InlineMath, FormulaCard, MatrixRenderer, UnitRenderer, GraphRenderer, GeometryRenderer } from "@/components/maths";
-
+import {
+  MathBlock,
+  InlineMath,
+  FormulaCard,
+  MatrixRenderer,
+  UnitRenderer,
+  GraphRenderer,
+  GeometryRenderer,
+} from "@/components/maths";
 
 // ─── Mermaid ────────────────────────────────────────────────────────────────
 
@@ -147,19 +154,123 @@ function CustomCallout({ type, children }: { type: string; children: React.React
 // ─── JS blocklist (avoid auto-wrapping these as formulas) ────────────────────
 
 const JS_BLOCKLIST = new Set([
-  "React", "ReactDOM", "TypeScript", "JavaScript", "NextJS", "NodeJS", "Props",
-  "State", "Ref", "Context", "Provider", "Consumer", "Promise", "Boolean",
-  "String", "Number", "Object", "Array", "HTML", "CSS", "JSON", "XML", "API",
-  "URL", "DOM", "BOM", "NaN", "Infinity", "undefined", "null", "true", "false",
+  "React",
+  "ReactDOM",
+  "TypeScript",
+  "JavaScript",
+  "NextJS",
+  "NodeJS",
+  "Props",
+  "State",
+  "Ref",
+  "Context",
+  "Provider",
+  "Consumer",
+  "Promise",
+  "Boolean",
+  "String",
+  "Number",
+  "Object",
+  "Array",
+  "HTML",
+  "CSS",
+  "JSON",
+  "XML",
+  "API",
+  "URL",
+  "DOM",
+  "BOM",
+  "NaN",
+  "Infinity",
+  "undefined",
+  "null",
+  "true",
+  "false",
 ]);
 
 const PHYSICS_UNITS = [
-  "m/s\\^2","m/s","km/h","km/s","mol/L","g/mol","kg/mol","kJ/mol","J/mol",
-  "eV","MeV","GeV","°C","°F","°K","K","atm","Pa","kPa","MPa","GPa","bar",
-  "mmHg","torr","N","kN","MN","J","kJ","MJ","W","kW","MW","V","mV","A","mA",
-  "Ω","Hz","kHz","MHz","GHz","m","km","cm","mm","μm","nm","pm","fm","kg","g",
-  "mg","μg","lb","oz","s","ms","μs","ns","min","h","d","yr","C","mC","μC",
-  "F","mF","μF","H","mH","T","Wb","lm","lx","Bq","Gy","Sv","kat","mol","mmol",
+  "m/s\\^2",
+  "m/s",
+  "km/h",
+  "km/s",
+  "mol/L",
+  "g/mol",
+  "kg/mol",
+  "kJ/mol",
+  "J/mol",
+  "eV",
+  "MeV",
+  "GeV",
+  "°C",
+  "°F",
+  "°K",
+  "K",
+  "atm",
+  "Pa",
+  "kPa",
+  "MPa",
+  "GPa",
+  "bar",
+  "mmHg",
+  "torr",
+  "N",
+  "kN",
+  "MN",
+  "J",
+  "kJ",
+  "MJ",
+  "W",
+  "kW",
+  "MW",
+  "V",
+  "mV",
+  "A",
+  "mA",
+  "Ω",
+  "Hz",
+  "kHz",
+  "MHz",
+  "GHz",
+  "m",
+  "km",
+  "cm",
+  "mm",
+  "μm",
+  "nm",
+  "pm",
+  "fm",
+  "kg",
+  "g",
+  "mg",
+  "μg",
+  "lb",
+  "oz",
+  "s",
+  "ms",
+  "μs",
+  "ns",
+  "min",
+  "h",
+  "d",
+  "yr",
+  "C",
+  "mC",
+  "μC",
+  "F",
+  "mF",
+  "μF",
+  "H",
+  "mH",
+  "T",
+  "Wb",
+  "lm",
+  "lx",
+  "Bq",
+  "Gy",
+  "Sv",
+  "kat",
+  "mol",
+  "mmol",
 ];
 
 // ─── LaTeX preprocessor ──────────────────────────────────────────────────────
@@ -193,21 +304,33 @@ function preprocessLatex(raw: string): string {
   // Protect code blocks and inline code
   const FENCE_TOKEN = "\x00FENCE\x00";
   const fenceBlocks: string[] = [];
-  s = s.replace(/```[\s\S]*?```/g, (m) => { fenceBlocks.push(m); return FENCE_TOKEN; });
+  s = s.replace(/```[\s\S]*?```/g, (m) => {
+    fenceBlocks.push(m);
+    return FENCE_TOKEN;
+  });
 
   // Protect markdown links [text](url) before any regex touches them
   const LINK_TOKEN = "\x00LINK\x00";
   const linkBlocks: string[] = [];
-  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m) => { linkBlocks.push(m); return LINK_TOKEN; });
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m) => {
+    linkBlocks.push(m);
+    return LINK_TOKEN;
+  });
 
   const INLINE_CODE_TOKEN = "\x00ICODE\x00";
   const inlineCodeBlocks: string[] = [];
-  s = s.replace(/`[^`\n]+`/g, (m) => { inlineCodeBlocks.push(m); return INLINE_CODE_TOKEN; });
+  s = s.replace(/`[^`\n]+`/g, (m) => {
+    inlineCodeBlocks.push(m);
+    return INLINE_CODE_TOKEN;
+  });
 
   // Protect existing math
   const MATH_TOKEN = "\x00MATH\x00";
   const mathBlocks: string[] = [];
-  s = s.replace(/(\$\$[\s\S]*?\$\$|\$(?!\s)[^\$\n]*?(?<!\s)\$)/g, (m) => { mathBlocks.push(m); return MATH_TOKEN; });
+  s = s.replace(/(\$\$[\s\S]*?\$\$|\$(?!\s)[^\$\n]*?(?<!\s)\$)/g, (m) => {
+    mathBlocks.push(m);
+    return MATH_TOKEN;
+  });
 
   // Convert \[...\] and \(...\) to $$ and $
   s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `$$\n${inner.trim()}\n$$`);
@@ -247,8 +370,10 @@ function preprocessLatex(raw: string): string {
   // Arrow shorthand
   s = s.replace(/(\s)(->|-->|<->|<=>)(\s)/g, (_m, pre, arrow, post) => {
     const map: Record<string, string> = {
-      "->": "$\\rightarrow$", "-->": "$\\longrightarrow$",
-      "<->": "$\\leftrightarrow$", "<=>": "$\\rightleftharpoons$",
+      "->": "$\\rightarrow$",
+      "-->": "$\\longrightarrow$",
+      "<->": "$\\leftrightarrow$",
+      "<=>": "$\\rightleftharpoons$",
     };
     return `${pre}${map[arrow]}${post}`;
   });
@@ -272,7 +397,10 @@ function preprocessLatex(raw: string): string {
   return s;
 }
 
-function extractCallout(children: React.ReactNode): { type: string | null; newChildren: React.ReactNode } {
+function extractCallout(children: React.ReactNode): {
+  type: string | null;
+  newChildren: React.ReactNode;
+} {
   let type: string | null = null;
   let matched = false;
 
@@ -280,7 +408,9 @@ function extractCallout(children: React.ReactNode): { type: string | null; newCh
     if (matched) return child;
 
     if (typeof child === "string") {
-      const match = child.match(/^\[!(NOTE|TIP|WARNING|CAUTION|IMPORTANT|DEFINITION|EXAMPLE|SUMMARY)\]\s*/i);
+      const match = child.match(
+        /^\[!(NOTE|TIP|WARNING|CAUTION|IMPORTANT|DEFINITION|EXAMPLE|SUMMARY)\]\s*/i,
+      );
       if (match) {
         type = match[1].toUpperCase();
         matched = true;
@@ -292,12 +422,19 @@ function extractCallout(children: React.ReactNode): { type: string | null; newCh
     if (React.isValidElement(child) && (child.props as any).children) {
       const grandChildren = React.Children.toArray((child.props as any).children);
       if (grandChildren.length > 0 && typeof grandChildren[0] === "string") {
-        const match = grandChildren[0].match(/^\[!(NOTE|TIP|WARNING|CAUTION|IMPORTANT|DEFINITION|EXAMPLE|SUMMARY)\]\s*/i);
+        const match = grandChildren[0].match(
+          /^\[!(NOTE|TIP|WARNING|CAUTION|IMPORTANT|DEFINITION|EXAMPLE|SUMMARY)\]\s*/i,
+        );
         if (match) {
           type = match[1].toUpperCase();
           matched = true;
           const newFirst = grandChildren[0].replace(match[0], "");
-          return React.cloneElement(child as React.ReactElement, {}, newFirst, ...grandChildren.slice(1));
+          return React.cloneElement(
+            child as React.ReactElement,
+            {},
+            newFirst,
+            ...grandChildren.slice(1),
+          );
         }
       }
     }
@@ -312,7 +449,9 @@ function extractCallout(children: React.ReactNode): { type: string | null; newCh
 
 const buildComponents = (isStreaming: boolean): any => ({
   h1: ({ children }: any) => (
-    <h1 className="text-2xl font-extrabold mt-8 mb-4 text-primary border-b border-primary/20 pb-2 leading-tight tracking-tight">{children}</h1>
+    <h1 className="text-2xl font-extrabold mt-8 mb-4 text-primary border-b border-primary/20 pb-2 leading-tight tracking-tight">
+      {children}
+    </h1>
   ),
   h2: ({ children }: any) => (
     <h2 className="text-xl font-bold mt-7 mb-3 text-blue-400 leading-snug">{children}</h2>
@@ -327,12 +466,18 @@ const buildComponents = (isStreaming: boolean): any => ({
     <h5 className="text-sm font-semibold mt-4 mb-1 text-cyan-400">{children}</h5>
   ),
   h6: ({ children }: any) => (
-    <h6 className="text-xs font-semibold uppercase tracking-widest mt-4 mb-1 text-muted-foreground">{children}</h6>
+    <h6 className="text-xs font-semibold uppercase tracking-widest mt-4 mb-1 text-muted-foreground">
+      {children}
+    </h6>
   ),
   p: ({ children }: any) => {
     const { type, newChildren } = extractCallout(children);
     if (type) return <CustomCallout type={type}>{newChildren}</CustomCallout>;
-    return <p className="text-[15px] sm:text-base leading-8 sm:leading-loose mb-5 last:mb-0 text-foreground/90">{children}</p>;
+    return (
+      <p className="text-[15px] sm:text-base leading-8 sm:leading-loose mb-5 last:mb-0 text-foreground/90">
+        {children}
+      </p>
+    );
   },
   del: ({ children }: any) => (
     <del className="line-through text-muted-foreground/60">{children}</del>
@@ -379,15 +524,21 @@ const buildComponents = (isStreaming: boolean): any => ({
         }}
       />
       {alt && (
-        <figcaption className="text-[10px] font-mono text-muted-foreground mt-1 text-center italic">{alt}</figcaption>
+        <figcaption className="text-[10px] font-mono text-muted-foreground mt-1 text-center italic">
+          {alt}
+        </figcaption>
       )}
     </figure>
   ),
   ul: ({ children }: any) => (
-    <ul className="list-disc pl-6 my-5 space-y-2.5 block w-full marker:text-muted-foreground/70">{children}</ul>
+    <ul className="list-disc pl-6 my-5 space-y-2.5 block w-full marker:text-muted-foreground/70">
+      {children}
+    </ul>
   ),
   ol: ({ children }: any) => (
-    <ol className="list-decimal pl-6 my-5 space-y-2.5 block w-full marker:text-muted-foreground marker:font-medium [&_ol]:list-[lower-alpha] [&_ol_ol]:list-[lower-roman]">{children}</ol>
+    <ol className="list-decimal pl-6 my-5 space-y-2.5 block w-full marker:text-muted-foreground marker:font-medium [&_ol]:list-[lower-alpha] [&_ol_ol]:list-[lower-roman]">
+      {children}
+    </ol>
   ),
   li: ({ children, checked }: any) => {
     // Task-list checkbox support
@@ -405,7 +556,10 @@ const buildComponents = (isStreaming: boolean): any => ({
       );
     }
     return (
-      <li className="text-[15px] sm:text-base leading-8 sm:leading-loose" style={{ display: "list-item" }}>
+      <li
+        className="text-[15px] sm:text-base leading-8 sm:leading-loose"
+        style={{ display: "list-item" }}
+      >
         {children}
       </li>
     );
@@ -430,17 +584,19 @@ const buildComponents = (isStreaming: boolean): any => ({
       {children}
     </thead>
   ),
-  tbody: ({ children }: any) => (
-    <tbody className="divide-y divide-border/50">{children}</tbody>
-  ),
+  tbody: ({ children }: any) => <tbody className="divide-y divide-border/50">{children}</tbody>,
   tr: ({ children }: any) => (
     <tr className="hover:bg-muted/30 transition-colors even:bg-muted/10">{children}</tr>
   ),
   th: ({ children }: any) => (
-    <th className="px-5 py-3.5 text-left text-[13px] font-bold text-primary tracking-wide border-r border-border/40 last:border-r-0">{children}</th>
+    <th className="px-5 py-3.5 text-left text-[13px] font-bold text-primary tracking-wide border-r border-border/40 last:border-r-0">
+      {children}
+    </th>
   ),
   td: ({ children }: any) => (
-    <td className="px-5 py-3.5 text-[15px] leading-relaxed border-r border-border/40 last:border-r-0">{children}</td>
+    <td className="px-5 py-3.5 text-[15px] leading-relaxed border-r border-border/40 last:border-r-0">
+      {children}
+    </td>
   ),
 
   // ── Code blocks (react-markdown v10: no `inline` prop; use parent context) ──
@@ -448,7 +604,8 @@ const buildComponents = (isStreaming: boolean): any => ({
     const child = React.Children.only(children) as any;
     const rawLang = (child?.props?.className || "").replace("language-", "").toLowerCase().trim();
     const langs = rawLang.split(/\s+/).filter(Boolean);
-    const code = typeof child?.props?.children === "string" ? child.props.children.replace(/\n$/, "") : "";
+    const code =
+      typeof child?.props?.children === "string" ? child.props.children.replace(/\n$/, "") : "";
 
     const isMermaid = langs.includes("mermaid");
     const isSmiles = langs.some((l: string) => ["smiles", "smi"].includes(l));
@@ -459,41 +616,52 @@ const buildComponents = (isStreaming: boolean): any => ({
     const isChem = langs.some((l: string) => ["chemistry", "chem"].includes(l));
 
     // User custom interactive blocks integration
-    const createBlock = (type: string): any => ({ 
-      id: "block-" + Math.random(), 
-      type, 
+    const createBlock = (type: string): any => ({
+      id: "block-" + Math.random(),
+      type,
       content: code,
-      children: [] 
+      children: [],
     });
 
     switch (rawLang) {
       // Physics
       case "physics:fbd":
-      case "fbd": return <FreeBodyDiagram block={createBlock("fbd")} />;
+      case "fbd":
+        return <FreeBodyDiagram block={createBlock("fbd")} />;
       case "physics:circuit":
-      case "circuit": return <CircuitDiagram block={createBlock("circuit")} />;
+      case "circuit":
+        return <CircuitDiagram block={createBlock("circuit")} />;
       case "physics:kinematics":
-      case "kinematics": return <KinematicsEquation block={createBlock("kinematics")} />;
-      
+      case "kinematics":
+        return <KinematicsEquation block={createBlock("kinematics")} />;
+
       // Chemistry
       case "chemistry:reaction":
-      case "reaction": return <ChemicalReaction block={createBlock("reaction")} />;
+      case "reaction":
+        return <ChemicalReaction block={createBlock("reaction")} />;
       case "chemistry:molecule":
-      case "molecule": return <MolecularStructure block={createBlock("molecule")} />;
+      case "molecule":
+        return <MolecularStructure block={createBlock("molecule")} />;
       case "chemistry:periodic":
-      case "periodic": return <PeriodicTable block={createBlock("periodic")} />;
-      
+      case "periodic":
+        return <PeriodicTable block={createBlock("periodic")} />;
+
       // Maths
       case "maths:formula":
-      case "formula": return <FormulaCard block={createBlock("formula")} />;
+      case "formula":
+        return <FormulaCard block={createBlock("formula")} />;
       case "maths:graph":
-      case "graph": return <GraphRenderer block={createBlock("graph")} />;
+      case "graph":
+        return <GraphRenderer block={createBlock("graph")} />;
       case "maths:geometry":
-      case "geometry": return <GeometryRenderer block={createBlock("geometry")} />;
+      case "geometry":
+        return <GeometryRenderer block={createBlock("geometry")} />;
       case "maths:matrix":
-      case "matrix": return <MatrixRenderer block={createBlock("matrix")} />;
+      case "matrix":
+        return <MatrixRenderer block={createBlock("matrix")} />;
       case "maths:unit":
-      case "unit": return <UnitRenderer block={createBlock("unit")} />;
+      case "unit":
+        return <UnitRenderer block={createBlock("unit")} />;
     }
 
     if (isMath) return <MathBlock block={createBlock("math")} />;
@@ -523,7 +691,9 @@ const buildComponents = (isStreaming: boolean): any => ({
     return (
       <div className="relative my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner group">
         <div className="flex items-center justify-between px-4 py-1.5 bg-white/5 border-b border-white/10">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">{rawLang || "code"}</span>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+            {rawLang || "code"}
+          </span>
           <button
             onClick={handleCopy}
             className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-white/40 hover:text-white/80 transition-colors"
@@ -553,7 +723,16 @@ const buildComponents = (isStreaming: boolean): any => ({
   code: ({ children, className }: any) => {
     const classStr = className || "";
     if (classStr.includes("math-inline") || classStr.includes("language-math")) {
-      return <InlineMath block={{ id: "math-" + Math.random(), type: "inlineMath", content: String(children), children: [] }} />;
+      return (
+        <InlineMath
+          block={{
+            id: "math-" + Math.random(),
+            type: "inlineMath",
+            content: String(children),
+            children: [],
+          }}
+        />
+      );
     }
 
     const rawLang = classStr.replace("language-", "").toLowerCase().trim();
@@ -598,10 +777,7 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
 
   return (
     <div className={`markdown-content text-foreground ${className}`}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
-        components={components}
-      >
+      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} components={components}>
         {processed}
       </ReactMarkdown>
     </div>

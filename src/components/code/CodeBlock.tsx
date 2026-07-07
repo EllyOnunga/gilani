@@ -8,60 +8,50 @@ import CollapsibleCode from "./CollapsibleCode";
 import CodeFooter from "./CodeFooter";
 
 interface Props {
-    block: DocumentBlock;
+  block: DocumentBlock;
 }
 
 export default function CodeBlock({ block }: Props) {
-    const language = (block.metadata?.language as string) || "text";
-    const fileName = (block.metadata?.fileName as string) || undefined;
-    const code = block.content ?? "";
-    const key = `${language}:${code}`;
+  const language = (block.metadata?.language as string) || "text";
+  const fileName = (block.metadata?.fileName as string) || undefined;
+  const code = block.content ?? "";
+  const key = `${language}:${code}`;
 
-    const [html, setHtml] = useState(() => getCached(key) || "");
+  const [html, setHtml] = useState(() => getCached(key) || "");
 
-    useEffect(() => {
-        if (getCached(key)) return;
+  useEffect(() => {
+    if (getCached(key)) return;
 
-        async function highlight() {
-            const highlighter = await getHighlighter();
+    async function highlight() {
+      const highlighter = await getHighlighter();
 
-            const highlighted = highlighter.codeToHtml(
-                code,
-                {
-                    lang: language,
-                    theme: "github-dark",
-                }
-            );
+      const highlighted = highlighter.codeToHtml(code, {
+        lang: language,
+        theme: "github-dark",
+      });
 
-            const sanitized = DOMPurify.sanitize(highlighted);
-            setCached(key, sanitized);
-            setHtml(sanitized);
-        }
+      const sanitized = DOMPurify.sanitize(highlighted);
+      setCached(key, sanitized);
+      setHtml(sanitized);
+    }
 
-        highlight();
-    }, [code, language, key]);
+    highlight();
+  }, [code, language, key]);
 
-    return (
-        <section className="my-6 overflow-hidden rounded-xl border border-zinc-800 bg-[#0d1117]">
-            <CodeToolbar
-                language={language}
-                fileName={fileName}
-                code={code}
-            />
+  return (
+    <section className="my-6 overflow-hidden rounded-xl border border-zinc-800 bg-[#0d1117]">
+      <CodeToolbar language={language} fileName={fileName} code={code} />
 
-            <CollapsibleCode>
-                <div
-                    className="overflow-auto text-[14px] p-4"
-                    dangerouslySetInnerHTML={{
-                        __html: html,
-                    }}
-                />
-            </CollapsibleCode>
+      <CollapsibleCode>
+        <div
+          className="overflow-auto text-[14px] p-4"
+          dangerouslySetInnerHTML={{
+            __html: html,
+          }}
+        />
+      </CollapsibleCode>
 
-            <CodeFooter
-                code={code}
-                language={language}
-            />
-        </section>
-    );
+      <CodeFooter code={code} language={language} />
+    </section>
+  );
 }

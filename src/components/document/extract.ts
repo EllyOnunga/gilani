@@ -1,17 +1,11 @@
 export function extract(node: any) {
+  if (!node.children) return "";
 
-    if (!node.children)
+  return node.children
 
-        return "";
+    .map((c: any) => {
+      return c.value ?? "";
+    })
 
-    return node.children
-
-        .map((c: any) => {
-
-            return c.value ?? "";
-
-        })
-
-        .join("");
-
+    .join("");
 }

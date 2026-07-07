@@ -7,7 +7,8 @@ type Props = {
 };
 
 export function PlanUsageTab({ settings }: Props) {
-  const dailyLimit = settings.currentPlan === "free" ? PLANS.free.dailyMessages : PLANS.pro.dailyMessages;
+  const dailyLimit =
+    settings.currentPlan === "free" ? PLANS.free.dailyMessages : PLANS.pro.dailyMessages;
   const usagePercentage = Math.min(100, (settings.dailyMessageCount / dailyLimit) * 100);
 
   return (
@@ -17,7 +18,8 @@ export function PlanUsageTab({ settings }: Props) {
         <h3 className="font-serif text-xl font-bold text-foreground">Subscription Plan</h3>
       </div>
       <p className="text-xs text-muted-foreground">
-        Upgrade your plan to unlock more daily questions, quizzes, study notes synthesis, and premium AI models.
+        Upgrade your plan to unlock more daily questions, quizzes, study notes synthesis, and
+        premium AI models.
       </p>
 
       {/* Current plan + usage */}
@@ -25,8 +27,12 @@ export function PlanUsageTab({ settings }: Props) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4 text-primary" />
-            <span className="font-bold capitalize text-sm text-foreground">{settings.currentPlan} Plan</span>
-            <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary">Active</span>
+            <span className="font-bold capitalize text-sm text-foreground">
+              {settings.currentPlan} Plan
+            </span>
+            <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-primary">
+              Active
+            </span>
           </div>
           {settings.currentPlan === "free" && (
             <button
@@ -61,18 +67,31 @@ export function PlanUsageTab({ settings }: Props) {
           const p = PLANS[pid];
           const isActive = settings.currentPlan === pid;
           return (
-            <div key={pid} className={`rounded-xl border p-4 space-y-3 transition-all ${isActive ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"}`}>
+            <div
+              key={pid}
+              className={`rounded-xl border p-4 space-y-3 transition-all ${isActive ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"}`}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-bold text-sm text-foreground">{p.label}</p>
-                  <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{p.price === 0 ? "Free" : `KSh ${p.price.toLocaleString()}/mo`}</p>
+                  <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
+                    {p.price === 0 ? "Free" : `KSh ${p.price.toLocaleString()}/mo`}
+                  </p>
                 </div>
-                {isActive && <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-primary-foreground">Current</span>}
+                {isActive && (
+                  <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-primary-foreground">
+                    Current
+                  </span>
+                )}
               </div>
               <ul className="space-y-1">
                 {p.features.map((feat) => (
-                  <li key={feat} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <span className="w-1 h-1 rounded-full bg-primary/60 flex-shrink-0" />{feat}
+                  <li
+                    key={feat}
+                    className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
+                  >
+                    <span className="w-1 h-1 rounded-full bg-primary/60 flex-shrink-0" />
+                    {feat}
                   </li>
                 ))}
               </ul>

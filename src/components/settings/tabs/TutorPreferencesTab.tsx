@@ -13,12 +13,15 @@ export function TutorPreferencesTab({ settings }: Props) {
         <h3 className="font-serif text-xl font-bold text-foreground">Tutor Preferences</h3>
       </div>
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Personalize how GilaniAI responds to your study questions. Choose styles that match your preferred learning pacing.
+        Personalize how GilaniAI responds to your study questions. Choose styles that match your
+        preferred learning pacing.
       </p>
 
       <div className="space-y-3">
         <div>
-          <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">Tutor Tone / Personality</label>
+          <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
+            Tutor Tone / Personality
+          </label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {[
               { id: "encouraging", label: "Encouraging", desc: "Warm & supportive" },
@@ -39,7 +42,9 @@ export function TutorPreferencesTab({ settings }: Props) {
         </div>
 
         <div>
-          <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">Teaching Methodology</label>
+          <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
+            Teaching Methodology
+          </label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {[
               { id: "socratic", label: "Socratic Method", desc: "Guides with hints" },
@@ -60,7 +65,9 @@ export function TutorPreferencesTab({ settings }: Props) {
         </div>
 
         <div>
-          <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">Scaffolding Depth Level</label>
+          <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
+            Scaffolding Depth Level
+          </label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {[
               { id: "guided", label: "Highly Scaffolded", desc: "Small incremental hints" },
@@ -88,7 +95,7 @@ export function TutorPreferencesTab({ settings }: Props) {
         <p className="text-[11px] text-muted-foreground leading-relaxed -mt-2">
           Providing your grade and subjects helps GilaniAI tailor explanations automatically.
         </p>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground">Current Grade / Year</label>
@@ -111,14 +118,28 @@ export function TutorPreferencesTab({ settings }: Props) {
             />
           </div>
         </div>
-        
+
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-foreground">Subjects Enrolled (comma separated)</label>
+          <label className="text-xs font-semibold text-foreground">
+            Subjects Enrolled (comma separated)
+          </label>
           <input
             type="text"
             placeholder="e.g. Maths, Physics, Chemistry, Biology"
-            value={Array.isArray(settings.preferences.subjectsEnrolled) ? settings.preferences.subjectsEnrolled.join(", ") : ""}
-            onChange={(e) => settings.updatePreference("subjectsEnrolled", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+            value={
+              Array.isArray(settings.preferences.subjectsEnrolled)
+                ? settings.preferences.subjectsEnrolled.join(", ")
+                : ""
+            }
+            onChange={(e) =>
+              settings.updatePreference(
+                "subjectsEnrolled",
+                e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              )
+            }
             className="w-full rounded-xl border border-border/50 bg-background px-3 py-2 text-sm outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
           />
         </div>
@@ -128,7 +149,7 @@ export function TutorPreferencesTab({ settings }: Props) {
 
       <div className="space-y-4">
         <h4 className="font-serif text-lg font-bold text-foreground">Advanced Knobs</h4>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground">Response Language</label>
@@ -165,8 +186,12 @@ export function TutorPreferencesTab({ settings }: Props) {
               className="w-4 h-4 rounded border-border/50 text-primary focus:ring-primary/50"
             />
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Always show step-by-step workings</span>
-              <span className="text-[10px] text-muted-foreground">Instead of just the final summary.</span>
+              <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                Always show step-by-step workings
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Instead of just the final summary.
+              </span>
             </div>
           </label>
 
@@ -178,8 +203,12 @@ export function TutorPreferencesTab({ settings }: Props) {
               className="w-4 h-4 rounded border-border/50 text-primary focus:ring-primary/50"
             />
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Auto-save study responses</span>
-              <span className="text-[10px] text-muted-foreground">Automatically add highlighted tutor messages to the Saved tab.</span>
+              <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                Auto-save study responses
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                Automatically add highlighted tutor messages to the Saved tab.
+              </span>
             </div>
           </label>
         </div>

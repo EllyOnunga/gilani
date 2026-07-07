@@ -2,9 +2,9 @@ import { MarkdownRenderer } from "@/components/tutor/MarkdownRenderer";
 import { SmoothMarkdownRenderer } from "@/components/tutor/SmoothMarkdownRenderer";
 
 interface Props {
-    content: string;
-    isStreaming?: boolean;
-    className?: string;
+  content: string;
+  isStreaming?: boolean;
+  className?: string;
 }
 
 /**
@@ -17,21 +17,13 @@ interface Props {
  *   renders the full, final content immediately.
  */
 export default function AiRenderer({ content, isStreaming = false, className }: Props) {
-    return (
-        <div className="w-full overflow-hidden">
-            {isStreaming ? (
-                <SmoothMarkdownRenderer
-                    content={content}
-                    isStreaming={isStreaming}
-                    className={className}
-                />
-            ) : (
-                <MarkdownRenderer
-                    content={content}
-                    isStreaming={false}
-                    className={className}
-                />
-            )}
-        </div>
-    );
+  return (
+    <div className="w-full overflow-hidden">
+      {isStreaming ? (
+        <SmoothMarkdownRenderer content={content} isStreaming={isStreaming} className={className} />
+      ) : (
+        <MarkdownRenderer content={content} isStreaming={false} className={className} />
+      )}
+    </div>
+  );
 }

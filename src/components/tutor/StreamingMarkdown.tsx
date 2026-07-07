@@ -22,10 +22,7 @@ export const StreamingMarkdown = React.memo(function StreamingMarkdown({
 
   return (
     <div className={`markdown-content text-foreground ${className}`}>
-      <MarkdownRenderer
-        content={content}
-        isStreaming={isStreaming}
-      />
+      <MarkdownRenderer content={content} isStreaming={isStreaming} />
       {isStreaming && (
         <span
           className="inline-block w-[2px] h-[1.1em] bg-primary opacity-90 ml-0.5 align-text-bottom rounded-full"

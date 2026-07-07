@@ -28,7 +28,10 @@ const CURRICULA = {
     label: "IGCSE",
     full: "Cambridge IGCSE",
     chat: [
-      { type: "student", text: "What's the difference between mitosis and meiosis for IGCSE Biology?" },
+      {
+        type: "student",
+        text: "What's the difference between mitosis and meiosis for IGCSE Biology?",
+      },
       {
         type: "ai",
         text: "Mitosis makes two identical cells for growth and repair. Meiosis makes four genetically different cells for reproduction, halving the chromosome number. Examiners love it when you mention 'genetic variation' — that's the key marking-point phrase.",
@@ -137,7 +140,10 @@ export default function Hero() {
                 </button>
               ))}
             </div>
-            <p key={curriculum + "-full"} className="text-xs text-[#a1a1aa]/70 font-mono animate-in fade-in duration-300">
+            <p
+              key={curriculum + "-full"}
+              className="text-xs text-[#a1a1aa]/70 font-mono animate-in fade-in duration-300"
+            >
               {CURRICULA[curriculum].full}
             </p>
           </div>
@@ -178,8 +184,19 @@ export default function Hero() {
 
           <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-white/10 pt-6 text-sm text-[#a1a1aa]">
             <span className="inline-flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 text-[#E28743]">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                className="w-4 h-4 text-[#E28743]"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
               </svg>
               Free to start, no credit card required
             </span>
@@ -192,13 +209,22 @@ export default function Hero() {
         <div className="relative flex flex-1 items-center justify-center w-full max-w-lg lg:max-w-none">
           {/* Floating Glow Chips */}
           <div className="absolute -left-10 top-20 hidden motion-safe:animate-bounce rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl px-5 py-3 text-sm font-semibold text-white shadow-2xl md:block [animation-duration:4s] z-20">
-            <span className="mr-2 text-xl" aria-hidden="true">📄</span> Upload PDF
+            <span className="mr-2 text-xl" aria-hidden="true">
+              📄
+            </span>{" "}
+            Upload PDF
           </div>
           <div className="absolute -right-6 top-40 hidden motion-safe:animate-bounce rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl px-5 py-3 text-sm font-semibold text-white shadow-2xl md:block [animation-duration:5s] [animation-delay:1s] z-20">
-            <span className="mr-2 text-xl" aria-hidden="true">🧮</span> Math Solver
+            <span className="mr-2 text-xl" aria-hidden="true">
+              🧮
+            </span>{" "}
+            Math Solver
           </div>
           <div className="absolute -left-12 bottom-40 hidden motion-safe:animate-bounce rounded-2xl border border-[#C96A3D]/30 bg-[#C96A3D]/10 backdrop-blur-xl px-5 py-3 text-sm font-semibold text-[#E28743] shadow-[0_0_20px_rgba(201,106,61,0.3)] md:block [animation-duration:4.5s] [animation-delay:0.5s] z-20">
-            <span className="mr-2 text-xl" aria-hidden="true">🤖</span> AI Tutor
+            <span className="mr-2 text-xl" aria-hidden="true">
+              🤖
+            </span>{" "}
+            AI Tutor
           </div>
 
           {/* Phone Frame */}
@@ -216,7 +242,10 @@ export default function Hero() {
 
             <div className="flex flex-col h-full pt-16 p-4 gap-4 overflow-y-auto bg-gradient-to-b from-[#211B18] to-[#161210]">
               {messages.map((msg, idx) => (
-                <div key={idx} className={`flex w-full ${msg.type === "student" ? "justify-end" : "justify-start"}`}>
+                <div
+                  key={idx}
+                  className={`flex w-full ${msg.type === "student" ? "justify-end" : "justify-start"}`}
+                >
                   <div
                     className={`max-w-[85%] rounded-[20px] px-4 py-3 text-[13px] leading-relaxed shadow-md ${
                       msg.type === "student"
@@ -243,8 +272,18 @@ export default function Hero() {
               <div className="w-full rounded-full border border-white/10 bg-[#27272a]/80 backdrop-blur-md px-4 py-3 flex items-center justify-between shadow-lg">
                 <span className="text-[13px] text-white/40">Message GilaniAI...</span>
                 <div className="w-7 h-7 rounded-full bg-[#C96A3D] flex items-center justify-center shadow-lg shadow-[#C96A3D]/50">
-                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  <svg
+                    className="w-3.5 h-3.5 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 10l7-7m0 0l7 7m-7-7v18"
+                    />
                   </svg>
                 </div>
               </div>

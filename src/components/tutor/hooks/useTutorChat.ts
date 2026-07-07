@@ -14,8 +14,17 @@ import {
 import { useThreadsQuery } from "@/lib/hooks/useThreadsQuery";
 import { hasPendingMessage } from "@/lib/pending-message";
 
-export function useTutorChat({ threadId, userId, authToken }: { threadId?: string; userId: string | null; authToken: string | null }) {
-  const { threads, threadsLoading, threadsLoadError, setThreads, invalidateThreads } = useThreadsQuery(userId);
+export function useTutorChat({
+  threadId,
+  userId,
+  authToken,
+}: {
+  threadId?: string;
+  userId: string | null;
+  authToken: string | null;
+}) {
+  const { threads, threadsLoading, threadsLoadError, setThreads, invalidateThreads } =
+    useThreadsQuery(userId);
 
   const [chatError, setChatError] = useState<string | null>(null);
   const [messagesUsed, setMessagesUsed] = useState<number>(0);
@@ -35,8 +44,10 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
   const [messagesLoading, setMessagesLoading] = useState(!isBrandNewThread);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
   const [userVotes, setUserVotes] = useState<Record<string, 1 | -1>>({});
-  
-  const [escalationStatus, setEscalationStatus] = useState<"open" | "in_review" | "resolved" | null>(null);
+
+  const [escalationStatus, setEscalationStatus] = useState<
+    "open" | "in_review" | "resolved" | null
+  >(null);
   const [escalating, setEscalating] = useState(false);
   const [escalateEmailError, setEscalateEmailError] = useState("");
 
@@ -57,7 +68,9 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
         console.error("Failed to load user plan profile:", err);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [userId]);
 
   const refreshRateLimitStatus = useCallback(async () => {
@@ -84,12 +97,19 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
             if (p.retryAfterMs !== undefined || p.isDaily !== undefined) return null;
           } catch {}
           const lower = prev.toLowerCase();
-          if (lower.includes("rate limit") || lower.includes("daily") || lower.includes("quota") || lower.includes("exceeded"))
+          if (
+            lower.includes("rate limit") ||
+            lower.includes("daily") ||
+            lower.includes("quota") ||
+            lower.includes("exceeded")
+          )
             return null;
           return prev;
         });
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
@@ -104,10 +124,12 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "rate_limits", filter: `key=eq.${dailyKey}` },
-        () => refreshRateLimitStatus()
+        () => refreshRateLimitStatus(),
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId, refreshRateLimitStatus]);
 
   useEffect(() => {
@@ -120,7 +142,11 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
     return () => clearTimeout(safety);
   }, []);
 
-  const attachmentMetaRef = useRef<{ storageUrl?: string; mimeType?: string; fileName?: string } | null>(null);
+  const attachmentMetaRef = useRef<{
+    storageUrl?: string;
+    mimeType?: string;
+    fileName?: string;
+  } | null>(null);
 
   const transport = useMemo(
     () =>
@@ -136,12 +162,18 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
               parsed.attachmentMeta = attachmentMetaRef.current;
               attachmentMetaRef.current = null;
               init = { ...init, body: JSON.stringify(parsed) };
-            } catch { /* ignore parse errors */ }
+            } catch {
+              /* ignore parse errors */
+            }
           }
           const res = await fetch(input, init);
           if (!res.ok) {
             let errText = "";
-            try { errText = await res.text(); } catch { errText = res.statusText; }
+            try {
+              errText = await res.text();
+            } catch {
+              errText = res.statusText;
+            }
             throw new Error(errText);
           }
           return res;
@@ -198,7 +230,9 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
   const isPending = status === "submitted" || status === "streaming";
   const messages = messagesRaw as UIMessage[];
   const messagesRef = useRef<UIMessage[]>(messages);
-  useEffect(() => { messagesRef.current = messages; }, [messages]);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // When sendMessage fires optimistically, useChat immediately adds the user
   // message to messagesRaw. If messagesLoading is still true at that point,
@@ -410,7 +444,9 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
   const prevPendingRef = useRef(isPending);
   useEffect(() => {
     if (prevPendingRef.current && !isPending) {
-      const timer = setTimeout(() => { loadMessages(true); }, 300);
+      const timer = setTimeout(() => {
+        loadMessages(true);
+      }, 300);
       return () => clearTimeout(timer);
     }
     prevPendingRef.current = isPending;
@@ -422,20 +458,29 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
       .channel(`escalation-status-${threadId}`)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "escalations", filter: `conversation_id=eq.${threadId}` },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "escalations",
+          filter: `conversation_id=eq.${threadId}`,
+        },
         (payload) => {
           const newStatus = (payload.new as any)?.status;
           if (newStatus) {
             setEscalationStatus(newStatus);
             if (newStatus === "resolved")
-              toast.success("A teacher has reviewed your conversation and responded!", { duration: 6000 });
+              toast.success("A teacher has reviewed your conversation and responded!", {
+                duration: 6000,
+              });
             else if (newStatus === "in_review")
               toast.info("A teacher is now reviewing your conversation.", { duration: 4000 });
           }
         },
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [threadId]);
 
   useEffect(() => {
@@ -444,7 +489,12 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
       .channel(`messages-${threadId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${threadId}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${threadId}`,
+        },
         (payload) => {
           const msg = payload.new as any;
           if (msg?.role === "assistant" && msg?.content?.includes("Teacher Review:")) {
@@ -464,7 +514,9 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
         },
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [threadId, messagesLoading]);
 
   const handleEscalate = async (email?: string) => {
@@ -485,14 +537,21 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
         return;
       }
       const result = await createEscalationFn({
-        data: { conversationId: threadId, reason: "student_request", detail: "Student manually requested teacher review.", reviewerId: reviewerId ?? null },
+        data: {
+          conversationId: threadId,
+          reason: "student_request",
+          detail: "Student manually requested teacher review.",
+          reviewerId: reviewerId ?? null,
+        },
       });
       if (result.alreadyOpen) {
         toast.info("This conversation already has an open escalation.");
         setEscalating(false);
         return;
       }
-      await createEscalationNotification({ data: { conversationId: threadId, reviewerId: reviewerId ?? null } });
+      await createEscalationNotification({
+        data: { conversationId: threadId, reviewerId: reviewerId ?? null },
+      });
       setEscalationStatus("open");
       setEscalateEmailError("");
       toast.success("Conversation escalated to your teacher! They will be notified by email.");
@@ -530,7 +589,10 @@ export function useTutorChat({ threadId, userId, authToken }: { threadId?: strin
     setEscalateEmailError,
     messages,
     setMessages,
-    sendMessage: (msg: any, attachmentMeta?: { storageUrl?: string; mimeType?: string; fileName?: string }) => {
+    sendMessage: (
+      msg: any,
+      attachmentMeta?: { storageUrl?: string; mimeType?: string; fileName?: string },
+    ) => {
       if (attachmentMeta) attachmentMetaRef.current = attachmentMeta;
       return sendMessage(msg);
     },

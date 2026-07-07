@@ -121,9 +121,11 @@ export const MessageBubble = memo(function MessageBubble({
   const { reasoningSteps, toolSteps } = useMemo(() => {
     const part = m.parts?.find((p: any) => p.type === "thinking-steps");
     const steps = Array.isArray(part?.steps) ? part.steps : [];
-    
-    const dbToolSteps = steps.filter((s: any) => s.type === "tool-call" || s.type === "tool-result");
-    
+
+    const dbToolSteps = steps.filter(
+      (s: any) => s.type === "tool-call" || s.type === "tool-result",
+    );
+
     const liveToolSteps: any[] = [];
     const seenCalls = new Set<string>();
     const seenResults = new Set<string>();
@@ -138,7 +140,7 @@ export const MessageBubble = memo(function MessageBubble({
             input: inv.args,
           });
         }
-        if ('result' in inv && !seenResults.has(invId)) {
+        if ("result" in inv && !seenResults.has(invId)) {
           seenResults.add(invId);
           liveToolSteps.push({
             type: "tool-result",
@@ -186,7 +188,6 @@ export const MessageBubble = memo(function MessageBubble({
     return () => {
       if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStreamActive]);
   const showBubbleCard = displayText.length > 0;
   const isUser = m.role === "user";
@@ -254,7 +255,7 @@ export const MessageBubble = memo(function MessageBubble({
           {toolSteps.map((step: any, i: number) => {
             if (step.type !== "tool-call") return null;
             const isDone = toolSteps.some(
-              (s: any) => s.type === "tool-result" && s.toolName === step.toolName
+              (s: any) => s.type === "tool-result" && s.toolName === step.toolName,
             );
             return (
               <div
@@ -266,9 +267,34 @@ export const MessageBubble = memo(function MessageBubble({
                 }`}
               >
                 {isDone ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="animate-spin"
+                  >
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
                 )}
                 <span className="font-semibold">{step.toolName}</span>
               </div>
@@ -278,7 +304,9 @@ export const MessageBubble = memo(function MessageBubble({
       )}
       <div
         className={`${
-          isUser ? "max-w-[88%] sm:max-w-[72%] px-4 py-3" : "w-full max-w-[96%] sm:max-w-full px-0 py-1"
+          isUser
+            ? "max-w-[88%] sm:max-w-[72%] px-4 py-3"
+            : "w-full max-w-[96%] sm:max-w-full px-0 py-1"
         } text-sm leading-relaxed relative transition-all duration-200 ${
           isUser
             ? "bg-card border border-border text-foreground rounded-2xl rounded-tr-sm shadow-sm"
@@ -304,7 +332,12 @@ export const MessageBubble = memo(function MessageBubble({
                       {showThinkingPanel && (
                         <div className="mt-1.5 space-y-1.5 rounded-lg border border-border/50 bg-muted/20 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
                           {reasoningSteps.map((step: any, i: number) => (
-                            <p key={`reasoning-${i}-${(step.text || "").slice(0, 20)}`} className="italic">{step.text}</p>
+                            <p
+                              key={`reasoning-${i}-${(step.text || "").slice(0, 20)}`}
+                              className="italic"
+                            >
+                              {step.text}
+                            </p>
                           ))}
                         </div>
                       )}
@@ -331,7 +364,7 @@ export const MessageBubble = memo(function MessageBubble({
                       {toolSteps.map((step: any, i: number) => {
                         if (step.type !== "tool-call") return null;
                         const isDone = toolSteps.some(
-                          (s: any) => s.type === "tool-result" && s.toolName === step.toolName
+                          (s: any) => s.type === "tool-result" && s.toolName === step.toolName,
                         );
                         return (
                           <div
@@ -343,9 +376,34 @@ export const MessageBubble = memo(function MessageBubble({
                             }`}
                           >
                             {isDone ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="11"
+                                height="11"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
                             ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="11"
+                                height="11"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="animate-spin"
+                              >
+                                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                              </svg>
                             )}
                             <span className="font-semibold">{step.toolName}</span>
                           </div>
@@ -353,7 +411,6 @@ export const MessageBubble = memo(function MessageBubble({
                       })}
                     </div>
                   )}
-
                 </div>
               ) : (
                 !isStreamActive && (

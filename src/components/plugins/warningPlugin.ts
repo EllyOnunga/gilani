@@ -1,30 +1,21 @@
 import { RendererPlugin } from "./types";
 
 export const warningPlugin: RendererPlugin = {
+  name: "warning",
 
-    name: "warning",
+  test(node) {
+    if (node.type !== "paragraph") return false;
 
-    test(node) {
+    const value = node.children?.[0]?.value ?? "";
 
-        if (node.type !== "paragraph")
-            return false;
+    return value.trim() === "Common Mistake";
+  },
 
-        const value = node.children?.[0]?.value ?? "";
+  transform(node) {
+    node.data = {
+      component: "WarningCard",
+    };
 
-        return value.trim() === "Common Mistake";
-
-    },
-
-    transform(node) {
-
-        node.data = {
-
-            component: "WarningCard"
-
-        };
-
-        return node;
-
-    }
-
+    return node;
+  },
 };

@@ -39,7 +39,10 @@ export default function FAQ() {
           {FAQS.map((faq, idx) => {
             const isOpen = openIdx === idx;
             return (
-              <div key={idx} className="rounded-2xl border border-white/10 bg-[#1C1C1C] overflow-hidden transition-all duration-300">
+              <div
+                key={idx}
+                className="rounded-2xl border border-white/10 bg-[#1C1C1C] overflow-hidden transition-all duration-300"
+              >
                 <button
                   onClick={() => setOpenIdx(isOpen ? null : idx)}
                   className="flex w-full items-center justify-between p-6 text-left"
@@ -51,12 +54,19 @@ export default function FAQ() {
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
 
                 {isOpen && (
-                  <div className="px-6 pb-6 text-[rgba(255,255,255,0.75)] leading-relaxed">{faq.a}</div>
+                  <div className="px-6 pb-6 text-[rgba(255,255,255,0.75)] leading-relaxed">
+                    {faq.a}
+                  </div>
                 )}
               </div>
             );

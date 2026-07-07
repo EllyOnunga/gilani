@@ -12,13 +12,21 @@ export function AdminFeedbackTab({ feedback }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
           <ThumbsUp className="mx-auto h-5 w-5 mb-2 text-green-500" />
-          <p className="font-serif text-2xl sm:text-3xl font-bold">{feedback.filter((f) => f.vote === 1).length}</p>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Positive</p>
+          <p className="font-serif text-2xl sm:text-3xl font-bold">
+            {feedback.filter((f) => f.vote === 1).length}
+          </p>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+            Positive
+          </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-2.5 sm:p-4 text-center shadow-sm">
           <ThumbsDown className="mx-auto h-5 w-5 mb-2 text-destructive" />
-          <p className="font-serif text-2xl sm:text-3xl font-bold">{feedback.filter((f) => f.vote === -1).length}</p>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">Negative</p>
+          <p className="font-serif text-2xl sm:text-3xl font-bold">
+            {feedback.filter((f) => f.vote === -1).length}
+          </p>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+            Negative
+          </p>
         </div>
       </div>
 
@@ -36,16 +44,26 @@ export function AdminFeedbackTab({ feedback }: Props) {
               <thead>
                 <tr className="border-b border-border bg-muted/40">
                   {["User", "Vote", "Message ID", "Date"].map((h) => (
-                    <th key={h} className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{h}</th>
+                    <th
+                      key={h}
+                      className="px-2 py-2 sm:px-5 sm:py-3 text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {feedback.map((f) => (
-                  <tr key={f.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                  <tr
+                    key={f.id}
+                    className="border-b border-border/50 hover:bg-accent/30 transition-colors"
+                  >
                     <td className="px-2 py-2 sm:px-5 sm:py-3">
                       <p className="font-semibold">{f.profiles?.display_name ?? "—"}</p>
-                      <p className="font-mono text-[10px] text-muted-foreground">{f.user_id?.slice(0, 8)}…</p>
+                      <p className="font-mono text-[10px] text-muted-foreground">
+                        {f.user_id?.slice(0, 8)}…
+                      </p>
                     </td>
                     <td className="px-2 py-2 sm:px-5 sm:py-3">
                       {f.vote === 1 ? (
@@ -58,15 +76,21 @@ export function AdminFeedbackTab({ feedback }: Props) {
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-3 font-mono text-[10px] text-muted-foreground">{f.message_id?.slice(0, 12)}…</td>
-                    <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">{formatDate(f.created_at)}</td>
+                    <td className="px-5 py-3 font-mono text-[10px] text-muted-foreground">
+                      {f.message_id?.slice(0, 12)}…
+                    </td>
+                    <td className="px-2 py-2 sm:px-5 sm:py-3 font-mono text-xs text-muted-foreground">
+                      {formatDate(f.created_at)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <div className="px-5 py-3 border-t border-border/50 bg-muted/20">
-            <p className="font-mono text-[10px] text-muted-foreground">{feedback.length} total responses</p>
+            <p className="font-mono text-[10px] text-muted-foreground">
+              {feedback.length} total responses
+            </p>
           </div>
         </div>
       )}

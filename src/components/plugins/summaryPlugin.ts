@@ -1,30 +1,21 @@
 import { RendererPlugin } from "./types";
 
 export const summaryPlugin: RendererPlugin = {
+  name: "summary",
 
-    name: "summary",
+  test(node) {
+    if (node.type !== "paragraph") return false;
 
-    test(node) {
+    const value = node.children?.[0]?.value ?? "";
 
-        if (node.type !== "paragraph")
-            return false;
+    return value.trim() === "Summary";
+  },
 
-        const value = node.children?.[0]?.value ?? "";
+  transform(node) {
+    node.data = {
+      component: "SummaryCard",
+    };
 
-        return value.trim() === "Summary";
-
-    },
-
-    transform(node) {
-
-        node.data = {
-
-            component: "SummaryCard"
-
-        };
-
-        return node;
-
-    }
-
+    return node;
+  },
 };

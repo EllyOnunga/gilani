@@ -126,7 +126,6 @@ export const Route = createFileRoute("/api/notifications/digest")({
               } catch (e) {
                 // Ignore if table doesn't exist
               }
-
             } catch (innerErr) {
               console.error(`[Digest] Failed for user ${profile.id}:`, innerErr);
               failed++;

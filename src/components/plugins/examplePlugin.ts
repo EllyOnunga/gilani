@@ -1,30 +1,21 @@
 import { RendererPlugin } from "./types";
 
 export const examplePlugin: RendererPlugin = {
+  name: "example",
 
-    name: "example",
+  test(node) {
+    if (node.type !== "paragraph") return false;
 
-    test(node) {
+    const value = node.children?.[0]?.value ?? "";
 
-        if (node.type !== "paragraph")
-            return false;
+    return value.trim() === "Example";
+  },
 
-        const value = node.children?.[0]?.value ?? "";
+  transform(node) {
+    node.data = {
+      component: "ExampleCard",
+    };
 
-        return value.trim() === "Example";
-
-    },
-
-    transform(node) {
-
-        node.data = {
-
-            component: "ExampleCard"
-
-        };
-
-        return node;
-
-    }
-
+    return node;
+  },
 };

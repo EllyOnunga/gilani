@@ -88,13 +88,19 @@ export function NoteUploadModal({ onClose, onUploaded }: NoteUploadModalProps) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={!busy ? onClose : undefined} />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={!busy ? onClose : undefined}
+      />
 
       <div className="relative w-full max-w-lg rounded-3xl border border-border bg-card shadow-2xl p-6 sm:p-8 space-y-5 z-10">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Upload Notes</h2>
           {!busy && (
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              onClick={onClose}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               <X className="h-5 w-5" />
             </button>
           )}
@@ -106,7 +112,9 @@ export function NoteUploadModal({ onClose, onUploaded }: NoteUploadModalProps) {
               <button
                 onClick={() => setTab("file")}
                 className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-colors ${
-                  tab === "file" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  tab === "file"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <UploadCloud className="h-4 w-4" /> Upload File
@@ -114,7 +122,9 @@ export function NoteUploadModal({ onClose, onUploaded }: NoteUploadModalProps) {
               <button
                 onClick={() => setTab("paste")}
                 className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition-colors ${
-                  tab === "paste" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  tab === "paste"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <FileText className="h-4 w-4" /> Paste Text
@@ -168,7 +178,8 @@ export function NoteUploadModal({ onClose, onUploaded }: NoteUploadModalProps) {
                   className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none"
                 />
                 <p className={`text-xs ${overLimit ? "text-red-500" : "text-muted-foreground"}`}>
-                  {pastedText.length.toLocaleString()} / {MAX_RAW_TEXT_LENGTH.toLocaleString()} characters
+                  {pastedText.length.toLocaleString()} / {MAX_RAW_TEXT_LENGTH.toLocaleString()}{" "}
+                  characters
                 </p>
               </div>
             )}

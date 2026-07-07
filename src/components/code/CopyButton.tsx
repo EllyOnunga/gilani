@@ -2,28 +2,26 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 
 interface Props {
-    value: string;
+  value: string;
 }
 
-export default function CopyButton({
-    value,
-}: Props) {
-    const [copied, setCopied] = useState(false);
+export default function CopyButton({ value }: Props) {
+  const [copied, setCopied] = useState(false);
 
-    async function handleCopy() {
-        await navigator.clipboard.writeText(value);
+  async function handleCopy() {
+    await navigator.clipboard.writeText(value);
 
-        setCopied(true);
+    setCopied(true);
 
-        setTimeout(() => {
-            setCopied(false);
-        }, 2000);
-    }
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  }
 
-    return (
-        <button
-            onClick={handleCopy}
-            className="
+  return (
+    <button
+      onClick={handleCopy}
+      className="
         flex
         items-center
         gap-2
@@ -35,18 +33,17 @@ export default function CopyButton({
         transition
         hover:bg-[#4B352B]
       "
-        >
-            {copied ? (
-                <>
-                    <Check size={14} />
-                    ✓ Copied
-                </>
-            ) : (
-                <>
-                    <Copy size={14} />
-                    📋 Copy
-                </>
-            )}
-        </button>
-    );
+    >
+      {copied ? (
+        <>
+          <Check size={14} />✓ Copied
+        </>
+      ) : (
+        <>
+          <Copy size={14} />
+          📋 Copy
+        </>
+      )}
+    </button>
+  );
 }

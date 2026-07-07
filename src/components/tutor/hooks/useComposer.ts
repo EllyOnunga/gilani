@@ -4,7 +4,13 @@ import { parseDocument } from "@/lib/document-parser";
 import { friendlyError } from "@/lib/async";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AttachedFile = { name: string; text: string; size: number; storageUrl?: string; mimeType?: string };
+export type AttachedFile = {
+  name: string;
+  text: string;
+  size: number;
+  storageUrl?: string;
+  mimeType?: string;
+};
 
 const MAX_DOC_CHARS = 8000;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -42,13 +48,17 @@ export function useComposer() {
       // Check permission status first — only request if still in 'prompt' state
       let needsPrompt = true;
       try {
-        const permStatus = await navigator.permissions.query({ name: "microphone" as PermissionName });
+        const permStatus = await navigator.permissions.query({
+          name: "microphone" as PermissionName,
+        });
         needsPrompt = permStatus.state === "prompt";
         if (permStatus.state === "denied") {
           toast.error("Microphone access denied. Please enable it in your browser settings.");
           return;
         }
-      } catch { /* permissions API not supported, fall through to getUserMedia */ }
+      } catch {
+        /* permissions API not supported, fall through to getUserMedia */
+      }
 
       if (needsPrompt) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -59,14 +69,18 @@ export function useComposer() {
       if (!window.isSecureContext) {
         toast.error("Microphone access requires a secure connection (HTTPS) on mobile.");
       } else {
-        toast.error("Microphone access denied. Please allow microphone permissions in your browser settings.");
+        toast.error(
+          "Microphone access denied. Please allow microphone permissions in your browser settings.",
+        );
       }
       return;
     }
 
     baseInputRef.current = input;
     const recognition = new SpeechRecognitionCtor();
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     recognition.continuous = !isIOS;
     recognition.interimResults = true;
     recognition.lang = "en-US";
@@ -82,9 +96,13 @@ export function useComposer() {
       if (event.error !== "no-speech" && event.error !== "aborted") {
         if (event.error === "not-allowed") {
           if (!window.isSecureContext) {
-            toast.error("Microphone access requires a secure connection (HTTPS) on mobile. Please use HTTPS or localhost.");
+            toast.error(
+              "Microphone access requires a secure connection (HTTPS) on mobile. Please use HTTPS or localhost.",
+            );
           } else {
-            toast.error("Microphone access denied. Please check your browser settings or permissions.");
+            toast.error(
+              "Microphone access denied. Please check your browser settings or permissions.",
+            );
           }
         } else {
           toast.error(`Voice input error (${event.error}). Please try again.`);
@@ -112,7 +130,9 @@ export function useComposer() {
 
   const handleRawFile = async (file: File) => {
     if (file.size > MAX_FILE_SIZE) {
-      setDocUploadError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 10MB.`);
+      setDocUploadError(
+        `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 10MB.`,
+      );
       return;
     }
 

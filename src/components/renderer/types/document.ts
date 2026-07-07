@@ -2,39 +2,33 @@ import { BlockMetadata } from "./metadata";
 import { BlockType } from "./block";
 
 export interface DocumentBlock {
+  id: string;
 
-    id: string;
+  type: BlockType;
 
-    type: BlockType;
+  title?: string;
 
-    title?: string;
+  content?: string;
 
-    content?: string;
+  data?: unknown;
 
-    data?: unknown;
+  metadata?: BlockMetadata;
 
-    metadata?: BlockMetadata;
-
-    children: DocumentBlock[];
-
+  children: DocumentBlock[];
 }
 
 export interface DocumentModel {
+  version: 1;
 
-    version: 1;
-
-    blocks: DocumentBlock[];
-
+  blocks: DocumentBlock[];
 }
 
 export interface MathData {
+  latex: string;
 
-    latex: string;
-
-    display: boolean;
-
+  display: boolean;
 }
 
 interface Props {
-    block: DocumentBlock;
+  block: DocumentBlock;
 }

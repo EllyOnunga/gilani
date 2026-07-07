@@ -6,17 +6,15 @@ import { studyTipPlugin } from "./studyTipPlugin";
 import { warningPlugin } from "./warningPlugin";
 
 export const rendererPlugins = [
+  definitionPlugin,
 
-    definitionPlugin,
+  examplePlugin,
 
-    examplePlugin,
+  summaryPlugin,
 
-    summaryPlugin,
+  formulaPlugin,
 
-    formulaPlugin,
+  studyTipPlugin,
 
-    studyTipPlugin,
-
-    warningPlugin
-
+  warningPlugin,
 ];

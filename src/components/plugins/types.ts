@@ -1,9 +1,7 @@
 export interface RendererPlugin {
+  name: string;
 
-    name: string;
+  test(node: any): boolean;
 
-    test(node: any): boolean;
-
-    transform(node: any): any;
-
+  transform(node: any): any;
 }

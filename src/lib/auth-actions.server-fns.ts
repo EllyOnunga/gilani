@@ -52,8 +52,7 @@ export const assignUserRole = createServerFn({ method: "POST" })
       if (insertError) throw insertError;
 
       // Also ensure profile exists for OAuth users
-      const resolvedDisplayName =
-        displayName || authResult.user.user_metadata?.full_name || null;
+      const resolvedDisplayName = displayName || authResult.user.user_metadata?.full_name || null;
 
       await supabaseAdmin.from("profiles").upsert(
         {
@@ -70,20 +69,18 @@ export const assignUserRole = createServerFn({ method: "POST" })
       // up in the Supabase Auth dashboard's user list. The app itself always
       // reads display_name from the profiles table above, never from here.
       if (resolvedDisplayName) {
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
-          user_metadata: { display_name: resolvedDisplayName },
-        }).catch((err) => console.error("[assignUserRole] Failed to sync auth metadata:", err));
+        await supabaseAdmin.auth.admin
+          .updateUserById(userId, {
+            user_metadata: { display_name: resolvedDisplayName },
+          })
+          .catch((err) => console.error("[assignUserRole] Failed to sync auth metadata:", err));
       }
 
       // Send welcome email
       const userEmail = authResult.user.email;
       const userName = displayName || authResult.user.user_metadata?.full_name || "there";
       const dashboard =
-        role === "teacher"
-          ? "/teacher/escalations"
-          : role === "admin"
-            ? "/admin/users"
-            : "/tutor";
+        role === "teacher" ? "/teacher/escalations" : role === "admin" ? "/admin/users" : "/tutor";
       if (userEmail) {
         sendTransactionalEmail({
           to: userEmail,
@@ -128,17 +125,20 @@ export const instantLogin = createServerFn({ method: "POST" })
     // role ever having been assigned.
     const isBrandNewProfile = !existingProfile;
 
-    const { data: linkData, error: linkError } =
-      await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email });
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+    });
     if (linkError || !linkData?.properties?.hashed_token) {
       throw new Error(linkError?.message || "Failed to create session");
     }
 
     const SUPABASE_URL = process.env.SUPABASE_URL!;
-    const SUPABASE_ANON_KEY =
-      process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+    const SUPABASE_ANON_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
     if (!SUPABASE_ANON_KEY) {
-      throw new Error("Missing SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY) environment variable");
+      throw new Error(
+        "Missing SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY) environment variable",
+      );
     }
     const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -193,4 +193,3 @@ export const instantLogin = createServerFn({ method: "POST" })
       needsProfileSetup,
     };
   });
-

@@ -1,35 +1,33 @@
 import { ReactNode } from "react";
 
 export type BlockType =
-    | "paragraph"
-    | "heading"
-    | "definition"
-    | "example"
-    | "formula"
-    | "summary"
-    | "warning"
-    | "tip"
-    | "practice"
-    | "table"
-    | "code"
-    | "math"
-    | "image"
-    | "list";
+  | "paragraph"
+  | "heading"
+  | "definition"
+  | "example"
+  | "formula"
+  | "summary"
+  | "warning"
+  | "tip"
+  | "practice"
+  | "table"
+  | "code"
+  | "math"
+  | "image"
+  | "list";
 
 export interface DocumentBlock {
+  id: string;
 
-    id: string;
+  type: BlockType;
 
-    type: BlockType;
+  title?: string;
 
-    title?: string;
+  children?: DocumentBlock[];
 
-    children?: DocumentBlock[];
+  content?: string;
 
-    content?: string;
+  language?: string;
 
-    language?: string;
-
-    meta?: Record<string, unknown>;
-
+  meta?: Record<string, unknown>;
 }

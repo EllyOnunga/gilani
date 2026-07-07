@@ -181,7 +181,8 @@ function QuizzesRoute() {
                   </h3>
                   {formOptions && formOptions.quizzesMaxToday < 999_999 && (
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {formOptions.quizzesUsedToday}/{formOptions.quizzesMaxToday} quizzes used today
+                      {formOptions.quizzesUsedToday}/{formOptions.quizzesMaxToday} quizzes used
+                      today
                     </p>
                   )}
                 </div>
@@ -212,10 +213,11 @@ function QuizzesRoute() {
                       <button
                         key={d}
                         onClick={() => setDifficulty(d)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${difficulty === d
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          difficulty === d
                             ? "bg-primary text-primary-foreground border-primary"
                             : "border-border text-muted-foreground hover:border-primary/40"
-                          }`}
+                        }`}
                       >
                         {d.charAt(0).toUpperCase() + d.slice(1)}
                       </button>
@@ -233,10 +235,11 @@ function QuizzesRoute() {
                       <button
                         key={n}
                         onClick={() => setQuestionCount(n)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${questionCount === n
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          questionCount === n
                             ? "bg-primary text-primary-foreground border-primary"
                             : "border-border text-muted-foreground hover:border-primary/40"
-                          }`}
+                        }`}
                       >
                         {n}
                       </button>
@@ -249,7 +252,9 @@ function QuizzesRoute() {
                 disabled={generating}
                 className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
               >
-                {generating ? "Generating your quiz..." : (
+                {generating ? (
+                  "Generating your quiz..."
+                ) : (
                   <>
                     <Brain className="h-4 w-4" />
                     Generate Quiz

@@ -21,10 +21,15 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={!busy ? onCancel : undefined} />
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={!busy ? onCancel : undefined}
+      />
       <div className="relative w-full max-w-sm rounded-2xl border border-border bg-card shadow-2xl p-6 space-y-4 z-10">
         <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-xl shrink-0 ${destructive ? "bg-red-50 text-red-500" : "bg-primary/10 text-primary"}`}>
+          <div
+            className={`p-2 rounded-xl shrink-0 ${destructive ? "bg-red-50 text-red-500" : "bg-primary/10 text-primary"}`}
+          >
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div>

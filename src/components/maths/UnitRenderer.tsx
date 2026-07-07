@@ -3,27 +3,27 @@ import EquationToolbar from "./EquationToolbar";
 import type { DocumentBlock } from "@/components/renderer/types/document";
 
 interface Props {
-    block: DocumentBlock;
+  block: DocumentBlock;
 }
 
 export default function UnitRenderer({ block }: Props) {
-    let content = (block.data as any)?.latex || block.content || "";
-    
-    // Ensure it's wrapped in siunitx \SI or \pu macro (or standard math)
-    if (!content.includes("\\SI") && !content.includes("\\pu")) {
-        content = `\\mathrm{${content}}`;
-    }
+  let content = (block.data as any)?.latex || block.content || "";
 
-    const customBlock: DocumentBlock = {
-        ...block,
-        content,
-        data: { ...((block.data as any) || {}), latex: content },
-    };
+  // Ensure it's wrapped in siunitx \SI or \pu macro (or standard math)
+  if (!content.includes("\\SI") && !content.includes("\\pu")) {
+    content = `\\mathrm{${content}}`;
+  }
 
-    return (
-        <section className="my-6 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900/50">
-            <EquationToolbar title="Units" />
-            <MathBlock block={customBlock} />
-        </section>
-    );
+  const customBlock: DocumentBlock = {
+    ...block,
+    content,
+    data: { ...((block.data as any) || {}), latex: content },
+  };
+
+  return (
+    <section className="my-6 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900/50">
+      <EquationToolbar title="Units" />
+      <MathBlock block={customBlock} />
+    </section>
+  );
 }

@@ -336,9 +336,7 @@ export const createResolutionNotification = createServerFn({ method: "POST" })
   });
 
 export const renameThreadFn = createServerFn({ method: "POST" })
-  .validator(
-    z.object({ threadId: z.string().uuid(), title: z.string().trim().min(1).max(120) }),
-  )
+  .validator(z.object({ threadId: z.string().uuid(), title: z.string().trim().min(1).max(120) }))
   .handler(async ({ data }) => {
     const request = (await import("@tanstack/react-start/server")).getRequest();
     const { authenticateRequest } = await import("@/lib/api-auth.server");

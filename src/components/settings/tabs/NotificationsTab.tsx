@@ -29,7 +29,11 @@ export function NotificationsTab({ settings }: Props) {
     // Optimistically update UI
     updatePreference("notificationsPush", isEnabling);
 
-    if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+    if (
+      typeof window === "undefined" ||
+      !("serviceWorker" in navigator) ||
+      !("PushManager" in window)
+    ) {
       toast.error("Push notifications are not supported in your browser.");
       updatePreference("notificationsPush", false);
       return;
@@ -37,7 +41,9 @@ export function NotificationsTab({ settings }: Props) {
 
     setIsPushToggling(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
 
       if (isEnabling) {
@@ -56,7 +62,7 @@ export function NotificationsTab({ settings }: Props) {
         if (!subscription) {
           const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
           if (!vapidKey) throw new Error("VAPID public key not found");
-          
+
           subscription = await swRegistration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(vapidKey),
@@ -66,7 +72,7 @@ export function NotificationsTab({ settings }: Props) {
         // Send subscription to backend
         const res = await fetch("/api/notifications/push-subscribe", {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
@@ -87,7 +93,7 @@ export function NotificationsTab({ settings }: Props) {
           method: "DELETE",
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
-        
+
         if (!res.ok) throw new Error("Failed to remove push subscription");
         toast.info("Push notifications disabled.");
       }
@@ -116,9 +122,13 @@ export function NotificationsTab({ settings }: Props) {
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-muted-foreground" />
-              <label htmlFor="notif-email" className="text-sm font-semibold text-foreground">Email Notifications</label>
+              <label htmlFor="notif-email" className="text-sm font-semibold text-foreground">
+                Email Notifications
+              </label>
             </div>
-            <p className="text-[11px] text-muted-foreground">Receive emails when a teacher replies to an escalation.</p>
+            <p className="text-[11px] text-muted-foreground">
+              Receive emails when a teacher replies to an escalation.
+            </p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -136,9 +146,13 @@ export function NotificationsTab({ settings }: Props) {
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <Smartphone className="h-4 w-4 text-muted-foreground" />
-              <label htmlFor="notif-push" className="text-sm font-semibold text-foreground">Push Notifications</label>
+              <label htmlFor="notif-push" className="text-sm font-semibold text-foreground">
+                Push Notifications
+              </label>
             </div>
-            <p className="text-[11px] text-muted-foreground">Receive in-app push notifications for reminders.</p>
+            <p className="text-[11px] text-muted-foreground">
+              Receive in-app push notifications for reminders.
+            </p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -157,9 +171,13 @@ export function NotificationsTab({ settings }: Props) {
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <RefreshCcw className="h-4 w-4 text-muted-foreground" />
-              <label htmlFor="notif-digest" className="text-sm font-semibold text-foreground">Weekly Digest</label>
+              <label htmlFor="notif-digest" className="text-sm font-semibold text-foreground">
+                Weekly Digest
+              </label>
             </div>
-            <p className="text-[11px] text-muted-foreground">Get a weekly summary of your study progress.</p>
+            <p className="text-[11px] text-muted-foreground">
+              Get a weekly summary of your study progress.
+            </p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input

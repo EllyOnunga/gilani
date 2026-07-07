@@ -5,7 +5,15 @@ import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendTransactionalEmail, emailTemplate } from "@/lib/email.server";
-import { ShieldAlert, CheckCircle2, MessageSquare, Clock, AlertTriangle, Menu, RefreshCw } from "lucide-react";
+import {
+  ShieldAlert,
+  CheckCircle2,
+  MessageSquare,
+  Clock,
+  AlertTriangle,
+  Menu,
+  RefreshCw,
+} from "lucide-react";
 import { useLayout } from "@/contexts/layout-context";
 import { NotificationBell } from "@/components/notifications";
 import { z } from "zod";
@@ -95,7 +103,8 @@ const resolveEscalation = createServerFn({ method: "POST" })
       .single();
     if (escErr) throw new Error(escErr.message);
     const isAdmin = roleCheck.role === "admin";
-    if (!isAdmin && esc.reviewer_id !== userId) throw new Error("Forbidden: You are not assigned to this escalation");
+    if (!isAdmin && esc.reviewer_id !== userId)
+      throw new Error("Forbidden: You are not assigned to this escalation");
 
     const { error } = await supabaseAdmin
       .from("escalations")
@@ -124,7 +133,8 @@ const resolveEscalation = createServerFn({ method: "POST" })
               body: `Your escalated study session has been reviewed by a teacher. Their response has been added to your conversation. Log in to GilaniAI to continue learning.`,
               buttonText: "View Response",
               buttonUrl: `${appUrl}/login?redirect=/tutor/${esc.conversation_id}`,
-              footerNote: "You are receiving this because you requested a teacher review on GilaniAI.",
+              footerNote:
+                "You are receiving this because you requested a teacher review on GilaniAI.",
             }),
           }).catch((err: any) => console.error("[Student Email] Failed:", err));
         }
@@ -142,7 +152,8 @@ const resolveEscalation = createServerFn({ method: "POST" })
         parts: JSON.stringify([{ type: "text", text: teacherText }]),
         user_id: esc.user_id,
       } as any);
-      if (msgErr) console.error("Failed to sync teacher response to messages table:", msgErr.message);
+      if (msgErr)
+        console.error("Failed to sync teacher response to messages table:", msgErr.message);
     }
   });
 
@@ -175,7 +186,8 @@ const saveEscalationDraft = createServerFn({ method: "POST" })
       .single();
     if (escErr) throw new Error(escErr.message);
     const isAdmin = roleCheck.role === "admin";
-    if (!isAdmin && esc.reviewer_id !== userId) throw new Error("Forbidden: You are not assigned to this escalation");
+    if (!isAdmin && esc.reviewer_id !== userId)
+      throw new Error("Forbidden: You are not assigned to this escalation");
 
     const { error } = await supabaseAdmin
       .from("escalations")
@@ -258,7 +270,7 @@ function EscalationsPage() {
   const { setSidebarOpen, user } = useLayout();
   const serverFns = useMemo(
     () => ({ listEscalations, resolveEscalation, getConversationMessages, saveEscalationDraft }),
-    [listEscalations, resolveEscalation, getConversationMessages, saveEscalationDraft]
+    [listEscalations, resolveEscalation, getConversationMessages, saveEscalationDraft],
   );
   const esc = useTeacherEscalations(serverFns);
 
@@ -301,16 +313,41 @@ function EscalationsPage() {
       {/* ── Stats ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total Escalations", value: esc.escalations.length, icon: MessageSquare, color: "text-primary", bg: "border-primary/20 bg-primary/[0.02]" },
-          { label: "Pending Review", value: esc.pending.length, icon: Clock, color: "text-amber-600 dark:text-amber-400", bg: "border-amber-200/60 dark:border-amber-800/60 bg-amber-500/[0.02]" },
-          { label: "Resolved", value: esc.resolved.length, icon: CheckCircle2, color: "text-green-600 dark:text-green-400", bg: "border-green-200/60 dark:border-green-800/60 bg-green-500/[0.02]" },
+          {
+            label: "Total Escalations",
+            value: esc.escalations.length,
+            icon: MessageSquare,
+            color: "text-primary",
+            bg: "border-primary/20 bg-primary/[0.02]",
+          },
+          {
+            label: "Pending Review",
+            value: esc.pending.length,
+            icon: Clock,
+            color: "text-amber-600 dark:text-amber-400",
+            bg: "border-amber-200/60 dark:border-amber-800/60 bg-amber-500/[0.02]",
+          },
+          {
+            label: "Resolved",
+            value: esc.resolved.length,
+            icon: CheckCircle2,
+            color: "text-green-600 dark:text-green-400",
+            bg: "border-green-200/60 dark:border-green-800/60 bg-green-500/[0.02]",
+          },
         ].map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className={`rounded-xl border p-4 sm:p-5 shadow-xs flex items-center justify-between ${bg}`}>
+          <div
+            key={label}
+            className={`rounded-xl border p-4 sm:p-5 shadow-xs flex items-center justify-between ${bg}`}
+          >
             <div className="space-y-1">
-              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{label}</p>
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                {label}
+              </p>
               <p className={`font-serif text-3xl font-black ${color}`}>{value}</p>
             </div>
-            <div className={`rounded-full p-2.5 bg-background/50 border border-border/20 shadow-inner flex items-center justify-center ${color}`}>
+            <div
+              className={`rounded-full p-2.5 bg-background/50 border border-border/20 shadow-inner flex items-center justify-center ${color}`}
+            >
               <Icon className="h-5 w-5" />
             </div>
           </div>
@@ -326,143 +363,195 @@ function EscalationsPage() {
               onClick={() => esc.setFilter(f)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors cursor-pointer ${esc.filter === f ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
-              {f} <span className="text-[10px] opacity-60">({f === "all" ? esc.escalations.length : f === "pending" ? esc.pending.length : esc.resolved.length})</span>
+              {f}{" "}
+              <span className="text-[10px] opacity-60">
+                (
+                {f === "all"
+                  ? esc.escalations.length
+                  : f === "pending"
+                    ? esc.pending.length
+                    : esc.resolved.length}
+                )
+              </span>
             </button>
           ))}
         </div>
       )}
 
       <div className="lg:grid lg:grid-cols-[1fr_420px] lg:gap-6 lg:items-start">
-      <div className="space-y-6 min-w-0">
-
-      {/* ── Loading skeleton ── */}
-      {esc.loading && (
-        <div className="space-y-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="rounded-xl border border-border p-4 sm:p-5 animate-pulse">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-muted/60" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 w-1/3 rounded bg-muted/60" />
-                  <div className="h-2.5 w-1/2 rounded bg-muted/40" />
+        <div className="space-y-6 min-w-0">
+          {/* ── Loading skeleton ── */}
+          {esc.loading && (
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="rounded-xl border border-border p-4 sm:p-5 animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-muted/60" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-1/3 rounded bg-muted/60" />
+                      <div className="h-2.5 w-1/2 rounded bg-muted/40" />
+                    </div>
+                    <div className="h-5 w-16 rounded-full bg-muted/40" />
+                  </div>
                 </div>
-                <div className="h-5 w-16 rounded-full bg-muted/40" />
+              ))}
+            </div>
+          )}
+
+          {/* ── Error state ── */}
+          {!esc.loading && esc.error && esc.escalations.length === 0 && (
+            <div className="rounded-xl border border-destructive/30 bg-destructive/[0.03] p-6 sm:p-12 text-center">
+              <div className="mx-auto h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                <AlertTriangle className="h-7 w-7 text-destructive/70" />
               </div>
+              <p className="font-serif text-xl font-medium text-foreground">
+                Couldn't load escalations
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">{esc.error}</p>
+              <button
+                onClick={() => esc.loadEscalations()}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-semibold hover:bg-accent transition-colors cursor-pointer"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Retry
+              </button>
             </div>
-          ))}
+          )}
+
+          {/* ── Empty state ── */}
+          {!esc.loading && !esc.error && esc.filteredEscalations.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border p-6 sm:p-12 text-center">
+              <div className="mx-auto h-14 w-14 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                <ShieldAlert className="h-7 w-7 text-muted-foreground/50" />
+              </div>
+              <p className="font-serif text-xl font-medium text-muted-foreground">
+                {esc.filter === "all" ? "All clear" : `No ${esc.filter} escalations`}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {esc.filter === "all"
+                  ? "No escalations assigned to you yet."
+                  : `There are no ${esc.filter} escalations at the moment.`}
+              </p>
+            </div>
+          )}
+
+          {/* ── Urgent (distress) ── */}
+          {esc.filter !== "resolved" && esc.pendingUrgent.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                <p className="font-mono text-[11px] uppercase tracking-widest text-red-600 dark:text-red-400 font-bold">
+                  Urgent — Distress ({esc.pendingUrgent.length})
+                </p>
+              </div>
+              {esc.pendingUrgent.map((e) => (
+                <EscalationCard
+                  key={e.id}
+                  esc={e}
+                  isOpen={esc.activeId === e.id}
+                  onOpen={() => (esc.activeId === e.id ? esc.setActiveId(null) : esc.open(e.id))}
+                  convoMessages={esc.convoMessages}
+                  loadingMessages={esc.loadingMessages}
+                  answer={esc.answer}
+                  setAnswer={esc.handleAnswerChange}
+                  saving={esc.saving}
+                  onResolve={esc.handleResolve}
+                  onCancel={() => esc.setActiveId(null)}
+                  urgent
+                />
+              ))}
+            </section>
+          )}
+
+          {/* ── Pending ── */}
+          {esc.filter !== "resolved" && esc.pendingOther.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                  Pending ({esc.pendingOther.length})
+                </p>
+              </div>
+              {esc.pendingOther.map((e) => (
+                <EscalationCard
+                  key={e.id}
+                  esc={e}
+                  isOpen={esc.activeId === e.id}
+                  onOpen={() => (esc.activeId === e.id ? esc.setActiveId(null) : esc.open(e.id))}
+                  convoMessages={esc.convoMessages}
+                  loadingMessages={esc.loadingMessages}
+                  answer={esc.answer}
+                  setAnswer={esc.handleAnswerChange}
+                  saving={esc.saving}
+                  onResolve={esc.handleResolve}
+                  onCancel={() => esc.setActiveId(null)}
+                />
+              ))}
+            </section>
+          )}
+
+          {/* ── Resolved ── */}
+          {esc.filter !== "pending" && esc.resolved.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                  Resolved ({esc.resolved.length})
+                </p>
+              </div>
+              <div className="space-y-2">
+                {esc.resolved.map((e) => (
+                  <EscalationCard
+                    key={e.id}
+                    esc={e}
+                    isOpen={esc.activeId === e.id}
+                    onOpen={() => (esc.activeId === e.id ? esc.setActiveId(null) : esc.open(e.id))}
+                    convoMessages={esc.convoMessages}
+                    loadingMessages={esc.loadingMessages}
+                    answer={esc.answer}
+                    setAnswer={esc.handleAnswerChange}
+                    saving={esc.saving}
+                    onResolve={esc.handleResolve}
+                    onCancel={() => esc.setActiveId(null)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
-      )}
 
-      {/* ── Error state ── */}
-      {!esc.loading && esc.error && esc.escalations.length === 0 && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/[0.03] p-6 sm:p-12 text-center">
-          <div className="mx-auto h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-            <AlertTriangle className="h-7 w-7 text-destructive/70" />
-          </div>
-          <p className="font-serif text-xl font-medium text-foreground">Couldn't load escalations</p>
-          <p className="text-sm text-muted-foreground mt-1">{esc.error}</p>
-          <button
-            onClick={() => esc.loadEscalations()}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-semibold hover:bg-accent transition-colors cursor-pointer"
-          >
-            <RefreshCw className="h-3.5 w-3.5" /> Retry
-          </button>
-        </div>
-      )}
-
-      {/* ── Empty state ── */}
-      {!esc.loading && !esc.error && esc.filteredEscalations.length === 0 && (
-        <div className="rounded-xl border border-dashed border-border p-6 sm:p-12 text-center">
-          <div className="mx-auto h-14 w-14 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-            <ShieldAlert className="h-7 w-7 text-muted-foreground/50" />
-          </div>
-          <p className="font-serif text-xl font-medium text-muted-foreground">{esc.filter === "all" ? "All clear" : `No ${esc.filter} escalations`}</p>
-          <p className="text-sm text-muted-foreground mt-1">{esc.filter === "all" ? "No escalations assigned to you yet." : `There are no ${esc.filter} escalations at the moment.`}</p>
-        </div>
-      )}
-
-      {/* ── Urgent (distress) ── */}
-      {esc.filter !== "resolved" && esc.pendingUrgent.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-            <p className="font-mono text-[11px] uppercase tracking-widest text-red-600 dark:text-red-400 font-bold">Urgent — Distress ({esc.pendingUrgent.length})</p>
-          </div>
-          {esc.pendingUrgent.map((e) => (
-            <EscalationCard
-              key={e.id} esc={e} isOpen={esc.activeId === e.id} onOpen={() => (esc.activeId === e.id ? esc.setActiveId(null) : esc.open(e.id))}
-              convoMessages={esc.convoMessages} loadingMessages={esc.loadingMessages} answer={esc.answer} setAnswer={esc.handleAnswerChange}
-              saving={esc.saving} onResolve={esc.handleResolve} onCancel={() => esc.setActiveId(null)} urgent
-            />
-          ))}
-        </section>
-      )}
-
-      {/* ── Pending ── */}
-      {esc.filter !== "resolved" && esc.pendingOther.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">Pending ({esc.pendingOther.length})</p>
-          </div>
-          {esc.pendingOther.map((e) => (
-            <EscalationCard
-              key={e.id} esc={e} isOpen={esc.activeId === e.id} onOpen={() => (esc.activeId === e.id ? esc.setActiveId(null) : esc.open(e.id))}
-              convoMessages={esc.convoMessages} loadingMessages={esc.loadingMessages} answer={esc.answer} setAnswer={esc.handleAnswerChange}
-              saving={esc.saving} onResolve={esc.handleResolve} onCancel={() => esc.setActiveId(null)}
-            />
-          ))}
-        </section>
-      )}
-
-      {/* ── Resolved ── */}
-      {esc.filter !== "pending" && esc.resolved.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">Resolved ({esc.resolved.length})</p>
-          </div>
-          <div className="space-y-2">
-            {esc.resolved.map((e) => (
-              <EscalationCard
-                key={e.id} esc={e} isOpen={esc.activeId === e.id} onOpen={() => (esc.activeId === e.id ? esc.setActiveId(null) : esc.open(e.id))}
-                convoMessages={esc.convoMessages} loadingMessages={esc.loadingMessages} answer={esc.answer} setAnswer={esc.handleAnswerChange}
-                saving={esc.saving} onResolve={esc.handleResolve} onCancel={() => esc.setActiveId(null)}
+        {/* ── Desktop detail panel ── */}
+        <div className="hidden lg:block lg:sticky lg:top-6">
+          {activeEscalation ? (
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+              <div className="p-4 sm:p-5 border-b border-border bg-muted/20 flex items-center justify-between">
+                <p className="font-sans text-sm font-bold text-foreground">
+                  {activeEscalation.student_name || "Student"}
+                </p>
+                <button
+                  onClick={() => esc.setActiveId(null)}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+              <EscalationDetail
+                esc={activeEscalation}
+                convoMessages={esc.convoMessages}
+                loadingMessages={esc.loadingMessages}
+                answer={esc.answer}
+                setAnswer={esc.handleAnswerChange}
+                saving={esc.saving}
+                onResolve={esc.handleResolve}
+                onCancel={() => esc.setActiveId(null)}
+                variant="panel"
               />
-            ))}
-          </div>
-        </section>
-      )}
-
-      </div>
-
-      {/* ── Desktop detail panel ── */}
-      <div className="hidden lg:block lg:sticky lg:top-6">
-        {activeEscalation ? (
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-            <div className="p-4 sm:p-5 border-b border-border bg-muted/20 flex items-center justify-between">
-              <p className="font-sans text-sm font-bold text-foreground">{activeEscalation.student_name || "Student"}</p>
-              <button onClick={() => esc.setActiveId(null)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Close</button>
             </div>
-            <EscalationDetail
-              esc={activeEscalation}
-              convoMessages={esc.convoMessages}
-              loadingMessages={esc.loadingMessages}
-              answer={esc.answer}
-              setAnswer={esc.handleAnswerChange}
-              saving={esc.saving}
-              onResolve={esc.handleResolve}
-              onCancel={() => esc.setActiveId(null)}
-              variant="panel"
-            />
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-            Select an escalation to respond.
-          </div>
-        )}
-      </div>
-
+          ) : (
+            <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+              Select an escalation to respond.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

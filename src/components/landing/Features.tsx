@@ -50,7 +50,9 @@ export default function Features() {
           <h2 className="font-serif text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
             Everything you need to
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-[#a1a1aa]">study smarter</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-[#a1a1aa]">
+              study smarter
+            </span>
           </h2>
         </div>
 

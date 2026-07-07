@@ -43,7 +43,9 @@ function AuthedShell() {
   const navigate = useNavigate();
 
   const studentOnlyPaths = ["/tutor", "/tutor"];
-  const isOnStudentRoute = studentOnlyPaths.some((p) => shell.path === p || shell.path.startsWith(p + "/"));
+  const isOnStudentRoute = studentOnlyPaths.some(
+    (p) => shell.path === p || shell.path.startsWith(p + "/"),
+  );
   const shouldRedirectOffStudentRoute = (shell.isAdmin || shell.isTeacher) && isOnStudentRoute;
 
   useEffect(() => {
@@ -66,7 +68,9 @@ function AuthedShell() {
   return (
     <div className="fixed inset-0 flex h-dvh w-full flex-col overflow-hidden overscroll-none lg:flex-row bg-background text-foreground">
       <DisclaimerModal />
-      {shell.showPlans && <PlansModal onClose={() => shell.setShowPlans(false)} currentPlan={shell.currentPlan} />}
+      {shell.showPlans && (
+        <PlansModal onClose={() => shell.setShowPlans(false)} currentPlan={shell.currentPlan} />
+      )}
 
       {shell.sidebarOpen && (
         <div
@@ -77,7 +81,9 @@ function AuthedShell() {
 
       <Sidebar shell={shell} />
 
-      <main className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-x-hidden pb-16 lg:pb-0 ${shell.path.startsWith("/tutor") ? "overflow-hidden h-full" : "overflow-y-auto scroll-smooth"}`}>
+      <main
+        className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-x-hidden pb-16 lg:pb-0 ${shell.path.startsWith("/tutor") ? "overflow-hidden h-full" : "overflow-y-auto scroll-smooth"}`}
+      >
         {!shell.path.startsWith("/tutor") && <Breadcrumb />}
         <div className="w-full flex-1 flex flex-col min-h-0">
           <LayoutContext.Provider

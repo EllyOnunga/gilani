@@ -1,15 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Plus,
-  MessageSquare,
-  Loader2,
-  Search,
-  Trash2,
-  ChevronRight,
-  Menu,
-} from "lucide-react";
+import { Plus, MessageSquare, Loader2, Search, Trash2, ChevronRight, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { useLayout } from "@/contexts/layout-context";
 
@@ -63,7 +55,10 @@ function ChatsPage() {
     supabase.auth.getSession().then(({ data }) => {
       const uid = data?.session?.user?.id ?? null;
       setUserId(uid);
-      if (!uid) { setLoading(false); return; }
+      if (!uid) {
+        setLoading(false);
+        return;
+      }
       supabase
         .from("conversations")
         .select("id,title,updated_at,created_at")
@@ -87,7 +82,7 @@ function ChatsPage() {
     try {
       const { error } = await supabase.from("conversations").delete().eq("id", id);
       if (error) throw error;
-      setThreads(prev => prev.filter(t => t.id !== id));
+      setThreads((prev) => prev.filter((t) => t.id !== id));
       toast.success("Chat deleted");
     } catch {
       toast.error("Failed to delete chat");
@@ -97,9 +92,7 @@ function ChatsPage() {
   }, []);
 
   const filtered = search.trim()
-    ? threads.filter(t =>
-        (t.title || "").toLowerCase().includes(search.toLowerCase())
-      )
+    ? threads.filter((t) => (t.title || "").toLowerCase().includes(search.toLowerCase()))
     : threads;
 
   const groups = groupByDate(filtered);
@@ -142,7 +135,7 @@ function ChatsPage() {
             type="text"
             placeholder="Search chats..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 outline-none"
           />
         </div>
@@ -153,7 +146,9 @@ function ChatsPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider">Loading chats…</p>
+            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
+              Loading chats…
+            </p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3 text-center">
@@ -164,7 +159,7 @@ function ChatsPage() {
           </div>
         ) : (
           <div className="space-y-6 pt-4">
-            {(Object.keys(groups) as Array<keyof typeof groups>).map(key => {
+            {(Object.keys(groups) as Array<keyof typeof groups>).map((key) => {
               const group = groups[key];
               if (group.length === 0) return null;
               return (
@@ -173,7 +168,7 @@ function ChatsPage() {
                     {GROUP_LABELS[key]}
                   </h2>
                   <div className="space-y-1">
-                    {group.map(t => (
+                    {group.map((t) => (
                       <Link
                         key={t.id}
                         to="/tutor/$threadId"
@@ -200,7 +195,7 @@ function ChatsPage() {
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <button
-                            onClick={e => deleteThread(t.id, e)}
+                            onClick={(e) => deleteThread(t.id, e)}
                             className="p-1.5 rounded-lg text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
                             title="Delete chat"
                           >

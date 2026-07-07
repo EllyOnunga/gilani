@@ -1,5 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { Shield, AlertTriangle, CheckCircle, Cookie, BarChart, ChevronRight, Trash2 } from "lucide-react";
+import {
+  Shield,
+  AlertTriangle,
+  CheckCircle,
+  Cookie,
+  BarChart,
+  ChevronRight,
+  Trash2,
+} from "lucide-react";
 import type { useSettings } from "@/components/settings/hooks/useSettings";
 
 type Props = {
@@ -23,7 +31,8 @@ export function ConsentSecurityTab({ settings, userEmail }: Props) {
               <AlertTriangle className="h-4 w-4 text-amber-500" /> AI Disclaimer Agreement
             </p>
             <p className="text-xs text-muted-foreground leading-normal max-w-md">
-              Acknowledgment of AI safety rules, limitations, and guidelines for ethical learning assistance.
+              Acknowledgment of AI safety rules, limitations, and guidelines for ethical learning
+              assistance.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -63,7 +72,9 @@ export function ConsentSecurityTab({ settings, userEmail }: Props) {
             type="button"
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${settings.cookieConsent ? "bg-primary" : "bg-muted"}`}
           >
-            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${settings.cookieConsent ? "translate-x-4.5" : "translate-x-1"}`} />
+            <span
+              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${settings.cookieConsent ? "translate-x-4.5" : "translate-x-1"}`}
+            />
           </button>
         </div>
 
@@ -82,13 +93,17 @@ export function ConsentSecurityTab({ settings, userEmail }: Props) {
             type="button"
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${settings.analyticsConsent ? "bg-primary" : "bg-muted"}`}
           >
-            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${settings.analyticsConsent ? "translate-x-4.5" : "translate-x-1"}`} />
+            <span
+              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${settings.analyticsConsent ? "translate-x-4.5" : "translate-x-1"}`}
+            />
           </button>
         </div>
 
         {/* Data Management Section */}
         <div className="space-y-2.5 pt-2">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Data Management</p>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
+            Data Management
+          </p>
           <div className="flex flex-col gap-2">
             <button
               onClick={() => {
@@ -101,7 +116,9 @@ export function ConsentSecurityTab({ settings, userEmail }: Props) {
             </button>
             <button
               onClick={() => {
-                if(confirm("Are you sure you want to clear all chat history? This cannot be undone.")) {
+                if (
+                  confirm("Are you sure you want to clear all chat history? This cannot be undone.")
+                ) {
                   alert("Chat history cleared.");
                 }
               }}
@@ -115,14 +132,20 @@ export function ConsentSecurityTab({ settings, userEmail }: Props) {
 
         {/* Policies Section */}
         <div className="space-y-2.5 pt-2">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Review Policies</p>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
+            Review Policies
+          </p>
           <div className="flex flex-col gap-2">
             {[
               { path: "/terms", label: "Terms of Service Agreement" },
               { path: "/privacy", label: "Privacy Policy Commitments" },
               { path: "/cookies", label: "Full Cookie Policy Details" },
             ].map((p) => (
-              <Link key={p.path} to={p.path} className="w-full text-left rounded-xl border border-border hover:bg-accent px-4 py-3 text-xs font-semibold text-primary transition-all flex items-center justify-between">
+              <Link
+                key={p.path}
+                to={p.path}
+                className="w-full text-left rounded-xl border border-border hover:bg-accent px-4 py-3 text-xs font-semibold text-primary transition-all flex items-center justify-between"
+              >
                 <span>{p.label}</span>
                 <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
               </Link>
@@ -154,12 +177,15 @@ export function ConsentSecurityTab({ settings, userEmail }: Props) {
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 space-y-3">
               {!settings.reauthSent ? (
                 <p className="text-xs font-semibold text-destructive">
-                  {settings.reauthSending ? "Sending verification code to your email…" : "A verification code is being sent to your email."}
+                  {settings.reauthSending
+                    ? "Sending verification code to your email…"
+                    : "A verification code is being sent to your email."}
                 </p>
               ) : (
                 <>
                   <p className="text-xs font-semibold text-destructive">
-                    A verification code was sent to <span className="font-mono">{userEmail}</span>. Enter it below to permanently delete your account.
+                    A verification code was sent to <span className="font-mono">{userEmail}</span>.
+                    Enter it below to permanently delete your account.
                   </p>
                   <div>
                     <input
@@ -174,7 +200,9 @@ export function ConsentSecurityTab({ settings, userEmail }: Props) {
                       className="w-full rounded-lg border border-destructive/30 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-destructive/40 tracking-widest font-mono"
                       maxLength={6}
                     />
-                    {settings.reauthError && <p className="text-xs text-destructive mt-1">{settings.reauthError}</p>}
+                    {settings.reauthError && (
+                      <p className="text-xs text-destructive mt-1">{settings.reauthError}</p>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button

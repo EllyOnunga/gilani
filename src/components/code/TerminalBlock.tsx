@@ -1,15 +1,13 @@
 import { Terminal } from "lucide-react";
 
 interface Props {
-    output: string;
+  output: string;
 }
 
-export default function TerminalBlock({
-    output,
-}: Props) {
-    return (
-        <section
-            className="
+export default function TerminalBlock({ output }: Props) {
+  return (
+    <section
+      className="
       my-6
       overflow-hidden
       rounded-xl
@@ -17,9 +15,9 @@ export default function TerminalBlock({
       border-zinc-800
       bg-black
     "
-        >
-            <div
-                className="
+    >
+      <div
+        className="
         flex
         items-center
         gap-2
@@ -29,15 +27,13 @@ export default function TerminalBlock({
         px-4
         py-3
       "
-            >
-                <Terminal size={16} />
+      >
+        <Terminal size={16} />
 
-                <span>Terminal</span>
-            </div>
+        <span>Terminal</span>
+      </div>
 
-            <pre className="overflow-auto p-5 text-green-400">
-                {output}
-            </pre>
-        </section>
-    );
+      <pre className="overflow-auto p-5 text-green-400">{output}</pre>
+    </section>
+  );
 }

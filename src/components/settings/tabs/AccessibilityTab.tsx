@@ -49,9 +49,13 @@ export function AccessibilityTab({ settings }: Props) {
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-muted-foreground" />
-              <label htmlFor="acc-motion" className="text-sm font-semibold text-foreground">Reduce Motion</label>
+              <label htmlFor="acc-motion" className="text-sm font-semibold text-foreground">
+                Reduce Motion
+              </label>
             </div>
-            <p className="text-[11px] text-muted-foreground">Disable slide animations and transitions.</p>
+            <p className="text-[11px] text-muted-foreground">
+              Disable slide animations and transitions.
+            </p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -69,9 +73,13 @@ export function AccessibilityTab({ settings }: Props) {
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4 text-muted-foreground" />
-              <label htmlFor="acc-contrast" className="text-sm font-semibold text-foreground">High Contrast Mode</label>
+              <label htmlFor="acc-contrast" className="text-sm font-semibold text-foreground">
+                High Contrast Mode
+              </label>
             </div>
-            <p className="text-[11px] text-muted-foreground">Increase contrast for better readability.</p>
+            <p className="text-[11px] text-muted-foreground">
+              Increase contrast for better readability.
+            </p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input

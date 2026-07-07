@@ -388,10 +388,11 @@ export function ChatInput({
               htmlFor={isDisabled ? undefined : "chat-file-input"}
               aria-label="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)"
               aria-disabled={isDisabled}
-              className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${isDisabled
+              className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${
+                isDisabled
                   ? "opacity-40 cursor-not-allowed pointer-events-none"
                   : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90"
-                }`}
+              }`}
               title="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)"
             >
               {parsingFile ? (
@@ -436,12 +437,13 @@ export function ChatInput({
               }}
               disabled={!isPending && (isDisabled || (!input.trim() && !attachedFile))}
               title={isPending ? "Stop generating" : "Send (Enter)"}
-              className={`flex flex-shrink-0 items-center justify-center gap-1.5 rounded-full transition-all duration-200 ${isPending
+              className={`flex flex-shrink-0 items-center justify-center gap-1.5 rounded-full transition-all duration-200 ${
+                isPending
                   ? "h-8 w-8 bg-transparent border-2 border-primary text-primary hover:bg-primary/10 active:scale-95"
                   : isDisabled || (!input.trim() && !attachedFile)
                     ? "h-8 w-8 bg-muted text-muted-foreground opacity-40 cursor-not-allowed"
                     : "h-8 sm:h-8 px-3 sm:px-3.5 bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 hover:scale-105 active:scale-95"
-                }`}
+              }`}
             >
               {isPending ? (
                 <Square className="h-3 w-3" />

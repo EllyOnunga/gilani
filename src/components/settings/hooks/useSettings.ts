@@ -3,7 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/async";
 
-export type TabType = "profile" | "tutor" | "theme" | "plan" | "consent" | "notifications" | "language" | "accessibility" | "shortcuts" | "sessions";
+export type TabType =
+  | "profile"
+  | "tutor"
+  | "theme"
+  | "plan"
+  | "consent"
+  | "notifications"
+  | "language"
+  | "accessibility"
+  | "shortcuts"
+  | "sessions";
 
 type SettingsServerFns = {
   deleteAccount: (args: { data: { otp: string } }) => Promise<void>;
@@ -42,7 +52,7 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
   });
 
   const updatePreference = useCallback((key: string, value: any) => {
-    setPreferences(prev => ({ ...prev, [key]: value }));
+    setPreferences((prev) => ({ ...prev, [key]: value }));
   }, []);
 
   // Loading States
@@ -96,7 +106,7 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
           if ((data as any).tutor_style) setTutorStyle((data as any).tutor_style);
           if ((data as any).tutor_depth) setTutorDepth((data as any).tutor_depth);
           if ((data as any).preferences) {
-            setPreferences(prev => ({ ...prev, ...(data as any).preferences }));
+            setPreferences((prev) => ({ ...prev, ...(data as any).preferences }));
           } else {
             // Fallback: load from localStorage if DB column not migrated yet
             const local = localStorage.getItem(`gilani_prefs_${user.id}`);
@@ -106,8 +116,11 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
                 if (parsed.tutorTone) setTutorTone(parsed.tutorTone);
                 if (parsed.tutorStyle) setTutorStyle(parsed.tutorStyle);
                 if (parsed.tutorDepth) setTutorDepth(parsed.tutorDepth);
-                if (parsed.preferences) setPreferences(prev => ({ ...prev, ...parsed.preferences }));
-              } catch { /* ignore */ }
+                if (parsed.preferences)
+                  setPreferences((prev) => ({ ...prev, ...parsed.preferences }));
+              } catch {
+                /* ignore */
+              }
             }
           }
         }
@@ -142,26 +155,32 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
   }, [user?.id]);
 
   // ─── Analytics ────────────────────────────────────────────────────────────────
-  const fireSettingsEvent = useCallback((action: string, payload?: Record<string, any>) => {
-    if (!user?.id) return;
-    // Fire-and-forget: no await, never blocks UI
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.access_token) return;
-      fetch("/api/settings/events", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ action, payload }),
-      }).catch(() => {}); // silently ignore failures
-    });
-  }, [user?.id]);
+  const fireSettingsEvent = useCallback(
+    (action: string, payload?: Record<string, any>) => {
+      if (!user?.id) return;
+      // Fire-and-forget: no await, never blocks UI
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session?.access_token) return;
+        fetch("/api/settings/events", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ action, payload }),
+        }).catch(() => {}); // silently ignore failures
+      });
+    },
+    [user?.id],
+  );
 
-  const setActiveTabTracked = useCallback((tab: TabType) => {
-    setActiveTab(tab);
-    fireSettingsEvent("settings.tab_viewed", { tab });
-  }, [fireSettingsEvent]);
+  const setActiveTabTracked = useCallback(
+    (tab: TabType) => {
+      setActiveTab(tab);
+      fireSettingsEvent("settings.tab_viewed", { tab });
+    },
+    [fireSettingsEvent],
+  );
 
   // ─── Actions ─────────────────────────────────────────────────────────────────
   const handleProfileSave = async (e?: React.FormEvent) => {
@@ -178,9 +197,7 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
         updated_at: new Date().toISOString(),
       };
 
-      const { error: coreError } = await supabase
-        .from("profiles")
-        .upsert(corePayload as any);
+      const { error: coreError } = await supabase.from("profiles").upsert(corePayload as any);
 
       if (coreError) throw coreError;
 
@@ -198,24 +215,34 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
         updated_at: new Date().toISOString(),
       };
 
-      const { error: extError } = await supabase
-        .from("profiles")
-        .upsert(extPayload as any);
+      const { error: extError } = await supabase.from("profiles").upsert(extPayload as any);
 
       if (extError) {
         // Extended columns missing — store preferences locally as fallback
-        console.warn("[Settings] Extended columns not yet migrated, using localStorage fallback:", extError.message);
-        localStorage.setItem(`gilani_prefs_${user.id}`, JSON.stringify({
-          tutorTone, tutorStyle, tutorDepth,
-          disclaimerAccepted, cookieConsent, analyticsConsent,
-          preferences,
-        }));
+        console.warn(
+          "[Settings] Extended columns not yet migrated, using localStorage fallback:",
+          extError.message,
+        );
+        localStorage.setItem(
+          `gilani_prefs_${user.id}`,
+          JSON.stringify({
+            tutorTone,
+            tutorStyle,
+            tutorDepth,
+            disclaimerAccepted,
+            cookieConsent,
+            analyticsConsent,
+            preferences,
+          }),
+        );
       }
 
       // Analytics: log which tab/preferences were saved
       fireSettingsEvent("settings.preferences_saved", {
         tab: activeTab,
-        tutorTone, tutorStyle, tutorDepth,
+        tutorTone,
+        tutorStyle,
+        tutorDepth,
         preferencesKeys: Object.keys(preferences),
       });
 
@@ -283,7 +310,9 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
     if (typeof window !== "undefined") {
       localStorage.setItem("theme", theme);
       document.documentElement.classList.toggle("dark", nextDark);
-      toast.success(nextDark ? "Dark theme active 🌙" : "Light theme active ☀️", { duration: 1500 });
+      toast.success(nextDark ? "Dark theme active 🌙" : "Light theme active ☀️", {
+        duration: 1500,
+      });
     }
   };
 
@@ -310,7 +339,9 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
       await serverFns.deleteAccount({ data: { otp: reauthOtp } });
       await supabase.auth.signOut();
       toast.success("Account deleted successfully.");
-      setTimeout(() => { window.location.href = "/"; }, 1200);
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1200);
     } catch (err: any) {
       setReauthError(friendlyError(err, "Failed to delete account."));
       setDeleting(false);
@@ -326,7 +357,9 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
         .update({ disclaimer_accepted: false, updated_at: new Date().toISOString() })
         .eq("id", user.id);
     }
-    toast.info("AI Disclaimer consent revoked. You will be prompted to read it again on your next dashboard visit.");
+    toast.info(
+      "AI Disclaimer consent revoked. You will be prompted to read it again on your next dashboard visit.",
+    );
   };
 
   const toggleConsent = async (type: "cookie" | "analytics", value: boolean) => {
@@ -337,12 +370,15 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
     } else {
       setAnalyticsConsent(value);
       localStorage.setItem("gilani_analytics_consent", String(value));
-      toast.success(value ? "Anonymous usage tracking enabled." : "Anonymous usage tracking disabled.");
+      toast.success(
+        value ? "Anonymous usage tracking enabled." : "Anonymous usage tracking disabled.",
+      );
     }
     if (user?.id) {
-      const updateData = type === "cookie"
-        ? { cookie_consent: value, updated_at: new Date().toISOString() }
-        : { analytics_consent: value, updated_at: new Date().toISOString() };
+      const updateData =
+        type === "cookie"
+          ? { cookie_consent: value, updated_at: new Date().toISOString() }
+          : { analytics_consent: value, updated_at: new Date().toISOString() };
       await supabase.from("profiles").update(updateData).eq("id", user.id);
     }
   };
@@ -360,21 +396,55 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
     }
   };
 
-
   return {
-    activeTab, setActiveTab: setActiveTabTracked,
-    displayName, setDisplayName, avatarUrl, setAvatarUrl,
-    tutorTone, setTutorTone, tutorStyle, setTutorStyle, tutorDepth, setTutorDepth,
-    preferences, updatePreference,
-    busy, emailBusy, deleting, reauthSending,
-    showPlans, setShowPlans, currentPlan, setCurrentPlan, dailyMessageCount,
-    showDeleteConfirm, setShowDeleteConfirm, reauthError, setReauthError,
-    reauthOtp, setReauthOtp, reauthSent, setReauthSent,
-    newEmail, setNewEmail,
-    isDark, setIsDark, disclaimerAccepted, setDisclaimerAccepted,
-    cookieConsent, setCookieConsent, analyticsConsent, setAnalyticsConsent,
-    handleProfileSave, handlePhotoUpload, toggleTheme, handleRequestReauth,
-    handleDeleteAccount, handleDisclaimerRevoke, toggleConsent,
-    handleEmailChange
+    activeTab,
+    setActiveTab: setActiveTabTracked,
+    displayName,
+    setDisplayName,
+    avatarUrl,
+    setAvatarUrl,
+    tutorTone,
+    setTutorTone,
+    tutorStyle,
+    setTutorStyle,
+    tutorDepth,
+    setTutorDepth,
+    preferences,
+    updatePreference,
+    busy,
+    emailBusy,
+    deleting,
+    reauthSending,
+    showPlans,
+    setShowPlans,
+    currentPlan,
+    setCurrentPlan,
+    dailyMessageCount,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    reauthError,
+    setReauthError,
+    reauthOtp,
+    setReauthOtp,
+    reauthSent,
+    setReauthSent,
+    newEmail,
+    setNewEmail,
+    isDark,
+    setIsDark,
+    disclaimerAccepted,
+    setDisclaimerAccepted,
+    cookieConsent,
+    setCookieConsent,
+    analyticsConsent,
+    setAnalyticsConsent,
+    handleProfileSave,
+    handlePhotoUpload,
+    toggleTheme,
+    handleRequestReauth,
+    handleDeleteAccount,
+    handleDisclaimerRevoke,
+    toggleConsent,
+    handleEmailChange,
   };
 }

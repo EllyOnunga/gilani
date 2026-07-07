@@ -55,17 +55,14 @@ export const Route = createFileRoute("/api/notifications/push-send")({
             .single();
 
           if (!(profile as any)?.push_subscription) {
-            return new Response(
-              JSON.stringify({ error: "Target user has no push subscription" }),
-              { status: 404, headers: { "Content-Type": "application/json" } },
-            );
+            return new Response(JSON.stringify({ error: "Target user has no push subscription" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            });
           }
 
           const payload: PushPayload = { title, body: message, url: url || "/" };
-          const sent = await sendPushNotification(
-            (profile as any).push_subscription,
-            payload,
-          );
+          const sent = await sendPushNotification((profile as any).push_subscription, payload);
 
           return new Response(JSON.stringify({ ok: sent }), {
             status: sent ? 200 : 500,

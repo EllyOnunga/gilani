@@ -1,30 +1,21 @@
 import { RendererPlugin } from "./types";
 
 export const definitionPlugin: RendererPlugin = {
+  name: "definition",
 
-    name: "definition",
+  test(node) {
+    if (node.type !== "paragraph") return false;
 
-    test(node) {
+    const value = node.children?.[0]?.value ?? "";
 
-        if (node.type !== "paragraph")
-            return false;
+    return value.trim() === "Definition";
+  },
 
-        const value = node.children?.[0]?.value ?? "";
+  transform(node) {
+    node.data = {
+      component: "DefinitionCard",
+    };
 
-        return value.trim() === "Definition";
-
-    },
-
-    transform(node) {
-
-        node.data = {
-
-            component: "DefinitionCard"
-
-        };
-
-        return node;
-
-    }
-
+    return node;
+  },
 };

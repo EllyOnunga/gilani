@@ -4,24 +4,24 @@ import { useAuth } from "@/hooks/use-auth";
 import { GilaniLoader } from "@/components/GilaniLoader";
 import { AuthModal } from "@/components/auth/AuthModal";
 
-import { 
-    Navbar, 
-    Hero, 
-    SocialProof, 
-    Features, 
-    HowItWorks, 
-    ComparisonTable, 
-    DemoSection, 
-    Testimonials, 
-    Pricing, 
-    FAQ, 
-    FinalCTA, 
-    Footer 
+import {
+  Navbar,
+  Hero,
+  SocialProof,
+  Features,
+  HowItWorks,
+  ComparisonTable,
+  DemoSection,
+  Testimonials,
+  Pricing,
+  FAQ,
+  FinalCTA,
+  Footer,
 } from "@/components/landing";
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): { authModalOpen?: boolean } => ({
-    authModalOpen: search.authModalOpen === 'true' || search.authModalOpen === true || undefined,
+    authModalOpen: search.authModalOpen === "true" || search.authModalOpen === true || undefined,
   }),
   head: () => ({
     meta: [
@@ -62,58 +62,58 @@ export const Route = createFileRoute('/')({
 });
 
 function LandingPage() {
-    const { user, roles, loading } = useAuth();
-    const navigate = useNavigate();
-    const search = Route.useSearch();
-    // True while a brand-new sign-up is mid-flow (e.g. still needs to submit
-    // the display-name form). Supabase reports `user` as signed-in the
-    // moment setSession() runs, which is BEFORE that form is filled out —
-    // without this flag, this page would redirect away (or blank the modal
-    // via the loader below) before the user ever saw the name-capture step.
-    const [authInProgress, setAuthInProgress] = useState(false);
+  const { user, roles, loading } = useAuth();
+  const navigate = useNavigate();
+  const search = Route.useSearch();
+  // True while a brand-new sign-up is mid-flow (e.g. still needs to submit
+  // the display-name form). Supabase reports `user` as signed-in the
+  // moment setSession() runs, which is BEFORE that form is filled out —
+  // without this flag, this page would redirect away (or blank the modal
+  // via the loader below) before the user ever saw the name-capture step.
+  const [authInProgress, setAuthInProgress] = useState(false);
 
-    useEffect(() => {
-        if (!loading && user && !authInProgress) {
-            if (roles.includes("admin")) {
-                navigate({ to: "/admin/users" as any });
-            } else if (roles.includes("teacher")) {
-                navigate({ to: "/teacher/escalations" as any });
-            } else {
-                navigate({ to: "/tutor" as any });
-            }
-        }
-    }, [user, roles, loading, authInProgress, navigate]);
-
-    if (!authInProgress && user && !loading) {
-        return <GilaniLoader />;
+  useEffect(() => {
+    if (!loading && user && !authInProgress) {
+      if (roles.includes("admin")) {
+        navigate({ to: "/admin/users" as any });
+      } else if (roles.includes("teacher")) {
+        navigate({ to: "/teacher/escalations" as any });
+      } else {
+        navigate({ to: "/tutor" as any });
+      }
     }
+  }, [user, roles, loading, authInProgress, navigate]);
 
-    const closeAuthModal = () => {
-        setAuthInProgress(false);
-        navigate({ search: { authModalOpen: undefined } as any });
-    };
+  if (!authInProgress && user && !loading) {
+    return <GilaniLoader />;
+  }
 
-    return (
-        <main className="min-h-screen w-full bg-[#121212] text-white selection:bg-[#C96A3D] selection:text-white font-sans overflow-x-hidden">
-            {search.authModalOpen && (
-                <AuthModal
-                    onClose={closeAuthModal}
-                    onAuthStart={() => setAuthInProgress(true)}
-                    onAuthComplete={() => setAuthInProgress(false)}
-                />
-            )}
-            <Navbar />
-            <Hero />
-            <SocialProof />
-            <Features />
-            <HowItWorks />
-            <ComparisonTable />
-            <DemoSection />
-            <Testimonials />
-            <Pricing />
-            <FAQ />
-            <FinalCTA />
-            <Footer />
-        </main>
-    );
+  const closeAuthModal = () => {
+    setAuthInProgress(false);
+    navigate({ search: { authModalOpen: undefined } as any });
+  };
+
+  return (
+    <main className="min-h-screen w-full bg-[#121212] text-white selection:bg-[#C96A3D] selection:text-white font-sans overflow-x-hidden">
+      {search.authModalOpen && (
+        <AuthModal
+          onClose={closeAuthModal}
+          onAuthStart={() => setAuthInProgress(true)}
+          onAuthComplete={() => setAuthInProgress(false)}
+        />
+      )}
+      <Navbar />
+      <Hero />
+      <SocialProof />
+      <Features />
+      <HowItWorks />
+      <ComparisonTable />
+      <DemoSection />
+      <Testimonials />
+      <Pricing />
+      <FAQ />
+      <FinalCTA />
+      <Footer />
+    </main>
+  );
 }

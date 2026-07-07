@@ -1,30 +1,21 @@
 import { RendererPlugin } from "./types";
 
 export const studyTipPlugin: RendererPlugin = {
+  name: "tip",
 
-    name: "tip",
+  test(node) {
+    if (node.type !== "paragraph") return false;
 
-    test(node) {
+    const value = node.children?.[0]?.value ?? "";
 
-        if (node.type !== "paragraph")
-            return false;
+    return value.trim() === "Study Tip";
+  },
 
-        const value = node.children?.[0]?.value ?? "";
+  transform(node) {
+    node.data = {
+      component: "StudyTipCard",
+    };
 
-        return value.trim() === "Study Tip";
-
-    },
-
-    transform(node) {
-
-        node.data = {
-
-            component: "StudyTipCard"
-
-        };
-
-        return node;
-
-    }
-
+    return node;
+  },
 };

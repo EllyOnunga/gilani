@@ -66,7 +66,6 @@ async function run() {
 
   console.log(`[Backfill] ${totalRemaining ?? "unknown"} chunks need embeddings.\n`);
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { data: rows, error } = await supabaseAdmin
       .from("note_chunks")

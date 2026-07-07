@@ -1,25 +1,17 @@
 export function transformSections(sections: any[]) {
+  return sections.map((section) => {
+    const title = section.heading.children[0].value
 
-    return sections.map(section => {
+      .trim()
 
-        const title =
+      .toLowerCase();
 
-            section.heading.children[0].value
+    return {
+      type: "gilani",
 
-                .trim()
+      component: title,
 
-                .toLowerCase();
-
-        return {
-
-            type: "gilani",
-
-            component: title,
-
-            children: section.children
-
-        };
-
-    });
-
+      children: section.children,
+    };
+  });
 }

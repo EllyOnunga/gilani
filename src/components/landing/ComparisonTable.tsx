@@ -16,7 +16,8 @@ export default function ComparisonTable() {
             Why not just get a tutor?
           </h2>
           <p className="text-[#a1a1aa] max-w-xl mx-auto">
-            You still can — GilaniAI is what happens between sessions, and on the nights a tutor isn't around.
+            You still can — GilaniAI is what happens between sessions, and on the nights a tutor
+            isn't around.
           </p>
         </div>
 
@@ -29,8 +30,13 @@ export default function ComparisonTable() {
 
           <div className="divide-y divide-white/5">
             {ROWS.map((row, idx) => (
-              <div key={idx} className="grid grid-cols-3 p-6 items-center transition-colors hover:bg-white/[0.02]">
-                <div className="font-medium text-white text-sm sm:text-base pr-2">{row.feature}</div>
+              <div
+                key={idx}
+                className="grid grid-cols-3 p-6 items-center transition-colors hover:bg-white/[0.02]"
+              >
+                <div className="font-medium text-white text-sm sm:text-base pr-2">
+                  {row.feature}
+                </div>
                 <div className="flex justify-center text-xl">
                   {row.trad ? (
                     <span className="text-emerald-500">✅</span>
@@ -40,7 +46,9 @@ export default function ComparisonTable() {
                 </div>
                 <div className="flex justify-center text-xl">
                   {row.gilani ? (
-                    <span className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">✅</span>
+                    <span className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">
+                      ✅
+                    </span>
                   ) : (
                     <span className="text-red-500">❌</span>
                   )}

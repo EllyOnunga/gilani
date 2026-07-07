@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import { type Thread } from "@/lib/hooks/useThreadsQuery";
 
 import { useSidebarUI } from "./split/useSidebarUI";
-import { useThreadActions, groupThreadsByDate, type GroupedThreads } from "./split/useThreadActions";
+import {
+  useThreadActions,
+  groupThreadsByDate,
+  type GroupedThreads,
+} from "./split/useThreadActions";
 import { useEscalation } from "./split/useEscalation";
 import { useThreadExport } from "./split/useThreadExport";
 import { useProfile } from "./split/useProfile";

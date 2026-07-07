@@ -35,7 +35,10 @@ function TermsPage() {
               includes:
             </p>
             <ul>
-              <li>Socratic AI tutoring chat sessions, including notes summarisation and practice quizzes generated within the conversation</li>
+              <li>
+                Socratic AI tutoring chat sessions, including notes summarisation and practice
+                quizzes generated within the conversation
+              </li>
               <li>Exam countdown reminders and streak tracking</li>
               <li>Teacher escalation for human expert review</li>
             </ul>

@@ -1,13 +1,11 @@
 interface Props {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
-export default function InlineCode({
-    children,
-}: Props) {
-    return (
-        <code
-            className="
+export default function InlineCode({ children }: Props) {
+  return (
+    <code
+      className="
         rounded
         bg-[#35261F]
         px-1.5
@@ -16,8 +14,8 @@ export default function InlineCode({
         text-[0.9em]
         text-[#E28743]
       "
-        >
-            {children}
-        </code>
-    );
+    >
+      {children}
+    </code>
+  );
 }

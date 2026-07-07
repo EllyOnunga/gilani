@@ -114,7 +114,10 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "GilaniAI", body: event.data ? event.data.text() : "You have a new notification." };
+    data = {
+      title: "GilaniAI",
+      body: event.data ? event.data.text() : "You have a new notification.",
+    };
   }
 
   const title = data.title || "GilaniAI";
@@ -138,21 +141,18 @@ self.addEventListener("notificationclick", (event) => {
   const url = event.notification.data?.url || "/";
 
   event.waitUntil(
-    clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((windowClients) => {
-        // Focus existing window if already open
-        for (const client of windowClients) {
-          if (client.url.includes(self.location.origin) && "focus" in client) {
-            client.navigate(url);
-            return client.focus();
-          }
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      // Focus existing window if already open
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          client.navigate(url);
+          return client.focus();
         }
-        // Otherwise open a new window
-        if (clients.openWindow) {
-          return clients.openWindow(url);
-        }
-      }),
+      }
+      // Otherwise open a new window
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
+    }),
   );
 });
-

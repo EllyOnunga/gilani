@@ -86,28 +86,31 @@ export function useTeacherEscalations(serverFns: ServerFns) {
   const [filter, setFilter] = useState<"all" | "pending" | "resolved">("all");
   const draftSaveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const loadEscalations = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    else setRefreshing(true);
-    try {
-      const authRes = await supabase.auth.getSession();
-      const session = authRes?.data?.session;
-      if (!session?.user?.id) {
-        setEscalations([]);
-        return;
+  const loadEscalations = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      else setRefreshing(true);
+      try {
+        const authRes = await supabase.auth.getSession();
+        const session = authRes?.data?.session;
+        if (!session?.user?.id) {
+          setEscalations([]);
+          return;
+        }
+        const rows = await withRetry(() => serverFns.listEscalations());
+        setEscalations(rows as Escalation[]);
+        setError(null);
+      } catch (err: any) {
+        const message = friendlyError(err, "Failed to load escalations.");
+        setError(message);
+        toast.error(message);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-      const rows = await withRetry(() => serverFns.listEscalations());
-      setEscalations(rows as Escalation[]);
-      setError(null);
-    } catch (err: any) {
-      const message = friendlyError(err, "Failed to load escalations.");
-      setError(message);
-      toast.error(message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [serverFns]);
+    },
+    [serverFns],
+  );
 
   useEffect(() => {
     loadEscalations();
@@ -136,13 +139,18 @@ export function useTeacherEscalations(serverFns: ServerFns) {
         .channel(`escalations-${userId}`)
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "escalations", filter: `reviewer_id=eq.${userId}` },
+          {
+            event: "*",
+            schema: "public",
+            table: "escalations",
+            filter: `reviewer_id=eq.${userId}`,
+          },
           () => {
             if (debounceTimer) clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
               loadEscalationsRef.current(true);
             }, 400);
-          }
+          },
         )
         .subscribe();
     })();
@@ -206,7 +214,7 @@ export function useTeacherEscalations(serverFns: ServerFns) {
 
     // Optimistic update — reflect resolution immediately
     setEscalations((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, status: "resolved", detail: answer } : e))
+      prev.map((e) => (e.id === id ? { ...e, status: "resolved", detail: answer } : e)),
     );
     clearDraft(id);
     setActiveId(null);
@@ -218,7 +226,7 @@ export function useTeacherEscalations(serverFns: ServerFns) {
       if (!session?.user?.id) throw new Error("Not signed in");
       await serverFns.resolveEscalation({ data: { id, expertAnswer: previousAnswer } });
       toast.success("Escalation resolved.");
-      
+
       const esc = previousEscalations.find((e) => e.id === id);
       if (esc?.conversation_id && esc?.user_id) {
         await createResolutionNotification({
@@ -241,12 +249,31 @@ export function useTeacherEscalations(serverFns: ServerFns) {
   const resolved = escalations.filter((e) => e.status === "resolved");
   const pendingUrgent = pending.filter((e) => e.reason === "distress_keyword");
   const pendingOther = pending.filter((e) => e.reason !== "distress_keyword");
-  const filteredEscalations = filter === "pending" ? pending : filter === "resolved" ? resolved : escalations;
+  const filteredEscalations =
+    filter === "pending" ? pending : filter === "resolved" ? resolved : escalations;
 
   return {
-    escalations, activeId, setActiveId, answer, setAnswer, saving, loading,
-    convoMessages, loadingMessages, refreshing, filter, setFilter, error,
-    loadEscalations, open, handleAnswerChange, handleResolve,
-    pending, resolved, pendingUrgent, pendingOther, filteredEscalations
+    escalations,
+    activeId,
+    setActiveId,
+    answer,
+    setAnswer,
+    saving,
+    loading,
+    convoMessages,
+    loadingMessages,
+    refreshing,
+    filter,
+    setFilter,
+    error,
+    loadEscalations,
+    open,
+    handleAnswerChange,
+    handleResolve,
+    pending,
+    resolved,
+    pendingUrgent,
+    pendingOther,
+    filteredEscalations,
   };
 }

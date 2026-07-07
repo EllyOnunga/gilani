@@ -44,7 +44,6 @@ export function compileExpression(expr: string): ((x: number) => number) | null 
   const stripped = safe.replace(/Math\.[a-zA-Z0-9]+/g, "").replace(/\bx\b/g, "");
   if (/[A-Za-z_]/.test(stripped)) return null;
   try {
-    // eslint-disable-next-line no-new-func
     const fn = new Function(
       "x",
       `"use strict"; const r = (${safe}); return (typeof r === "number" && isFinite(r)) ? r : NaN;`,

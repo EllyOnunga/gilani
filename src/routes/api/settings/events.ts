@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/settings/events")({
           console.error("[API Settings Events] Error:", error);
           return new Response(
             JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-            { status: 500, headers: { "Content-Type": "application/json" } }
+            { status: 500, headers: { "Content-Type": "application/json" } },
           );
         }
       },

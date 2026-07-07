@@ -1,19 +1,17 @@
 export interface BlockMeta {
+  icon?: string;
 
-    icon?: string;
+  subject?: string;
 
-    subject?: string;
+  difficulty?: "easy" | "medium" | "hard";
 
-    difficulty?: "easy" | "medium" | "hard";
+  collapsible?: boolean;
 
-    collapsible?: boolean;
+  defaultOpen?: boolean;
 
-    defaultOpen?: boolean;
+  language?: string;
 
-    language?: string;
+  tags?: string[];
 
-    tags?: string[];
-
-    source?: string;
-
+  source?: string;
 }

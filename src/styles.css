@@ -13,7 +13,6 @@
 @import "@fontsource/jetbrains-mono/500.css";
 @import "@fontsource/jetbrains-mono/600.css";
 
-
 @custom-variant dark (&:is(.dark *));
 
 /* GilaniAI — "Scholarly hearth" design tokens
@@ -103,31 +102,31 @@
 .dark {
   --background: #161210;
   --foreground: #ffffff;
-  --card: #211B18;
+  --card: #211b18;
   --card-foreground: #ffffff;
-  --popover: #211B18;
+  --popover: #211b18;
   --popover-foreground: #ffffff;
-  --primary: #C96A3D;
+  --primary: #c96a3d;
   --primary-foreground: #161210;
-  --secondary: #211B18;
+  --secondary: #211b18;
   --secondary-foreground: rgba(255, 255, 255, 0.7);
-  --muted: #211B18;
+  --muted: #211b18;
   --muted-foreground: rgba(255, 255, 255, 0.7);
-  --accent: #E28743;
+  --accent: #e28743;
   --accent-foreground: #ffffff;
   --destructive: hsl(0 70% 55%);
   --destructive-foreground: #ffffff;
   --border: rgba(255, 255, 255, 0.12);
   --input: rgba(255, 255, 255, 0.15);
-  --ring: #C96A3D;
+  --ring: #c96a3d;
   --sidebar: #161210;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #C96A3D;
+  --sidebar-primary: #c96a3d;
   --sidebar-primary-foreground: #161210;
-  --sidebar-accent: #211B18;
+  --sidebar-accent: #211b18;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #C96A3D;
+  --sidebar-ring: #c96a3d;
 }
 
 @keyframes slideUp {
@@ -210,7 +209,6 @@
 }
 
 @keyframes cursor-blink {
-
   0%,
   100% {
     opacity: 0;
@@ -289,7 +287,6 @@
 
 /* Streaming cursor for active messages */
 @keyframes streamCursor {
-
   0%,
   50% {
     opacity: 1;
@@ -322,10 +319,12 @@
 }
 
 .text-shimmer {
-  background: linear-gradient(100deg,
-      currentColor 35%,
-      rgba(212, 175, 55, 0.9) 50%,
-      currentColor 65%);
+  background: linear-gradient(
+    100deg,
+    currentColor 35%,
+    rgba(212, 175, 55, 0.9) 50%,
+    currentColor 65%
+  );
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -464,8 +463,8 @@
   margin-top: 0.25rem;
 }
 
-.prose-ai li>ol,
-.prose-ai li>ul {
+.prose-ai li > ol,
+.prose-ai li > ul {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }
@@ -513,7 +512,7 @@
 }
 
 /* Ensure all direct children respect width */
-.prose-ai>* {
+.prose-ai > * {
   max-width: 100%;
   overflow: hidden;
 }
@@ -525,7 +524,7 @@
 }
 
 /* ── Improved block math spacing ─────────────────────────────────── */
-.prose-ai .katex-display+.katex-display {
+.prose-ai .katex-display + .katex-display {
   margin-top: 0.75rem;
 }
 
@@ -540,11 +539,13 @@
 
 /* Add subtle background to block math for visual separation */
 .prose-ai .katex-display:not(:only-child) {
-  background: linear-gradient(to right,
-      transparent 0%,
-      rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 10%,
-      rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 90%,
-      transparent 100%);
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 10%,
+    rgba(var(--color-primary-rgb, 59, 130, 246), 0.03) 90%,
+    transparent 100%
+  );
   border-radius: 0.375rem;
 }
 
@@ -614,7 +615,6 @@
 }
 
 @keyframes bar-pulse {
-
   0%,
   100% {
     opacity: 0.3;
@@ -627,7 +627,6 @@
 
 /* Gilani loader */
 @keyframes g-bounce {
-
   0%,
   100% {
     transform: scale(0.6);
@@ -661,7 +660,9 @@
   text-underline-offset: 3px;
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.15s, text-decoration-color 0.15s;
+  transition:
+    color 0.15s,
+    text-decoration-color 0.15s;
 }
 .markdown-content a:hover {
   color: #7dd3fc;
@@ -682,20 +683,20 @@
   letter-spacing: 0.05em;
   padding: 0.625rem 1rem;
   text-align: left;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 .markdown-content td {
   padding: 0.5rem 1rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 .markdown-content tr:last-child td {
   border-bottom: none;
 }
 .markdown-content tr:nth-child(even) td {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 .markdown-content tr:hover td {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* Lists */
@@ -723,15 +724,15 @@
   border-left: 3px solid rgba(var(--color-primary), 0.5);
   padding: 0.4rem 0.8rem;
   margin: 0.75rem 0;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   font-style: italic;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 0 0.5rem 0.5rem 0;
 }
 
 /* Inline code */
 .markdown-content code:not(pre code) {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   color: #f472b6;
   font-family: var(--font-mono);
   font-size: 0.78rem;
@@ -742,7 +743,7 @@
 /* Horizontal rule */
 .markdown-content hr {
   border: none;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin: 1rem 0;
 }
 

@@ -200,7 +200,11 @@ function PlannerRoute() {
     <div className="h-full flex flex-col bg-background">
       <TutorPageHeader
         title="Study Planner"
-        subtitle={plans.length > 0 ? `${plans.length} plan${plans.length !== 1 ? "s" : ""}` : "Organize your goals"}
+        subtitle={
+          plans.length > 0
+            ? `${plans.length} plan${plans.length !== 1 ? "s" : ""}`
+            : "Organize your goals"
+        }
         actions={
           <button
             onClick={() => setShowForm(true)}
@@ -223,7 +227,8 @@ function PlannerRoute() {
                   </h3>
                   {formOptions && formOptions.plannersMaxToday < 999_999 && (
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {formOptions.plannersUsedToday}/{formOptions.plannersMaxToday} plans generated today
+                      {formOptions.plannersUsedToday}/{formOptions.plannersMaxToday} plans generated
+                      today
                     </p>
                   )}
                 </div>
@@ -249,7 +254,10 @@ function PlannerRoute() {
 
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">
-                  Exam date <span className="text-muted-foreground font-normal">(optional — leave blank for a general 14-day plan)</span>
+                  Exam date{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (optional — leave blank for a general 14-day plan)
+                  </span>
                 </label>
                 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                   <PopoverTrigger asChild>
@@ -294,7 +302,8 @@ function PlannerRoute() {
 
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">
-                  Hours available per day: <span className="text-primary font-semibold">{hoursPerDay}h</span>
+                  Hours available per day:{" "}
+                  <span className="text-primary font-semibold">{hoursPerDay}h</span>
                 </label>
                 <input
                   type="range"
@@ -334,7 +343,9 @@ function PlannerRoute() {
                 disabled={generating}
                 className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
               >
-                {generating ? "Building your schedule..." : (
+                {generating ? (
+                  "Building your schedule..."
+                ) : (
                   <>
                     <Sparkles className="h-4 w-4" />
                     Generate Plan
@@ -427,7 +438,9 @@ function PlannerRoute() {
                         <button
                           onClick={() => setViewMode("list")}
                           className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors ${
-                            viewMode === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                            viewMode === "list"
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:bg-muted"
                           }`}
                         >
                           <LayoutList className="h-3 w-3" />
@@ -436,7 +449,9 @@ function PlannerRoute() {
                         <button
                           onClick={() => setViewMode("week")}
                           className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors ${
-                            viewMode === "week" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                            viewMode === "week"
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:bg-muted"
                           }`}
                         >
                           <LayoutGrid className="h-3 w-3" />
@@ -448,71 +463,79 @@ function PlannerRoute() {
                           key={plan.id}
                           items={items}
                           onToggleItem={(itemId) => handleToggleItem(plan.id, itemId)}
-                          onStartFocus={(itemId, duration) => startFocusSession(plan.id, itemId, duration)}
+                          onStartFocus={(itemId, duration) =>
+                            startFocusSession(plan.id, itemId, duration)
+                          }
                         />
                       ) : (
-                      <>
-                      {sortedDates.map((date) => (
-                        <div key={date} className="space-y-2.5">
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                            <Clock className="h-3 w-3" />
-                            {new Date(date + "T00:00:00").toLocaleDateString(undefined, {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </h4>
-                          {grouped[date].map((item) => (
-                            <div key={item.id} className="flex items-start gap-3">
-                              <button
-                                onClick={() => handleToggleItem(plan.id, item.id)}
-                                className="shrink-0 mt-0.5"
-                              >
-                                {item.completed ? (
-                                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                                ) : (
-                                  <Circle className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
-                                )}
-                              </button>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                                  <span className="text-xs font-semibold text-primary">
-                                    {item.subject}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    · {item.topic}
-                                  </span>
-                                  <span
-                                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide flex items-center gap-1 ${PRIORITY_STYLES[item.priority] || PRIORITY_STYLES.low}`}
+                        <>
+                          {sortedDates.map((date) => (
+                            <div key={date} className="space-y-2.5">
+                              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                <Clock className="h-3 w-3" />
+                                {new Date(date + "T00:00:00").toLocaleDateString(undefined, {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </h4>
+                              {grouped[date].map((item) => (
+                                <div key={item.id} className="flex items-start gap-3">
+                                  <button
+                                    onClick={() => handleToggleItem(plan.id, item.id)}
+                                    className="shrink-0 mt-0.5"
                                   >
-                                    <Flag className="h-2.5 w-2.5" />
-                                    {item.priority}
-                                  </span>
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {item.durationMinutes}m
-                                  </span>
-                                  {!item.completed && (
-                                    <button
-                                      onClick={() => startFocusSession(plan.id, item.id, item.durationMinutes)}
-                                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                                      title="Start a focus session for this task"
+                                    {item.completed ? (
+                                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                                    ) : (
+                                      <Circle className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
+                                    )}
+                                  </button>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                      <span className="text-xs font-semibold text-primary">
+                                        {item.subject}
+                                      </span>
+                                      <span className="text-xs text-muted-foreground">
+                                        · {item.topic}
+                                      </span>
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide flex items-center gap-1 ${PRIORITY_STYLES[item.priority] || PRIORITY_STYLES.low}`}
+                                      >
+                                        <Flag className="h-2.5 w-2.5" />
+                                        {item.priority}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {item.durationMinutes}m
+                                      </span>
+                                      {!item.completed && (
+                                        <button
+                                          onClick={() =>
+                                            startFocusSession(
+                                              plan.id,
+                                              item.id,
+                                              item.durationMinutes,
+                                            )
+                                          }
+                                          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                                          title="Start a focus session for this task"
+                                        >
+                                          <Timer className="h-2.5 w-2.5" />
+                                          Focus
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div
+                                      className={`text-sm prose prose-sm max-w-none [&>p]:m-0 ${item.completed ? "text-muted-foreground line-through" : "text-foreground"}`}
                                     >
-                                      <Timer className="h-2.5 w-2.5" />
-                                      Focus
-                                    </button>
-                                  )}
+                                      <MarkdownRenderer content={item.task} />
+                                    </div>
+                                  </div>
                                 </div>
-                                <div
-                                  className={`text-sm prose prose-sm max-w-none [&>p]:m-0 ${item.completed ? "text-muted-foreground line-through" : "text-foreground"}`}
-                                >
-                                  <MarkdownRenderer content={item.task} />
-                                </div>
-                              </div>
+                              ))}
                             </div>
                           ))}
-                        </div>
-                      ))}
-                      </>
+                        </>
                       )}
                     </div>
                   )}

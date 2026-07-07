@@ -43,9 +43,15 @@ export function groupThreadsByDate(threads: Thread[]): GroupedThreads {
   return { today, yesterday, last7Days, older };
 }
 
-export function useThreadActions(userId: string | null | undefined, options?: { enabled?: boolean }) {
+export function useThreadActions(
+  userId: string | null | undefined,
+  options?: { enabled?: boolean },
+) {
   const navigate = useNavigate();
-  const { threads, threadsLoading, threadsLoadError, invalidateThreads } = useThreadsQuery(userId, options);
+  const { threads, threadsLoading, threadsLoadError, invalidateThreads } = useThreadsQuery(
+    userId,
+    options,
+  );
   const groupedThreads = groupThreadsByDate(threads);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);

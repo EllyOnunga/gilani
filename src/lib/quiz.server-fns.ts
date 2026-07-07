@@ -11,62 +11,62 @@ import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
 
 // ─── Schema ──────────────────────────────────────────────────────────────
 export const QuizQuestionSchema = z.object({
-    question: z.string().min(5).max(500),
-    options: z.array(z.string().min(1).max(200)).length(4),
-    correctIndex: z.number().int().min(0).max(3),
-    explanation: z.string().min(10).max(800),
-    difficulty: z.enum(["easy", "medium", "hard"]),
-    topic: z.string().min(1).max(100),
+  question: z.string().min(5).max(500),
+  options: z.array(z.string().min(1).max(200)).length(4),
+  correctIndex: z.number().int().min(0).max(3),
+  explanation: z.string().min(10).max(800),
+  difficulty: z.enum(["easy", "medium", "hard"]),
+  topic: z.string().min(1).max(100),
 });
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema> & { id: string };
 
 const QuizGenerationSchema = z.object({
-    questions: z.array(QuizQuestionSchema).min(3).max(15),
+  questions: z.array(QuizQuestionSchema).min(3).max(15),
 });
 
 function isRateLimitError(error: unknown): boolean {
-    if (!error) return false;
-    const err = error as any;
-    const msg = String(err?.message || err?.error?.message || JSON.stringify(err) || "");
-    return (
-        err?.statusCode === 429 ||
-        msg.includes("rate_limit") ||
-        msg.includes("Rate limit") ||
-        msg.includes("quota") ||
-        /429/.test(msg)
-    );
+  if (!error) return false;
+  const err = error as any;
+  const msg = String(err?.message || err?.error?.message || JSON.stringify(err) || "");
+  return (
+    err?.statusCode === 429 ||
+    msg.includes("rate_limit") ||
+    msg.includes("Rate limit") ||
+    msg.includes("quota") ||
+    /429/.test(msg)
+  );
 }
 
 // ─── Generate a quiz ─────────────────────────────────────────────────────
 export const generateQuizFn = createServerFn({ method: "POST" })
-    .validator(
-        z.object({
-            topic: z.string().trim().min(2).max(200),
-            difficulty: z.enum(["easy", "medium", "hard", "mixed"]).default("mixed"),
-            questionCount: z.number().int().min(3).max(15).default(8),
-        }),
-    )
-    .handler(async ({ data }) => {
-        const request = getRequest();
-        let authResult: Awaited<ReturnType<typeof authenticateRequest>>;
-        try {
-            authResult = await authenticateRequest(request);
-        } catch {
-            throw new Error("Unauthorized");
-        }
-        const userId = authResult.userId;
+  .validator(
+    z.object({
+      topic: z.string().trim().min(2).max(200),
+      difficulty: z.enum(["easy", "medium", "hard", "mixed"]).default("mixed"),
+      questionCount: z.number().int().min(3).max(15).default(8),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    let authResult: Awaited<ReturnType<typeof authenticateRequest>>;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
+    const userId = authResult.userId;
 
-        // Enforces both per-minute and plan-based daily quota (getPlanLimits().dailyQuizzes)
-        const rateLimit = await checkPlanRateLimit(userId, "quiz");
-        if (!rateLimit.allowed) {
-            throw new Error(
-                rateLimit.isDaily
-                    ? "You've reached your daily quiz generation limit. Upgrade your plan or try again tomorrow."
-                    : "You're generating quizzes too fast. Please wait a moment and try again.",
-            );
-        }
+    // Enforces both per-minute and plan-based daily quota (getPlanLimits().dailyQuizzes)
+    const rateLimit = await checkPlanRateLimit(userId, "quiz");
+    if (!rateLimit.allowed) {
+      throw new Error(
+        rateLimit.isDaily
+          ? "You've reached your daily quiz generation limit. Upgrade your plan or try again tomorrow."
+          : "You're generating quizzes too fast. Please wait a moment and try again.",
+      );
+    }
 
-        const { topic } = data;
+    const { topic } = data;
     const limits = getPlanLimits(rateLimit.plan);
     const allowedDifficulties = limits.quizDifficulties.length
       ? limits.quizDifficulties
@@ -76,179 +76,178 @@ export const generateQuizFn = createServerFn({ method: "POST" })
       : (allowedDifficulties[allowedDifficulties.length - 1] as typeof data.difficulty);
     const questionCount = Math.min(data.questionCount, limits.maxQuizQuestions);
 
-        const { data: profile } = await supabaseAdmin
-            .from("profiles")
-            .select("curriculum")
-            .eq("id", userId)
-            .maybeSingle();
-        const curriculum = sanitizeCurriculum(profile?.curriculum);
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("curriculum")
+      .eq("id", userId)
+      .maybeSingle();
+    const curriculum = sanitizeCurriculum(profile?.curriculum);
 
-        // ─── RAG: ground the quiz in the student's notes + curriculum library ───
-        // Mirrors the retrieval pattern in src/routes/api/chat.ts.
-        let notesContext = "";
-        try {
-            const geminiKey = (process.env.GEMINI_API_KEY || "").trim();
-            if (geminiKey) {
-                const { embed } = await import("ai");
-                const embModel = createGoogleAiProvider().textEmbeddingModel();
-                const { embedding } = await withTimeout(
-                    embed({
-                        model: embModel,
-                        value: topic,
-                        maxRetries: 0,
-                        providerOptions: { google: { outputDimensionality: 768 } },
-                    }),
-                    15000,
-                    "Embedding generation timed out",
-                );
-                const embeddingStr = `[${(embedding as number[]).join(",")}]`;
+    // ─── RAG: ground the quiz in the student's notes + curriculum library ───
+    // Mirrors the retrieval pattern in src/routes/api/chat.ts.
+    let notesContext = "";
+    try {
+      const geminiKey = (process.env.GEMINI_API_KEY || "").trim();
+      if (geminiKey) {
+        const { embed } = await import("ai");
+        const embModel = createGoogleAiProvider().textEmbeddingModel();
+        const { embedding } = await withTimeout(
+          embed({
+            model: embModel,
+            value: topic,
+            maxRetries: 0,
+            providerOptions: { google: { outputDimensionality: 768 } },
+          }),
+          15000,
+          "Embedding generation timed out",
+        );
+        const embeddingStr = `[${(embedding as number[]).join(",")}]`;
 
-                const [personalResult, globalResult] = await Promise.allSettled([
-                    supabaseAdmin.rpc("match_note_chunks", {
-                        query_embedding: embeddingStr,
-                        match_user_id: userId,
-                        match_count: 6,
-                    }),
-                    supabaseAdmin.rpc("match_global_note_chunks", {
-                        query_embedding: embeddingStr,
-                        match_count: 6,
-                    }),
-                ]);
+        const [personalResult, globalResult] = await Promise.allSettled([
+          supabaseAdmin.rpc("match_note_chunks", {
+            query_embedding: embeddingStr,
+            match_user_id: userId,
+            match_count: 6,
+          }),
+          supabaseAdmin.rpc("match_global_note_chunks", {
+            query_embedding: embeddingStr,
+            match_count: 6,
+          }),
+        ]);
 
-                const personalChunks: string[] =
-                    personalResult.status === "fulfilled" && personalResult.value.data?.length
-                        ? personalResult.value.data.map((c: any) => c.content)
-                        : [];
-                const globalChunks: string[] =
-                    globalResult.status === "fulfilled" && globalResult.value.data?.length
-                        ? globalResult.value.data.map((c: any) => c.content)
-                        : [];
+        const personalChunks: string[] =
+          personalResult.status === "fulfilled" && personalResult.value.data?.length
+            ? personalResult.value.data.map((c: any) => c.content)
+            : [];
+        const globalChunks: string[] =
+          globalResult.status === "fulfilled" && globalResult.value.data?.length
+            ? globalResult.value.data.map((c: any) => c.content)
+            : [];
 
-                const allChunks: string[] = [];
-                if (personalChunks.length) allChunks.push("--- Student's Notes ---", ...personalChunks);
-                if (globalChunks.length) allChunks.push("--- Curriculum Library ---", ...globalChunks);
-                if (allChunks.length) notesContext = sanitizeUntrustedInput(allChunks.join("\n---\n"));
-            } else {
-                console.log("[Quiz RAG] No embedding provider available, skipping RAG");
-            }
-        } catch (err) {
-            if (isRateLimitError(err)) {
-                console.log("[Quiz RAG] Embeddings rate limited, generating from general knowledge");
-            } else {
-                console.error("[Quiz RAG] Failed:", err instanceof Error ? err.message : String(err));
-            }
-        }
+        const allChunks: string[] = [];
+        if (personalChunks.length) allChunks.push("--- Student's Notes ---", ...personalChunks);
+        if (globalChunks.length) allChunks.push("--- Curriculum Library ---", ...globalChunks);
+        if (allChunks.length) notesContext = sanitizeUntrustedInput(allChunks.join("\n---\n"));
+      } else {
+        console.log("[Quiz RAG] No embedding provider available, skipping RAG");
+      }
+    } catch (err) {
+      if (isRateLimitError(err)) {
+        console.log("[Quiz RAG] Embeddings rate limited, generating from general knowledge");
+      } else {
+        console.error("[Quiz RAG] Failed:", err instanceof Error ? err.message : String(err));
+      }
+    }
 
-        // ─── Build generation prompt ─────────────────────────────────────
-        const difficultyInstruction =
-            difficulty === "mixed"
-                ? "Vary difficulty across easy, medium, and hard questions so the quiz progresses naturally, roughly in order from easy to hard."
-                : `All questions should be ${difficulty} difficulty.`;
+    // ─── Build generation prompt ─────────────────────────────────────
+    const difficultyInstruction =
+      difficulty === "mixed"
+        ? "Vary difficulty across easy, medium, and hard questions so the quiz progresses naturally, roughly in order from easy to hard."
+        : `All questions should be ${difficulty} difficulty.`;
 
-        const prompt = [
-            `You are an expert ${curriculum} curriculum examiner creating a quiz for a Kenyan student.`,
-            `Generate exactly ${questionCount} multiple-choice questions on: "${topic}".`,
-            difficultyInstruction,
-            "Each question must have exactly 4 options, with exactly one correct answer.",
-            "Every question MUST include a detailed explanation (2-4 sentences) that teaches WHY the correct answer is right, and where useful, why a common wrong option is tempting but incorrect.",
-            "Base every question on accurate, curriculum-appropriate content. Do not invent facts.",
-            "Tag each question with a short 'topic' field naming the specific sub-topic it tests — this is used to detect the student's weak areas afterward.",
-            notesContext
-                ? `Ground your questions in the following reference material where it's relevant:\n\n${notesContext}`
-                : "No reference material was found for this topic — draw on accurate general curriculum knowledge.",
-        ].join("\n\n");
+    const prompt = [
+      `You are an expert ${curriculum} curriculum examiner creating a quiz for a Kenyan student.`,
+      `Generate exactly ${questionCount} multiple-choice questions on: "${topic}".`,
+      difficultyInstruction,
+      "Each question must have exactly 4 options, with exactly one correct answer.",
+      "Every question MUST include a detailed explanation (2-4 sentences) that teaches WHY the correct answer is right, and where useful, why a common wrong option is tempting but incorrect.",
+      "Base every question on accurate, curriculum-appropriate content. Do not invent facts.",
+      "Tag each question with a short 'topic' field naming the specific sub-topic it tests — this is used to detect the student's weak areas afterward.",
+      notesContext
+        ? `Ground your questions in the following reference material where it's relevant:\n\n${notesContext}`
+        : "No reference material was found for this topic — draw on accurate general curriculum knowledge.",
+    ].join("\n\n");
 
-        const { generateObject } = await import("ai");
-        const gateway = createGoogleAiProvider();
+    const { generateObject } = await import("ai");
+    const gateway = createGoogleAiProvider();
 
-        let result;
-        try {
-            result = await withTimeout(
-                generateObject({
-                    model: gateway.chatModel() as any,
-                    schema: QuizGenerationSchema,
-                    prompt,
-                } as any),
-                120000,
-                "Quiz generation timed out",
-            );
-        } catch (err) {
-            console.error("[Quiz Gen] Failed:", err instanceof Error ? err.message : String(err));
-            throw new Error("Failed to generate quiz. Please try again in a moment.");
-        }
+    let result;
+    try {
+      result = await withTimeout(
+        generateObject({
+          model: gateway.chatModel() as any,
+          schema: QuizGenerationSchema,
+          prompt,
+        } as any),
+        120000,
+        "Quiz generation timed out",
+      );
+    } catch (err) {
+      console.error("[Quiz Gen] Failed:", err instanceof Error ? err.message : String(err));
+      throw new Error("Failed to generate quiz. Please try again in a moment.");
+    }
 
-        const questionsWithIds: QuizQuestion[] = (result as any).object.questions.map((q: any) => ({
-            ...q,
-            id: crypto.randomUUID(),
-        }));
+    const questionsWithIds: QuizQuestion[] = (result as any).object.questions.map((q: any) => ({
+      ...q,
+      id: crypto.randomUUID(),
+    }));
 
-        const { data: quiz, error } = await supabaseAdmin
-            .from("quizzes")
-            .insert({
-                user_id: userId,
-                topic,
-                difficulty,
-                questions: questionsWithIds as any,
-            })
-            .select("id")
-            .single();
+    const { data: quiz, error } = await supabaseAdmin
+      .from("quizzes")
+      .insert({
+        user_id: userId,
+        topic,
+        difficulty,
+        questions: questionsWithIds as any,
+      })
+      .select("id")
+      .single();
 
-        if (error) throw error;
-        return { quizId: quiz.id, questions: questionsWithIds };
-    });
+    if (error) throw error;
+    return { quizId: quiz.id, questions: questionsWithIds };
+  });
 
 // ─── Submit a completed attempt ──────────────────────────────────────────
 export const submitQuizAttemptFn = createServerFn({ method: "POST" })
-    .validator(
+  .validator(
+    z.object({
+      quizId: z.string().uuid(),
+      answers: z.array(
         z.object({
-            quizId: z.string().uuid(),
-            answers: z.array(
-                z.object({
-                    questionId: z.string(),
-                    selectedIndex: z.number().int().min(0).max(3),
-                    correct: z.boolean(),
-                    topic: z.string().optional(),
-                }),
-            ),
+          questionId: z.string(),
+          selectedIndex: z.number().int().min(0).max(3),
+          correct: z.boolean(),
+          topic: z.string().optional(),
         }),
-    )
-    .handler(async ({ data }) => {
-        const request = getRequest();
-        let authResult: Awaited<ReturnType<typeof authenticateRequest>>;
-        try {
-            authResult = await authenticateRequest(request);
-        } catch {
-            throw new Error("Unauthorized");
-        }
-        const userId = authResult.userId;
+      ),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    let authResult: Awaited<ReturnType<typeof authenticateRequest>>;
+    try {
+      authResult = await authenticateRequest(request);
+    } catch {
+      throw new Error("Unauthorized");
+    }
+    const userId = authResult.userId;
 
-        const { data: quiz, error: quizError } = await supabaseAdmin
-            .from("quizzes")
-            .select("id, user_id")
-            .eq("id", data.quizId)
-            .maybeSingle();
-        if (quizError || !quiz || quiz.user_id !== userId) {
-            throw new Error("Quiz not found");
-        }
+    const { data: quiz, error: quizError } = await supabaseAdmin
+      .from("quizzes")
+      .select("id, user_id")
+      .eq("id", data.quizId)
+      .maybeSingle();
+    if (quizError || !quiz || quiz.user_id !== userId) {
+      throw new Error("Quiz not found");
+    }
 
-        const correctCount = data.answers.filter((a) => a.correct).length;
-        const score = Math.round((correctCount / Math.max(1, data.answers.length)) * 100);
-        const weakTopics = Array.from(
-            new Set(data.answers.filter((a) => !a.correct && a.topic).map((a) => a.topic as string)),
-        );
+    const correctCount = data.answers.filter((a) => a.correct).length;
+    const score = Math.round((correctCount / Math.max(1, data.answers.length)) * 100);
+    const weakTopics = Array.from(
+      new Set(data.answers.filter((a) => !a.correct && a.topic).map((a) => a.topic as string)),
+    );
 
-        const { error } = await supabaseAdmin.from("quiz_attempts").insert({
-            quiz_id: data.quizId,
-            user_id: userId,
-            answers: data.answers as any,
-            score,
-            weak_topics: weakTopics as any,
-        });
-        if (error) throw error;
-
-        return { score, correctCount, total: data.answers.length, weakTopics };
+    const { error } = await supabaseAdmin.from("quiz_attempts").insert({
+      quiz_id: data.quizId,
+      user_id: userId,
+      answers: data.answers as any,
+      score,
+      weak_topics: weakTopics as any,
     });
+    if (error) throw error;
 
+    return { score, correctCount, total: data.answers.length, weakTopics };
+  });
 
 // ─── Quiz form options (plan-derived, sourced from the user's Supabase profile) ───
 export const getQuizFormOptionsFn = createServerFn({ method: "GET" }).handler(async () => {

@@ -30,22 +30,32 @@ export function ProfileDetailsTab({ settings, userEmail, PresetAvatarSVG }: Prop
           )}
           <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity duration-200">
             <Upload className="h-5 w-5 text-white" />
-            <input type="file" onChange={settings.handlePhotoUpload} accept="image/*" className="sr-only" />
+            <input
+              type="file"
+              onChange={settings.handlePhotoUpload}
+              accept="image/*"
+              className="sr-only"
+            />
           </label>
         </div>
 
         <div className="flex-1 min-w-0 space-y-1 text-center sm:text-left">
-          <p className="text-xs font-semibold text-foreground">{settings.displayName || "No name set"}</p>
+          <p className="text-xs font-semibold text-foreground">
+            {settings.displayName || "No name set"}
+          </p>
           <p className="text-xs text-muted-foreground">{userEmail}</p>
           <p className="text-[10px] text-muted-foreground mt-1 flex items-center justify-center sm:justify-start gap-1">
-            <Info className="h-3.5 w-3.5 flex-shrink-0 text-primary" /> Upload a photo or use your initials.
+            <Info className="h-3.5 w-3.5 flex-shrink-0 text-primary" /> Upload a photo or use your
+            initials.
           </p>
         </div>
       </div>
 
       <div className="space-y-3">
         <div>
-          <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">Display Name</label>
+          <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
+            Display Name
+          </label>
           <input
             type="text"
             required

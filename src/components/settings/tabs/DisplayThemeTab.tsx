@@ -9,11 +9,16 @@ export function DisplayThemeTab({ settings }: Props) {
   return (
     <section className="rounded-2xl border border-border/40 bg-card p-4 sm:p-6 shadow-xs space-y-6 animate-in-slide">
       <div className="flex items-center gap-2.5">
-        {settings.isDark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+        {settings.isDark ? (
+          <Moon className="h-5 w-5 text-primary" />
+        ) : (
+          <Sun className="h-5 w-5 text-primary" />
+        )}
         <h3 className="font-serif text-xl font-bold text-foreground">Display Theme</h3>
       </div>
       <p className="text-xs text-muted-foreground">
-        Choose between Light mode (scholarly warm parchment layout) and Dark mode (charcoal deep theme).
+        Choose between Light mode (scholarly warm parchment layout) and Dark mode (charcoal deep
+        theme).
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

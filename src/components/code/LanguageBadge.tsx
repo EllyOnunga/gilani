@@ -1,13 +1,11 @@
 interface Props {
-    language?: string;
+  language?: string;
 }
 
-export default function LanguageBadge({
-    language,
-}: Props) {
-    return (
-        <span
-            className="
+export default function LanguageBadge({ language }: Props) {
+  return (
+    <span
+      className="
       rounded-md
       bg-[#3B2A22]
       px-2
@@ -18,8 +16,8 @@ export default function LanguageBadge({
       tracking-wide
       text-[#E28743]
     "
-        >
-            {language || "TEXT"}
-        </span>
-    );
+    >
+      {language || "TEXT"}
+    </span>
+  );
 }

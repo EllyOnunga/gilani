@@ -26,10 +26,7 @@ const consumeVerifyToken = createServerFn({ method: "GET" })
     // informational only and never gates access, so it's safe (and necessary)
     // to make the link idempotent. Nulling it caused false "expired" screens
     // when a link was opened twice (e.g. corporate email link-scanners).
-    await supabaseAdmin
-      .from("profiles")
-      .update({ email_verified: true })
-      .eq("id", profile.id);
+    await supabaseAdmin.from("profiles").update({ email_verified: true }).eq("id", profile.id);
 
     return { success: true, role: roleRow?.role ?? "student" };
   });
@@ -44,10 +41,7 @@ export const Route = createFileRoute("/verify-email")({
     return consumeVerifyToken({ data: { token: search.token } });
   },
   head: () => ({
-    meta: [
-      { title: "Verify Email — GilaniAI" },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
+    meta: [{ title: "Verify Email — GilaniAI" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: VerifyEmailPage,
 });
@@ -64,7 +58,8 @@ function VerifyEmailPage() {
             <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
             <h1 className="font-serif text-2xl font-black text-white">Email verified</h1>
             <p className="text-sm text-[#9ca3af]">
-              Your email is confirmed. You're all set — this didn't change your access, it just secures your account.
+              Your email is confirmed. You're all set — this didn't change your access, it just
+              secures your account.
             </p>
           </>
         ) : (
@@ -77,7 +72,13 @@ function VerifyEmailPage() {
           </>
         )}
         <Link
-          to={role === "admin" ? "/admin/users" : role === "teacher" ? "/teacher/escalations" : "/tutor"}
+          to={
+            role === "admin"
+              ? "/admin/users"
+              : role === "teacher"
+                ? "/teacher/escalations"
+                : "/tutor"
+          }
           className="inline-block w-full rounded-xl bg-[#d9531e] py-3.5 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#c44819] transition-all"
         >
           Go to GilaniAI

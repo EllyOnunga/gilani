@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
-import { 
-  sendTransactionalEmail, 
-  teacherReplyEmailTemplate, 
-  studyReminderEmailTemplate 
+import {
+  sendTransactionalEmail,
+  teacherReplyEmailTemplate,
+  studyReminderEmailTemplate,
 } from "@/lib/email.server";
 
 export const Route = createFileRoute("/api/notifications/email")({
@@ -53,10 +53,13 @@ export const Route = createFileRoute("/api/notifications/email")({
           // Respect user preferences (default to true if preferences JSON doesn't exist yet)
           const prefs = (profile.preferences as any) || {};
           if (prefs.notificationsEmail === false) {
-            return new Response(JSON.stringify({ message: "User opted out of email notifications" }), {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-            });
+            return new Response(
+              JSON.stringify({ message: "User opted out of email notifications" }),
+              {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              },
+            );
           }
 
           // Fetch auth email

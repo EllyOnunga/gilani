@@ -136,8 +136,9 @@ function About() {
               <span className="text-[#d9531e] italic">not a replacement.</span>
             </h1>
             <p className="text-base sm:text-lg leading-relaxed text-[#9ca3af] max-w-2xl mx-auto">
-              GilaniAI is an AI-powered study assistant built for students on any curriculum. We combine curriculum-grounded AI, Socratic questioning, and real human
-              teacher oversight to help students learn better — not just get answers.
+              GilaniAI is an AI-powered study assistant built for students on any curriculum. We
+              combine curriculum-grounded AI, Socratic questioning, and real human teacher oversight
+              to help students learn better — not just get answers.
             </p>
           </div>
         </section>
@@ -157,8 +158,8 @@ function About() {
                   <Check className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
                   <p>
                     <span className="font-semibold text-white">Ground every answer</span> in real
-                    curriculum material from KCSE, CBC, CBE, Cambridge IGCSE, Edexcel, Canadian Curriculum and more — no generic internet
-                    responses.
+                    curriculum material from KCSE, CBC, CBE, Cambridge IGCSE, Edexcel, Canadian
+                    Curriculum and more — no generic internet responses.
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -265,7 +266,6 @@ function About() {
                   badge: "Canada & Beyond",
                 },
               ].map(({ title, desc, badge }) => (
-
                 <div
                   key={title}
                   className="rounded-2xl border border-white/8 bg-[#1a1d27] p-6 hover:border-white/14 transition-colors flex flex-col justify-between h-full"

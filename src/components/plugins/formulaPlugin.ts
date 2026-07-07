@@ -1,30 +1,21 @@
 import { RendererPlugin } from "./types";
 
 export const formulaPlugin: RendererPlugin = {
+  name: "formula",
 
-    name: "formula",
+  test(node) {
+    if (node.type !== "paragraph") return false;
 
-    test(node) {
+    const value = node.children?.[0]?.value ?? "";
 
-        if (node.type !== "paragraph")
-            return false;
+    return value.trim() === "Formula";
+  },
 
-        const value = node.children?.[0]?.value ?? "";
+  transform(node) {
+    node.data = {
+      component: "FormulaCard",
+    };
 
-        return value.trim() === "Formula";
-
-    },
-
-    transform(node) {
-
-        node.data = {
-
-            component: "FormulaCard"
-
-        };
-
-        return node;
-
-    }
-
+    return node;
+  },
 };

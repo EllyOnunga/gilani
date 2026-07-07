@@ -11,7 +11,4 @@
  *   - Streaming-aware rendering (incomplete math suppressed gracefully)
  *   - LaTeX pre-processor (auto-wraps chemical formulas, units, arrows)
  */
-export {
-  MarkdownRenderer,
-  MarkdownRenderer as default,
-} from "@/components/tutor/MarkdownRenderer";
+export { MarkdownRenderer, MarkdownRenderer as default } from "@/components/tutor/MarkdownRenderer";

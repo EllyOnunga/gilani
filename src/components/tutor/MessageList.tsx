@@ -31,7 +31,6 @@ type Props = {
   allThreadsPath?: string;
 };
 
-
 export const MessageList = React.memo(function MessageList({
   messages,
   messagesLoading,

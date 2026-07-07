@@ -31,7 +31,9 @@ function DocumentsRoute() {
 
   const fetchNotes = async (searchTerm: string, page: number, append: boolean) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       let query = supabase
@@ -97,7 +99,9 @@ function DocumentsRoute() {
     setRetryingId(id);
     try {
       const { chunks } = await retryNote({ data: { noteId: id } });
-      setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, status: "processing", error_message: null } : n)));
+      setNotes((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, status: "processing", error_message: null } : n)),
+      );
       await processNoteChunks(id, chunks);
       const { data } = await supabase
         .from("notes")
@@ -114,12 +118,15 @@ function DocumentsRoute() {
     }
   };
 
-  if (loading) return (
-    <div className="h-full flex flex-col">
-      <TutorPageHeader title="My Documents" subtitle="Study materials uploaded to the AI" />
-      <div className="flex-1 flex items-center justify-center"><GilaniLoader /></div>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="h-full flex flex-col">
+        <TutorPageHeader title="My Documents" subtitle="Study materials uploaded to the AI" />
+        <div className="flex-1 flex items-center justify-center">
+          <GilaniLoader />
+        </div>
+      </div>
+    );
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -137,7 +144,6 @@ function DocumentsRoute() {
       />
       <div className="flex-1 overflow-y-auto p-4 lg:p-8">
         <div className="max-w-5xl mx-auto space-y-6">
-
           {(notes.length > 0 || search) && (
             <div className="relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -204,7 +210,10 @@ function DocumentsRoute() {
       </div>
 
       {uploadOpen && (
-        <NoteUploadModal onClose={() => setUploadOpen(false)} onUploaded={() => fetchNotes(search, 0, false)} />
+        <NoteUploadModal
+          onClose={() => setUploadOpen(false)}
+          onUploaded={() => fetchNotes(search, 0, false)}
+        />
       )}
 
       {confirmDeleteId && (

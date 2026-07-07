@@ -13,7 +13,13 @@ import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
 const _profileCache = new Map<
   string,
   {
-    data: { studentName?: string | null; curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string };
+    data: {
+      studentName?: string | null;
+      curriculum: string;
+      tutorTone: string;
+      tutorStyle: string;
+      tutorDepth: string;
+    };
     expiresAt: number;
   }
 >();
@@ -24,7 +30,13 @@ function getCachedProfile(userId: string) {
 }
 function setCachedProfile(
   userId: string,
-  data: { studentName?: string | null; curriculum: string; tutorTone: string; tutorStyle: string; tutorDepth: string },
+  data: {
+    studentName?: string | null;
+    curriculum: string;
+    tutorTone: string;
+    tutorStyle: string;
+    tutorDepth: string;
+  },
 ) {
   _profileCache.set(userId, { data, expiresAt: Date.now() + 10_000 });
 }
@@ -133,7 +145,7 @@ export const Route = createFileRoute("/api/chat")({
               })
               .select("*")
               .single();
-              
+
             if (createError) {
               return new Response(JSON.stringify({ error: "Failed to create thread" }), {
                 status: 500,
@@ -177,11 +189,13 @@ export const Route = createFileRoute("/api/chat")({
                 content: (userText || null) as any,
                 parts: JSON.stringify([{ type: "text", text: userText }]),
                 user_id: userId,
-                ...(attachmentMeta?.storageUrl ? {
-                  file_url: attachmentMeta.storageUrl,
-                  file_type: attachmentMeta.mimeType ?? null,
-                  file_name: attachmentMeta.fileName ?? null,
-                } : {}),
+                ...(attachmentMeta?.storageUrl
+                  ? {
+                      file_url: attachmentMeta.storageUrl,
+                      file_type: attachmentMeta.mimeType ?? null,
+                      file_name: attachmentMeta.fileName ?? null,
+                    }
+                  : {}),
               } as any);
             } else if (isRetry) {
               const { data: lastMsg } = await supabaseAdmin
@@ -221,67 +235,67 @@ export const Route = createFileRoute("/api/chat")({
             let notesContext = "";
             if (latestMessageContent) {
               try {
-              const geminiKey = (process.env.GEMINI_API_KEY || "").trim();
-              if (geminiKey) {
-                const embModel = createGoogleAiProvider().textEmbeddingModel();
-                console.log(`[RAG] Using gemini for embeddings`);
-                const { embedding } = await withTimeout(
-                  embed({
-                    model: embModel,
-                    value: latestMessageContent,
-                    maxRetries: 0,
-                    providerOptions: { google: { outputDimensionality: 768 } },
-                  }),
-                  60000,
-                  "Embedding generation timed out",
-                );
+                const geminiKey = (process.env.GEMINI_API_KEY || "").trim();
+                if (geminiKey) {
+                  const embModel = createGoogleAiProvider().textEmbeddingModel();
+                  console.log(`[RAG] Using gemini for embeddings`);
+                  const { embedding } = await withTimeout(
+                    embed({
+                      model: embModel,
+                      value: latestMessageContent,
+                      maxRetries: 0,
+                      providerOptions: { google: { outputDimensionality: 768 } },
+                    }),
+                    60000,
+                    "Embedding generation timed out",
+                  );
 
-                const embeddingStr = `[${(embedding as number[]).join(",")}]`;
+                  const embeddingStr = `[${(embedding as number[]).join(",")}]`;
 
-                // ── Run both pools in parallel ────────────────────────────────
-                const [personalResult, globalResult] = await Promise.allSettled([
-                  supabaseAdmin.rpc("match_note_chunks", {
-                    query_embedding: embeddingStr,
-                    match_user_id: userId,
-                    match_count: 5,
-                  }),
-                  supabaseAdmin.rpc("match_global_note_chunks", {
-                    query_embedding: embeddingStr,
-                    match_count: 5,
-                  }),
-                ]);
+                  // ── Run both pools in parallel ────────────────────────────────
+                  const [personalResult, globalResult] = await Promise.allSettled([
+                    supabaseAdmin.rpc("match_note_chunks", {
+                      query_embedding: embeddingStr,
+                      match_user_id: userId,
+                      match_count: 5,
+                    }),
+                    supabaseAdmin.rpc("match_global_note_chunks", {
+                      query_embedding: embeddingStr,
+                      match_count: 5,
+                    }),
+                  ]);
 
-                const personalChunks: string[] =
-                  personalResult.status === "fulfilled" && personalResult.value.data?.length
-                    ? personalResult.value.data.map((c: any) => c.content)
-                    : [];
+                  const personalChunks: string[] =
+                    personalResult.status === "fulfilled" && personalResult.value.data?.length
+                      ? personalResult.value.data.map((c: any) => c.content)
+                      : [];
 
-                const globalChunks: string[] =
-                  globalResult.status === "fulfilled" && globalResult.value.data?.length
-                    ? globalResult.value.data.map((c: any) => c.content)
-                    : [];
+                  const globalChunks: string[] =
+                    globalResult.status === "fulfilled" && globalResult.value.data?.length
+                      ? globalResult.value.data.map((c: any) => c.content)
+                      : [];
 
-                console.log(
-                  `[RAG] Personal: ${personalChunks.length} chunks, Global: ${globalChunks.length} chunks`,
-                );
+                  console.log(
+                    `[RAG] Personal: ${personalChunks.length} chunks, Global: ${globalChunks.length} chunks`,
+                  );
 
-                // ── Personal notes first, then global ─────────────────────────
-                const allChunks: string[] = [];
-                if (personalChunks.length) {
-                  allChunks.push("--- Your Notes ---");
-                  allChunks.push(...personalChunks);
+                  // ── Personal notes first, then global ─────────────────────────
+                  const allChunks: string[] = [];
+                  if (personalChunks.length) {
+                    allChunks.push("--- Your Notes ---");
+                    allChunks.push(...personalChunks);
+                  }
+                  if (globalChunks.length) {
+                    allChunks.push("--- Curriculum Library ---");
+                    allChunks.push(...globalChunks);
+                  }
+
+                  if (allChunks.length) {
+                    notesContext = sanitizeUntrustedInput(allChunks.join("\n---\n"));
+                  }
+                } else {
+                  console.log("[RAG] No embedding provider available, skipping RAG");
                 }
-                if (globalChunks.length) {
-                  allChunks.push("--- Curriculum Library ---");
-                  allChunks.push(...globalChunks);
-                }
-
-                if (allChunks.length) {
-                  notesContext = sanitizeUntrustedInput(allChunks.join("\n---\n"));
-                }
-              } else {
-                console.log("[RAG] No embedding provider available, skipping RAG");
-              }
               } catch (err: unknown) {
                 if (isRateLimitError(err)) {
                   console.log(`[RAG] Embeddings rate limited, skipping RAG`);
@@ -371,7 +385,8 @@ ${finalContent}`;
             },
             tools: {
               evaluateCode: tool({
-                description: "Execute code in a secure sandbox to verify if a student's solution works.",
+                description:
+                  "Execute code in a secure sandbox to verify if a student's solution works.",
                 inputSchema: z.object({
                   code: z.string().describe("The code string to run"),
                   language: z.enum(["javascript", "python"]),
@@ -415,7 +430,9 @@ ${finalContent}`;
 
                     if (!response.ok) {
                       console.error(`[API Chat] evaluateCode: Judge0 HTTP ${response.status}`);
-                      return { output: "Code execution service returned an error. Please try again." };
+                      return {
+                        output: "Code execution service returned an error. Please try again.",
+                      };
                     }
 
                     const result: any = await response.json();
@@ -425,7 +442,8 @@ ${finalContent}`;
                     const compileOutput = (result?.compile_output || "").trim();
 
                     let output = `Status: ${statusDescription}`;
-                    if (compileOutput) output += `\nCompile output:\n${compileOutput.slice(0, 1500)}`;
+                    if (compileOutput)
+                      output += `\nCompile output:\n${compileOutput.slice(0, 1500)}`;
                     if (stdout) output += `\nOutput:\n${stdout.slice(0, 1500)}`;
                     if (stderr) output += `\nErrors:\n${stderr.slice(0, 1500)}`;
                     if (!compileOutput && !stdout && !stderr) output += "\n(No output produced.)";
@@ -436,7 +454,8 @@ ${finalContent}`;
                     const message = err instanceof Error ? err.message : String(err);
                     console.error("[API Chat] evaluateCode failed:", message);
                     return {
-                      output: "Code execution timed out or failed. Please verify your solution manually for now.",
+                      output:
+                        "Code execution timed out or failed. Please verify your solution manually for now.",
                     };
                   }
                 }) as any,
@@ -449,7 +468,11 @@ ${finalContent}`;
                   "(3) the student asks for links, websites, or external resources; " +
                   "(4) you are not 100% confident in a specific fact, formula, or data point. " +
                   "Prefer searching multiple times with different queries to ground your answer comprehensively.",
-                inputSchema: z.object({ query: z.string().describe("A specific, targeted search query — be detailed for best results.") }) as any,
+                inputSchema: z.object({
+                  query: z
+                    .string()
+                    .describe("A specific, targeted search query — be detailed for best results."),
+                }) as any,
                 execute: (async ({ query }: any) => {
                   console.log(`[API Chat] searchWeb tool invoked. Query: ${query}`);
 
@@ -480,7 +503,8 @@ ${finalContent}`;
                     if (!response.ok) {
                       console.error(`[API Chat] searchWeb: Tavily HTTP ${response.status}`);
                       return {
-                        result: "Web search failed. Answer using your existing knowledge and flag if the information may be outdated.",
+                        result:
+                          "Web search failed. Answer using your existing knowledge and flag if the information may be outdated.",
                       };
                     }
 
@@ -502,20 +526,23 @@ ${finalContent}`;
                       ? `Web Results:\n${formattedResults}`
                       : "No relevant results found.";
 
-                    console.log(`[API Chat] searchWeb: ${results.length} results returned for query: "${query}"`);
+                    console.log(
+                      `[API Chat] searchWeb: ${results.length} results returned for query: "${query}"`,
+                    );
                     return { result };
                   } catch (err: unknown) {
                     const message = err instanceof Error ? err.message : String(err);
                     console.error("[API Chat] searchWeb failed:", message);
                     return {
-                      result: "Web search timed out or failed. Answer using your existing knowledge and flag if the information may be outdated.",
+                      result:
+                        "Web search timed out or failed. Answer using your existing knowledge and flag if the information may be outdated.",
                     };
                   }
                 }) as any,
               }) as any,
               setCurriculum: tool({
                 description:
-                  "Call this ONCE when the student explicitly states their OWN curriculum or exam board for the first time in conversation (e.g. \"I'm doing KCSE\", \"this is for CBC\"). Do NOT call this for incidental mentions of someone else's curriculum. This persists their curriculum so future sessions are personalised — it does not need to be called again once set.",
+                  'Call this ONCE when the student explicitly states their OWN curriculum or exam board for the first time in conversation (e.g. "I\'m doing KCSE", "this is for CBC"). Do NOT call this for incidental mentions of someone else\'s curriculum. This persists their curriculum so future sessions are personalised — it does not need to be called again once set.',
                 inputSchema: z.object({
                   curriculum: z.enum(["KCSE", "CBC", "IGCSE", "A-Level", "IB", "8-4-4", "CBE"]),
                 }) as any,
@@ -545,7 +572,9 @@ ${finalContent}`;
                   } catch (err: unknown) {
                     const message = err instanceof Error ? err.message : String(err);
                     console.error("[API Chat] setCurriculum failed:", message);
-                    return { result: "Failed to save curriculum, will retry next time it's mentioned." };
+                    return {
+                      result: "Failed to save curriculum, will retry next time it's mentioned.",
+                    };
                   }
                 }) as any,
               }) as any,
@@ -575,7 +604,11 @@ ${finalContent}`;
                 `[API Chat] google finished. Length: ${assistantText.length}. FinishReason: ${finishReason}. Tokens: ${totalTokens} (cached: ${cachedTokens}) Cache: ${cacheHit ? "✅ HIT" : "❌ MISS"}`,
               );
 
-              const fullAssistantText = steps?.map(s => s.text || "").filter(Boolean).join("\n\n") || assistantText;
+              const fullAssistantText =
+                steps
+                  ?.map((s) => s.text || "")
+                  .filter(Boolean)
+                  .join("\n\n") || assistantText;
               const safeText =
                 fullAssistantText.trim() ||
                 "Sorry, I could not generate a response right now. Please try again.";

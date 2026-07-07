@@ -14,9 +14,7 @@ export function SmoothMarkdownRenderer({
 }: SmoothMarkdownRendererProps) {
   // If not streaming at mount time (i.e. this is a historical/saved message),
   // start fully revealed so we NEVER play the typewriter animation for old messages.
-  const [displayedLength, setDisplayedLength] = useState(() =>
-    isStreaming ? 0 : content.length
-  );
+  const [displayedLength, setDisplayedLength] = useState(() => (isStreaming ? 0 : content.length));
   // Track whether we've finished the typewriter animation
   const [animationDone, setAnimationDone] = useState(() => !isStreaming);
 
@@ -63,7 +61,7 @@ export function SmoothMarkdownRenderer({
     }, 22); // ~45 ticks/sec
 
     return () => clearInterval(interval);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Reset when a new streaming session begins (content resets to empty)
   useEffect(() => {
@@ -84,9 +82,7 @@ export function SmoothMarkdownRenderer({
 
   // Once animation finishes and streaming is done, switch to static render
   if (animationDone && !isStreaming) {
-    return (
-      <MarkdownRenderer content={content} isStreaming={false} className={className} />
-    );
+    return <MarkdownRenderer content={content} isStreaming={false} className={className} />;
   }
 
   // During streaming or finishing animation — render the buffered slice

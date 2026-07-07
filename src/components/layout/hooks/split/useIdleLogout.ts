@@ -15,7 +15,14 @@ export function useIdleLogout(signOut: () => Promise<void>) {
         } catch {}
       }, TIMEOUT_MS);
     };
-    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "visibilitychange"];
+    const events = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "touchstart",
+      "scroll",
+      "visibilitychange",
+    ];
     events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
     reset();
     return () => {

@@ -84,7 +84,9 @@ export function PlannerWeekView({ items, onToggleItem, onStartFocus }: PlannerWe
               }`}
             >
               <div className="text-center">
-                <p className={`text-[10px] font-semibold uppercase tracking-wider ${today ? "text-primary" : "text-muted-foreground"}`}>
+                <p
+                  className={`text-[10px] font-semibold uppercase tracking-wider ${today ? "text-primary" : "text-muted-foreground"}`}
+                >
                   {format(day, "EEE")}
                 </p>
                 <p className={`text-sm font-bold ${today ? "text-primary" : "text-foreground"}`}>
@@ -93,11 +95,16 @@ export function PlannerWeekView({ items, onToggleItem, onStartFocus }: PlannerWe
               </div>
 
               {dayItems.length === 0 ? (
-                <p className="text-[10px] text-muted-foreground/50 text-center italic py-2">Free day</p>
+                <p className="text-[10px] text-muted-foreground/50 text-center italic py-2">
+                  Free day
+                </p>
               ) : (
                 <div className="space-y-2">
                   {dayItems.map((item) => (
-                    <div key={item.id} className="border-t border-border/40 pt-2 first:border-t-0 first:pt-0">
+                    <div
+                      key={item.id}
+                      className="border-t border-border/40 pt-2 first:border-t-0 first:pt-0"
+                    >
                       <div className="flex items-start gap-1.5">
                         <button onClick={() => onToggleItem(item.id)} className="shrink-0 mt-0.5">
                           {item.completed ? (
@@ -107,10 +114,14 @@ export function PlannerWeekView({ items, onToggleItem, onStartFocus }: PlannerWe
                           )}
                         </button>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] font-semibold text-primary truncate">{item.subject}</p>
+                          <p className="text-[10px] font-semibold text-primary truncate">
+                            {item.subject}
+                          </p>
                           <div
                             className={`text-[11px] leading-snug prose prose-sm max-w-none [&>p]:m-0 ${
-                              item.completed ? "text-muted-foreground line-through" : "text-foreground"
+                              item.completed
+                                ? "text-muted-foreground line-through"
+                                : "text-foreground"
                             }`}
                           >
                             <MarkdownRenderer content={item.task} />
@@ -122,7 +133,9 @@ export function PlannerWeekView({ items, onToggleItem, onStartFocus }: PlannerWe
                               <Flag className="h-2 w-2" />
                               {item.priority}
                             </span>
-                            <span className="text-[8px] text-muted-foreground">{item.durationMinutes}m</span>
+                            <span className="text-[8px] text-muted-foreground">
+                              {item.durationMinutes}m
+                            </span>
                             {!item.completed && (
                               <button
                                 onClick={() => onStartFocus(item.id, item.durationMinutes)}

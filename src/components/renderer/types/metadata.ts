@@ -1,28 +1,28 @@
 export interface BlockMetadata {
-    language?: string;
-    fileName?: string;
-    displayMode?: boolean;
+  language?: string;
+  fileName?: string;
+  displayMode?: boolean;
 
-    numbered?: boolean;
-    subject?: string;
-    difficulty?: "easy" | "medium" | "hard";
+  numbered?: boolean;
+  subject?: string;
+  difficulty?: "easy" | "medium" | "hard";
 
-    collapsible?: boolean;
-    defaultOpen?: boolean;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
 
-    icon?: string;
+  icon?: string;
 
-    tags?: string[];
+  tags?: string[];
 
-    source?: string;
+  source?: string;
 
-    streamed?: boolean;
+  streamed?: boolean;
 
-    createdAt?: number;
+  createdAt?: number;
 
-    level?: number;
+  level?: number;
 
-    href?: string;
+  href?: string;
 
-    ordered?: boolean;
+  ordered?: boolean;
 }

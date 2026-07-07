@@ -142,10 +142,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      ></div>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
 
       {/* Modal Content */}
       <div className="relative w-full max-w-md rounded-3xl border border-white/8 bg-[#1a1d27] shadow-2xl p-8 sm:p-10 space-y-6 z-10 animate-in fade-in zoom-in-95 duration-200">
@@ -198,9 +195,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
               type="button"
               onClick={() => setRole("student")}
               className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors ${
-                role === "student"
-                  ? "bg-[#C96A3D] text-white"
-                  : "text-[#9ca3af] hover:text-white"
+                role === "student" ? "bg-[#C96A3D] text-white" : "text-[#9ca3af] hover:text-white"
               }`}
             >
               <User className="h-3.5 w-3.5" /> I'm a Student
@@ -209,9 +204,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
               type="button"
               onClick={() => setRole("teacher")}
               className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors ${
-                role === "teacher"
-                  ? "bg-[#C96A3D] text-white"
-                  : "text-[#9ca3af] hover:text-white"
+                role === "teacher" ? "bg-[#C96A3D] text-white" : "text-[#9ca3af] hover:text-white"
               }`}
             >
               <GraduationCap className="h-3.5 w-3.5" /> I'm a Teacher
