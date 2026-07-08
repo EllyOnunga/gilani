@@ -25,50 +25,30 @@ function TutorIndex() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Check if we're on exact /tutor BEFORE any hooks
+  // Hooks must be called unconditionally on every render (Rules of Hooks) —
+  // this component persists as the layout for /tutor/$threadId (it renders
+  // <Outlet/> below), so isExactTutor's value can change across renders of
+  // the SAME mounted instance as the user navigates between /tutor and a
+  // thread. Conditionally skipping hooks based on it caused React error
+  // #300/#310 ("hooks count changed between renders").
   const isExactTutor = location.pathname === "/tutor" || location.pathname === "/tutor/";
 
-  // ✅ If not on exact /tutor, render Outlet immediately (before calling any other hooks)
-  if (!isExactTutor) {
-    return (
-      <div className="flex flex-col h-screen">
-        <div className="flex-1 overflow-hidden">
-          <Outlet />
-        </div>
-      </div>
-    );
-  }
-
-  // ✅ Now call all hooks ONLY when we're on /tutor
-  // The early return above guarantees these are only reached for the exact /tutor route.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const composer = useComposer();
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [error, setError] = useState<string | null>(null);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [loading, setLoading] = useState(true);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [authToken, setAuthToken] = useState<string | null>(null);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [userId, setUserId] = useState<string | null>(null);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [creatingThread, setCreatingThread] = useState(false);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [timerOpen, setTimerOpen] = useState(false);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [timerState, setTimerState] = useState<{
     minutes: number;
     seconds: number;
     running: boolean;
   } | null>(null);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const startedRef = useRef(false);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { threads } = useThreadsQuery(userId);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     const handler = (e: Event) => {
       const { minutes, seconds, running } = (e as CustomEvent).detail as any;
@@ -125,12 +105,31 @@ function TutorIndex() {
     }
   };
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+    // Only the exact /tutor draft page needs to check the session on mount;
+    // when this layout first mounts on a child route (e.g. a direct link to
+    // /tutor/$threadId), skip it — the thread route handles its own auth.
+    if (!isExactTutor) return;
     checkSession();
+    // isExactTutor is intentionally excluded: this must run once on mount
+    // only (guarded by startedRef above), not re-fire on every route change
+    // between /tutor and a thread.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Render Outlet for child routes now that all hooks above have been
+  // called unconditionally on every render.
+  if (!isExactTutor) {
+    return (
+      <div className="flex flex-col h-screen">
+        <div className="flex-1 overflow-hidden">
+          <Outlet />
+        </div>
+      </div>
+    );
+  }
 
   const handleDraftSubmit = async (event?: { preventDefault?: () => void }) => {
     event?.preventDefault?.();
