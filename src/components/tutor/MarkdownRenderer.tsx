@@ -301,9 +301,7 @@ function preprocessLatex(raw: string): string {
 
   let s = raw;
 
-  // Do not normalize backslashes (\\ is required for LaTeX newlines)
-
-  // Fix control-character mangling from streaming
+  // ── Step 1: Fix control-character mangling from streaming ─────────────────
   s = s
     .replace(/[\x00-\x1F]rac/g, "\\frac")
     .replace(/[\x00-\x1F]imes/g, "\\times")
@@ -317,17 +315,35 @@ function preprocessLatex(raw: string): string {
     .replace(/[\x00-\x1F]right/g, "\\right")
     .replace(/[\x00-\x1F]ce\b/g, "\\ce");
 
-  // Strip AI-generated \\ line-break artifacts before any block detection.
-  // The AI sometimes emits \\ as a line separator (e.g. "```function-plot \\ { \\ ...").
-  // Remove lines that consist only of \\ and replace inline " \\ " with a real newline.
-  s = s.replace(/^[ \t]*\\\\[ \t]*$/gm, "");
-  s = s.replace(/ \\\\ /g, "\n");
+  // ── Step 2: Protect math blocks FIRST (before any \\ stripping) ───────────
+  // CRITICAL: \\ inside pmatrix/aligned are LaTeX row separators. They must
+  // be tokenised before we strip the stray \\ the AI injects in plain text.
+  const MATH_TOKEN = "\x00MATH\x00";
+  const mathBlocks: string[] = [];
+  // Protect $$...$$, then $...$  (order matters – greedy $$ first)
+  s = s.replace(/\$\$[\s\S]*?\$\$/g, (m) => {
+    mathBlocks.push(m);
+    return MATH_TOKEN;
+  });
+  s = s.replace(/\$(?!\s)[^\$\n]*?(?<!\s)\$/g, (m) => {
+    mathBlocks.push(m);
+    return MATH_TOKEN;
+  });
 
-  // Check balanced fences before touching code blocks
+  // ── Step 3: Strip AI-generated \\ line-break artifacts (plain text only) ──
+  // The AI sometimes emits \\ as a separator outside math (e.g. in prose or
+  // inside code-fence content). Now that math is tokenised this is safe.
+  s = s.replace(/^[ \t]*\\\\[ \t]*$/gm, ""); // line that is only \\
+  s = s.replace(/ \\\\ /g, "\n"); // inline " \\ " → newline
+
+  // ── Step 4: Fence / code / link protection ────────────────────────────────
   const fenceCount = (s.match(/```/g) || []).length;
-  if (fenceCount % 2 !== 0) return s;
+  if (fenceCount % 2 !== 0) {
+    // Unbalanced fences (still streaming) – restore math and bail early
+    s = s.replace(new RegExp(MATH_TOKEN, "g"), () => mathBlocks.shift()!);
+    return s;
+  }
 
-  // Protect code blocks and inline code
   const FENCE_TOKEN = "\x00FENCE\x00";
   const fenceBlocks: string[] = [];
   s = s.replace(/```[\s\S]*?```/g, (m) => {
@@ -335,7 +351,6 @@ function preprocessLatex(raw: string): string {
     return FENCE_TOKEN;
   });
 
-  // Protect markdown links [text](url) before any regex touches them
   const LINK_TOKEN = "\x00LINK\x00";
   const linkBlocks: string[] = [];
   s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m) => {
@@ -350,31 +365,23 @@ function preprocessLatex(raw: string): string {
     return INLINE_CODE_TOKEN;
   });
 
-  // Protect existing math
-  const MATH_TOKEN = "\x00MATH\x00";
-  const mathBlocks: string[] = [];
-  s = s.replace(/(\$\$[\s\S]*?\$\$|\$(?!\s)[^\$\n]*?(?<!\s)\$)/g, (m) => {
-    mathBlocks.push(m);
-    return MATH_TOKEN;
-  });
-
-  // Convert \[...\] and \(...\) to $$ and $
+  // ── Step 5: Convert \[...\] and \(...\) to $$ / $ ────────────────────────
   s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `$$\n${inner.trim()}\n$$`);
   s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_m, inner) => `$${inner.trim()}$`);
 
-  // Wrap \ce{...} in $...$
+  // ── Step 6: Wrap bare LaTeX commands ─────────────────────────────────────
+  // \ce{...}
   s = s.replace(/(^|[^a-zA-Z\\])ce\{([^}]+)\}/g, "$1\\ce{$2}");
   s = s.replace(/\\ce\{([^}]+)\}/g, "$\\ce{$1}$");
 
-  // Wrap common LaTeX commands
+  // Common maths commands
   s = s.replace(/\\xrightarrow\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g, "$\\xrightarrow{$1}$");
   s = s.replace(/\\xleftarrow\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g, "$\\xleftarrow{$1}$");
   s = s.replace(/\\overset\{([^}]+)\}\{([^}]+)\}/g, "$\\overset{$1}{$2}$");
   s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$\\frac{$1}{$2}$");
 
-  // Wrap numbers preceding \text{} in the same math block
-  s = s.replace(/(\d+(?:\.\d+)?)\s*\\text\{([^}]+)\}/g, "$$$1 \\text{$2}$$$");
-  // Wrap standalone \text{}
+  // Numbers before \text{}
+  s = s.replace(/(\d+(?:\.\d+)?)\s*\\text\{([^}]+)\}/g, "$$$1 \\text{$2}$$");
   s = s.replace(/\\text\{([^}]+)\}/g, "$\\text{$1}$");
 
   s = s.replace(/\\sqrt\{([^}]+)\}/g, "$\\sqrt{$1}$");
@@ -386,9 +393,9 @@ function preprocessLatex(raw: string): string {
   s = s.replace(/\\longrightarrow\b/g, "$\\longrightarrow$");
   s = s.replace(/\\leftrightarrow\b/g, "$\\leftrightarrow$");
 
-  // Auto-detect multi-element chemical formulas
+  // ── Step 7: Auto-detect chemical formulas ────────────────────────────────
   s = s.replace(
-    /\b([A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*){1,}(?:\([A-Z][a-z]?\d*\)\d*)*)\b/g,
+    /\b([A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*){1,}(?:\([A-Z][a-z]?\d*\)\d*)*)(?=\s|$|[^a-zA-Z])/g,
     (_m, formula) => {
       if (!/\d/.test(formula)) return formula;
       if (JS_BLOCKLIST.has(formula)) return formula;
@@ -398,7 +405,7 @@ function preprocessLatex(raw: string): string {
     },
   );
 
-  // Arrow shorthand
+  // ── Step 8: Arrow shorthand ───────────────────────────────────────────────
   s = s.replace(/(\s)(->|-->|<->|<=>)(\s)/g, (_m, pre, arrow, post) => {
     const map: Record<string, string> = {
       "->": "$\\rightarrow$",
@@ -409,7 +416,7 @@ function preprocessLatex(raw: string): string {
     return `${pre}${map[arrow]}${post}`;
   });
 
-  // Wrap physics values with units
+  // ── Step 9: Physics units ─────────────────────────────────────────────────
   const unitPattern = PHYSICS_UNITS.join("|");
   s = s.replace(
     new RegExp(`\\b(\\d+(?:\\.\\d+)?)\\s*(${unitPattern})\\b`, "g"),
@@ -422,13 +429,53 @@ function preprocessLatex(raw: string): string {
   // Clean up stray LaTeX thin spaces outside math mode
   s = s.replace(/\\,/g, " ");
 
-  // Restore protected blocks
-  s = s.replace(new RegExp(MATH_TOKEN, "g"), () => mathBlocks.shift()!);
+  // Restore protected blocks — run repairMatrix on each math block so that
+  // pmatrix / bmatrix content without \\ row separators is auto-fixed.
+  s = s.replace(new RegExp(MATH_TOKEN, "g"), () => repairMatrix(mathBlocks.shift()!));
   s = s.replace(new RegExp(INLINE_CODE_TOKEN, "g"), () => inlineCodeBlocks.shift()!);
   s = s.replace(new RegExp(FENCE_TOKEN, "g"), () => fenceBlocks.shift()!);
   s = s.replace(new RegExp(LINK_TOKEN, "g"), () => linkBlocks.shift()!);
 
   return s;
+}
+
+/**
+ * Repair pmatrix/bmatrix blocks where the AI omitted \\ row separators.
+ *
+ * Common bad output:  $\begin{pmatrix} 1 & 2 3 & 4 \end{pmatrix}$
+ * Fixed output:       $\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}$
+ *
+ * Also fixes column vectors: $\begin{pmatrix} 4 5 6 \end{pmatrix}$
+ *                        →   $\begin{pmatrix} 4 \\ 5 \\ 6 \end{pmatrix}$
+ */
+function repairMatrix(math: string): string {
+  return math.replace(
+    /(\\begin\{[bBpvV]?matrix\})([ \t\S]*?)(\\end\{[bBpV]?matrix\})/g,
+    (_m, open, inner, close) => {
+      // Already has \\ — do nothing
+      if (inner.includes("\\\\")) return _m;
+
+      if (inner.includes("&")) {
+        // Multi-column: insert \\ where a row boundary is detected.
+        // A boundary is: closing token (digit/letter/brace) then whitespace
+        // then an opening token (digit, -, or \\) WITHOUT \\ between them.
+        const fixed = inner.replace(
+          /([0-9a-zA-Z}\])\|])[ \t]+(-?[0-9\\-])/g,
+          (_match: string, end: string, start: string) => `${end} \\\\ ${start}`,
+        );
+        return `${open}${fixed}${close}`;
+      }
+
+      // Single-column (column vector): space-separated tokens → join with \\\\
+      const trimmed = inner.trim();
+      const tokens = trimmed.split(/[ \t]+/).filter(Boolean);
+      if (tokens.length > 1 && /^[\d.+\-\\a-zA-Z{}^_ ]+$/.test(trimmed)) {
+        return `${open} ${tokens.join(" \\\\ ")} ${close}`;
+      }
+
+      return _m;
+    },
+  );
 }
 
 function extractCallout(children: React.ReactNode): {
