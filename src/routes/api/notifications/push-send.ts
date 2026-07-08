@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { authenticateRequest } from "@/lib/api-auth.server";
 import { sendPushNotification } from "@/lib/push.server";
 import type { PushPayload } from "@/lib/push.server";
+import { createNotification } from "@/lib/tutor.server-fns";
 
 export const Route = createFileRoute("/api/notifications/push-send")({
   server: {
@@ -63,6 +64,17 @@ export const Route = createFileRoute("/api/notifications/push-send")({
 
           const payload: PushPayload = { title, body: message, url: url || "/" };
           const sent = await sendPushNotification((profile as any).push_subscription, payload);
+          // Persist so it shows up in the in-app notification bell/history
+          // even if the push itself failed or the device was offline.
+          await createNotification({
+            userId: targetUserId,
+            title,
+            message,
+            type: "admin_push",
+            link: url || undefined,
+          }).catch((err: unknown) =>
+            console.error("[Push Send] Failed to persist notification:", err),
+          );
 
           return new Response(JSON.stringify({ ok: sent }), {
             status: sent ? 200 : 500,

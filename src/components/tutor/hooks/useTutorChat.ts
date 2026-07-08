@@ -40,7 +40,8 @@ export function useTutorChat({
   const [currentPlan, setCurrentPlan] = useState("free");
   // If a pending message exists for this thread it's brand-new: skip
   // the initial DB load and start immediately in a ready (not loading) state.
-  const isBrandNewThread = !!threadId && hasPendingMessage(threadId);
+  const isBrandNewThreadRef = useRef(!!threadId && hasPendingMessage(threadId));
+  const isBrandNewThread = isBrandNewThreadRef.current;
   const [messagesLoading, setMessagesLoading] = useState(!isBrandNewThread);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
   const [userVotes, setUserVotes] = useState<Record<string, 1 | -1>>({});

@@ -38,6 +38,75 @@ export function AdminUsersTab({
     setPushUrl("");
   };
 
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkRole, setBulkRole] = useState<Role>(ROLES[0]);
+  const [bulkTitle, setBulkTitle] = useState("");
+  const [bulkMessage, setBulkMessage] = useState("");
+  const [bulkUrl, setBulkUrl] = useState("");
+  const [bulkSending, setBulkSending] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{
+    sent: number;
+    skipped: number;
+    failed: number;
+    total: number;
+  } | null>(null);
+
+  const closeBulkModal = () => {
+    setBulkModalOpen(false);
+    setBulkTitle("");
+    setBulkMessage("");
+    setBulkUrl("");
+    setBulkProgress(null);
+  };
+
+  const handleBulkSend = async () => {
+    if (!bulkTitle.trim() || !bulkMessage.trim()) return;
+    const recipients = profileState.filter((p) => p.role === bulkRole);
+    if (recipients.length === 0) {
+      toast.error(`No users with role "${bulkRole}"`);
+      return;
+    }
+    setBulkSending(true);
+    setBulkProgress({ sent: 0, skipped: 0, failed: 0, total: recipients.length });
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    let sent = 0;
+    let skipped = 0;
+    let failed = 0;
+    for (const p of recipients) {
+      try {
+        const res = await fetch("/api/notifications/push-send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            targetUserId: p.id,
+            title: bulkTitle,
+            message: bulkMessage,
+            url: bulkUrl || undefined,
+          }),
+        });
+        if (res.status === 404) {
+          skipped += 1;
+        } else if (!res.ok) {
+          failed += 1;
+        } else {
+          sent += 1;
+        }
+      } catch {
+        failed += 1;
+      }
+      setBulkProgress({ sent, skipped, failed, total: recipients.length });
+    }
+    setBulkSending(false);
+    toast.success(
+      `Sent to ${sent} of ${recipients.length} ${bulkRole}s (${skipped} not subscribed, ${failed} failed)`,
+    );
+  };
+
   const handleSendPush = async () => {
     if (!pushTarget || !pushTitle.trim() || !pushMessage.trim()) return;
     setPushSending(true);
@@ -89,14 +158,22 @@ export function AdminUsersTab({
         })}
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, email, or role…"
-          className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        />
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, email, or role…"
+            className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <button
+          onClick={() => setBulkModalOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-accent transition-colors whitespace-nowrap"
+        >
+          <Bell className="h-3.5 w-3.5" /> Notify by role
+        </button>
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
@@ -259,6 +336,84 @@ export function AdminUsersTab({
                   <Bell className="h-4 w-4" />
                 )}
                 Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {bulkModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card shadow-xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-lg font-bold">Notify by role</h3>
+              <button
+                onClick={closeBulkModal}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <select
+                value={bulkRole}
+                onChange={(e) => setBulkRole(e.target.value as Role)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+              >
+                {ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    All {r}s ({counts[r]})
+                  </option>
+                ))}
+              </select>
+              <input
+                value={bulkTitle}
+                onChange={(e) => setBulkTitle(e.target.value)}
+                placeholder="Title"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <textarea
+                value={bulkMessage}
+                onChange={(e) => setBulkMessage(e.target.value)}
+                placeholder="Message"
+                rows={3}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+              <input
+                value={bulkUrl}
+                onChange={(e) => setBulkUrl(e.target.value)}
+                placeholder="Link URL (optional, defaults to /)"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              {bulkProgress && (
+                <p className="font-mono text-[10px] text-muted-foreground text-center">
+                  Sent {bulkProgress.sent + bulkProgress.skipped + bulkProgress.failed} of{" "}
+                  {bulkProgress.total}
+                  {" · "}
+                  {bulkProgress.sent} sent · {bulkProgress.skipped} not subscribed ·{" "}
+                  {bulkProgress.failed} failed
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={closeBulkModal}
+                disabled={bulkSending}
+                className="flex-1 rounded-lg border border-border py-2 text-sm font-semibold hover:bg-accent transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkSend}
+                disabled={bulkSending || !bulkTitle.trim() || !bulkMessage.trim()}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50 hover:opacity-90 transition-opacity"
+              >
+                {bulkSending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Bell className="h-4 w-4" />
+                )}
+                Send to role
               </button>
             </div>
           </div>
