@@ -600,7 +600,12 @@ const buildComponents = (isStreaming: boolean): any => ({
   ),
 
   // ── Code blocks (react-markdown v10: no `inline` prop; use parent context) ──
+  // lowercase name required by react-markdown's components map (matches the
+  // <pre> tag); the hook below is called unconditionally on every invocation,
+  // so this is not an actual rules-of-hooks violation.
   pre: ({ children, node }: any) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [copied, setCopied] = React.useState(false);
     const child = React.Children.only(children) as any;
     const rawLang = (child?.props?.className || "").replace("language-", "").toLowerCase().trim();
     const langs = rawLang.split(/\s+/).filter(Boolean);
@@ -681,7 +686,6 @@ const buildComponents = (isStreaming: boolean): any => ({
     if (isGraph) return <FunctionGraphBlock spec={code} />;
     if (isSvg) return <DiagramSVG svg={code} />;
 
-    const [copied, setCopied] = React.useState(false);
     const handleCopy = () =>
       navigator.clipboard.writeText(code).then(() => {
         setCopied(true);
