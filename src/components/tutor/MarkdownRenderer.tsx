@@ -16,6 +16,7 @@ import ExampleCard from "@/components/cards/ExampleCard";
 import WarningCard from "@/components/cards/WarningCard";
 import StudyTipCard from "@/components/cards/StudyTipCard";
 import SummaryCard from "@/components/cards/SummaryCard";
+import PracticeQuestionCard from "@/components/cards/PracticeQuestionCard";
 
 import { FreeBodyDiagram, CircuitDiagram, KinematicsEquation } from "@/components/physics";
 import { ChemicalReaction, MolecularStructure, PeriodicTable } from "@/components/chemistry";
@@ -68,7 +69,7 @@ function MermaidDiagram({ code, isStreaming }: { code: string; isStreaming?: boo
   return (
     <div
       ref={ref}
-      className="my-3 overflow-x-auto rounded-xl border border-border/40 bg-muted/20 p-3 flex justify-center"
+      className="my-3 overflow-x-auto rounded-xl border border-border/40 bg-muted/20 p-3 whitespace-pre-wrap font-mono text-sm text-left text-zinc-300"
     />
   );
 }
@@ -137,15 +138,17 @@ function CustomCallout({ type, children }: { type: string; children: React.React
     case "IMPORTANT":
     case "SUMMARY":
       return <SummaryCard>{children}</SummaryCard>;
+    case "PRACTICE":
+      return <StudyTipCard>{children}</StudyTipCard>;
     default:
       // Fallback
       return (
-        <div className="my-3 rounded-xl border-l-4 border-blue-400 bg-blue-50 dark:bg-blue-950/40 px-4 py-3">
-          <div className="flex items-center gap-1.5 font-semibold text-xs uppercase tracking-wider mb-1 text-blue-800 dark:text-blue-300">
-            <Info className="h-3.5 w-3.5" />
+        <div className="my-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center gap-1.5 font-semibold text-xs uppercase tracking-wider mb-2 text-muted-foreground">
+            <Info className="h-4 w-4" />
             {type}
           </div>
-          <div className="text-sm">{children}</div>
+          <div className="text-sm text-foreground">{children}</div>
         </div>
       );
   }
@@ -273,6 +276,24 @@ const PHYSICS_UNITS = [
   "mmol",
 ];
 
+// ─── Shared KaTeX macros (mirrors MathBlock/InlineMath) ──────────────────────
+
+const MATH_MACROS = {
+  "\\vec": "\\overrightarrow{#1}",
+  "\\unit": "\\mathrm{#1}",
+  "\\degree": "^\\circ",
+  "\\mol": "\\mathrm{mol}",
+  "\\kJ": "\\mathrm{kJ}",
+  "\\atm": "\\mathrm{atm}",
+  "\\N": "\\mathbb{N}",
+  "\\Z": "\\mathbb{Z}",
+  "\\Q": "\\mathbb{Q}",
+  "\\R": "\\mathbb{R}",
+  "\\C": "\\mathbb{C}",
+  "\\diff": "\\mathrm{d}",
+  "\\pdiff": "\\partial",
+};
+
 // ─── LaTeX preprocessor ──────────────────────────────────────────────────────
 
 function preprocessLatex(raw: string): string {
@@ -280,8 +301,7 @@ function preprocessLatex(raw: string): string {
 
   let s = raw;
 
-  // Normalize backslashes
-  s = s.replace(/\\\\/g, "\\");
+  // Do not normalize backslashes (\\ is required for LaTeX newlines)
 
   // Fix control-character mangling from streaming
   s = s
@@ -296,6 +316,12 @@ function preprocessLatex(raw: string): string {
     .replace(/[\x00-\x1F]left/g, "\\left")
     .replace(/[\x00-\x1F]right/g, "\\right")
     .replace(/[\x00-\x1F]ce\b/g, "\\ce");
+
+  // Strip AI-generated \\ line-break artifacts before any block detection.
+  // The AI sometimes emits \\ as a line separator (e.g. "```function-plot \\ { \\ ...").
+  // Remove lines that consist only of \\ and replace inline " \\ " with a real newline.
+  s = s.replace(/^[ \t]*\\\\[ \t]*$/gm, "");
+  s = s.replace(/ \\\\ /g, "\n");
 
   // Check balanced fences before touching code blocks
   const fenceCount = (s.match(/```/g) || []).length;
@@ -345,7 +371,12 @@ function preprocessLatex(raw: string): string {
   s = s.replace(/\\xleftarrow\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g, "$\\xleftarrow{$1}$");
   s = s.replace(/\\overset\{([^}]+)\}\{([^}]+)\}/g, "$\\overset{$1}{$2}$");
   s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "$\\frac{$1}{$2}$");
+
+  // Wrap numbers preceding \text{} in the same math block
+  s = s.replace(/(\d+(?:\.\d+)?)\s*\\text\{([^}]+)\}/g, "$$$1 \\text{$2}$$$");
+  // Wrap standalone \text{}
   s = s.replace(/\\text\{([^}]+)\}/g, "$\\text{$1}$");
+
   s = s.replace(/\\sqrt\{([^}]+)\}/g, "$\\sqrt{$1}$");
   s = s.replace(/\\times\b/g, "$\\times$");
   s = s.replace(/\\cdot\b/g, "$\\cdot$");
@@ -384,9 +415,12 @@ function preprocessLatex(raw: string): string {
     new RegExp(`\\b(\\d+(?:\\.\\d+)?)\\s*(${unitPattern})\\b`, "g"),
     (_m, num, unit) => {
       const latexUnit = unit.replace(/\\?\^(\d)/g, "^{$1}").replace(/°/g, "^\\circ ");
-      return `$${num}\\,\\text{${latexUnit}}$`;
+      return `$${num} \\text{${latexUnit}}$`;
     },
   );
+
+  // Clean up stray LaTeX thin spaces outside math mode
+  s = s.replace(/\\,/g, " ");
 
   // Restore protected blocks
   s = s.replace(new RegExp(MATH_TOKEN, "g"), () => mathBlocks.shift()!);
@@ -409,7 +443,7 @@ function extractCallout(children: React.ReactNode): {
 
     if (typeof child === "string") {
       const match = child.match(
-        /^\[!(NOTE|TIP|WARNING|CAUTION|IMPORTANT|DEFINITION|EXAMPLE|SUMMARY)\]\s*/i,
+        /^\[!(NOTE|TIP|WARNING|CAUTION|IMPORTANT|DEFINITION|EXAMPLE|SUMMARY|PRACTICE)\]\s*/i,
       );
       if (match) {
         type = match[1].toUpperCase();
@@ -423,7 +457,7 @@ function extractCallout(children: React.ReactNode): {
       const grandChildren = React.Children.toArray((child.props as any).children);
       if (grandChildren.length > 0 && typeof grandChildren[0] === "string") {
         const match = grandChildren[0].match(
-          /^\[!(NOTE|TIP|WARNING|CAUTION|IMPORTANT|DEFINITION|EXAMPLE|SUMMARY)\]\s*/i,
+          /^\[!(NOTE|TIP|WARNING|CAUTION|IMPORTANT|DEFINITION|EXAMPLE|SUMMARY|PRACTICE)\]\s*/i,
         );
         if (match) {
           type = match[1].toUpperCase();
@@ -447,28 +481,76 @@ function extractCallout(children: React.ReactNode): {
 
 // ─── Markdown component map (react-markdown v10 compatible) ──────────────────
 
+// Shared KaTeX macros used by both inline and block math renderers
+const KATEX_MACROS: Record<string, string> = {
+  "\\vec": "\\overrightarrow{#1}",
+  "\\unit": "\\mathrm{#1}",
+  "\\degree": "^\\circ",
+  "\\mol": "\\mathrm{mol}",
+  "\\kJ": "\\mathrm{kJ}",
+  "\\atm": "\\mathrm{atm}",
+  "\\N": "\\mathbb{N}",
+  "\\Z": "\\mathbb{Z}",
+  "\\Q": "\\mathbb{Q}",
+  "\\R": "\\mathbb{R}",
+  "\\C": "\\mathbb{C}",
+  "\\diff": "\\mathrm{d}",
+  "\\pdiff": "\\partial",
+};
+
+function renderKatex(latex: string, display: boolean): string {
+  return katex.renderToString(latex, {
+    throwOnError: false,
+    displayMode: display,
+    macros: KATEX_MACROS,
+    strict: "ignore",
+  });
+}
+
+// Detect Mermaid diagram syntax regardless of fence label
+const MERMAID_PATTERN =
+  /^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|journey|quadrantChart|timeline|xychart|block-beta|mindmap)\b/;
+
 const buildComponents = (isStreaming: boolean): any => ({
   h1: ({ children }: any) => (
-    <h1 className="text-2xl font-extrabold mt-8 mb-4 text-primary border-b border-primary/20 pb-2 leading-tight tracking-tight">
+    <h1 className="text-2xl font-bold mt-8 mb-4 text-foreground pb-2 leading-tight tracking-tight border-b border-border/50">
       {children}
     </h1>
   ),
+  // ── Math nodes produced by remarkMath ──────────────────────────────────────
+  // react-markdown v10 exposes these as element types "inlineMath" and "math"
+  inlineMath: ({ node }: any) => {
+    const latex = node?.value ?? "";
+    return (
+      <span
+        className="inline-block max-w-full overflow-x-auto align-middle"
+        dangerouslySetInnerHTML={{ __html: renderKatex(latex, false) }}
+      />
+    );
+  },
+  math: ({ node }: any) => {
+    const latex = node?.value ?? "";
+    return (
+      <div
+        className="my-5 overflow-x-auto py-1 text-center"
+        dangerouslySetInnerHTML={{ __html: renderKatex(latex, true) }}
+      />
+    );
+  },
   h2: ({ children }: any) => (
-    <h2 className="text-xl font-bold mt-7 mb-3 text-blue-400 leading-snug">{children}</h2>
+    <h2 className="text-xl font-bold mt-7 mb-3 text-foreground leading-snug">{children}</h2>
   ),
   h3: ({ children }: any) => (
-    <h3 className="text-lg font-bold mt-6 mb-2 text-purple-400 leading-snug">{children}</h3>
+    <h3 className="text-lg font-semibold mt-6 mb-2 text-foreground leading-snug">{children}</h3>
   ),
   h4: ({ children }: any) => (
-    <h4 className="text-base font-semibold mt-5 mb-1.5 text-teal-400">{children}</h4>
+    <h4 className="text-base font-semibold mt-5 mb-1.5 text-foreground">{children}</h4>
   ),
   h5: ({ children }: any) => (
-    <h5 className="text-sm font-semibold mt-4 mb-1 text-cyan-400">{children}</h5>
+    <h5 className="text-sm font-semibold mt-4 mb-1 text-foreground">{children}</h5>
   ),
   h6: ({ children }: any) => (
-    <h6 className="text-xs font-semibold uppercase tracking-widest mt-4 mb-1 text-muted-foreground">
-      {children}
-    </h6>
+    <h6 className="text-xs font-semibold mt-4 mb-1 text-muted-foreground">{children}</h6>
   ),
   p: ({ children }: any) => {
     const { type, newChildren } = extractCallout(children);
@@ -599,6 +681,44 @@ const buildComponents = (isStreaming: boolean): any => ({
     </td>
   ),
 
+  div: ({ children, className }: any) => {
+    const classStr = className || "";
+    if (classStr.includes("math-display") || classStr.includes("math math-display")) {
+      const latex = String(children);
+      const html = katex.renderToString(latex, {
+        throwOnError: false,
+        displayMode: true,
+        macros: MATH_MACROS,
+        strict: "ignore",
+      });
+      return (
+        <section className="my-6 w-full max-w-full overflow-x-auto overflow-y-hidden py-2 text-lg">
+          <div dangerouslySetInnerHTML={{ __html: html }} />
+        </section>
+      );
+    }
+    return <div className={className}>{children}</div>;
+  },
+  span: ({ children, className }: any) => {
+    const classStr = className || "";
+    if (classStr.includes("math-inline") || classStr.includes("math math-inline")) {
+      const latex = String(children);
+      const html = katex.renderToString(latex, {
+        throwOnError: false,
+        displayMode: false,
+        macros: MATH_MACROS,
+        strict: "ignore",
+      });
+      return (
+        <span
+          className="inline-block max-w-full overflow-x-auto align-middle overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      );
+    }
+    return <span className={className}>{children}</span>;
+  },
+
   // ── Code blocks (react-markdown v10: no `inline` prop; use parent context) ──
   // lowercase name required by react-markdown's components map (matches the
   // <pre> tag); the hook below is called unconditionally on every invocation,
@@ -612,9 +732,16 @@ const buildComponents = (isStreaming: boolean): any => ({
     const code =
       typeof child?.props?.children === "string" ? child.props.children.replace(/\n$/, "") : "";
 
-    const isMermaid = langs.includes("mermaid");
+    // Content-sniff Mermaid diagrams regardless of fence label.
+    // AI models often write ```graph or ```mermaid interchangeably.
+    const isMermaidLabel = langs.includes("mermaid");
+    const isMermaidContent = MERMAID_PATTERN.test(code);
+    const isMermaid = isMermaidLabel || isMermaidContent;
     const isSmiles = langs.some((l: string) => ["smiles", "smi"].includes(l));
-    const isGraph = langs.some((l: string) => ["function-plot", "graph", "plot"].includes(l));
+    // "graph" alone is ambiguous (could be Mermaid) — only treat as function-plot if content is JSON
+    const isGraph =
+      langs.some((l: string) => ["function-plot", "plot"].includes(l)) ||
+      (langs.includes("graph") && !isMermaidContent);
     const isSvg = langs.some((l: string) => ["svg", "diagram"].includes(l));
     // math/chemistry blocks are handled by rehype-katex — let them pass through
     const isMath = langs.some((l: string) => ["math", "latex", "tex"].includes(l));
@@ -627,6 +754,17 @@ const buildComponents = (isStreaming: boolean): any => ({
       content: code,
       children: [],
     });
+
+    // ── Early Mermaid check (must precede the switch to avoid "graph" case firing) ──
+    if (isMermaid) {
+      const clean = code
+        .replace(/\$\\longrightarrow\$/g, "-->")
+        .replace(/\$\\rightarrow\$/g, "-->")
+        .replace(/\$\\to\$/g, "-->")
+        .replace(/\$\\leftarrow\$/g, "<--")
+        .replace(/\$\\leftrightarrow\$/g, "<-->");
+      return <MermaidDiagram code={clean} isStreaming={isStreaming} />;
+    }
 
     switch (rawLang) {
       // Physics
@@ -667,21 +805,26 @@ const buildComponents = (isStreaming: boolean): any => ({
       case "maths:unit":
       case "unit":
         return <UnitRenderer block={createBlock("unit")} />;
+
+      // Cards/callouts with explicit block syntax
+      case "definition":
+        return <DefinitionCard>{code}</DefinitionCard>;
+      case "example":
+      case "worked-example":
+        return <ExampleCard>{code}</ExampleCard>;
+      case "warning":
+      case "common-mistake":
+        return <WarningCard>{code}</WarningCard>;
+      case "tip":
+      case "study-tip":
+        return <StudyTipCard>{code}</StudyTipCard>;
+      case "summary":
+        return <SummaryCard>{code}</SummaryCard>;
     }
 
     if (isMath) return <MathBlock block={createBlock("math")} />;
     if (isChem) return <ChemicalReaction block={createBlock("reaction")} />;
 
-    if (isMermaid) {
-      const clean = code
-        .replace(/\$\\longrightarrow\$/g, "-->")
-        .replace(/\$\\rightarrow\$/g, "-->")
-        .replace(/\$\\to\$/g, "-->")
-        .replace(/\$\\leftarrow\$/g, "<--")
-        .replace(/\$\\leftrightarrow\$/g, "<-->")
-        .replace(/\$([^$]+)\$/g, (_m: string, inner: string) => inner.trim());
-      return <MermaidDiagram code={clean} isStreaming={isStreaming} />;
-    }
     if (isSmiles) return <SmilesDrawer smiles={code} />;
     if (isGraph) return <FunctionGraphBlock spec={code} />;
     if (isSvg) return <DiagramSVG svg={code} />;
@@ -693,11 +836,9 @@ const buildComponents = (isStreaming: boolean): any => ({
       });
 
     return (
-      <div className="relative my-2 rounded-xl overflow-hidden bg-[#1e1e2e] shadow-inner group">
-        <div className="flex items-center justify-between px-4 py-1.5 bg-white/5 border-b border-white/10">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
-            {rawLang || "code"}
-          </span>
+      <div className="relative my-4 rounded-xl overflow-hidden bg-zinc-950 border border-border/40 group">
+        <div className="flex items-center justify-between px-4 py-2 bg-zinc-900/80 border-b border-white/10">
+          <span className="font-sans text-xs text-zinc-400 font-medium">{rawLang || "code"}</span>
           <button
             onClick={handleCopy}
             className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-white/40 hover:text-white/80 transition-colors"

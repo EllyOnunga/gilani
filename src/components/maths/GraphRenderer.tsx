@@ -46,7 +46,7 @@ export default function GraphRenderer({ block }: Props) {
   }, [data]);
 
   return (
-    <section className="my-6 overflow-hidden rounded-xl border border-rose-600 bg-white">
+    <section className="my-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <EquationToolbar title="Graph" />
       <div
         ref={boardRef}

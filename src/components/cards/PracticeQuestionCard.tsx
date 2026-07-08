@@ -10,24 +10,26 @@ export default function PracticeQuestionCard({ question, answer }: Props) {
   const [showAnswer, setShowAnswer] = useState(false);
 
   return (
-    <section className="my-6 rounded-2xl border border-[#C96A3D]/30">
-      <div className="flex items-center gap-2 border-b border-[#C96A3D]/20 bg-[#2A201C] px-5 py-3">
-        <CircleHelp size={18} className="text-[#E28743]" />
-
-        <span className="font-semibold text-[#E28743]">Try Yourself</span>
+    <section className="my-4 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="flex items-center gap-2 border-b border-border/40 bg-muted/20 px-4 py-2.5">
+        <CircleHelp className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Try Yourself
+        </span>
       </div>
-
-      <div className="space-y-5 p-5">
-        {question}
-
+      <div className="space-y-4 p-4">
+        <div className="text-sm text-foreground leading-relaxed">{question}</div>
         <button
           onClick={() => setShowAnswer(!showAnswer)}
-          className="rounded-lg bg-[#C96A3D] px-4 py-2 text-white transition hover:bg-[#E28743]"
+          className="rounded-lg border border-border bg-muted/30 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted/60"
         >
           {showAnswer ? "Hide Answer" : "Reveal Answer"}
         </button>
-
-        {showAnswer && <div className="rounded-xl bg-zinc-900 p-4">{answer}</div>}
+        {showAnswer && (
+          <div className="rounded-lg border border-border/60 bg-muted/20 p-4 text-sm text-foreground leading-relaxed">
+            {answer}
+          </div>
+        )}
       </div>
     </section>
   );

@@ -6,14 +6,16 @@ interface Props {
 
 export default function DefinitionCard({ children }: Props) {
   return (
-    <section className="my-6 overflow-hidden rounded-2xl border border-[#C96A3D]/30 bg-[#241B17]">
-      <div className="flex items-center gap-2 border-b border-[#C96A3D]/20 bg-[#2D201A] px-5 py-3">
-        <BookOpen size={18} className="text-[#E28743]" />
-
-        <span className="font-semibold text-[#E28743]">Definition</span>
+    <section className="my-4 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="flex items-center gap-2 border-b border-border/40 bg-muted/20 px-4 py-2.5">
+        <BookOpen className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Definition
+        </span>
       </div>
-
-      <div className="p-5 leading-8 text-zinc-200">{children}</div>
+      <div className="p-4 text-sm text-foreground leading-relaxed prose prose-sm max-w-none">
+        {children}
+      </div>
     </section>
   );
 }

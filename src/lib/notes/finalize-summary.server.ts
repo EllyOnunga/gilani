@@ -28,12 +28,23 @@ export async function finalizeSummary(
   const { generateObject } = await import("ai");
 
   const prompt = [
-    "Merge the following segment summaries (from one document, in order) into a single " +
-      "cohesive, well-organized markdown summary. Do not drop any content — every segment's " +
-      "material must be represented in the final result.",
-    "--- SEGMENT SUMMARIES ---",
-    partialSummaries.map((s, i) => `## Segment ${i + 1}\n${s}`).join("\n\n"),
-    "--- ALL KEY CONCEPTS COLLECTED SO FAR ---",
+    `You are an expert educational editor. Your job is to merge ${partialSummaries.length} segment summaries (from one document, in order) into a single, polished, complete study guide in markdown format.`,
+
+    `--- MERGE RULES ---`,
+    `1. COMPLETE COVERAGE: Every piece of content from every segment must be present in the final output. Do NOT drop anything for brevity. This is a study document — completeness is essential.`,
+    `2. ELIMINATE DUPLICATION: If the same concept, definition, or formula appears in multiple segments, include it only once in the most logical place.`,
+    `3. LOGICAL STRUCTURE: Organise the final document with clear ## headings and ### sub-headings that group related content together, regardless of what segment it came from.`,
+    `4. PRESERVE ALL MATH & SCIENCE: Every formula, equation, unit, and chemical formula MUST remain in LaTeX ($...$). Do NOT convert any LaTeX back to plain text.`,
+    `5. PRESERVE ALL TABLES: If any segment contains a markdown table, keep it intact and properly formatted.`,
+    `6. DEFINITIONS FIRST: In each section, lead with the key definitions before explanations and examples.`,
+    `7. WORKED EXAMPLES LAST: Collect all worked examples and practice questions at the end of each section or in a dedicated "## Worked Examples" section.`,
+    `8. ADD A GLOSSARY: At the very end, append a "## Key Concepts Glossary" section — a clean alphabetically-sorted list of all key concepts with one-line definitions.`,
+    `9. DO NOT ADD EXTERNAL CONTENT: Only use material from the segment summaries and key concepts listed below. Do not invent or add anything not in the source.`,
+
+    `--- SEGMENT SUMMARIES ---`,
+    partialSummaries.map((s, i) => `### Segment ${i + 1}\n${s}`).join("\n\n"),
+
+    `--- ALL KEY CONCEPTS COLLECTED ---`,
     allKeyConcepts.join(", "),
   ].join("\n\n");
 

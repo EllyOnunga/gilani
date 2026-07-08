@@ -6,14 +6,16 @@ interface Props {
 
 export default function WarningCard({ children }: Props) {
   return (
-    <section className="my-6 rounded-2xl border border-red-500/30 bg-red-950/20">
-      <div className="flex items-center gap-2 border-b border-red-500/20 px-5 py-3">
-        <TriangleAlert size={18} className="text-red-400" />
-
-        <span className="font-semibold text-red-300">Common Mistake</span>
+    <section className="my-4 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="flex items-center gap-2 border-b border-border/40 bg-muted/20 px-4 py-2.5">
+        <TriangleAlert className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Common Mistake
+        </span>
       </div>
-
-      <div className="p-5">{children}</div>
+      <div className="p-4 text-sm text-foreground leading-relaxed prose prose-sm max-w-none">
+        {children}
+      </div>
     </section>
   );
 }

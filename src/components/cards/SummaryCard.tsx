@@ -6,14 +6,16 @@ interface Props {
 
 export default function SummaryCard({ children }: Props) {
   return (
-    <section className="my-6 rounded-2xl border border-purple-500/30 bg-purple-950/20">
-      <div className="flex items-center gap-2 border-b border-purple-500/20 px-5 py-3">
-        <ClipboardList size={18} className="text-purple-400" />
-
-        <span className="font-semibold text-purple-300">Summary</span>
+    <section className="my-4 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="flex items-center gap-2 border-b border-border/40 bg-muted/20 px-4 py-2.5">
+        <ClipboardList className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Summary
+        </span>
       </div>
-
-      <div className="p-5">{children}</div>
+      <div className="p-4 text-sm text-foreground leading-relaxed prose prose-sm max-w-none">
+        {children}
+      </div>
     </section>
   );
 }

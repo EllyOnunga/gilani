@@ -119,15 +119,43 @@ export const generateStudyPlanFn = createServerFn({ method: "POST" })
 
     // ─── Build the generation prompt ──────────────────────────────────
     const prompt = [
-      `You are an expert ${curriculum} curriculum study coach creating a day-by-day study schedule for a Kenyan student.`,
+      `You are an elite ${curriculum || "general"} curriculum study coach creating a personalised day-by-day study schedule for a Kenyan student.`,
+
+      `--- GOAL ---`,
       `Exam / goal: "${examName}".`,
       dateInstruction,
+
+      `--- SUBJECTS & TOPICS ---`,
       `Subjects and topics to cover: ${subjects}.`,
-      `The student can realistically study about ${hoursPerDay} hour(s) per day — keep each day's total durationMinutes roughly within that budget (allow some days lighter, e.g. rest days, but do not wildly exceed the budget on any single day).`,
-      "Spread topics across days using spaced repetition rather than cramming one subject per day block after block. Revisit important topics more than once if the timeframe allows.",
-      "Each item's 'task' field must be a specific, actionable instruction (e.g. 'Practice past-paper questions on quadratic equations, focusing on completing the square' — not just 'Study algebra').",
-      weakTopicsContext || "No prior quiz history is available for this student yet.",
-      "Every item must include a realistic date (YYYY-MM-DD) within the plan's span, a subject, a specific topic, a task, a duration in minutes, and a priority (low/medium/high) reflecting how critical that topic is to the exam.",
+
+      `--- TIME BUDGET ---`,
+      `The student can realistically study about ${hoursPerDay} hour(s) per day. Keep each day's total durationMinutes within that budget (${Math.round(hoursPerDay * 60)} minutes/day). Some days may be lighter (rest, review), but NEVER exceed 1.5× the daily budget in total on any single day.`,
+
+      `--- TASK QUALITY RULES ---`,
+      `Each item's 'task' field MUST be a specific, concrete, actionable study instruction. Bad examples: "Study algebra", "Review chemistry". Good examples:`,
+      `  - "Complete 10 past-paper questions on factorising quadratics. Focus on the difference of two squares pattern."`,
+      `  - "Make a summary table of all 20 standard amino acids: name, abbreviation, and functional group. Then test yourself without looking."`,
+      `  - "Derive Newton's second law from first principles, then solve 5 F=ma problems with varying unknowns."`,
+      `Be this specific. Every task should be completable and measurable within the stated duration.`,
+
+      `--- SPACED REPETITION & PROGRESSION ---`,
+      `1. Spread topics across days — do NOT block all of one subject together. Interleave subjects.`,
+      `2. Revisit high-priority topics at least twice: once for initial learning, once for review/practice 3–5 days later.`,
+      `3. As the exam approaches, shift from new-content sessions to exam-practice, past-paper, and timed-test sessions.`,
+      `4. Leave the final 1–2 days before the exam for light review only — no new content. Mark these as priority: "low".`,
+
+      `--- PRIORITY SYSTEM ---`,
+      `Set priority based on a combination of: (1) how much the topic is likely to be tested, (2) how difficult it is, and (3) how little time is left.`,
+      `  - high: critical exam topics, topics the student has struggled with, topics appearing in final weeks`,
+      `  - medium: important but not the highest-weight topics, mid-plan sessions`,
+      `  - low: revision sessions, rest/catch-up days, final review days`,
+
+      weakTopicsContext ||
+        "No prior quiz history is available — prioritize based on typical exam weightings for the subject.",
+
+      `--- OUTPUT FORMAT ---`,
+      `Every item MUST have: date (YYYY-MM-DD within the plan span), subject (short name), topic (specific sub-topic), task (detailed actionable instruction as above), durationMinutes (integer, 15–240), priority (low/medium/high).`,
+      `Sort items by date ascending. Cover all stated subjects proportionally across the full plan.`,
     ].join("\n\n");
 
     const { generateObject } = await import("ai");

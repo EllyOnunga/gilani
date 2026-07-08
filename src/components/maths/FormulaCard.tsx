@@ -11,29 +11,13 @@ export default function FormulaCard({ block }: Props) {
   const explanation = block.metadata?.subject; // fallback to subject for explanation? Or just empty for now until block.data handles it.
 
   return (
-    <section
-      className="
-my-6
-overflow-hidden
-rounded-xl
-border
-border-[#C96A3D]
-"
-    >
+    <section className="my-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <EquationToolbar title="Formula" />
 
       <MathBlock block={block} />
 
       {explanation && (
-        <div
-          className="
-border-t
-border-zinc-800
-bg-[#241B17]
-p-5
-text-zinc-300
-"
-        >
+        <div className="border-t border-border/40 bg-muted/20 p-5 text-muted-foreground text-sm">
           {explanation}
         </div>
       )}

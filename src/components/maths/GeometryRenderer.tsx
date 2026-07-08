@@ -33,7 +33,7 @@ export default function GeometryRenderer({ block }: Props) {
   }, [block.content]);
 
   return (
-    <section className="my-6 overflow-hidden rounded-xl border border-fuchsia-600 bg-white">
+    <section className="my-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <EquationToolbar title="Geometry Proof" />
       <div
         ref={boardRef}

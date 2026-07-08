@@ -1,4 +1,5 @@
 import React from "react";
+import { InlineMath } from "react-katex";
 
 // ─── Safe expression compiler ──────────────────────────────────────────────
 // Whitelists identifiers to Math.* equivalents; rejects anything else.
@@ -263,15 +264,23 @@ export function FunctionGraph({ spec }: { spec: GraphSpec }) {
               className="text-foreground"
             />
             {p.label && (
-              <text
-                x={sx(p.x) + 6}
-                y={sy(p.y) - 6}
-                fontSize="10"
-                fontFamily="monospace"
-                className="fill-foreground"
+              <foreignObject
+                x={sx(p.x) - 100}
+                y={sy(p.y) - 100}
+                width="200"
+                height="200"
+                style={{ overflow: "visible", pointerEvents: "none" }}
               >
-                {p.label}
-              </text>
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-foreground whitespace-nowrap translate-x-4 -translate-y-4">
+                    {p.label.startsWith("$") && p.label.endsWith("$") ? (
+                      <InlineMath math={p.label.slice(1, -1)} />
+                    ) : (
+                      p.label
+                    )}
+                  </span>
+                </div>
+              </foreignObject>
             )}
           </g>
         ))}
@@ -288,7 +297,17 @@ export function FunctionGraph({ spec }: { spec: GraphSpec }) {
               className="h-2.5 w-2.5 rounded-full inline-block flex-shrink-0"
               style={{ background: c.error ? "#999" : c.color }}
             />
-            {c.error ? `${c.label || c.expr} (invalid expression)` : c.label || `y = ${c.expr}`}
+            {c.error ? (
+              `${c.label || c.expr} (invalid expression)`
+            ) : c.label ? (
+              c.label.startsWith("$") && c.label.endsWith("$") ? (
+                <InlineMath math={c.label.slice(1, -1)} />
+              ) : (
+                c.label
+              )
+            ) : (
+              `y = ${c.expr}`
+            )}
           </div>
         ))}
       </div>

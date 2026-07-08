@@ -142,20 +142,44 @@ export const generateQuizFn = createServerFn({ method: "POST" })
     // ─── Build generation prompt ─────────────────────────────────────
     const difficultyInstruction =
       difficulty === "mixed"
-        ? "Vary difficulty across easy, medium, and hard questions so the quiz progresses naturally, roughly in order from easy to hard."
-        : `All questions should be ${difficulty} difficulty.`;
+        ? "Vary difficulty naturally across the quiz — start with 2–3 easier questions to build confidence, build to medium-difficulty in the middle, and finish with 2–3 hard, exam-like challenge questions. Tag each question's 'difficulty' field accurately."
+        : `All questions should be ${difficulty} difficulty. Ensure the question style, mark-worthy precision, and answer choices reflect that difficulty level exactly.`;
 
     const prompt = [
-      `You are an expert ${curriculum} curriculum examiner creating a quiz for a Kenyan student.`,
-      `Generate exactly ${questionCount} multiple-choice questions on: "${topic}".`,
+      `You are an elite ${curriculum || "general"} curriculum examiner crafting a diagnostic quiz for a Kenyan student.`,
+      `Your task: Generate exactly ${questionCount} multiple-choice questions on the topic: "${topic}".`,
+
+      `--- DIFFICULTY ---`,
       difficultyInstruction,
-      "Each question must have exactly 4 options, with exactly one correct answer.",
-      "Every question MUST include a detailed explanation (2-4 sentences) that teaches WHY the correct answer is right, and where useful, why a common wrong option is tempting but incorrect.",
-      "Base every question on accurate, curriculum-appropriate content. Do not invent facts.",
-      "Tag each question with a short 'topic' field naming the specific sub-topic it tests — this is used to detect the student's weak areas afterward.",
+
+      `--- QUESTION QUALITY RULES ---`,
+      `1. Every question MUST test a specific, clearly identifiable learning objective. Do NOT write vague or trivially obvious questions.`,
+      `2. The question stem must be precise and unambiguous. No trick wording. If a calculation is needed, state all given values clearly.`,
+      `3. Each question has exactly 4 options (A–D). Only ONE option is correct. The other 3 must be plausible — use common misconceptions, correct but irrelevant facts, or off-by-one errors as distractors (NOT random garbage).`,
+      `4. Options must be parallel in length and style (avoid "all of the above", "none of the above").`,
+
+      `--- MATH & SCIENCE FORMATTING RULES (CRITICAL) ---`,
+      `ALL mathematical expressions, formulas, units, and chemical formulas in the question and ALL option strings MUST be written in LaTeX, wrapped in dollar signs. Examples:`,
+      `  - Forces: Write "$F = ma$" not "F=ma"`,
+      `  - Units: Write "$10 \\text{ m/s}$" not "10m/s"`,
+      `  - Chemistry: Write "$\\ce{H2SO4}$" not "H2SO4"`,
+      `  - Equations: Write "$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$" not "x = (-b +/- sqrt(b^2-4ac)) / 2a"`,
+      `  - Fractions: Use "$\\frac{numerator}{denominator}$" always`,
+      `NEVER write raw math in plain text. This is mandatory.`,
+
+      `--- EXPLANATION QUALITY RULES ---`,
+      `Every question MUST include a detailed explanation (3–5 sentences) that:`,
+      `  1. States WHY the correct answer is correct, citing the relevant rule, law, or formula.`,
+      `  2. Identifies the most common wrong option and explains specifically why it is incorrect.`,
+      `  3. For calculation questions, shows the key steps of the working in the explanation — with LaTeX.`,
+      `  4. Ends with a single exam tip or pattern-recognition insight relevant to this type of question.`,
+
+      `--- TOPIC TAGGING ---`,
+      `Tag each question's 'topic' field with a short, specific sub-topic name (e.g., "Newton's Third Law", "Quadratic Formula", "Oxidation Numbers") — this is used to detect weak areas in the student's performance. Be precise, not broad.`,
+
       notesContext
-        ? `Ground your questions in the following reference material where it's relevant:\n\n${notesContext}`
-        : "No reference material was found for this topic — draw on accurate general curriculum knowledge.",
+        ? `--- REFERENCE MATERIAL ---\nGround your questions in the following curriculum-aligned reference material where relevant:\n\n${notesContext}`
+        : `--- REFERENCE ---\nNo personal notes were found. Draw on accurate, curriculum-appropriate knowledge for "${topic}".`,
     ].join("\n\n");
 
     const { generateObject } = await import("ai");

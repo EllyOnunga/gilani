@@ -21,7 +21,7 @@ export default function MatrixRenderer({ block }: Props) {
   };
 
   return (
-    <section className="my-6 overflow-hidden rounded-xl border border-blue-600">
+    <section className="my-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <EquationToolbar title="Matrix" />
       <MathBlock block={customBlock} />
     </section>

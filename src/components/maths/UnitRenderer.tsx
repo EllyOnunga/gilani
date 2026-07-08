@@ -21,7 +21,7 @@ export default function UnitRenderer({ block }: Props) {
   };
 
   return (
-    <section className="my-6 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900/50">
+    <section className="my-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
       <EquationToolbar title="Units" />
       <MathBlock block={customBlock} />
     </section>

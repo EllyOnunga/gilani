@@ -37,11 +37,24 @@ export async function summarizeChunk(
   const { generateObject } = await import("ai");
 
   const prompt = [
-    `This is segment ${chunkIndex + 1} of ${totalChunks} from a larger document. Produce an ` +
-      "exhaustive summary of just this segment — don't worry about the rest of the document, " +
-      "another pass will merge all segments together afterward.",
-    "Do not omit any keyword, explanation, formula, or described diagram from this segment.",
-    "--- SEGMENT TEXT ---",
+    `You are an expert educational content analyst processing segment ${chunkIndex + 1} of ${totalChunks} from a student's notes or textbook.`,
+    `Your goal: produce an exhaustive, well-structured markdown reorganization of ONLY this segment. Another pass will merge all segments — focus purely on this one.`,
+
+    `--- CONTENT RULES ---`,
+    `1. PRESERVE EVERYTHING: Every keyword, definition, formula, equation, law, reaction, diagram description, example, and worked solution must appear in your output. This is lossless restructuring, not compression.`,
+    `2. IMPROVE STRUCTURE: Reorganize the content into clear markdown sections with ## headings and ### sub-headings. Use bullet points for lists, numbered lists for steps.`,
+    `3. MATH & SCIENCE FORMATTING: All formulas, equations, units, and chemical formulas MUST be formatted in LaTeX with dollar signs. Examples:`,
+    `   - Write "$F = ma$" not "F=ma"`,
+    `   - Write "$v = u + at$" not "v=u+at"`,
+    `   - Write "$\\ce{H2SO4}$" not "H2SO4"`,
+    `   - Write "$\\frac{m}{M_r}$" for fractions`,
+    `   - Write "$\\Delta H = H_{products} - H_{reactants}$" for thermodynamics`,
+    `4. DEFINITIONS: Format key term definitions as: **Term**: definition text.`,
+    `5. DIAGRAMS & FIGURES: If the text describes a diagram, chart, table, or figure, reproduce its structure in markdown. Use a markdown table if it's tabular data. Describe labeled parts or flows clearly.`,
+    `6. EXAMPLES & WORKED SOLUTIONS: Preserve every worked example with full steps. Keep all given values, working, and answers.`,
+    `7. DO NOT EDITORIALIZE: Do not add opinions, external content not in this segment, or anything not present in the original text. Stick to the source material.`,
+
+    `--- SEGMENT TEXT ---`,
     chunkText,
   ].join("\n\n");
 

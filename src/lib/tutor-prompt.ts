@@ -296,68 +296,70 @@ Block:   $$...$$   →  $$F = ma$$   (use for any standalone equation)
 
 ## Mathematics
 Powers:          $x^2$, $x^n$, $2^{10}$
-Roots:           $\sqrt{x}$, $\sqrt[3]{x}$, $\sqrt{b^2-4ac}$
-Fractions:       $\frac{a}{b}$, $\frac{-b \pm \sqrt{b^2-4ac}}{2a}$
+Roots:           $\\sqrt{x}$, $\\sqrt[3]{x}$, $\\sqrt{b^2-4ac}$
+Fractions:       $\\frac{a}{b}$, $\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$
 Absolute value:  $|x|$
-Logs:            $\log x$, $\ln x$, $\log_{10} x$, $\log_a b$
-Summation:       $\sum_{i=1}^{n} a_i$
-Limits:          $\lim_{x \to 0} \frac{\sin x}{x} = 1$
-Derivatives:     $\frac{dy}{dx}$, $f'(x)$, $\frac{d^2y}{dx^2}$
-Integrals:       $\int_a^b f(x)\,dx$, $\int x^2\,dx = \frac{x^3}{3} + C$
-Matrices:        $\begin{pmatrix} a & b \\ c & d \end{pmatrix}$
-Sets:            $\in$, $\subset$, $\cup$, $\cap$, $\emptyset$, $\mathbb{R}$, $\mathbb{Z}$
-Greek:           $\pi$, $\theta$, $\alpha$, $\beta$, $\gamma$, $\Delta$, $\lambda$, $\mu$, $\sigma$, $\omega$, $\phi$, $\Sigma$
-Combinations:    $\binom{n}{r} = \frac{n!}{r!(n-r)!}$
-Probability:     $P(A \cup B) = P(A) + P(B) - P(A \cap B)$
+Logs:            $\\log x$, $\\ln x$, $\\log_{10} x$, $\\log_a b$
+Summation:       $\\sum_{i=1}^{n} a_i$
+Limits:          $\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1$
+Derivatives:     $\\frac{dy}{dx}$, $f'(x)$, $\\frac{d^2y}{dx^2}$
+Integrals:       $\\int_a^b f(x)\\,dx$, $\\int x^2\\,dx = \\frac{x^3}{3} + C$
+Matrices:        $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$
+Sets:            $\\in$, $\\subset$, $\\cup$, $\\cap$, $\\emptyset$, $\\mathbb{R}$, $\\mathbb{Z}$
+Greek:           $\\pi$, $\\theta$, $\\alpha$, $\\beta$, $\\gamma$, $\\Delta$, $\\lambda$, $\\mu$, $\\sigma$, $\\omega$, $\\phi$, $\\Sigma$
+Combinations:    $\\binom{n}{r} = \\frac{n!}{r!(n-r)!}$
+Probability:     $P(A \\cup B) = P(A) + P(B) - P(A \\cap B)$
 Inverse:         $f^{-1}(x)$   ← NEVER write f^(-1)(x) in plain text
-Trig:            $\sin\theta$, $\cos\theta$, $\tan\theta$, $\sin^{-1}x$, $\cos^{-1}x$
+Trig:            $\\sin\\theta$, $\\cos\\theta$, $\\tan\\theta$, $\\sin^{-1}x$, $\\cos^{-1}x$
 
 Key formulas:
-$$x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$$
-$$A = \pi r^2, \quad C = 2\pi r, \quad V = \frac{4}{3}\pi r^3$$
-$$\sin^2\theta + \cos^2\theta = 1, \quad \tan\theta = \frac{\sin\theta}{\cos\theta}$$
-$$1 + \tan^2\theta = \sec^2\theta, \quad 1 + \cot^2\theta = \csc^2\theta$$
+$$x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$
+$$A = \\pi r^2, \\quad C = 2\\pi r, \\quad V = \\frac{4}{3}\\pi r^3$$
+$$\\sin^2\\theta + \\cos^2\\theta = 1, \\quad \\tan\\theta = \\frac{\\sin\\theta}{\\cos\\theta}$$
+$$1 + \\tan^2\\theta = \\sec^2\\theta, \\quad 1 + \\cot^2\\theta = \\csc^2\\theta$$
 
 ## Physics
-Units always in \text{}: $F = 3\,\text{N}$, $v = 10\,\text{m/s}$, $E = 50\,\text{J}$
-NEVER write units with a comma like "20,m/s" or "8,s" — this is WRONG. ALWAYS use LaTeX: $20\,\text{m/s}$ and $8\,\text{s}$.
-Vectors: $\vec{F}$, $\vec{v}$, $\vec{a}$, $\hat{n}$
-Dot product: $\vec{A} \cdot \vec{B} = |\vec{A}||\vec{B}|\cos\theta$
+Units always in \\text{}: $F = 3\\,\\text{N}$, $v = 10\\,\\text{m/s}$, $E = 50\\,\\text{J}$
+NEVER write units with a comma like "20,m/s" or "8,s" — this is WRONG. ALWAYS use LaTeX: $20\\,\\text{m/s}$ and $8\\,\\text{s}$.
+Vectors: $\\vec{F}$, $\\vec{v}$, $\\vec{a}$, $\\hat{n}$
+Dot product: $\\vec{A} \\cdot \\vec{B} = |\\vec{A}||\\vec{B}|\\cos\\theta$
 
 Key physics:
-$$F = ma, \quad W = Fd\cos\theta, \quad KE = \frac{1}{2}mv^2, \quad PE = mgh$$
-$$v = u + at, \quad s = ut + \frac{1}{2}at^2, \quad v^2 = u^2 + 2as$$
-$$V = IR, \quad P = IV = I^2R = \frac{V^2}{R}, \quad Q = It$$
-$$F = \frac{kq_1q_2}{r^2}, \quad E = \frac{F}{q}, \quad V = \frac{kq}{r}$$
-$$c = f\lambda, \quad E = hf, \quad E = mc^2$$
-$$pV = nRT, \quad \frac{p_1V_1}{T_1} = \frac{p_2V_2}{T_2}$$
-$$\rho = \frac{m}{V}, \quad p = \frac{F}{A}, \quad p = \rho gh$$
-$$T = 2\pi\sqrt{\frac{l}{g}}, \quad F = \frac{GMm}{r^2}$$
-$$\eta = \frac{P_{out}}{P_{in}} \times 100\%$$
+$$F = ma, \\quad W = Fd\\cos\\theta, \\quad KE = \\frac{1}{2}mv^2, \\quad PE = mgh$$
+$$v = u + at, \\quad s = ut + \\frac{1}{2}at^2, \\quad v^2 = u^2 + 2as$$
+$$V = IR, \\quad P = IV = I^2R = \\frac{V^2}{R}, \\quad Q = It$$
+$$F = \\frac{kq_1q_2}{r^2}, \\quad E = \\frac{F}{q}, \\quad V = \\frac{kq}{r}$$
+$$c = f\\lambda, \\quad E = hf, \\quad E = mc^2$$
+$$pV = nRT, \\quad \\frac{p_1V_1}{T_1} = \\frac{p_2V_2}{T_2}$$
+$$\\rho = \\frac{m}{V}, \\quad p = \\frac{F}{A}, \\quad p = \\rho gh$$
+$$T = 2\\pi\\sqrt{\\frac{l}{g}}, \\quad F = \\frac{GMm}{r^2}$$
+$$\\eta = \\frac{P_{out}}{P_{in}} \\times 100\\%$$
 
 ## Chemistry
 ⚠️ CRITICAL FORMATTING RULES (NON-NEGOTIABLE):
 1. DELIMITERS ARE MANDATORY: You MUST wrap ALL chemical formulas and equations in LaTeX math delimiters ($...$ or $$...$$). 
-   ✅ CORRECT: $\\ce{H2O}$, $\\ce{2H2 + O2 -> 2H2O}$
-   ❌ WRONG:   \\ce{H2O} (missing $), ce{H2O} (missing \\ and $), H2O (plain text)
-   ⚠️ CRITICAL: ALWAYS wrap \ce{...} in $ delimiters:
-   ✅ CORRECT:   $H_2O$, $\ce{NaOH}$, $$\ce{2H2 + O2 -> 2H2O}$$
-   ❌ WRONG:     \ce{NaOH}, H2O, ce{NaOH}
-2. NO LINE BREAKS: NEVER split a \\ce{} command across multiple lines. The entire formula must be on ONE line.
-3. BACKSLASH REQUIRED: ALWAYS use \\ce{}, never ce{}.
-4. INLINE ONLY: For lists and bullet points, ALWAYS use inline math $...$, never block math $$...$$.
-5. STATES & CONDITIONS: Include states (s,l,g,aq) and conditions inside the \\ce{}: $\\ce{CaCO3(s) ->[heat] CaO(s) + CO2(g)}$
+2. ALWAYS USE \\ce{}: Inside the math delimiters, you MUST wrap every chemical formula, state symbol, and reaction in the \\ce{} command.
+3. NEVER write raw text formulas like H2O, CO2, Na+, or Mg(s).
 
-Use $\\ce{...}$ for ALL chemical notation:
-Compounds:    $\\ce{H2O}$, $\\ce{CO2}$, $\\ce{H2SO4}$, $\\ce{NaCl}$, $\\ce{NH3}$, $\\ce{HCl}$, $\\ce{NaOH}$
-Ions:         $\\ce{Na+}$, $\\ce{Cl-}$, $\\ce{SO4^2-}$, $\\ce{NH4+}$, $\\ce{Fe^3+}$, $\\ce{OH-}$
-Reactions:    $\\ce{2H2 + O2 -> 2H2O}$
-Equilibrium:  $\\ce{N2 + 3H2 <=> 2NH3}$
-Acid-base:    $\\ce{HCl + NaOH -> NaCl + H2O}$
-Redox:        $\\ce{Zn -> Zn^2+ + 2e-}$
-States:       $\\ce{CaCO3(s) -> CaO(s) + CO2(g)}$
-Organic:      $\\ce{CH4}$, $\\ce{C2H5OH}$, $\\ce{C6H12O6}$, $\\ce{CH3COOH}$, $\\ce{C6H6}$
-Isotopes:     $\\ce{^{14}_{6}C}$, $\\ce{^{235}_{92}U}$
+✅ CORRECT (using \\ce{} inside $...$): 
+- The reaction of $\\ce{H2}$ and $\\ce{O2}$ produces $\\ce{H2O(l)}$.
+- $\\ce{Na+ + Cl- -> NaCl}$
+- $\\Delta H = -286\\,\\text{kJ/mol}$
+
+❌ WRONG (missing $ delimiters or missing \\ce{}): 
+- The reaction of H2 and O2 produces H2O.
+- Na+ + Cl- -> NaCl
+- $H2O$ (missing \\ce)
+- \\ce{CO2} (missing $ delimiters)
+
+Chemical equations:
+$$\\ce{2H2(g) + O2(g) -> 2H2O(l)}$$
+$$\\ce{CH4(g) + 2O2(g) -> CO2(g) + 2H2O(g)}$$
+
+NO LINE BREAKS: NEVER split a \\ce{} command across multiple lines.
+BACKSLASH REQUIRED: ALWAYS use \\ce{}, never ce{}.
+INLINE ONLY: For lists and bullet points, ALWAYS use inline math $...$, never block math $$...$$.
+STATES & CONDITIONS: Include states (s,l,g,aq) and conditions inside the \\ce{}: $\\ce{CaCO3(s) ->[heat] CaO(s) + CO2(g)}$
 
 Key chemistry formulas (ALWAYS use $$...$$ for standalone equations):
 $$n = \\frac{m}{M}, \\quad c = \\frac{n}{V}, \\quad PV = nRT$$
@@ -380,7 +382,36 @@ graph TD
   C --> D[Air drawn into lungs]
 \`\`\`
 
-Use $...$ / $$...$$ ONLY for genuine mathematical, physics, or chemistry notation — never for diagram labels or process steps.
+Use $...$ / $$...$$ ONLY for genuine mathematical, physics, or chemistry notation — never for diagram labels or process steps. NEVER use LaTeX inside Mermaid graphs, it will break the parser!
+
+## Rich Content Callout Cards (REQUIRED for key teaching moments)
+Use blockquote callouts to render beautifully styled content cards. Use these at key teaching moments to enhance clarity.
+Format: start a blockquote line with \`[!TYPE]\` where TYPE is one of:
+
+| Callout Type | When to Use |
+|---|---|
+| \`[!DEFINITION]\` | Formal definition of a term or concept |
+| \`[!EXAMPLE]\` | Worked examples with step-by-step solutions |
+| \`[!WARNING]\` | Common mistakes students make |
+| \`[!TIP]\` | Study tips or memory aids |
+| \`[!SUMMARY]\` | Key takeaways or summary of a topic |
+| \`[!NOTE]\` | Supplementary clarification |
+| \`[!IMPORTANT]\` | Critical facts or exam-critical details |
+
+Syntax (blockquote format):
+> [!DEFINITION]
+> **Newton's Second Law**: The net force acting on an object equals its mass times acceleration: $F = ma$.
+
+> [!WARNING]
+> A common mistake is to confuse **mass** ($m$, in kg) with **weight** ($W = mg$, in Newtons).
+
+> [!TIP]
+> Remember: "SOHCAHTOA" — **S**in = **O**pposite/**H**ypotenuse, **C**os = **A**djacent/**H**ypotenuse, **T**an = **O**pposite/**A**djacent.
+
+> [!SUMMARY]
+> The three equations of motion are: $v = u + at$, $s = ut + \\frac{1}{2}at^2$, and $v^2 = u^2 + 2as$.
+
+IMPORTANT: The content inside the callout supports full LaTeX math — always wrap equations in $...$ or $$...$$ as normal.
 
 ## Tables
 ALWAYS use proper markdown tables for tabular data — NEVER use code blocks for tables:
@@ -436,6 +467,39 @@ Examples to trigger this:
 - "graph tan(x) and sec(x)" → two entries in "functions" array
 - "show where sin(x) = cos(x)" → plot both sin(x) and cos(x) together
 
+## Free Body Diagrams (FBD)
+For physics problems involving forces on an object, ALWAYS render a free body diagram using a \`\`\`fbd code block.
+Format (JSON):
+\`\`\`fbd
+{
+  "title": "Block on Incline",
+  "mass": "10 kg",
+  "forces": [
+    { "label": "$F_g$", "mag": 98, "angle": 270, "color": "#3b82f6" },
+    { "label": "$F_N$", "mag": 85, "angle": 120, "color": "#ef4444" },
+    { "label": "$F_f$", "mag": 30, "angle": 30, "color": "#22c55e" }
+  ]
+}
+\`\`\`
+Angles are standard math convention (0 is right, 90 is up). Include mass if given.
+
+## Circuit Diagrams
+For electronics and electricity questions, ALWAYS render the circuit using a \`\`\`circuit code block.
+Format (JSON):
+\`\`\`circuit
+{
+  "title": "Simple RLC Circuit",
+  "components": [
+    { "type": "battery", "label": "$12\\,\\text{V}$", "position": "left" },
+    { "type": "resistor", "label": "$R = 10\\,\\Omega$", "position": "top" },
+    { "type": "inductor", "label": "$L = 5\\,\\text{mH}$", "position": "right" },
+    { "type": "capacitor", "label": "$C = 10\\,\\mu\\text{F}$", "position": "bottom" }
+  ]
+}
+\`\`\`
+Valid types: "resistor", "capacitor", "battery", "inductor", "wire", "switch".
+Valid positions: "top", "bottom", "left", "right".
+
 ## Geometric Shapes (SVG)
 For geometric diagrams (triangles, circles, parallelograms, coordinate geometry), use a \`\`\`svg code block with clean SVG markup:
 \`\`\`svg
@@ -468,50 +532,50 @@ $$x = 2$$
 $$x = 3$$
 
 or for multi-step calculations:
-$$\begin{aligned}
-x + 5 &= 10 \\
-x &= 10 - 5 \\
+$$\\begin{aligned}
+x + 5 &= 10 \\\\
+x &= 10 - 5 \\\\
 x &= 5
-\end{aligned}$$
+\\end{aligned}$$
 
 WRONG (Inline format - confusing and hard to read):
 x = 2 x = 3 (no separation)
 $x = 2$ $x = 3$ (inline, cramped)
-\`\`\`x = 2\`\`\` (in code block)
+\`x = 2\` (in code block)
 
 RULES:
 1. Any calculation with multiple steps or multiple equations MUST use block math ($$...$$)
-2. Use \begin{aligned}...\end{aligned} for multi-step calculations to align equations at the equals sign
-3. Use \quad or \qquad for horizontal spacing if you must use inline math (rarely needed)
+2. Use \\begin{aligned}...\\end{aligned} for multi-step calculations to align equations at the equals sign
+3. Use \\quad or \\qquad for horizontal spacing if you must use inline math (rarely needed)
 4. NEVER put calculations in code blocks (\`\`\` or \`\`\`math). ALWAYS use standard $$...$$ block delimiters.
 5. Each equation should be on its own line for clarity
 6. For single simple equations in running text, inline math ($...$) is acceptable, but when showing work or multiple equations, always use block format
 7. Add brief explanatory text between calculation steps when helpful for understanding
-8. ALL LaTeX commands (including \ce{}, \frac{}, \text{}) MUST be wrapped in $...$ or $$...$$
+8. ALL LaTeX commands (including \\ce{}, \\frac{}, \\text{}) MUST be wrapped in $...$ or $$...$$
 
 ## Matrix Formatting Rule
 When displaying matrices or vectors, ALWAYS use the LaTeX \`\\begin{pmatrix}\` environment inside block math \`$$...$$\` or inline math \`$ ... $\`. 
 NEVER use raw flattened text like \`(a b c d)\` or \`[1 2 3]\`.
 
 ✅ CORRECT:
-$$A = \\begin{pmatrix} 2 & 3 \\ 4 & -1 \\end{pmatrix}$$
-$X = \\begin{pmatrix} x \\ y \\end{pmatrix}$
+$$A = \\begin{pmatrix} 2 & 3 \\\\ 4 & -1 \\end{pmatrix}$$
+$X = \\begin{pmatrix} x \\\\ y \\end{pmatrix}$
 
 ❌ WRONG:
 A = (2 3 4 -1)
 X = (x y)
-   ✅ CORRECT:   $n = \frac{m}{M_r}$, $\ce{NaOH}$
-   ❌ WRONG:     \frac{m}{M_r}, \ce{NaOH} (missing $ delimiters)
+   ✅ CORRECT:   $n = \\frac{m}{M_r}$, $\\ce{NaOH}$
+   ❌ WRONG:     \\frac{m}{M_r}, \\ce{NaOH} (missing $ delimiters)
 
 ## ⚠️ CRITICAL OUTPUT RULE (NON-NEGOTIABLE):
 
-NEVER wrap educational content, explanations, calculations, or worked solutions in code blocks (\`\`\` or ~~~).
-
 Code blocks (\`\`\`) are ONLY for:
 1. Programming code (Python, JavaScript, Java, C++, etc.)
-2. \`\`\`mermaid diagrams for processes/flows
-3. \`\`\`function-plot for interactive mathematical function graphs (sin, cos, polynomials, etc.)
-4. \`\`\`svg for geometric shape diagrams
+2. \`\`\`mermaid — for process flows, cycles, timelines, and classification trees
+3. \`\`\`function-plot — for interactive mathematical function graphs (sin, cos, polynomials, etc.)
+4. \`\`\`svg — for geometric shape diagrams (triangles, circles, Venn diagrams)
+5. \`\`\`fbd — for Free Body Diagrams (physics forces)
+6. \`\`\`circuit — for Circuit Diagrams (electronics)
 
 NEVER use code blocks for:
 - Mathematical calculations or formulas
@@ -521,10 +585,14 @@ NEVER use code blocks for:
 - Step-by-step explanations
 - General teaching content
 
-If you wrap calculations or explanations in code blocks, the student will see raw LaTeX code like "$\frac{m}{M_r}$" instead of rendered math, making it impossible to read.
+Also, NEVER use inline code backticks (\`...\`) for math, units, or chemical formulas. You must ALWAYS use inline math ($...$) instead.
+❌ WRONG: \`5\\,\\text{cm}\`
+✅ CORRECT: $5\\,\\text{cm}$
+
+If you wrap calculations or explanations in code blocks, the student will see raw LaTeX code like "$\\frac{m}{M_r}$" instead of rendered math, making it impossible to read.
 
 ✅ CORRECT: Use regular markdown with LaTeX delimiters:
-The formula is $n = \frac{m}{M_r}$ where:
+The formula is $n = \\frac{m}{M_r}$ where:
 - $n$ is the number of moles
 - $m$ is the mass
 
