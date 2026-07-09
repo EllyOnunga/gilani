@@ -319,8 +319,8 @@ $$\\sin^2\\theta + \\cos^2\\theta = 1, \\quad \\tan\\theta = \\frac{\\sin\\theta
 $$1 + \\tan^2\\theta = \\sec^2\\theta, \\quad 1 + \\cot^2\\theta = \\csc^2\\theta$$
 
 ## Physics
-Units always in \\text{}: $F = 3\\,\\text{N}$, $v = 10\\,\\text{m/s}$, $E = 50\\,\\text{J}$
-NEVER write units with a comma like "20,m/s" or "8,s" — this is WRONG. ALWAYS use LaTeX: $20\\,\\text{m/s}$ and $8\\,\\text{s}$.
+Units always in \\text{}: $F = 3\\text{N}$, $v = 10\\text{m/s}$, $E = 50\\text{J}$
+NEVER write units with a comma like "20,m/s" or "8,s" — this is WRONG. ALWAYS use LaTeX: $20\\text{m/s}$ and $8\\text{s}$.
 Vectors: $\\vec{F}$, $\\vec{v}$, $\\vec{a}$, $\\hat{n}$
 Dot product: $\\vec{A} \\cdot \\vec{B} = |\\vec{A}||\\vec{B}|\\cos\\theta$
 
@@ -344,7 +344,7 @@ $$\\eta = \\frac{P_{out}}{P_{in}} \\times 100\\%$$
 ✅ CORRECT (using \\ce{} inside $...$): 
 - The reaction of $\\ce{H2}$ and $\\ce{O2}$ produces $\\ce{H2O(l)}$.
 - $\\ce{Na+ + Cl- -> NaCl}$
-- $\\Delta H = -286\\,\\text{kJ/mol}$
+- $\\Delta H = -286\\text{kJ/mol}$
 
 ❌ WRONG (missing $ delimiters or missing \\ce{}): 
 - The reaction of H2 and O2 produces H2O.
@@ -492,10 +492,10 @@ Format (JSON):
 {
   "title": "Simple RLC Circuit",
   "components": [
-    { "type": "battery", "label": "$12\\,\\text{V}$", "position": "left" },
-    { "type": "resistor", "label": "$R = 10\\,\\Omega$", "position": "top" },
-    { "type": "inductor", "label": "$L = 5\\,\\text{mH}$", "position": "right" },
-    { "type": "capacitor", "label": "$C = 10\\,\\mu\\text{F}$", "position": "bottom" }
+    { "type": "battery", "label": "$12\\text{V}$", "position": "left" },
+    { "type": "resistor", "label": "$R = 10\\Omega$", "position": "top" },
+    { "type": "inductor", "label": "$L = 5\\text{mH}$", "position": "right" },
+    { "type": "capacitor", "label": "$C = 10\\mu\\text{F}$", "position": "bottom" }
   ]
 }
 \`\`\`
@@ -612,8 +612,8 @@ NEVER use code blocks for:
 - General teaching content
 
 Also, NEVER use inline code backticks (\`...\`) for math, units, or chemical formulas. You must ALWAYS use inline math ($...$) instead.
-❌ WRONG: \`5\\,\\text{cm}\`
-✅ CORRECT: $5\\,\\text{cm}$
+❌ WRONG: \`5\\text{cm}\`
+✅ CORRECT: $5\\text{cm}$
 
 If you wrap calculations or explanations in code blocks, the student will see raw LaTeX code like "$\\frac{m}{M_r}$" instead of rendered math, making it impossible to read.
 
