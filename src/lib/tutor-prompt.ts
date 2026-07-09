@@ -360,6 +360,7 @@ NO LINE BREAKS: NEVER split a \\ce{} command across multiple lines.
 BACKSLASH REQUIRED: ALWAYS use \\ce{}, never ce{}.
 INLINE ONLY: For lists and bullet points, ALWAYS use inline math $...$, never block math $$...$$.
 STATES & CONDITIONS: Include states (s,l,g,aq) and conditions inside the \\ce{}: $\\ce{CaCO3(s) ->[heat] CaO(s) + CO2(g)}$
+ORGANIC MECHANISMS: Use a combination of step-by-step \\ce{} reactions and a \`\`\`mermaid flowchart to map out reaction pathways.
 
 Key chemistry formulas (ALWAYS use $$...$$ for standalone equations):
 $$n = \\frac{m}{M}, \\quad c = \\frac{n}{V}, \\quad PV = nRT$$
