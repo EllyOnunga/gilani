@@ -13,7 +13,14 @@ import {
   X,
   Camera,
   Mic,
+  Plus,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type AttachedFile = {
   name: string;
@@ -384,66 +391,73 @@ export function ChatInput({
             }}
             disabled={isDisabled}
           />
-          {/* label+htmlFor: native OS command — no JS click() required */}
-          <div className="pb-2 pl-2 pt-2 flex items-center justify-center gap-1">
-            <label
-              htmlFor={isDisabled ? undefined : "chat-file-input"}
-              aria-label="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)"
-              aria-disabled={isDisabled}
-              className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${
-                isDisabled
-                  ? "opacity-40 cursor-not-allowed pointer-events-none"
-                  : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90"
-              }`}
-              title="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)"
-            >
-              {parsingFile ? (
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              ) : (
-                <Paperclip className="h-4 w-4" />
-              )}
-            </label>
+          {/* Action Menu (replaces individual attachment buttons) */}
+          <div className="pb-2 pl-2 pt-2 flex items-center justify-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  disabled={isDisabled}
+                  aria-label="Add attachment or voice"
+                  className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${
+                    isDisabled
+                      ? "opacity-40 cursor-not-allowed pointer-events-none"
+                      : isListening
+                        ? "text-red-500 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/30 animate-pulse"
+                        : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90"
+                  }`}
+                >
+                  {parsingFile ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  ) : isListening ? (
+                    <span className="relative flex h-4 w-4 items-center justify-center">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                    </span>
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" sideOffset={8} className="w-48 p-1.5 z-50">
+                {/* 1. Upload Document */}
+                <DropdownMenuItem asChild className="cursor-pointer gap-2.5 p-2 rounded-lg">
+                  <label
+                    htmlFor={isDisabled ? undefined : "chat-file-input"}
+                    className="flex w-full items-center"
+                  >
+                    <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Upload Document</span>
+                  </label>
+                </DropdownMenuItem>
 
-            {onScanClick && (
-              <button
-                type="button"
-                onClick={onScanClick}
-                disabled={isDisabled}
-                className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${
-                  isDisabled
-                    ? "opacity-40 cursor-not-allowed pointer-events-none"
-                    : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90"
-                }`}
-                title="Scan document with camera"
-              >
-                <Camera className="h-4 w-4" />
-              </button>
-            )}
-
-            {onVoiceClick && (
-              <button
-                type="button"
-                onClick={onVoiceClick}
-                disabled={isDisabled}
-                className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${
-                  isDisabled
-                    ? "opacity-40 cursor-not-allowed pointer-events-none"
-                    : isListening
-                      ? "text-red-500 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/30 animate-pulse"
-                      : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90"
-                }`}
-                title={isListening ? "Stop listening" : "Voice input"}
-              >
-                {isListening ? (
-                  <span className="relative flex h-4 w-4 items-center justify-center">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
-                  </span>
-                ) : (
-                  <Mic className="h-4 w-4" />
+                {/* 2. Scan with Camera */}
+                {onScanClick && (
+                  <DropdownMenuItem
+                    onClick={onScanClick}
+                    className="cursor-pointer gap-2.5 p-2 rounded-lg"
+                  >
+                    <Camera className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Use Camera</span>
+                  </DropdownMenuItem>
                 )}
-              </button>
-            )}
+
+                {/* 3. Voice Input */}
+                {onVoiceClick && (
+                  <DropdownMenuItem
+                    onClick={onVoiceClick}
+                    className="cursor-pointer gap-2.5 p-2 rounded-lg"
+                  >
+                    <Mic
+                      className={`h-4 w-4 ${isListening ? "text-red-500" : "text-muted-foreground"}`}
+                    />
+                    <span className="text-sm font-medium">
+                      {isListening ? "Stop Voice Input" : "Voice Input"}
+                    </span>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <textarea
