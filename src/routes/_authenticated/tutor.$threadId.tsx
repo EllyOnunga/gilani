@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/async";
 import { generateThreadTitleFn, renameThreadFn } from "@/lib/tutor.server-fns";
 import { consumePendingMessage } from "@/lib/pending-message";
+import { useAuth } from "@/hooks/use-auth";
 
 import { useTutorChat } from "@/components/tutor/hooks/useTutorChat";
 import { useComposer } from "@/components/tutor/hooks/useComposer";
@@ -38,29 +39,10 @@ const exportAsPDF = async (
 
 function TutorThread() {
   const { threadId } = Route.useParams();
-  const [authToken, setAuthToken] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const { session, loading: authLoading } = useAuth();
 
-  useEffect(() => {
-    let active = true;
-    supabase.auth
-      .getSession()
-      .then((res) => {
-        if (!active) return;
-        const session = res?.data?.session;
-        if (session?.access_token) setAuthToken(session.access_token);
-        if (session?.user?.id) setUserId(session.user.id);
-        setAuthLoading(false);
-      })
-      .catch((err) => {
-        console.error("[TutorThread] Failed to get auth session:", err);
-        if (active) setAuthLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const authToken = session?.access_token ?? null;
+  const userId = session?.user?.id ?? null;
 
   if (authLoading) return <GilaniLoader />;
 

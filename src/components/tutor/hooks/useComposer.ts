@@ -164,7 +164,8 @@ export function useComposer() {
       setAttachedFile({ ...parsed, storageUrl, mimeType: file.type });
       toast.success("Document attached!", { id: toastId });
     } catch (err: any) {
-      const errMsg = friendlyError(err, "Failed to attach document.");
+      // Use the explicit, friendly error from document-parser, falling back to friendlyError for unknown issues.
+      const errMsg = err.message || friendlyError(err, "Failed to attach document.");
       setDocUploadError(errMsg);
       toast.error(errMsg, { id: toastId });
     } finally {

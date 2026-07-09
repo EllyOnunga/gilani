@@ -11,6 +11,8 @@ import {
   Clock,
   CreditCard,
   X,
+  Camera,
+  Mic,
 } from "lucide-react";
 
 type AttachedFile = {
@@ -383,7 +385,7 @@ export function ChatInput({
             disabled={isDisabled}
           />
           {/* label+htmlFor: native OS command — no JS click() required */}
-          <div className="pb-2 pl-2 pt-2 flex items-center justify-center">
+          <div className="pb-2 pl-2 pt-2 flex items-center justify-center gap-1">
             <label
               htmlFor={isDisabled ? undefined : "chat-file-input"}
               aria-label="Attach a file (PDF, DOCX, TXT, MD, CSV — max 2MB)"
@@ -401,6 +403,47 @@ export function ChatInput({
                 <Paperclip className="h-4 w-4" />
               )}
             </label>
+
+            {onScanClick && (
+              <button
+                type="button"
+                onClick={onScanClick}
+                disabled={isDisabled}
+                className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${
+                  isDisabled
+                    ? "opacity-40 cursor-not-allowed pointer-events-none"
+                    : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90"
+                }`}
+                title="Scan document with camera"
+              >
+                <Camera className="h-4 w-4" />
+              </button>
+            )}
+
+            {onVoiceClick && (
+              <button
+                type="button"
+                onClick={onVoiceClick}
+                disabled={isDisabled}
+                className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${
+                  isDisabled
+                    ? "opacity-40 cursor-not-allowed pointer-events-none"
+                    : isListening
+                      ? "text-red-500 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/30 animate-pulse"
+                      : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90"
+                }`}
+                title={isListening ? "Stop listening" : "Voice input"}
+              >
+                {isListening ? (
+                  <span className="relative flex h-4 w-4 items-center justify-center">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                  </span>
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+              </button>
+            )}
           </div>
 
           <textarea

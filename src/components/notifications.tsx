@@ -17,6 +17,7 @@ export function NotificationBell({ userId }: { userId: string }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -75,15 +76,25 @@ export function NotificationBell({ userId }: { userId: string }) {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
-  const handleClick = async (n: Notification) => {
+  const handleClick = async (e: React.MouseEvent, n: Notification) => {
+    // If it has a link, navigate immediately
+    if (n.link) {
+      if (!n.read) {
+        await (supabase as any).from("notifications").update({ read: true }).eq("id", n.id);
+        setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+      }
+      navigate({ to: n.link as any });
+      setOpen(false);
+      return;
+    }
+
+    // Otherwise, just toggle expansion
+    setExpandedId((prev) => (prev === n.id ? null : n.id));
+
     if (!n.read) {
       await (supabase as any).from("notifications").update({ read: true }).eq("id", n.id);
       setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
     }
-    if (n.link) {
-      navigate({ to: n.link as any });
-    }
-    setOpen(false);
   };
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
@@ -170,7 +181,7 @@ export function NotificationBell({ userId }: { userId: string }) {
                   >
                     {/* Clickable content area */}
                     <button
-                      onClick={() => handleClick(n)}
+                      onClick={(e) => handleClick(e, n)}
                       className="flex-1 text-left px-4 py-3.5 hover:bg-accent/50 transition-colors"
                     >
                       <div className="flex items-start gap-2.5">
@@ -188,7 +199,11 @@ export function NotificationBell({ userId }: { userId: string }) {
                           >
                             {n.title}
                           </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">
+                          <p
+                            className={`text-[11px] text-muted-foreground mt-0.5 leading-relaxed ${
+                              expandedId === n.id ? "" : "line-clamp-2"
+                            }`}
+                          >
                             {n.message}
                           </p>
                           <p className="font-mono text-[9px] text-muted-foreground/50 mt-1.5">
