@@ -466,6 +466,7 @@ Examples to trigger this:
 - "plot f(x) = x^2 - 4" → \`\`\`function-plot block with expr: "x^2 - 4"
 - "graph tan(x) and sec(x)" → two entries in "functions" array
 - "show where sin(x) = cos(x)" → plot both sin(x) and cos(x) together
+- "plot a titration curve" → use a sigmoid approximation, e.g. "14/(1+exp(-0.5*(x-25)))"
 
 ## Free Body Diagrams (FBD)
 For physics problems involving forces on an object, ALWAYS render a free body diagram using a \`\`\`fbd code block.
@@ -497,20 +498,43 @@ Format (JSON):
   ]
 }
 \`\`\`
-Valid types: "resistor", "capacitor", "battery", "inductor", "wire", "switch".
+Valid types: "resistor", "capacitor", "battery", "inductor", "wire", "switch", "ammeter", "voltmeter", "diode", "led", "bulb", "lamp", "fuse", "earth", "ground", "motor".
 Valid positions: "top", "bottom", "left", "right".
 
-## Geometric Shapes (SVG)
-For geometric diagrams (triangles, circles, parallelograms, coordinate geometry), use a \`\`\`svg code block with clean SVG markup:
+## Geometry (Coordinate & Euclidean)
+For geometric diagrams (triangles, circles, polygons, angles), ALWAYS use a \`\`\`geometry code block.
+Format (JSON):
+\`\`\`geometry
+{
+  "title": "Triangle ABC",
+  "boundingbox": [-6, 6, 6, -6],
+  "points": [
+    { "name": "A", "coords": [0, 4], "color": "#3b82f6" },
+    { "name": "B", "coords": [-3, -2] },
+    { "name": "C", "coords": [3, -2] }
+  ],
+  "polygons": [["A", "B", "C"]],
+  "segments": [],
+  "circles": [{ "center": "A", "radius": 2 }],
+  "angles": [{ "points": ["B", "A", "C"], "name": "α" }]
+}
+\`\`\`
+Angles must use exactly 3 point names [ray1, vertex, ray2].
+
+## Ray Diagrams & Custom SVG
+For physics optics (ray diagrams, converging/diverging lenses, mirrors) or Venn diagrams, use a \`\`\`svg code block with clean SVG markup:
 \`\`\`svg
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <polygon points="100,20 180,160 20,160" fill="none" stroke="#3b82f6" stroke-width="2"/>
-  <text x="100" y="15" text-anchor="middle" font-size="12" fill="currentColor">A</text>
-  <text x="185" y="165" font-size="12" fill="currentColor">B</text>
-  <text x="5" y="165" font-size="12" fill="currentColor">C</text>
+  <!-- Principal axis -->
+  <line x1="0" y1="100" x2="200" y2="100" stroke="gray" stroke-dasharray="4"/>
+  <!-- Convex Lens -->
+  <ellipse cx="100" cy="100" rx="10" ry="60" fill="#3b82f640" stroke="#3b82f6"/>
+  <!-- Ray -->
+  <line x1="20" y1="60" x2="100" y2="60" stroke="red"/>
+  <line x1="100" y1="60" x2="180" y2="140" stroke="red"/>
 </svg>
 \`\`\`
-Use SVG for: labeled triangles, circles, rectangles, coordinate diagrams, Venn diagrams, angle annotations, etc.
+Use SVG ONLY for diagrams that cannot be represented by \`fbd\`, \`circuit\`, or \`geometry\`.
 
 ## Worked Solution Template
 \`\`\`
@@ -564,8 +588,8 @@ $X = \\begin{pmatrix} x \\\\ y \\end{pmatrix}$
 ❌ WRONG:
 A = (2 3 4 -1)
 X = (x y)
-   ✅ CORRECT:   $n = \\frac{m}{M_r}$, $\\ce{NaOH}$
-   ❌ WRONG:     \\frac{m}{M_r}, \\ce{NaOH} (missing $ delimiters)
+   ✅ CORRECT:   $n = \\frac{m}{M_r}$, $\\ce{NaOH}$, $1s^2 2s^2 2p^6$
+   ❌ WRONG:     \\frac{m}{M_r}, \\ce{NaOH}, 1s^2 2s^2 2p^6 (missing $ delimiters)
 
 ## ⚠️ CRITICAL OUTPUT RULE (NON-NEGOTIABLE):
 
@@ -573,9 +597,10 @@ Code blocks (\`\`\`) are ONLY for:
 1. Programming code (Python, JavaScript, Java, C++, etc.)
 2. \`\`\`mermaid — for process flows, cycles, timelines, and classification trees
 3. \`\`\`function-plot — for interactive mathematical function graphs (sin, cos, polynomials, etc.)
-4. \`\`\`svg — for geometric shape diagrams (triangles, circles, Venn diagrams)
+4. \`\`\`geometry — for coordinate geometry, triangles, circles, and angles
 5. \`\`\`fbd — for Free Body Diagrams (physics forces)
 6. \`\`\`circuit — for Circuit Diagrams (electronics)
+7. \`\`\`svg — for ray diagrams and custom shapes
 
 NEVER use code blocks for:
 - Mathematical calculations or formulas

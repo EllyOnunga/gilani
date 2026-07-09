@@ -26,7 +26,6 @@ import {
   FormulaCard,
   MatrixRenderer,
   UnitRenderer,
-  GraphRenderer,
   GeometryRenderer,
 } from "@/components/maths";
 
@@ -842,7 +841,7 @@ const buildComponents = (isStreaming: boolean): any => ({
         return <FormulaCard block={createBlock("formula")} />;
       case "maths:graph":
       case "graph":
-        return <GraphRenderer block={createBlock("graph")} />;
+        return <FunctionGraphBlock spec={code} />;
       case "maths:geometry":
       case "geometry":
         return <GeometryRenderer block={createBlock("geometry")} />;
