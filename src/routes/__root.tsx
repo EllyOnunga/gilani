@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -29,6 +30,50 @@ function ConsentGatedAnalytics() {
 
   if (!allowed) return null;
   return <Analytics />;
+}
+
+/** Thin top-of-page progress bar that shows during route transitions */
+function NavProgressBar() {
+  const isLoading = useRouterState({ select: (s) => s.status === "pending" });
+  const [visible, setVisible] = useState(false);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    let grow: ReturnType<typeof setInterval>;
+    if (isLoading) {
+      setVisible(true);
+      setWidth(15);
+      grow = setInterval(() => {
+        setWidth((w) => (w < 85 ? w + (85 - w) * 0.08 : w));
+      }, 120);
+    } else if (visible) {
+      setWidth(100);
+      const hide = setTimeout(() => {
+        setVisible(false);
+        setWidth(0);
+      }, 350);
+      return () => clearTimeout(hide);
+    }
+    return () => clearInterval(grow);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
+  if (!visible) return null;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        zIndex: 9999,
+        height: "2px",
+        width: `${width}%`,
+        transition: isLoading ? "width 0.12s ease-out" : "width 0.25s ease-out",
+        background: "linear-gradient(90deg, hsl(22 96% 45%), hsl(35 95% 55%))",
+        boxShadow: "0 0 8px hsl(22 96% 45% / 0.6)",
+      }}
+    />
+  );
 }
 
 if (typeof window !== "undefined" && import.meta.env.VITE_SENTRY_DSN) {
@@ -407,6 +452,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <NavProgressBar />
       <AuthInvalidator />
       <Outlet />
       <Toaster position={toasterPos} />

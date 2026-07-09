@@ -11,6 +11,30 @@ export interface AuthState {
   loading: boolean;
 }
 
+const ROLES_CACHE_KEY = "__gilani_role";
+
+function getCachedRoles(userId: string): AppRole[] | null {
+  try {
+    const raw = sessionStorage.getItem(ROLES_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed.userId === userId && Array.isArray(parsed.roles)) {
+      return parsed.roles as AppRole[];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedRoles(userId: string, roles: AppRole[]) {
+  try {
+    sessionStorage.setItem(ROLES_CACHE_KEY, JSON.stringify({ userId, roles }));
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export function useAuth(): AuthState {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -50,14 +74,42 @@ export function useAuth(): AuthState {
                     displayName: pendingDisplayName || undefined,
                   },
                 });
-                return [pendingRole as AppRole];
+                const newRoles = [pendingRole as AppRole];
+                setCachedRoles(userId, newRoles);
+                return newRoles;
               } catch {
                 // Role already assigned by trigger, continue
               }
             } else {
               localStorage.removeItem("pending_role");
-              return existing.map((x) => x.role as AppRole);
+              const existing2 = existing.map((x) => x.role as AppRole);
+              setCachedRoles(userId, existing2);
+              return existing2;
             }
+          }
+        }
+
+        // Serve from cache immediately on non-fresh sign-in
+        if (!isNewSignIn) {
+          const cached = getCachedRoles(userId);
+          if (cached && cached.length > 0) {
+            // Return cached immediately, refresh in background
+            Promise.resolve().then(async () => {
+              try {
+                const { data: r } = await supabase
+                  .from("user_roles")
+                  .select("role")
+                  .eq("user_id", userId);
+                if (r && r.length > 0 && active) {
+                  const fresh = r.map((x) => x.role as AppRole);
+                  setCachedRoles(userId, fresh);
+                  setRoles(fresh);
+                }
+              } catch {
+                // ignore background refresh errors
+              }
+            });
+            return cached;
           }
         }
 
@@ -65,7 +117,9 @@ export function useAuth(): AuthState {
         const { data: r } = await supabase.from("user_roles").select("role").eq("user_id", userId);
 
         if (r && r.length > 0) {
-          return r.map((x) => x.role as AppRole);
+          const fetched = r.map((x) => x.role as AppRole);
+          setCachedRoles(userId, fetched);
+          return fetched;
         }
 
         // No role found — trigger should have assigned student, return empty and let UI handle
@@ -102,6 +156,10 @@ export function useAuth(): AuthState {
           }
         });
       } else {
+        // Clear cache on sign out
+        try {
+          sessionStorage.removeItem(ROLES_CACHE_KEY);
+        } catch {}
         setRoles([]);
         setLoading(false);
       }

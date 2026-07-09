@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { authenticateRequest } from "@/lib/api-auth.server";
@@ -41,6 +41,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthedShell() {
   const shell = useAuthedShell();
   const navigate = useNavigate();
+  const [timedOut, setTimedOut] = useState(false);
 
   const studentOnlyPaths = ["/tutor", "/tutor"];
   const isOnStudentRoute = studentOnlyPaths.some(
@@ -56,6 +57,30 @@ function AuthedShell() {
       } as any);
     }
   }, [shouldRedirectOffStudentRoute, shell.isAdmin]);
+
+  // Safety timeout — if auth is still loading after 6s, stop blocking the UI
+  useEffect(() => {
+    if (!shell.loading) {
+      setTimedOut(false);
+      return;
+    }
+    const t = setTimeout(() => setTimedOut(true), 6000);
+    return () => clearTimeout(t);
+  }, [shell.loading]);
+
+  if (timedOut) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
+        <p className="text-sm text-muted-foreground">Taking longer than expected…</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Refresh
+        </button>
+      </div>
+    );
+  }
 
   if (shell.loading || !shell.user || shell.roles.length === 0) {
     return <GilaniLoader />;

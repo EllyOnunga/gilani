@@ -626,19 +626,45 @@
 }
 
 /* Gilani loader */
+@keyframes gilani-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gilani-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.animate-gilani-spin {
+  animation: gilani-spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-gilani-pulse {
+  animation: gilani-pulse 2s ease-in-out infinite;
+}
+
+/* Keep legacy g-bounce class so any cached reference doesn't break */
 @keyframes g-bounce {
   0%,
   100% {
     transform: scale(0.6);
     opacity: 0.7;
   }
-
   50% {
     transform: scale(1);
     opacity: 1;
   }
 }
-
 .animate-g-bounce {
   animation: g-bounce 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
