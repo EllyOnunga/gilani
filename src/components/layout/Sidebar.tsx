@@ -450,7 +450,7 @@ export function Sidebar({ shell }: Props) {
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative ${path.startsWith("/admin") ? "text-foreground font-semibold bg-muted/40 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-foreground before:rounded-r" : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"}`}
               >
-                <Users className="h-4 w-4" /> Users & Roles
+                <Users className="h-4 w-4" /> Dashboard
               </Link>
             </>
           )}
@@ -544,7 +544,7 @@ export function Sidebar({ shell }: Props) {
                   setSidebarOpen(false);
                   setSettingsOpen(true);
                 }}
-                className="flex items-center gap-3 cursor-pointer p-3 text-sm font-medium rounded-lg"
+                className="flex w-full items-center gap-3 cursor-pointer px-4 py-3 text-sm font-medium rounded-lg"
               >
                 <Settings className="h-5 w-5 text-muted-foreground" />
                 <span>Settings</span>
@@ -553,7 +553,7 @@ export function Sidebar({ shell }: Props) {
                 <Link
                   to="/contact"
                   onClick={() => setSidebarOpen(false)}
-                  className="flex w-full items-center gap-3 cursor-pointer p-3 text-sm font-medium rounded-lg"
+                  className="flex w-full items-center gap-3 cursor-pointer px-4 py-3 text-sm font-medium rounded-lg"
                 >
                   <Mail className="h-5 w-5 text-muted-foreground" />
                   <span>Contact</span>
@@ -562,7 +562,7 @@ export function Sidebar({ shell }: Props) {
               <DropdownMenuSeparator className="my-2" />
               <DropdownMenuItem
                 onClick={signOut}
-                className="text-destructive focus:text-destructive flex items-center gap-3 cursor-pointer p-3 text-sm font-medium rounded-lg"
+                className="text-destructive focus:text-destructive flex items-center gap-3 cursor-pointer px-4 py-3 text-sm font-medium rounded-lg"
               >
                 <LogOut className="h-5 w-5" /> <span>Logout</span>
               </DropdownMenuItem>
