@@ -60,7 +60,7 @@ export function ThreadHeader({
       <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
         <button
           onClick={() => setSidebarOpen(true)}
-          className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
+          className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0 lg:hidden"
           title="Open Menu"
         >
           <PanelLeft className="h-5 w-5" strokeWidth={2.25} />
