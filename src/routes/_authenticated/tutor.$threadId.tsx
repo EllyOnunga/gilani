@@ -258,7 +258,7 @@ function TutorThreadInner({
         <InAppCamera
           onCapture={(file) => {
             composer.setIsCameraOpen(false);
-            composer.handleRawFile(file);
+            composer.handleRawFile(file, "scan");
           }}
           onClose={() => composer.setIsCameraOpen(false)}
         />

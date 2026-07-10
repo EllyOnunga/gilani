@@ -25,6 +25,29 @@ export function useComposer() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const baseInputRef = useRef("");
+  const [currentPlan, setCurrentPlan] = useState("free");
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("plan")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        if (mounted && (data as any)?.plan) {
+          setCurrentPlan((data as any).plan);
+        }
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const toggleVoiceInput = async () => {
     const SpeechRecognitionCtor =
@@ -128,11 +151,23 @@ export function useComposer() {
     setIsCameraOpen(true);
   };
 
-  const handleRawFile = async (file: File) => {
+  const handleRawFile = async (file: File, type: "upload" | "scan" = "upload") => {
     if (file.size > MAX_FILE_SIZE) {
       setDocUploadError(
         `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is 10MB.`,
       );
+      return;
+    }
+
+    const limit = currentPlan === "pro" ? 5 : 3;
+    const today = new Date().toISOString().split("T")[0];
+    const key = `gilani_${type}s_count_${today}`;
+    const count = parseInt(localStorage.getItem(key) || "0", 10);
+
+    if (count >= limit) {
+      const msg = `You have reached your daily limit for ${type === "scan" ? "scans" : "uploads"}. Please try again tomorrow.`;
+      setDocUploadError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -162,6 +197,7 @@ export function useComposer() {
       toast.loading(`Extracting text from ${file.name}...`, { id: toastId });
       const parsed = await parseDocument(file);
       setAttachedFile({ ...parsed, storageUrl, mimeType: file.type });
+      localStorage.setItem(key, (count + 1).toString());
       toast.success("Document attached!", { id: toastId });
     } catch (err: any) {
       // Use the explicit, friendly error from document-parser, falling back to friendlyError for unknown issues.

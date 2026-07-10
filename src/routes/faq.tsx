@@ -119,8 +119,74 @@ const FAQS = [
         a: "You're already signed in and can use GilaniAI right away — the verification email is just a background confirmation of your email address and doesn't block access. If it hasn't arrived, check your spam or junk folder, or contact us at support@gilaniai.site.",
       },
       {
-        q: "Do I need a password?",
-        a: "No. Just enter your email or use Google sign-in and you're in immediately — no password, no link to click, no code to enter.",
+        q: "Why is the AI response slow sometimes?",
+        a: "Response speed depends on your internet connection and current server load. During peak hours responses may take a few extra seconds. If responses are consistently slow, try refreshing the page or switching to a faster network.",
+      },
+      {
+        q: "How do I install GilaniAI as an app on my phone?",
+        a: "Open GilaniAI in Chrome (Android) or Safari (iPhone), tap the share or menu icon, then select 'Add to Home Screen'. The app will install and open like a native app — no App Store needed.",
+      },
+      {
+        q: "Can I use GilaniAI on a tablet or laptop?",
+        a: "Yes. GilaniAI is fully responsive and works on any screen size — smartphones, tablets, and desktops all work without any extra setup.",
+      },
+    ],
+  },
+  {
+    category: "Subjects & Curricula",
+    items: [
+      {
+        q: "Which curricula does GilaniAI support?",
+        a: "GilaniAI is curriculum-agnostic and supports any curriculum including KCSE, CBC, Cambridge IGCSE, Edexcel IGCSE, the Canadian curriculum, and more. Simply tell the AI your curriculum and subject when you start a session.",
+      },
+      {
+        q: "Which subjects does GilaniAI cover?",
+        a: "GilaniAI covers all major academic subjects — Mathematics, Physics, Chemistry, Biology, English, History, Geography, Business Studies, Computer Science, and many more. If a subject is taught in school, the AI can help with it.",
+      },
+      {
+        q: "Can GilaniAI help me with exam revision?",
+        a: "Absolutely. GilaniAI can generate topic-specific practice questions, quiz you on past paper formats, summarise your notes into revision cards, and build a personalised study schedule around your exam dates.",
+      },
+      {
+        q: "Can GilaniAI help with university-level content?",
+        a: "GilaniAI is primarily designed for secondary school students, but the AI can handle university-level concepts in many subjects. Results will vary depending on the complexity and specialisation of the topic.",
+      },
+      {
+        q: "Does GilaniAI support languages other than English?",
+        a: "GilaniAI's interface is in English, but the AI can understand and respond in Swahili and several other languages. Just write to it in your preferred language and it will do its best to assist.",
+      },
+    ],
+  },
+  {
+    category: "Billing & Plans",
+    items: [
+      {
+        q: "What is included in the free plan?",
+        a: "The free plan gives you access to the AI tutor chat, teacher escalation, and the core study tools with a daily message limit. It's a great way to experience GilaniAI before upgrading.",
+      },
+      {
+        q: "What extra do I get on the Pro plan?",
+        a: "The Pro plan unlocks higher daily message limits, priority teacher escalation, and access to advanced study features. It's designed for students who use GilaniAI as their primary revision tool.",
+      },
+      {
+        q: "How much does the Pro plan cost?",
+        a: "Pro is priced at KES 500 per month. We occasionally offer discounted rates for longer-term subscriptions — check the Pricing section on the homepage for the latest offers.",
+      },
+      {
+        q: "What payment methods are accepted?",
+        a: "We accept M-Pesa, debit/credit cards, and other local payment options. Payment is handled securely and your card details are never stored on our servers.",
+      },
+      {
+        q: "How do I upgrade to Pro?",
+        a: "Go to your account settings inside GilaniAI and select 'Upgrade to Pro'. You'll be guided through the payment steps. Upgrade takes effect immediately after payment is confirmed.",
+      },
+      {
+        q: "Can I cancel my Pro subscription?",
+        a: "Yes. You can cancel at any time from your account settings. You'll retain Pro access until the end of your current billing period and won't be charged again after that.",
+      },
+      {
+        q: "Do you offer discounts for students or schools?",
+        a: "Yes. We offer school-wide pricing for institutions that want to provide GilaniAI to all their students. Contact us at support@gilaniai.site to discuss school plans and bulk pricing.",
       },
     ],
   },

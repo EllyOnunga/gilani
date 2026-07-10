@@ -119,6 +119,7 @@ export function Sidebar({ shell }: Props) {
     handleEscalateThread,
     exportingThreadId,
     handleExportThreadPDF,
+    setShowPlans,
   } = shell;
 
   return (
@@ -156,7 +157,7 @@ export function Sidebar({ shell }: Props) {
             {!isTeacher && !isAdmin && (
               <button
                 onClick={createNewThread}
-                className={`flex items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 text-foreground hover:bg-muted/40 transition-colors ${
+                className={`flex items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 text-foreground hover:bg-muted/40 transition-colors cursor-pointer ${
                   collapsed
                     ? "lg:h-8 lg:w-8 lg:p-1.5 gap-1.5 px-3 py-1.5 text-sm font-semibold"
                     : "gap-1.5 px-3 py-1.5 text-sm font-semibold"
@@ -281,7 +282,7 @@ export function Sidebar({ shell }: Props) {
                         window.dispatchEvent(new CustomEvent("custom:trigger-escalation"));
                       }
                     }}
-                    className={`flex w-full items-center rounded-lg text-[15px] font-medium transition-colors relative text-muted-foreground hover:bg-muted/20 hover:text-foreground ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2.5" : "gap-3 px-3 py-2.5"}`}
+                    className={`flex w-full items-center rounded-lg text-[15px] font-medium transition-colors relative text-muted-foreground hover:bg-muted/20 hover:text-foreground cursor-pointer ${collapsed ? "lg:justify-center lg:px-2 gap-3 px-3 py-2.5" : "gap-3 px-3 py-2.5"}`}
                   >
                     <ShieldAlert className="h-[18px] w-[18px] flex-shrink-0" />
                     <span className={collapsed ? "lg:hidden" : ""}>Escalate</span>
@@ -504,11 +505,11 @@ export function Sidebar({ shell }: Props) {
           />
         )}
 
-        <div className="mt-auto border-t border-border/50 pt-2">
+        <div className="mt-auto border-t border-border/50 pt-2 flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className={`flex w-fit items-center rounded-full bg-card border border-border shadow-sm hover:bg-accent hover:text-accent-foreground transition-all cursor-pointer text-left outline-hidden ${collapsed ? "lg:justify-center lg:p-1 gap-2 p-1.5 pr-2" : "gap-2 p-1.5 pr-3"}`}
+                className={`flex flex-1 min-w-0 items-center rounded-full bg-card border border-border shadow-sm hover:bg-accent hover:text-accent-foreground transition-all cursor-pointer text-left outline-hidden ${collapsed ? "lg:justify-center lg:p-1 gap-2 p-1.5 pr-2" : "gap-2 p-1.5 pr-3"}`}
               >
                 <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-border bg-background/50 shadow-inner">
                   {avatarUrl ? (
@@ -568,6 +569,18 @@ export function Sidebar({ shell }: Props) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {currentPlan !== "pro" && !collapsed && (
+            <button
+              onClick={() => {
+                setSidebarOpen(false);
+                setShowPlans(true);
+              }}
+              className="flex-shrink-0 flex items-center justify-center rounded-lg bg-[#d9531e] px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white hover:bg-[#c44819] transition-colors shadow-sm cursor-pointer"
+            >
+              Upgrade
+            </button>
+          )}
         </div>
       </aside>
 

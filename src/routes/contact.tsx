@@ -36,7 +36,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Is GilaniAI free to use?",
-    a: "Yes — there's a free tier with generous daily limits. The Scholar plan (KES 499/mo) unlocks unlimited sessions and priority support.",
+    a: "Yes — there's a free tier with generous daily limits. The Pro plan (KES 500/mo) unlocks unlimited sessions and priority support.",
   },
   {
     q: "How do I escalate to a human teacher?",

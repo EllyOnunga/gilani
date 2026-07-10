@@ -202,6 +202,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { name: "twitter:image", content: OG_IMAGE },
       { name: "twitter:image:alt", content: "GilaniAI logo" },
+      // Facebook / Instagram / WhatsApp social profile attribution
+      { property: "og:see_also", content: "https://www.facebook.com/Gilaniai" },
+      { property: "og:see_also", content: "https://www.instagram.com/gilani_ai" },
+      { property: "og:see_also", content: "https://wa.me/254102880577" },
+      // Facebook App Link (helps FB crawler resolve the page)
+      { property: "al:web:url", content: SITE_URL },
     ];
 
     if (import.meta.env.VITE_GOOGLE_SITE_VERIFICATION) {
@@ -244,7 +250,7 @@ const JSON_LD = JSON.stringify({
   operatingSystem: "Web, Android, iOS",
   offers: [
     { "@type": "Offer", price: "0", priceCurrency: "KES", name: "Free plan" },
-    { "@type": "Offer", price: "1000", priceCurrency: "KES", name: "Pro plan" },
+    { "@type": "Offer", price: "500", priceCurrency: "KES", name: "Pro plan" },
   ],
   author: { "@type": "Organization", name: "GilaniAI", url: "https://gilaniai.site" },
   inLanguage: ["en"],
@@ -261,7 +267,11 @@ const ORG_JSON_LD = JSON.stringify({
   name: "GilaniAI",
   url: SITE_URL,
   logo: OG_IMAGE,
-  sameAs: [],
+  sameAs: [
+    "https://www.facebook.com/Gilaniai",
+    "https://www.instagram.com/gilani_ai",
+    "https://wa.me/254102880577",
+  ],
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {

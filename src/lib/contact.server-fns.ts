@@ -221,12 +221,8 @@ export const submitContactFn = createServerFn({ method: "POST" })
                     <td style="font-size:12px;color:#6b7280;padding-bottom:4px">10 messages · 3 uploads per day</td>
                   </tr>
                   <tr>
-                    <td style="font-size:12px;font-weight:700;color:#111111;padding-bottom:4px">Basic</td>
-                    <td style="font-size:12px;color:#6b7280;padding-bottom:4px">50 messages · 15 uploads per day — KES 150/mo</td>
-                  </tr>
-                  <tr>
-                    <td style="font-size:12px;font-weight:700;color:#111111;padding-bottom:4px">Premium</td>
-                    <td style="font-size:12px;color:#6b7280;padding-bottom:4px">Unlimited messages · 50 uploads per day — KES 300/mo</td>
+                    <td style="font-size:12px;font-weight:700;color:#111111;padding-bottom:4px">Pro</td>
+                    <td style="font-size:12px;color:#6b7280;padding-bottom:4px">50 messages · quizzes & planner — KES 500/mo</td>
                   </tr>
                   <tr>
                     <td style="font-size:12px;font-weight:700;color:#111111">School</td>
@@ -253,7 +249,7 @@ export const submitContactFn = createServerFn({ method: "POST" })
         footerNote:
           "You received this because you submitted a contact form on GilaniAI. If this wasn't you, please ignore this email or contact support@gilaniai.site.",
       }),
-      text: `Hi ${data.name},\n\nThanks for reaching out! We've received your message (${categoryLabels[data.category] ?? data.category}) and will get back to you within 24 hours (Mon–Fri).\n\nGilaniAI Features:\n• Socratic AI Tutor — maths, sciences, languages with LaTeX support\n• Teacher Escalation — direct expert review\n• Learning Analytics — track study streaks & progress\n• Export Sessions — PDF & Word downloads\n\nPlans: Free (10 msgs/day) · Basic KES 150 · Premium KES 300 · School KES 5,000\n\nDirect contact:\n  support@gilaniai.site — technical support & billing\n  contact@gilaniai.site — general enquiries\n\nOpen the app: https://gilaniai.site\n\n— The GilaniAI Team`,
+      text: `Hi ${data.name},\n\nThanks for reaching out! We've received your message (${categoryLabels[data.category] ?? data.category}) and will get back to you within 24 hours (Mon–Fri).\n\nGilaniAI Features:\n• Socratic AI Tutor — maths, sciences, languages with LaTeX support\n• Teacher Escalation — direct expert review\n• Learning Analytics — track study streaks & progress\n• Export Sessions — PDF & Word downloads\n\nPlans: Free (10 msgs/day) · Pro KES 500 · School KES 5,000\n\nDirect contact:\n  support@gilaniai.site — technical support & billing\n  contact@gilaniai.site — general enquiries\n\nOpen the app: https://gilaniai.site\n\n— The GilaniAI Team`,
     });
 
     return { ok: true };
