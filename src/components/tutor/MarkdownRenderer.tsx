@@ -31,6 +31,23 @@ import {
 
 // ─── Mermaid ────────────────────────────────────────────────────────────────
 
+// Mermaid's flowchart parser treats "(" inside a [...] node label as the start
+// of a different node shape, which breaks parsing unless the whole label is
+// quoted. AI-generated diagrams often include parentheses in labels (e.g.
+// "Brine (NaCl)"), so quote any bracket label containing unescaped parens
+// before handing the code to Mermaid.
+function sanitizeMermaidLabels(code: string): string {
+  const wrap = (id: string, label: string, open: string, close: string) => {
+    if (/[()]/.test(label) && !/^".*"$/.test(label.trim())) {
+      return `${id}${open}"${label.replace(/"/g, "'")}"${close}`;
+    }
+    return `${id}${open}${label}${close}`;
+  };
+  return code
+    .replace(/(\b[A-Za-z0-9_]+)\[([^\[\]"]*)\]/g, (m, id, label) => wrap(id, label, "[", "]"))
+    .replace(/(\b[A-Za-z0-9_]+)\{([^{}"]*)\}/g, (m, id, label) => wrap(id, label, "{", "}"));
+}
+
 function MermaidDiagram({ code, isStreaming }: { code: string; isStreaming?: boolean }) {
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -803,12 +820,14 @@ const buildComponents = (isStreaming: boolean): any => ({
 
     // ── Early Mermaid check (must precede the switch to avoid "graph" case firing) ──
     if (isMermaid) {
-      const clean = code
-        .replace(/\$\\longrightarrow\$/g, "-->")
-        .replace(/\$\\rightarrow\$/g, "-->")
-        .replace(/\$\\to\$/g, "-->")
-        .replace(/\$\\leftarrow\$/g, "<--")
-        .replace(/\$\\leftrightarrow\$/g, "<-->");
+      const clean = sanitizeMermaidLabels(
+        code
+          .replace(/\$\\longrightarrow\$/g, "-->")
+          .replace(/\$\\rightarrow\$/g, "-->")
+          .replace(/\$\\to\$/g, "-->")
+          .replace(/\$\\leftarrow\$/g, "<--")
+          .replace(/\$\\leftrightarrow\$/g, "<-->"),
+      );
       return <MermaidDiagram code={clean} isStreaming={isStreaming} />;
     }
 

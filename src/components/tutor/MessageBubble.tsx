@@ -493,7 +493,7 @@ export const MessageBubble = memo(function MessageBubble({
                   {/* Persistent G avatar — visible before, during, and after streaming */}
                   <div className="flex items-center">
                     <div
-                      className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 border border-border/60 text-[11px] font-bold text-primary select-none"
+                      className="flex items-center justify-center text-2xl font-bold text-primary select-none leading-none"
                       aria-hidden="true"
                       title="GilaniAI"
                     >
