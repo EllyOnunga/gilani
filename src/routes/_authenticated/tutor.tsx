@@ -49,7 +49,7 @@ function TutorIndex() {
     running: boolean;
   } | null>(null);
   const { threads } = useThreadsQuery(userId);
-  const { setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
+  const { sidebarOpen, setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -123,6 +123,7 @@ function TutorIndex() {
           userId={userId}
           timerState={timerState}
           escalationStatus={null}
+          sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           createNewThread={() => navigate({ to: "/tutor", search: { new: "1" } } as any)}
           requestRenameThread={requestRenameThread}

@@ -58,7 +58,7 @@ function TutorThreadInner({
 }) {
   const { threadId } = Route.useParams();
   const navigate = useNavigate({ from: "/tutor/$threadId" });
-  const { setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
+  const { sidebarOpen, setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
 
   const chatState = useTutorChat({ threadId, userId, authToken });
   const composer = useComposer();
@@ -177,6 +177,7 @@ function TutorThreadInner({
           userId={userId}
           timerState={timerState}
           escalationStatus={chatState.escalationStatus}
+          sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           createNewThread={() => chatState.createNewThread(navigate)}
           requestRenameThread={requestRenameThread}
