@@ -246,26 +246,11 @@ export const MessageBubble = memo(function MessageBubble({
 
   return (
     <div className={`flex w-full group py-4 ${isUser ? "justify-end" : "justify-start"}`}>
-      {/* Avatar for Assistant */}
-      {!isUser && (
-        <div className="flex-shrink-0 mr-4 mt-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              className="w-5 h-5"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7v5a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-5a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
-            </svg>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col relative max-w-[85%] sm:max-w-[75%]">
+      <div
+        className={`flex flex-col relative ${
+          isUser ? "max-w-[85%] sm:max-w-[75%]" : "w-full px-3 sm:px-8"
+        }`}
+      >
         {/* Live tool call indicator — rendered OUTSIDE the bubble so it's visible even before text appears */}
         {!isUser && isStreamActive && toolSteps.length > 0 && !showBubbleCard && (
           <div className="mb-2 flex flex-wrap gap-2 animate-in fade-in duration-300 w-full max-w-[96%]">
@@ -433,71 +418,89 @@ export const MessageBubble = memo(function MessageBubble({
                   )
                 )}
 
-                {showBubbleCard && !isStreamActive && (
-                  <div className="flex items-center gap-1 mt-2 transition-opacity duration-200">
-                    {/* Copy */}
-                    <button
-                      onClick={handleCopy}
-                      className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded hover:bg-muted"
-                      title="Copy"
-                      aria-label="Copy message"
-                    >
-                      {copied ? (
-                        <Check className="h-3.5 w-3.5 text-green-500" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-
-                    {/* Retry */}
-                    {isLast && (
+                {/* Footer: action buttons (only once a final response exists) + persistent G avatar
+                    The avatar renders in all three states — before, during, and after streaming —
+                    since it lives outside the showBubbleCard/isStreamActive gates below. */}
+                <div className="flex flex-col gap-1.5 mt-2">
+                  {showBubbleCard && !isStreamActive && (
+                    <div className="flex items-center gap-1 transition-opacity duration-200">
+                      {/* Copy */}
                       <button
-                        onClick={isRateLimited ? undefined : onReload}
-                        disabled={isRateLimited}
-                        className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2.5 py-1.5 rounded ${
-                          isRateLimited
-                            ? "opacity-40 cursor-not-allowed text-muted-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                        }`}
-                        title={isRateLimited ? "Rate limit reached" : "Retry"}
-                        aria-label="Retry message"
+                        onClick={handleCopy}
+                        className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded hover:bg-muted"
+                        title="Copy"
+                        aria-label="Copy message"
                       >
-                        <RefreshCw className="h-3.5 w-3.5" />
+                        {copied ? (
+                          <Check className="h-3.5 w-3.5 text-green-500" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
                       </button>
-                    )}
 
-                    {/* Divider */}
-                    <span className="w-px h-3 bg-border/60 mx-0.5" />
+                      {/* Retry */}
+                      {isLast && (
+                        <button
+                          onClick={isRateLimited ? undefined : onReload}
+                          disabled={isRateLimited}
+                          className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2.5 py-1.5 rounded ${
+                            isRateLimited
+                              ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                          title={isRateLimited ? "Rate limit reached" : "Retry"}
+                          aria-label="Retry message"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                        </button>
+                      )}
 
-                    {/* Thumbs up */}
-                    <button
-                      onClick={() => handleVote(1)}
-                      disabled={voting}
-                      className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${
-                        vote === 1 ? "text-green-500" : "text-muted-foreground hover:text-green-500"
-                      }`}
-                      title="Good response"
-                      aria-label="Vote up"
+                      {/* Divider */}
+                      <span className="w-px h-3 bg-border/60 mx-0.5" />
+
+                      {/* Thumbs up */}
+                      <button
+                        onClick={() => handleVote(1)}
+                        disabled={voting}
+                        className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${
+                          vote === 1
+                            ? "text-green-500"
+                            : "text-muted-foreground hover:text-green-500"
+                        }`}
+                        title="Good response"
+                        aria-label="Vote up"
+                      >
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                      </button>
+
+                      {/* Thumbs down */}
+                      <button
+                        onClick={() => handleVote(-1)}
+                        disabled={voting}
+                        className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${
+                          vote === -1
+                            ? "text-destructive"
+                            : "text-muted-foreground hover:text-destructive"
+                        }`}
+                        title="Bad response"
+                        aria-label="Vote down"
+                      >
+                        <ThumbsDown className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Persistent G avatar — visible before, during, and after streaming */}
+                  <div className="flex items-center">
+                    <div
+                      className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 border border-border/60 text-[11px] font-bold text-primary select-none"
+                      aria-hidden="true"
+                      title="GilaniAI"
                     >
-                      <ThumbsUp className="h-3.5 w-3.5" />
-                    </button>
-
-                    {/* Thumbs down */}
-                    <button
-                      onClick={() => handleVote(-1)}
-                      disabled={voting}
-                      className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider transition-colors px-2 py-1 rounded hover:bg-muted ${
-                        vote === -1
-                          ? "text-destructive"
-                          : "text-muted-foreground hover:text-destructive"
-                      }`}
-                      title="Bad response"
-                      aria-label="Vote down"
-                    >
-                      <ThumbsDown className="h-3.5 w-3.5" />
-                    </button>
+                      G
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             </>
           ) : (
