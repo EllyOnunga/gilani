@@ -60,7 +60,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-function formatTime(seconds: number): string {
+export function formatTime(seconds: number): string {
   if (seconds <= 0) return "";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -74,7 +74,7 @@ function formatTime(seconds: number): string {
   return parts.join(" ");
 }
 
-function useRateLimitCountdown(chatError: string | null, onExpired?: () => void) {
+export function useRateLimitCountdown(chatError: string | null, onExpired?: () => void) {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [isDaily, setIsDaily] = useState(false);
   const [maxSeconds, setMaxSeconds] = useState(60);
@@ -164,6 +164,7 @@ export function ChatInput({
   const internalRef = useRef<HTMLTextAreaElement | null>(null);
   const textareaRef = externalInputRef ?? internalRef;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [dismissedBanners, setDismissedBanners] = useState<string[]>([]);
   const isRateLimited = useMemo(() => {
     if (!chatError) return false;
     try {
@@ -231,10 +232,10 @@ export function ChatInput({
     secondsLeft > 0 && maxSeconds > 0 ? Math.min(100, (secondsLeft / maxSeconds) * 100) : 0;
 
   return (
-    <div className="px-2 pb-2 pt-1 sm:px-4 sm:pb-4 sm:pt-3 sm:bg-background/95 sm:backdrop-blur-sm sm:border-t sm:border-border/40">
+    <div className="px-3 pb-4 pt-2 sm:px-6 sm:pb-6 relative z-10 w-full transition-all">
       <div className="lg:max-w-3xl lg:mx-auto">
         {/* Approaching-limit soft warning — auto-hides when usage drops below 80% */}
-        {isApproachingLimit && (
+        {isApproachingLimit && !dismissedBanners.includes("approaching") && (
           <div className="mb-2.5 rounded-2xl border border-orange-200 bg-orange-50/60 dark:bg-orange-950/20 dark:border-orange-900/30 backdrop-blur-sm overflow-hidden shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5">
               <div className="flex items-center gap-2 min-w-0">
@@ -255,6 +256,13 @@ export function ChatInput({
                     <CreditCard className="h-2.5 w-2.5" /> Upgrade
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setDismissedBanners((p) => [...p, "approaching"])}
+                  className="rounded-lg p-1 text-orange-600 hover:bg-orange-200 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
             {/* thin usage bar */}
@@ -268,7 +276,7 @@ export function ChatInput({
         )}
 
         {/* Rate limit banner */}
-        {isRateLimited && (
+        {isRateLimited && !dismissedBanners.includes("ratelimit") && (
           <div className="mb-2 rounded-xl border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 dark:border-destructive/30 overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5">
               <div className="flex items-center gap-2 min-w-0">
@@ -283,19 +291,28 @@ export function ChatInput({
                       : "Too many messages — please wait a moment"}
                 </p>
               </div>
-              {onUpgrade && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {onUpgrade && (
+                  <button
+                    onClick={onUpgrade}
+                    className="flex-shrink-0 inline-flex items-center gap-1 rounded-lg bg-destructive px-2.5 py-1 text-[10px] font-bold text-white hover:bg-destructive/90 active:scale-95 transition-all"
+                  >
+                    <CreditCard className="h-2.5 w-2.5" /> Upgrade
+                  </button>
+                )}
                 <button
-                  onClick={onUpgrade}
-                  className="flex-shrink-0 inline-flex items-center gap-1 rounded-lg bg-destructive px-2.5 py-1 text-[10px] font-bold text-white hover:bg-destructive/90 active:scale-95 transition-all"
+                  type="button"
+                  onClick={() => setDismissedBanners((p) => [...p, "ratelimit"])}
+                  className="rounded-lg p-1 text-destructive/80 hover:bg-destructive/20 hover:text-destructive transition-colors"
                 >
-                  <CreditCard className="h-2.5 w-2.5" /> Upgrade
+                  <X className="h-3.5 w-3.5" />
                 </button>
-              )}
+              </div>
             </div>
           </div>
         )}
         {/* General AI/Server Error Banner */}
-        {chatError && !isRateLimited && (
+        {chatError && !isRateLimited && !dismissedBanners.includes("error") && (
           <div className="mb-2.5 rounded-2xl border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 dark:border-destructive/30 backdrop-blur-sm shadow-sm animate-in-slide">
             <div className="flex items-start gap-2.5 px-3.5 py-3">
               <div className="flex-shrink-0 mt-0.5">
@@ -316,6 +333,14 @@ export function ChatInput({
                   })()}
                 </p>
               </div>
+              <button
+                onClick={() => setDismissedBanners((p) => [...p, "error"])}
+                className="flex-shrink-0 rounded-lg p-1 text-destructive/60 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                title="Dismiss error"
+                type="button"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
           </div>
         )}
@@ -378,7 +403,7 @@ export function ChatInput({
         )}
 
         {/* Main input */}
-        <div className="relative flex items-end gap-1.5 sm:gap-2 rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus-within:ring-2 focus-within:ring-primary/10">
+        <div className="relative flex flex-col rounded-3xl border border-border/80 bg-card shadow-[0_4px_24px_rgb(0,0,0,0.04)] focus-within:border-border focus-within:shadow-[0_6px_32px_rgb(0,0,0,0.08)] transition-all duration-300 overflow-hidden">
           {/* File input: hidden with onClick reset so the file blob is untouched during onChange */}
           <input
             id="chat-file-input"
@@ -391,140 +416,134 @@ export function ChatInput({
             }}
             disabled={isDisabled}
           />
-          {/* Action Menu (replaces individual attachment buttons) */}
-          <div className="pb-2 pl-2 pt-2 flex items-center justify-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  disabled={isDisabled}
-                  aria-label="Add attachment or voice"
-                  className={`flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${
-                    isDisabled
-                      ? "opacity-40 cursor-not-allowed pointer-events-none"
-                      : isListening
-                        ? "text-red-500 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/30 animate-pulse"
-                        : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90"
-                  }`}
-                >
-                  {parsingFile ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  ) : isListening ? (
-                    <span className="relative flex h-4 w-4 items-center justify-center">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
-                    </span>
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" sideOffset={8} className="w-48 p-1.5 z-50">
-                {/* 1. Upload Document */}
-                <DropdownMenuItem asChild className="cursor-pointer gap-2.5 p-2 rounded-lg">
-                  <label
-                    htmlFor={isDisabled ? undefined : "chat-file-input"}
-                    className="flex w-full items-center"
-                  >
-                    <Paperclip className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Upload Document</span>
-                  </label>
-                </DropdownMenuItem>
-
-                {/* 2. Scan with Camera */}
-                {onScanClick && (
-                  <DropdownMenuItem
-                    onClick={onScanClick}
-                    className="cursor-pointer gap-2.5 p-2 rounded-lg"
-                  >
-                    <Camera className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Use Camera</span>
-                  </DropdownMenuItem>
-                )}
-
-                {/* 3. Voice Input */}
-                {onVoiceClick && (
-                  <DropdownMenuItem
-                    onClick={onVoiceClick}
-                    className="cursor-pointer gap-2.5 p-2 rounded-lg"
-                  >
-                    <Mic
-                      className={`h-4 w-4 ${isListening ? "text-red-500" : "text-muted-foreground"}`}
-                    />
-                    <span className="text-sm font-medium">
-                      {isListening ? "Stop Voice Input" : "Voice Input"}
-                    </span>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {/* Text Area */}
+          <div className="px-4 pt-3">
+            <textarea
+              ref={textareaRef}
+              className="min-h-[44px] sm:min-h-[40px] w-full resize-none bg-transparent py-1 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 transition-opacity duration-200"
+              rows={1}
+              value={input}
+              onChange={onInputChange}
+              placeholder={
+                isPending
+                  ? "Waiting for response…"
+                  : isRateLimited
+                    ? secondsLeft > 0
+                      ? `Cooling down… ${formatTime(secondsLeft)}`
+                      : "Rate limit reached…"
+                    : parsingFile
+                      ? "Parsing document…"
+                      : "Ask GilaniAI anything…"
+              }
+              disabled={isDisabled}
+              onKeyDown={handleKeyDown}
+              style={{ maxHeight: 160, overflowY: "hidden" }}
+            />
           </div>
 
-          <textarea
-            ref={textareaRef}
-            className="min-h-[44px] sm:min-h-[40px] flex-1 resize-none bg-transparent py-3 sm:py-2.5 pr-1 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 transition-opacity duration-200"
-            rows={1}
-            value={input}
-            onChange={onInputChange}
-            placeholder={
-              isPending
-                ? "Waiting for response…"
-                : isRateLimited
-                  ? secondsLeft > 0
-                    ? `Cooling down… ${formatTime(secondsLeft)}`
-                    : "Rate limit reached…"
-                  : parsingFile
-                    ? "Parsing document…"
-                    : "Ask GilaniAI anything…"
-            }
-            disabled={isDisabled}
-            onKeyDown={handleKeyDown}
-            style={{ maxHeight: 160, overflowY: "hidden" }}
-          />
+          {/* Action Row */}
+          <div className="flex items-center justify-between px-3 pb-3 pt-1">
+            {/* Action Menu (replaces individual attachment buttons) */}
+            <div className="flex items-center justify-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={isDisabled}
+                    aria-label="Add attachment or voice"
+                    className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200 border border-transparent ${
+                      isDisabled
+                        ? "opacity-40 cursor-not-allowed pointer-events-none"
+                        : isListening
+                          ? "text-red-500 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/30 animate-pulse"
+                          : "cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:border-border/60 active:scale-90"
+                    }`}
+                  >
+                    {parsingFile ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    ) : isListening ? (
+                      <span className="relative flex h-4 w-4 items-center justify-center">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                      </span>
+                    ) : (
+                      <Plus className="h-5 w-5" />
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" sideOffset={8} className="w-48 p-1.5 z-50">
+                  {/* 1. Upload Document */}
+                  <DropdownMenuItem asChild className="cursor-pointer gap-2.5 p-2 rounded-lg">
+                    <label
+                      htmlFor={isDisabled ? undefined : "chat-file-input"}
+                      className="flex w-full items-center"
+                    >
+                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Document</span>
+                    </label>
+                  </DropdownMenuItem>
 
-          <div className="pb-2 pr-2 pt-2 flex items-center gap-1">
-            <button
-              type="button"
-              onClick={(e) => {
-                if (isPending) {
-                  onStop?.();
-                } else {
-                  onSubmit(e as any);
-                }
-              }}
-              disabled={!isPending && (isDisabled || (!input.trim() && !attachedFile))}
-              title={isPending ? "Stop generating" : "Send (Enter)"}
-              className={`flex flex-shrink-0 items-center justify-center gap-1.5 rounded-full transition-all duration-200 ${
-                isPending
-                  ? "h-8 w-8 bg-transparent border-2 border-primary text-primary hover:bg-primary/10 active:scale-95"
-                  : isDisabled || (!input.trim() && !attachedFile)
-                    ? "h-8 w-8 bg-muted text-muted-foreground opacity-40 cursor-not-allowed"
-                    : "h-8 sm:h-8 px-3 sm:px-3.5 bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 hover:scale-105 active:scale-95"
-              }`}
-            >
-              {isPending ? (
-                <Square className="h-3 w-3" />
-              ) : (
-                <>
-                  <Send className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline text-[11px] font-bold tracking-wide">Send</span>
-                </>
-              )}
-            </button>
+                  {/* 2. Scan with Camera */}
+                  {onScanClick && (
+                    <DropdownMenuItem
+                      onClick={onScanClick}
+                      className="cursor-pointer gap-2.5 p-2 rounded-lg"
+                    >
+                      <Camera className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Image</span>
+                    </DropdownMenuItem>
+                  )}
+
+                  {/* 3. Voice Input */}
+                  {onVoiceClick && (
+                    <DropdownMenuItem
+                      onClick={onVoiceClick}
+                      className="cursor-pointer gap-2.5 p-2 rounded-lg"
+                    >
+                      <Mic
+                        className={`h-4 w-4 ${isListening ? "text-red-500" : "text-muted-foreground"}`}
+                      />
+                      <span className="text-sm font-medium">
+                        {isListening ? "Stop Voice" : "Voice"}
+                      </span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  if (isPending) {
+                    onStop?.();
+                  } else {
+                    onSubmit(e as any);
+                  }
+                }}
+                disabled={!isPending && (isDisabled || (!input.trim() && !attachedFile))}
+                title={isPending ? "Stop generating" : "Send (Enter)"}
+                className={`flex flex-shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+                  isPending
+                    ? "h-9 w-9 bg-transparent border-2 border-primary text-primary hover:bg-primary/10 active:scale-95"
+                    : isDisabled || (!input.trim() && !attachedFile)
+                      ? "h-9 w-9 bg-muted/60 text-muted-foreground opacity-40 cursor-not-allowed"
+                      : "h-9 w-9 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:scale-105 active:scale-95"
+                }`}
+              >
+                {isPending ? (
+                  <Square className="h-3.5 w-3.5" />
+                ) : (
+                  <Send className="h-4 w-4 ml-0.5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Footer hint — desktop only */}
-        <div className="mt-1.5 hidden md:flex items-center justify-between px-1 min-h-[14px]">
-          <p className="font-mono text-[9px] text-muted-foreground/70">
-            {isRateLimited && isDaily ? (
-              <span className="text-amber-600 font-semibold">
-                Daily cap reached · resets at midnight
-              </span>
-            ) : (
-              "Shift+Enter for new line · PDF, DOCX, TXT supported"
-            )}
-          </p>
+        {/* Footer hint / char count — desktop only */}
+        <div className="mt-1.5 hidden md:flex items-center justify-end px-1 min-h-[14px]">
           {input.length > 0 && (
             <span
               className={`font-mono text-[9px] font-semibold tabular-nums transition-colors ${input.length > 3000 ? "text-amber-500" : "text-muted-foreground/70"}`}

@@ -346,12 +346,16 @@ export const renameThreadFn = createServerFn({ method: "POST" })
     } catch {
       throw new Error("Unauthorized");
     }
-    // Only rename the thread if it belongs to the authenticated user
-    const { error } = await supabaseAdmin
-      .from("conversations")
-      .update({ title: data.title })
-      .eq("id", data.threadId)
-      .eq("user_id", authResult.userId);
+    // Use upsert to handle the race condition where title generation completes
+    // BEFORE the /api/chat endpoint has finished creating the conversation row.
+    const { error } = await supabaseAdmin.from("conversations").upsert(
+      {
+        id: data.threadId,
+        user_id: authResult.userId,
+        title: data.title,
+      },
+      { onConflict: "id" },
+    );
     if (error) throw error;
     return { success: true };
   });

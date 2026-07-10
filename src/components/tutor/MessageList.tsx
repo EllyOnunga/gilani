@@ -22,6 +22,10 @@ type Props = {
   onEscalate?: () => void;
   escalationStatus?: "open" | "in_review" | "resolved" | null;
   escalating?: boolean;
+  messagesUsed?: number;
+  messagesMax?: number;
+  onUpgrade?: () => void;
+  onRateLimitExpired?: () => void;
   chatError?: string | null;
   recentThreads?: { id: string; title?: string | null }[];
   onUploadClick?: () => void;
@@ -48,6 +52,10 @@ export const MessageList = React.memo(function MessageList({
   onEscalate,
   escalationStatus,
   escalating,
+  messagesUsed,
+  messagesMax,
+  onUpgrade,
+  onRateLimitExpired,
   chatError,
   recentThreads,
   onUploadClick,
@@ -247,6 +255,12 @@ export const MessageList = React.memo(function MessageList({
             onVoiceClick={onVoiceClick}
             isListening={isListening}
             allThreadsPath={allThreadsPath}
+            chatError={chatError}
+            isRateLimited={isRateLimited}
+            messagesUsed={messagesUsed}
+            messagesMax={messagesMax}
+            onUpgrade={onUpgrade}
+            onRateLimitExpired={onRateLimitExpired}
           />
         )}
 

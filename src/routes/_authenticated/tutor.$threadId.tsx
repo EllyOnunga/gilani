@@ -214,6 +214,13 @@ function TutorThreadInner({
             onVoiceClick={composer.toggleVoiceInput}
             isListening={composer.isListening}
             allThreadsPath="/tutor/chats"
+            onRateLimitExpired={() => {
+              chatState.setChatError(null);
+              chatState.refreshRateLimitStatus();
+            }}
+            messagesUsed={chatState.messagesUsed}
+            messagesMax={chatState.messagesMax}
+            onUpgrade={() => setShowPlans(true)}
           />
         </div>
 
