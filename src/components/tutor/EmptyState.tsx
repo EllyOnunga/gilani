@@ -63,7 +63,7 @@ export function EmptyState({
   const remaining = Math.max(0, (messagesMax ?? 0) - messagesUsed);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] overflow-y-auto px-4 sm:px-6 gap-10 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 sm:px-6 gap-10 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500 pb-12">
       {/* Banners */}
       <div className="w-full flex flex-col gap-2 max-w-xl">
         {isApproachingLimit && !dismissedBanners.includes("approaching") && (
