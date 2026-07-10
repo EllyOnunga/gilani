@@ -15,9 +15,7 @@ const SUBJECTS = [
   { icon: "✅", label: "Homework Help", prompt: "Check my homework answers before I submit" },
   { icon: "📐", label: "Math", prompt: "Help me solve a maths problem step by step" },
   { icon: "🧪", label: "Chemistry", prompt: "Explain periodic table trends for Chemistry" },
-  { icon: "🌍", label: "Geography", prompt: "Explain major landforms for Geography" },
   { icon: "🌱", label: "Biology", prompt: "Help me understand photosynthesis for Biology" },
-  { icon: "📖", label: "History", prompt: "What are the causes of World War I?" },
   { icon: "💻", label: "Coding", prompt: "Teach me the basics of programming with examples" },
   { icon: "✍️", label: "Essays", prompt: "Help me structure and write an essay" },
 ];
@@ -65,7 +63,7 @@ export function EmptyState({
   const remaining = Math.max(0, (messagesMax ?? 0) - messagesUsed);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 sm:px-6 gap-10 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] overflow-y-auto px-4 sm:px-6 gap-10 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500">
       {/* Banners */}
       <div className="w-full flex flex-col gap-2 max-w-xl">
         {isApproachingLimit && !dismissedBanners.includes("approaching") && (
