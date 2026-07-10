@@ -490,16 +490,19 @@ export const MessageBubble = memo(function MessageBubble({
                     </div>
                   )}
 
-                  {/* Persistent G avatar — visible before, during, and after streaming */}
-                  <div className="flex items-center">
-                    <div
-                      className="flex items-center justify-center text-2xl font-bold text-primary select-none leading-none"
-                      aria-hidden="true"
-                      title="GilaniAI"
-                    >
-                      G
+                  {/* Persistent G avatar — only on the last assistant message,
+                      visible before, during, and after streaming */}
+                  {isLast && (
+                    <div className="flex items-center">
+                      <div
+                        className="flex items-center justify-center text-2xl font-bold text-primary select-none leading-none"
+                        aria-hidden="true"
+                        title="GilaniAI"
+                      >
+                        G
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </>
