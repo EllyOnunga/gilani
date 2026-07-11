@@ -10,7 +10,6 @@ import {
   SocialProof,
   Features,
   HowItWorks,
-  ComparisonTable,
   DemoSection,
   Testimonials,
   Pricing,
@@ -107,7 +106,6 @@ function LandingPage() {
       <SocialProof />
       <Features />
       <HowItWorks />
-      <ComparisonTable />
       <DemoSection />
       <Testimonials />
       <Pricing />

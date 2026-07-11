@@ -3,7 +3,6 @@ export { default as Hero } from "./Hero";
 export { default as SocialProof } from "./SocialProof";
 export { default as Features } from "./Features";
 export { default as HowItWorks } from "./HowItWorks";
-export { default as ComparisonTable } from "./ComparisonTable";
 export { default as DemoSection } from "./DemoSection";
 export { default as Testimonials } from "./Testimonials";
 export { default as Pricing } from "./Pricing";
