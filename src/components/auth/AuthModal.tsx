@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
-import { instantLogin, assignUserRole } from "@/lib/auth-actions.server-fns";
+import { instantLogin, assignUserRole, checkEmailStatus } from "@/lib/auth-actions.server-fns";
 import { CompleteProfileForm } from "@/components/auth/CompleteProfileForm";
 import { WorkspaceLoader } from "@/components/auth/WorkspaceLoader";
 import { FcGoogle } from "react-icons/fc";
@@ -19,6 +19,8 @@ interface AuthModalProps {
 export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalProps) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
@@ -66,27 +68,68 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
     if (!email) return toast.error("Please enter your email address.");
     setBusy(true);
     onAuthStart?.();
-    try {
-      const result = await instantLogin({ data: { email } });
-      const { error } = await supabase.auth.setSession({
-        access_token: result.access_token,
-        refresh_token: result.refresh_token,
-      });
-      if (error) throw error;
 
-      if (result.needsProfileSetup) {
-        setBusy(false);
-        setShowProfileForm(true);
-      } else {
+    try {
+      const { isNewUser } = await checkEmailStatus({ data: { email } });
+
+      if (!isNewUser) {
+        // Returning user - bypass email verification for instant login
+        const result = await instantLogin({ data: { email } });
+        const { error } = await supabase.auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+        });
+        if (error) throw error;
+
         setShowLoader(true);
         await routeToDestination();
         onAuthComplete?.();
         onClose();
+      } else {
+        // New user - require OTP email verification
+        const { error } = await supabase.auth.signInWithOtp({ email });
+        if (error) throw error;
+
+        setOtpSent(true);
+        setBusy(false);
       }
     } catch (err) {
       onAuthComplete?.();
       setBusy(false);
-      toast.error(friendlyError(err as { message?: string }, "Sign-in failed. Please try again."));
+      toast.error(
+        friendlyError(err as { message?: string }, "Failed to process login. Please try again."),
+      );
+    }
+  };
+
+  const onVerifyOtp = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!otp) return toast.error("Please enter the verification code.");
+    setBusy(true);
+
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: otp, type: "email" });
+    if (error || !data.session) {
+      setBusy(false);
+      return toast.error(
+        friendlyError(error as { message?: string }, "Invalid or expired code. Please try again."),
+      );
+    }
+
+    const userId = data.session.user.id;
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!profileRow?.onboarding_completed) {
+      setBusy(false);
+      setShowProfileForm(true);
+    } else {
+      setShowLoader(true);
+      await routeToDestination();
+      onAuthComplete?.();
+      onClose();
     }
   };
 
@@ -154,81 +197,122 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
               </div>
             </div>
 
-            {/* Google Sign-in */}
-            <button
-              onClick={onGoogle}
-              disabled={busy}
-              className="w-full flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] py-3.5 text-sm font-semibold text-white hover:bg-white/[0.08] hover:border-white/15 disabled:opacity-50 transition-all duration-200 cursor-pointer"
-            >
-              {busy ? (
-                <Loader2 className="h-4 w-4 animate-spin text-white/40" />
-              ) : (
-                <FcGoogle className="h-5 w-5" />
-              )}
-              Continue with Google
-            </button>
+            {/* Google Sign-in & Email Form (Only shown if OTP is not sent) */}
+            {!otpSent ? (
+              <>
+                <button
+                  onClick={onGoogle}
+                  disabled={busy}
+                  className="w-full flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] py-3.5 text-sm font-semibold text-white hover:bg-white/[0.08] hover:border-white/15 disabled:opacity-50 transition-all duration-200 cursor-pointer"
+                >
+                  {busy ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                  ) : (
+                    <FcGoogle className="h-5 w-5" />
+                  )}
+                  Continue with Google
+                </button>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-white/[0.06]" />
-              <span className="text-[10px] font-mono uppercase tracking-widest text-white/20">
-                or
-              </span>
-              <div className="h-px flex-1 bg-white/[0.06]" />
-            </div>
+                {/* Divider */}
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-white/[0.06]" />
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/20">
+                    or
+                  </span>
+                  <div className="h-px flex-1 bg-white/[0.06]" />
+                </div>
 
-            {/* Email Form */}
-            <form onSubmit={onEmailContinue} className="space-y-3">
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
-                <input
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="Email address"
-                  value={email}
-                  maxLength={254}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] pl-10 pr-4 py-3.5 text-sm text-white placeholder-white/25 focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all"
-                />
-              </div>
+                {/* Email Form */}
+                <form onSubmit={onEmailContinue} className="space-y-3">
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      required
+                      placeholder="Email address"
+                      value={email}
+                      maxLength={254}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] pl-10 pr-4 py-3.5 text-sm text-white placeholder-white/25 focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all"
+                    />
+                  </div>
 
-              <button
-                type="submit"
-                disabled={busy}
-                className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C96A3D] py-3.5 text-sm font-bold text-white hover:bg-[#D9784A] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 shadow-lg shadow-[#C96A3D]/20 cursor-pointer"
-              >
-                {busy ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    Continue
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                  </>
-                )}
-              </button>
-            </form>
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C96A3D] py-3.5 text-sm font-bold text-white hover:bg-[#D9784A] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 shadow-lg shadow-[#C96A3D]/20 cursor-pointer"
+                  >
+                    {busy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        Continue
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                      </>
+                    )}
+                  </button>
+                </form>
 
-            {/* Footer */}
-            <p className="text-center text-[10px] text-white/20 leading-relaxed">
-              By continuing you agree to our{" "}
-              <Link
-                to="/terms"
-                onClick={onClose}
-                className="text-white/35 hover:text-[#E28743] cursor-pointer transition-colors"
-              >
-                Terms
-              </Link>{" "}
-              &{" "}
-              <Link
-                to="/privacy"
-                onClick={onClose}
-                className="text-white/35 hover:text-[#E28743] cursor-pointer transition-colors"
-              >
-                Privacy Policy
-              </Link>
-              .
-            </p>
+                {/* Footer */}
+                <p className="text-center text-[10px] text-white/20 leading-relaxed">
+                  By continuing you agree to our{" "}
+                  <Link
+                    to="/terms"
+                    onClick={onClose}
+                    className="text-white/35 hover:text-[#E28743] cursor-pointer transition-colors"
+                  >
+                    Terms
+                  </Link>{" "}
+                  &{" "}
+                  <Link
+                    to="/privacy"
+                    onClick={onClose}
+                    className="text-white/35 hover:text-[#E28743] cursor-pointer transition-colors"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
+                </p>
+              </>
+            ) : (
+              <form onSubmit={onVerifyOtp} className="space-y-3">
+                <div className="text-sm text-white/60 text-center mb-4">
+                  We sent a 6-digit code to <br />
+                  <span className="font-semibold text-white/90">{email}</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    required
+                    placeholder="Enter 6-digit code"
+                    value={otp}
+                    maxLength={6}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    className="w-full text-center tracking-[0.5em] rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3.5 text-lg font-mono text-white placeholder-white/25 focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={busy || otp.length !== 6}
+                  className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C96A3D] py-3.5 text-sm font-bold text-white hover:bg-[#D9784A] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 shadow-lg shadow-[#C96A3D]/20 cursor-pointer mt-2"
+                >
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify Code"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtpSent(false);
+                    setOtp("");
+                  }}
+                  className="w-full text-xs font-semibold text-white/40 hover:text-white/80 py-2 mt-1"
+                >
+                  Back to email
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>

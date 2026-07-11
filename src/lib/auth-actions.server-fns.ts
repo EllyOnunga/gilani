@@ -99,6 +99,22 @@ export const assignUserRole = createServerFn({ method: "POST" })
     }
   });
 
+export const checkEmailStatus = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      email: z.string().email(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { data: existingProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("email", data.email.toLowerCase().trim())
+      .maybeSingle();
+
+    return { isNewUser: !existingProfile };
+  });
+
 /**
  * Passwordless instant login: creates or resolves a user by email, mints a
  * real Supabase session server-side with zero user-visible steps (no OTP

@@ -120,6 +120,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.4.1",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "^2.4.0",
@@ -153,5 +154,8 @@
     "*.{ts,tsx,js,jsx,css,json,md}": [
       "prettier --write"
     ]
+  },
+  "allowScripts": {
+    "sharp@0.32.6": true
   }
 }
