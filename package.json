@@ -1,5 +1,5 @@
 {
-  "name": "gilani_ai",
+  "name": "gilaniai",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -16,7 +16,8 @@
     "prepare": "husky",
     "cap:sync": "npx cap sync",
     "cap:open": "npx cap open android",
-    "cap:build": "npx cap build android"
+    "cap:build": "npx cap build android",
+    "android:prepare": "node scripts/sync-android-version.cjs && npx cap sync android"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.83",
