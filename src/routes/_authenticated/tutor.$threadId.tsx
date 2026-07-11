@@ -199,7 +199,7 @@ function TutorThreadInner({
             onEditRequest={composer.handleEditRequest}
             onDelete={chatState.handleDeleteMessage}
             onPromptClick={composer.handlePromptClick}
-            recentThreads={chatState.threads.slice(0, 3)}
+            recentThreads={chatState.threads}
             userId={userId}
             userVotes={chatState.userVotes}
             onVote={chatState.handleVote}

@@ -14,8 +14,6 @@ import { useRateLimitCountdown, formatTime } from "./ChatInput";
 const SUBJECTS = [
   { icon: "✅", label: "Homework Help", prompt: "Check my homework answers before I submit" },
   { icon: "📐", label: "Math", prompt: "Help me solve a maths problem step by step" },
-  { icon: "🧪", label: "Chemistry", prompt: "Explain periodic table trends for Chemistry" },
-  { icon: "🌱", label: "Biology", prompt: "Help me understand photosynthesis for Biology" },
   { icon: "💻", label: "Coding", prompt: "Teach me the basics of programming with examples" },
   { icon: "✍️", label: "Essays", prompt: "Help me structure and write an essay" },
 ];
@@ -63,7 +61,7 @@ export function EmptyState({
   const remaining = Math.max(0, (messagesMax ?? 0) - messagesUsed);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 sm:px-6 gap-10 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500 pb-12">
+    <div className="flex flex-col items-center justify-start min-h-[60vh] pt-6 md:pt-12 px-4 sm:px-6 gap-6 md:gap-8 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500 pb-12">
       {/* Banners */}
       <div className="w-full flex flex-col gap-2 max-w-xl">
         {isApproachingLimit && !dismissedBanners.includes("approaching") && (
@@ -177,8 +175,8 @@ export function EmptyState({
       </div>
 
       {/* Welcome Section */}
-      <div className="flex flex-col items-center text-center space-y-3">
-        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-2">
+      <div className="flex flex-col items-center text-center space-y-1">
+        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-start mb-2">
           <span className="text-2xl">🤖</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
@@ -207,10 +205,20 @@ export function EmptyState({
 
       {/* Recent Threads */}
       {recentThreads.length > 0 && (
-        <div className="w-full flex flex-col items-center mt-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-            Recent Chats
-          </p>
+        <div className="w-full flex flex-col items-center mt-2">
+          <div className="flex items-center gap-4 mb-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider m-0">
+              Recent Chats
+            </p>
+            {recentThreads.length > 3 && allThreadsPath && (
+              <Link
+                to={allThreadsPath}
+                className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+              >
+                View all <ArrowRight className="h-3 w-3" />
+              </Link>
+            )}
+          </div>
           <div className="flex flex-wrap justify-center gap-2 max-w-2xl">
             {recentThreads.slice(0, 3).map((thread) => (
               <button
@@ -224,14 +232,6 @@ export function EmptyState({
                 <span className="truncate max-w-[150px]">{thread.title || "New Conversation"}</span>
               </button>
             ))}
-            {recentThreads.length > 3 && allThreadsPath && (
-              <Link
-                to={allThreadsPath}
-                className="flex items-center gap-1.5 rounded-full border border-transparent px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5 transition-all"
-              >
-                View all <ArrowRight className="h-4 w-4" />
-              </Link>
-            )}
           </div>
         </div>
       )}

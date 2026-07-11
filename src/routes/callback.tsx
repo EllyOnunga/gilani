@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef, type FormEvent } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { GilaniLoader } from "@/components/GilaniLoader";
-import { NameCaptureForm } from "@/components/auth/NameCaptureForm";
+import { CompleteProfileForm } from "@/components/auth/CompleteProfileForm";
+import { WorkspaceLoader } from "@/components/auth/WorkspaceLoader";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/callback")({
@@ -22,10 +23,9 @@ function AuthCallback() {
   const { next, error: urlError, error_description } = useSearch({ from: "/callback" });
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [showNameForm, setShowNameForm] = useState(false);
-  const [displayName, setDisplayName] = useState("");
-  const [savingName, setSavingName] = useState(false);
-  const [pendingRole, setPendingRole] = useState<"student" | "teacher">("student");
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [showLoader, setShowLoader] = useState(false);
   const processedRef = useRef(false);
 
   // Sanitize next — prevent open redirect attacks
@@ -128,19 +128,13 @@ function AuthCallback() {
           .eq("id", session.user.id)
           .maybeSingle();
 
-        const storedRole = localStorage.getItem("pending_role") as "student" | "teacher" | null;
-        const effectiveRole = storedRole || "student";
-        localStorage.removeItem("pending_role");
-
         const isNewUser = !profileRow?.onboarding_completed;
 
-        if (isNewUser || (storedRole === "teacher" && roleRow?.role === "student")) {
-          // New user — show display name form before proceeding
-          setPendingRole(effectiveRole as "student" | "teacher");
-          // Pre-fill with Google name if available
+        if (isNewUser) {
+          // New user — show complete profile form before proceeding
           const googleName = session.user.user_metadata?.full_name || "";
-          setDisplayName(googleName);
-          setShowNameForm(true);
+          setProfileName(googleName);
+          setShowProfileForm(true);
           return;
         }
 
@@ -175,38 +169,43 @@ function AuthCallback() {
     handleCallback();
   }, []);
 
-  const onSaveName = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!displayName.trim()) return toast.error("Please enter your display name.");
-    setSavingName(true);
+  const onSaveProfile = async (displayName: string, role: "student" | "teacher") => {
     try {
       const { assignUserRole } = await import("@/lib/auth-actions.server-fns");
       await assignUserRole({
         data: {
-          role: pendingRole,
+          role,
           displayName: displayName.trim(),
         },
       });
-      // Redirect based on role
-      if (pendingRole === "teacher") {
-        navigate({ to: "/teacher/escalations" as any });
-      } else {
-        navigateToDestination(safePath);
-      }
+      setShowProfileForm(false);
+      setShowLoader(true);
+      // Brief loader then redirect based on role
+      setTimeout(() => {
+        if (role === "teacher") {
+          navigate({ to: "/teacher/escalations" as any });
+        } else {
+          navigateToDestination(safePath);
+        }
+      }, 1600);
     } catch (err) {
-      console.error("[Callback] Failed to save display name:", err);
+      console.error("[Callback] Failed to save profile:", err);
       toast.error("Something went wrong. Please try again.");
-      setSavingName(false);
+      throw err;
     }
   };
 
-  if (showNameForm) {
+  if (showLoader) {
+    return <WorkspaceLoader />;
+  }
+
+  if (showProfileForm) {
     return (
-      <NameCaptureForm
-        displayName={displayName}
-        onDisplayNameChange={setDisplayName}
-        onSubmit={onSaveName}
-        saving={savingName}
+      <CompleteProfileForm
+        initialName={profileName}
+        missingName={true}
+        missingRole={true}
+        onSave={onSaveProfile}
       />
     );
   }

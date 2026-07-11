@@ -1,20 +1,17 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, Link } from "@tanstack/react-router";
 import { Logo } from "@/components/ui/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { instantLogin, assignUserRole } from "@/lib/auth-actions.server-fns";
-import { NameCaptureForm } from "@/components/auth/NameCaptureForm";
+import { CompleteProfileForm } from "@/components/auth/CompleteProfileForm";
+import { WorkspaceLoader } from "@/components/auth/WorkspaceLoader";
 import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
-import { Mail, GraduationCap, User, X, Loader2, ArrowRight } from "lucide-react";
+import { Mail, X, Loader2, ArrowRight } from "lucide-react";
 import { friendlyError } from "@/lib/async";
 
 interface AuthModalProps {
   onClose: () => void;
-  // Lets the parent page know an in-progress sign-up (which may still need
-  // the name-capture step) is happening, so it doesn't unmount this modal
-  // and redirect away the instant Supabase reports the user as signed in —
-  // that race was causing the name form to never actually render.
   onAuthStart?: () => void;
   onAuthComplete?: () => void;
 }
@@ -22,15 +19,12 @@ interface AuthModalProps {
 export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalProps) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"student" | "teacher">("student");
   const [busy, setBusy] = useState(false);
-  const [showNameForm, setShowNameForm] = useState(false);
-  const [displayName, setDisplayName] = useState("");
-  const [savingName, setSavingName] = useState(false);
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
 
   const onGoogle = async () => {
     setBusy(true);
-    localStorage.setItem("pending_role", role);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -42,14 +36,12 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
       },
     });
     if (error) {
-      localStorage.removeItem("pending_role");
       setBusy(false);
       return toast.error(friendlyError(error, "Google sign-in failed. Please try again."));
     }
   };
 
   const routeToDestination = async () => {
-    // Mirror callback.tsx's routing for existing users: fetch their real role.
     const { data: session } = await supabase.auth.getSession();
     const userId = session.session?.user.id;
     if (!userId) return navigate({ to: "/tutor" as any, search: { new: "1" } as any });
@@ -73,16 +65,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
     e.preventDefault();
     if (!email) return toast.error("Please enter your email address.");
     setBusy(true);
-    // Tell the parent page an auth flow is underway BEFORE calling
-    // setSession — setSession fires a SIGNED_IN event synchronously enough
-    // that the parent's own "user is signed in, redirect away" effect could
-    // otherwise unmount this whole modal before the name form ever renders.
     onAuthStart?.();
-    // Mirror onGoogle: stash the chosen role so use-auth's own SIGNED_IN
-    // listener assigns it immediately, keeping its `roles` state in sync.
-    // Without this, roles stayed empty until a full page reload, which made
-    // freshly-signed-up teachers appear as students until refresh.
-    localStorage.setItem("pending_role", role);
     try {
       const result = await instantLogin({ data: { email } });
       const { error } = await supabase.auth.setSession({
@@ -93,50 +76,47 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
 
       if (result.needsProfileSetup) {
         setBusy(false);
-        setShowNameForm(true);
+        setShowProfileForm(true);
       } else {
-        localStorage.removeItem("pending_role");
+        setShowLoader(true);
         await routeToDestination();
         onAuthComplete?.();
         onClose();
       }
     } catch (err) {
-      localStorage.removeItem("pending_role");
       onAuthComplete?.();
       setBusy(false);
       toast.error(friendlyError(err as { message?: string }, "Sign-in failed. Please try again."));
     }
   };
 
-  const onSaveName = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!displayName.trim()) return toast.error("Please enter your display name.");
-    setSavingName(true);
+  const onSaveProfile = async (displayName: string, role: "student" | "teacher") => {
     try {
       await assignUserRole({ data: { role, displayName: displayName.trim() } });
+      setShowProfileForm(false);
+      setShowLoader(true);
       onAuthComplete?.();
-      if (role === "teacher") {
-        navigate({ to: "/teacher/escalations" as any });
-      } else {
-        navigate({ to: "/tutor" as any, search: { new: "1" } as any });
-      }
-      onClose();
+      setTimeout(async () => {
+        if (role === "teacher") {
+          navigate({ to: "/teacher/escalations" as any });
+        } else {
+          navigate({ to: "/tutor" as any, search: { new: "1" } as any });
+        }
+        onClose();
+      }, 1600);
     } catch (err) {
-      console.error("[AuthModal] Failed to save display name:", err);
+      console.error("[AuthModal] Failed to save profile:", err);
       toast.error("Something went wrong. Please try again.");
-      setSavingName(false);
+      throw err;
     }
   };
 
-  if (showNameForm) {
-    return (
-      <NameCaptureForm
-        displayName={displayName}
-        onDisplayNameChange={setDisplayName}
-        onSubmit={onSaveName}
-        saving={savingName}
-      />
-    );
+  if (showLoader) {
+    return <WorkspaceLoader />;
+  }
+
+  if (showProfileForm) {
+    return <CompleteProfileForm onSave={onSaveProfile} />;
   }
 
   return (
@@ -170,63 +150,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
                 <h1 className="font-serif text-2xl font-black text-white tracking-tight">
                   Welcome back
                 </h1>
-                <p className="text-sm text-white/40">
-                  Sign in or create your account to get started.
-                </p>
-              </div>
-            </div>
-
-            {/* Role Selector Cards */}
-            <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25 text-center">
-                I am a
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRole("student")}
-                  className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all duration-200 ${
-                    role === "student"
-                      ? "border-[#C96A3D]/60 bg-[#C96A3D]/10 text-white shadow-[0_0_20px_rgba(201,106,61,0.12)]"
-                      : "border-white/[0.07] bg-white/[0.03] text-white/40 hover:border-white/15 hover:text-white/70"
-                  }`}
-                >
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
-                      role === "student" ? "bg-[#C96A3D]/20" : "bg-white/5"
-                    }`}
-                  >
-                    <User className={`h-4 w-4 ${role === "student" ? "text-[#E28743]" : ""}`} />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-semibold leading-none">Student</p>
-                    <p className="text-[10px] mt-0.5 opacity-50">I want to learn</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRole("teacher")}
-                  className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all duration-200 ${
-                    role === "teacher"
-                      ? "border-[#C96A3D]/60 bg-[#C96A3D]/10 text-white shadow-[0_0_20px_rgba(201,106,61,0.12)]"
-                      : "border-white/[0.07] bg-white/[0.03] text-white/40 hover:border-white/15 hover:text-white/70"
-                  }`}
-                >
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
-                      role === "teacher" ? "bg-[#C96A3D]/20" : "bg-white/5"
-                    }`}
-                  >
-                    <GraduationCap
-                      className={`h-4 w-4 ${role === "teacher" ? "text-[#E28743]" : ""}`}
-                    />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-semibold leading-none">Teacher</p>
-                    <p className="text-[10px] mt-0.5 opacity-50">I want to teach</p>
-                  </div>
-                </button>
+                <p className="text-sm text-white/40">Continue to your account.</p>
               </div>
             </div>
 
@@ -234,7 +158,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
             <button
               onClick={onGoogle}
               disabled={busy}
-              className="w-full flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] py-3.5 text-sm font-semibold text-white hover:bg-white/[0.08] hover:border-white/15 disabled:opacity-50 transition-all duration-200"
+              className="w-full flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] py-3.5 text-sm font-semibold text-white hover:bg-white/[0.08] hover:border-white/15 disabled:opacity-50 transition-all duration-200 cursor-pointer"
             >
               {busy ? (
                 <Loader2 className="h-4 w-4 animate-spin text-white/40" />
@@ -261,7 +185,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
                   type="email"
                   autoComplete="email"
                   required
-                  placeholder="Enter your email address"
+                  placeholder="Email address"
                   value={email}
                   maxLength={254}
                   onChange={(e) => setEmail(e.target.value)}
@@ -272,13 +196,13 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
               <button
                 type="submit"
                 disabled={busy}
-                className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C96A3D] py-3.5 text-sm font-bold text-white hover:bg-[#D9784A] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 shadow-lg shadow-[#C96A3D]/20"
+                className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C96A3D] py-3.5 text-sm font-bold text-white hover:bg-[#D9784A] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 shadow-lg shadow-[#C96A3D]/20 cursor-pointer"
               >
                 {busy ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    Continue with Email
+                    Continue
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                   </>
                 )}
@@ -288,13 +212,21 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
             {/* Footer */}
             <p className="text-center text-[10px] text-white/20 leading-relaxed">
               By continuing you agree to our{" "}
-              <span className="text-white/35 hover:text-[#E28743] cursor-pointer transition-colors">
+              <Link
+                to="/terms"
+                onClick={onClose}
+                className="text-white/35 hover:text-[#E28743] cursor-pointer transition-colors"
+              >
                 Terms
-              </span>{" "}
+              </Link>{" "}
               &{" "}
-              <span className="text-white/35 hover:text-[#E28743] cursor-pointer transition-colors">
+              <Link
+                to="/privacy"
+                onClick={onClose}
+                className="text-white/35 hover:text-[#E28743] cursor-pointer transition-colors"
+              >
                 Privacy Policy
-              </span>
+              </Link>
               .
             </p>
           </div>

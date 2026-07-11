@@ -142,7 +142,7 @@ function TutorIndex() {
             onScanClick={composer.handleScanClick}
             onVoiceClick={composer.toggleVoiceInput}
             isListening={composer.isListening}
-            recentThreads={threads.slice(0, 3)}
+            recentThreads={threads}
             allThreadsPath="/tutor/chats"
           />
         </div>
