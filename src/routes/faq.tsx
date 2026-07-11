@@ -36,7 +36,7 @@ const FAQS = [
       },
       {
         q: "How do I create an account?",
-        a: "Click 'Get started' on the homepage and enter your email for instant access, or use 'Continue with Google.' There's no password and no link to click — you're signed in immediately.",
+        a: "Click 'Get started' on the homepage to create an account with your email and a password, or use 'Continue with Google' to sign in instantly.",
       },
       {
         q: "Can I use GilaniAI on my phone?",
