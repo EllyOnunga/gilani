@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback, useMemo } from "react";
+import * as Sentry from "@sentry/react";
 import { MessageBubble } from "./MessageBubble";
 import { EmptyState } from "./EmptyState";
 import { ThinkingSweep } from "./ThinkingSweep";
@@ -268,26 +269,34 @@ export const MessageList = React.memo(function MessageList({
         {!messagesLoading &&
           !messagesLoadError &&
           messages.map((m, idx: number) => (
-            <MessageBubble
+            <Sentry.ErrorBoundary
               key={m.id ?? idx}
-              message={m}
-              idx={idx}
-              isLast={idx === messages.length - 1}
-              isPending={isPending && idx === messages.length - 1}
-              isRateLimited={isRateLimited}
-              onReload={onReload}
-              onEditRequest={onEditRequest}
-              onDelete={onDelete}
-              userId={userId}
-              initialVote={userVotes?.[m.id] ?? null}
-              onVote={onVote}
-              onExportPDF={onExportPDF}
-              onEscalate={onEscalate}
-              escalationStatus={escalationStatus}
-              escalating={escalating}
-              messagesLoading={messagesLoading}
-              pauseLabel={idx === messages.length - 1 ? activeToolLabel : null}
-            />
+              fallback={
+                <div className="mx-auto my-2 w-full max-w-[96%] sm:max-w-full rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-xs text-destructive opacity-80">
+                  <p>Sorry, we couldn't render this specific message properly.</p>
+                </div>
+              }
+            >
+              <MessageBubble
+                message={m}
+                idx={idx}
+                isLast={idx === messages.length - 1}
+                isPending={isPending && idx === messages.length - 1}
+                isRateLimited={isRateLimited}
+                onReload={onReload}
+                onEditRequest={onEditRequest}
+                onDelete={onDelete}
+                userId={userId}
+                initialVote={userVotes?.[m.id] ?? null}
+                onVote={onVote}
+                onExportPDF={onExportPDF}
+                onEscalate={onEscalate}
+                escalationStatus={escalationStatus}
+                escalating={escalating}
+                messagesLoading={messagesLoading}
+                pauseLabel={idx === messages.length - 1 ? activeToolLabel : null}
+              />
+            </Sentry.ErrorBoundary>
           ))}
 
         {/* Thinking indicator — shimmer skeleton, matches assistant bubble layout */}

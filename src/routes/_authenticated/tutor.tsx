@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Outlet, useLocation } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense, lazy } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,9 @@ import { ChatInput } from "@/components/tutor/ChatInput";
 import { EmptyState } from "@/components/tutor/EmptyState";
 import { ThreadHeader } from "@/components/tutor/ThreadHeader";
 import { PomodoroTimer } from "@/components/tutor/PomodoroTimer";
-import { InAppCamera } from "@/components/tutor/InAppCamera";
+const InAppCamera = lazy(() =>
+  import("@/components/tutor/InAppCamera").then((m) => ({ default: m.InAppCamera })),
+);
 import { useComposer } from "@/components/tutor/hooks/useComposer";
 import { useThreadsQuery } from "@/lib/hooks/useThreadsQuery";
 import { setPendingMessage } from "@/lib/pending-message";
@@ -168,13 +170,15 @@ function TutorIndex() {
       </main>
 
       {composer.isCameraOpen && (
-        <InAppCamera
-          onCapture={(file) => {
-            composer.setIsCameraOpen(false);
-            composer.handleRawFile(file, "scan");
-          }}
-          onClose={() => composer.setIsCameraOpen(false)}
-        />
+        <Suspense fallback={<div className="fixed inset-0 z-[100] bg-black" />}>
+          <InAppCamera
+            onCapture={(file) => {
+              composer.setIsCameraOpen(false);
+              composer.handleRawFile(file, "scan");
+            }}
+            onClose={() => composer.setIsCameraOpen(false)}
+          />
+        </Suspense>
       )}
 
       <PomodoroTimer open={timerOpen} onOpenChange={setTimerOpen} showTrigger={false} />

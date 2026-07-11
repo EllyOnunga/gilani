@@ -11,6 +11,7 @@ import { PlansModal } from "@/components/PlansModal";
 import { DeleteModal } from "@/components/tutor/DeleteModal";
 import { useAuthedShell } from "@/components/layout/hooks/useAuthedShell";
 import { Sidebar } from "@/components/layout/Sidebar";
+import * as Sentry from "@sentry/react";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
@@ -127,7 +128,26 @@ function AuthedShell() {
               },
             }}
           >
-            <Outlet />
+            <Sentry.ErrorBoundary
+              fallback={
+                <div className="flex flex-col items-center justify-center p-8 text-center bg-destructive/5 rounded-xl border border-destructive/20 m-4">
+                  <h3 className="text-lg font-medium text-destructive mb-2">
+                    Something went wrong
+                  </h3>
+                  <p className="text-sm text-destructive/80 max-w-md">
+                    We encountered an error loading this section. Please try refreshing the page.
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="mt-4 px-4 py-2 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-lg transition-colors text-sm font-medium"
+                  >
+                    Reload Page
+                  </button>
+                </div>
+              }
+            >
+              <Outlet />
+            </Sentry.ErrorBoundary>
           </LayoutContext.Provider>
         </div>
       </main>

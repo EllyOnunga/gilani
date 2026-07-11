@@ -18,19 +18,44 @@ export function useThreadsQuery(
   const threadsQuery = useQuery({
     queryKey: ["threads", userId],
     queryFn: async () => {
-      const { data, error } = (await withTimeout(
-        Promise.resolve(
-          supabase
-            .from("conversations")
-            .select("id,title,updated_at")
-            .eq("user_id", userId as string)
-            .order("updated_at", { ascending: false }),
-        ),
-        8000,
-        "Database connection timed out",
-      )) as any;
-      if (error) throw new Error(`Failed to load sessions: ${error.message}`);
-      return (data ?? []) as Thread[];
+      try {
+        const { data, error } = (await withTimeout(
+          Promise.resolve(
+            supabase
+              .from("conversations")
+              .select("id,title,updated_at")
+              .eq("user_id", userId as string)
+              .order("updated_at", { ascending: false }),
+          ),
+          8000,
+          "Database connection timed out",
+        )) as any;
+        if (error) throw new Error(`Failed to load sessions: ${error.message}`);
+
+        const threads = (data ?? []) as Thread[];
+        if (threads.length > 0) {
+          import("@/lib/db/local").then(({ localDb }) => {
+            localDb.threads.bulkPut(threads).catch(console.error);
+          });
+        }
+        return threads;
+      } catch (err) {
+        // Fallback to Dexie
+        try {
+          const { localDb } = await import("@/lib/db/local");
+          const cached = await localDb.threads.toArray();
+          if (cached.length > 0) {
+            return cached.sort((a, b) => {
+              const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+              const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+              return dateB - dateA;
+            });
+          }
+        } catch (dexieErr) {
+          console.error("Failed to read from local DB", dexieErr);
+        }
+        throw err;
+      }
     },
     enabled,
     staleTime: 0,

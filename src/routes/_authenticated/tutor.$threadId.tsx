@@ -18,7 +18,11 @@ import { PlansModal } from "@/components/PlansModal";
 import { EscalateModal } from "@/components/tutor/EscalateModal";
 import { MessageList } from "@/components/tutor/MessageList";
 import { PomodoroTimer } from "@/components/tutor/PomodoroTimer";
-import { InAppCamera } from "@/components/tutor/InAppCamera";
+import { Suspense, lazy } from "react";
+
+const InAppCamera = lazy(() =>
+  import("@/components/tutor/InAppCamera").then((m) => ({ default: m.InAppCamera })),
+);
 
 export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
   component: TutorThread,
@@ -255,13 +259,15 @@ function TutorThreadInner({
       </main>
 
       {composer.isCameraOpen && (
-        <InAppCamera
-          onCapture={(file) => {
-            composer.setIsCameraOpen(false);
-            composer.handleRawFile(file, "scan");
-          }}
-          onClose={() => composer.setIsCameraOpen(false)}
-        />
+        <Suspense fallback={<div className="fixed inset-0 z-[100] bg-black" />}>
+          <InAppCamera
+            onCapture={(file) => {
+              composer.setIsCameraOpen(false);
+              composer.handleRawFile(file, "scan");
+            }}
+            onClose={() => composer.setIsCameraOpen(false)}
+          />
+        </Suspense>
       )}
 
       {showPlans && (

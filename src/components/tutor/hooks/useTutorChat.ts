@@ -12,6 +12,7 @@ import {
   createEscalationFn,
 } from "@/lib/tutor.server-fns";
 import { useThreadsQuery } from "@/lib/hooks/useThreadsQuery";
+import { useMessagesQuery } from "@/lib/hooks/useMessagesQuery";
 import { hasPendingMessage } from "@/lib/pending-message";
 
 export function useTutorChat({
@@ -312,113 +313,40 @@ export function useTutorChat({
     [threadId, messagesRaw, setMessages, regenerate],
   );
 
-  const loadMessages = useCallback(
-    async (silent = false) => {
-      if (!threadId) {
-        setMessagesLoading(false);
-        return;
-      }
-      if (!silent) {
-        setMessagesLoading(true);
-        setMessagesLoadError(null);
-      }
-      let timeoutId: ReturnType<typeof setTimeout> | undefined;
-      if (!silent) {
-        timeoutId = setTimeout(() => {
-          setMessagesLoading(false);
-          setMessagesLoadError("Loading timed out.");
-        }, 20000);
-      }
-      try {
-        const [messagesRes, escalationRes, feedbackRes] = await Promise.all([
-          supabase
-            .from("messages")
-            .select("*")
-            .eq("conversation_id", threadId)
-            .order("created_at", { ascending: true }),
-          (async () => {
-            try {
-              return await supabase
-                .from("escalations")
-                .select("status")
-                .eq("conversation_id", threadId)
-                .eq("user_id", userId ?? "")
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
-            } catch {
-              return { data: null, error: null };
-            }
-          })(),
-          userId
-            ? supabase.from("message_feedback").select("message_id, vote").eq("user_id", userId)
-            : Promise.resolve({ data: null, error: null }),
-        ]);
+  const {
+    data: messagesData,
+    isLoading: queryMessagesLoading,
+    error: queryMessagesError,
+    refetch: loadMessages,
+  } = useMessagesQuery(isBrandNewThread ? null : threadId, userId);
 
-        if (timeoutId) clearTimeout(timeoutId);
-
-        if (messagesRes.error) {
-          if (!silent) setMessagesLoadError(`Database error: ${messagesRes.error.message}`);
-          setMessagesLoading(false);
-          return;
+  useEffect(() => {
+    if (messagesData) {
+      if (messagesData.messages.length > 0) {
+        if (messagesData.messages.length >= messagesRef.current.length) {
+          setMessages(messagesData.messages);
         }
-
-        if (messagesRes.data && messagesRes.data.length > 0) {
-          if (!silent || messagesRes.data.length >= messagesRef.current.length) {
-            const __mapped = messagesRes.data.map((m) => {
-              let resolvedParts: any[] | null = null;
-              if (Array.isArray(m.parts) && m.parts.length > 0) {
-                resolvedParts = m.parts as any[];
-              } else if (typeof m.parts === "string" && m.parts.trim().startsWith("[")) {
-                try {
-                  const parsed = JSON.parse(m.parts);
-                  if (Array.isArray(parsed) && parsed.length > 0) resolvedParts = parsed;
-                } catch {}
-              }
-              return {
-                id: m.id ?? crypto.randomUUID(),
-                role: m.role as "user" | "assistant",
-                content: m.content || "",
-                parts: resolvedParts ?? [{ type: "text" as const, text: m.content || "" }],
-                createdAt: m.created_at ? new Date(m.created_at) : new Date(),
-              };
-            });
-            setMessages(__mapped);
-          }
-        } else {
-          // Don't clobber messages already present locally (e.g. an
-          // optimistically-appended message from a just-triggered
-          // sendMessage) just because the DB hasn't caught up yet on a
-          // brand-new thread. Only clear when we know there's truly
-          // nothing to preserve.
-          if (!silent && messagesRef.current.length === 0) setMessages([]);
-        }
-
-        if (escalationRes.error) {
-          console.error("[Escalation] Failed to fetch status:", escalationRes.error.message);
-        }
-        setEscalationStatus((escalationRes.data?.status as any) || null);
-
-        if (feedbackRes.data && feedbackRes.data.length > 0) {
-          const votesMap: Record<string, 1 | -1> = {};
-          for (const row of feedbackRes.data as any[]) {
-            if (row.message_id && row.vote != null) {
-              votesMap[row.message_id] = row.vote as 1 | -1;
-            }
-          }
-          setUserVotes(votesMap);
-        } else {
-          setUserVotes({});
-        }
-      } catch (e) {
-        if (timeoutId) clearTimeout(timeoutId);
-        if (!silent) setMessagesLoadError("Connection failed. Try refreshing.");
-      } finally {
-        setMessagesLoading(false);
+      } else if (messagesRef.current.length === 0) {
+        setMessages([]);
       }
-    },
-    [threadId, userId, setMessages],
-  );
+      setEscalationStatus(messagesData.escalationStatus as any);
+      setUserVotes(messagesData.userVotes);
+    }
+  }, [messagesData, setMessages]);
+
+  useEffect(() => {
+    if (queryMessagesError) {
+      setMessagesLoadError("Connection failed. Try refreshing.");
+    } else {
+      setMessagesLoadError(null);
+    }
+  }, [queryMessagesError]);
+
+  useEffect(() => {
+    if (queryMessagesLoading !== undefined) {
+      setMessagesLoading(queryMessagesLoading);
+    }
+  }, [queryMessagesLoading]);
 
   const handleDeleteMessage = useCallback(
     async (messageId: string) => {
@@ -428,25 +356,18 @@ export function useTutorChat({
         if (error) throw error;
         toast.success("Message deleted");
       } catch {
-        loadMessages(true);
+        loadMessages();
         toast.error("Failed to delete message");
       }
     },
     [setMessages, loadMessages],
   );
 
-  useEffect(() => {
-    // Brand-new threads have no DB messages yet — skip the initial load
-    // so the spinner never appears as the first optimistic message goes in.
-    if (isBrandNewThread) return;
-    loadMessages(false);
-  }, [loadMessages, isBrandNewThread]);
-
   const prevPendingRef = useRef(isPending);
   useEffect(() => {
     if (prevPendingRef.current && !isPending) {
       const timer = setTimeout(() => {
-        loadMessages(true);
+        loadMessages();
       }, 300);
       return () => clearTimeout(timer);
     }

@@ -1,6 +1,20 @@
-import { useState, type FormEvent } from "react";
+import { type FormEvent } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Logo } from "@/components/ui/logo";
-import { User, GraduationCap, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+
+const profileSchema = z.object({
+  displayName: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name cannot exceed 100 characters")
+    .regex(/^[a-zA-Z\s\-']+$/, "Name contains invalid characters"),
+  role: z.enum(["student", "teacher"]),
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 interface CompleteProfileFormProps {
   initialName?: string;
@@ -15,18 +29,24 @@ export function CompleteProfileForm({
   missingRole = true,
   onSave,
 }: CompleteProfileFormProps) {
-  const [displayName, setDisplayName] = useState(initialName);
-  const [role, setRole] = useState<"student" | "teacher">("student");
-  const [saving, setSaving] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      displayName: initialName || "",
+      role: "student",
+    },
+    mode: "onChange",
+  });
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (missingName && !displayName.trim()) return;
-    setSaving(true);
+  const onSubmitForm = async (data: ProfileFormValues) => {
     try {
-      await onSave(displayName || initialName, role);
+      await onSave(data.displayName, data.role);
     } catch {
-      setSaving(false);
+      // Error is caught and toast shown by parent component (AuthModal / callback)
     }
   };
 
@@ -52,23 +72,29 @@ export function CompleteProfileForm({
               </div>
             </div>
 
-            <form onSubmit={onSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-5">
               {/* Display Name */}
               {missingName && (
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold uppercase tracking-widest text-white/30">
-                    What should we call you?
-                  </label>
+                  <div className="flex justify-between items-baseline">
+                    <label className="text-[11px] font-semibold uppercase tracking-widest text-white/30">
+                      What should we call you?
+                    </label>
+                    {errors.displayName && (
+                      <span className="text-[10px] text-red-400">{errors.displayName.message}</span>
+                    )}
+                  </div>
                   <div className="relative">
                     <input
                       type="text"
-                      required
                       autoFocus
                       placeholder="Your full name"
-                      value={displayName}
-                      maxLength={100}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3.5 text-sm text-white placeholder-white/25 focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all"
+                      {...register("displayName")}
+                      className={`w-full rounded-2xl border bg-white/[0.04] px-4 py-3.5 text-sm text-white placeholder-white/25 focus:outline-none focus:ring-1 transition-all ${
+                        errors.displayName
+                          ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/30"
+                          : "border-white/[0.08] focus:border-[#C96A3D]/50 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06]"
+                      }`}
                     />
                   </div>
                 </div>
@@ -77,14 +103,22 @@ export function CompleteProfileForm({
               {/* Role Selector */}
               {missingRole && (
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold uppercase tracking-widest text-white/30">
-                    I am a
-                  </label>
+                  <div className="flex justify-between items-baseline">
+                    <label className="text-[11px] font-semibold uppercase tracking-widest text-white/30">
+                      I am a
+                    </label>
+                    {errors.role && (
+                      <span className="text-[10px] text-red-400">{errors.role.message}</span>
+                    )}
+                  </div>
                   <div className="relative">
                     <select
-                      value={role}
-                      onChange={(e) => setRole(e.target.value as "student" | "teacher")}
-                      className="w-full appearance-none rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3.5 text-sm text-white focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all cursor-pointer"
+                      {...register("role")}
+                      className={`w-full appearance-none rounded-2xl border bg-white/[0.04] px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-1 transition-all cursor-pointer ${
+                        errors.role
+                          ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/30"
+                          : "border-white/[0.08] focus:border-[#C96A3D]/50 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06]"
+                      }`}
                     >
                       <option value="student" className="bg-[#13151f] text-white">
                         Student
@@ -114,10 +148,10 @@ export function CompleteProfileForm({
 
               <button
                 type="submit"
-                disabled={saving || (missingName && !displayName.trim())}
+                disabled={isSubmitting || (missingName && !isValid)}
                 className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C96A3D] py-3.5 text-sm font-bold text-white hover:bg-[#D9784A] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 shadow-lg shadow-[#C96A3D]/20 cursor-pointer"
               >
-                {saving ? (
+                {isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
