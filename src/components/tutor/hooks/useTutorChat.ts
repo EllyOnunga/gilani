@@ -42,7 +42,7 @@ export function useTutorChat({
   // If a pending message exists for this thread it's brand-new: skip
   // the initial DB load and start immediately in a ready (not loading) state.
   const isBrandNewThreadRef = useRef(!!threadId && hasPendingMessage(threadId));
-  const isBrandNewThread = isBrandNewThreadRef.current;
+  const [isBrandNewThread, setIsBrandNewThread] = useState(isBrandNewThreadRef.current);
   const [messagesLoading, setMessagesLoading] = useState(!isBrandNewThread);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
   const [userVotes, setUserVotes] = useState<Record<string, 1 | -1>>({});
@@ -366,13 +366,16 @@ export function useTutorChat({
   const prevPendingRef = useRef(isPending);
   useEffect(() => {
     if (prevPendingRef.current && !isPending) {
+      if (isBrandNewThread) {
+        setIsBrandNewThread(false);
+      }
       const timer = setTimeout(() => {
         loadMessages();
-      }, 300);
+      }, 500);
       return () => clearTimeout(timer);
     }
     prevPendingRef.current = isPending;
-  }, [isPending, loadMessages]);
+  }, [isPending, loadMessages, isBrandNewThread]);
 
   useEffect(() => {
     if (!threadId) return;
