@@ -45,7 +45,13 @@ export function useMessagesQuery(threadId?: string | null, userId?: string | nul
           throw new Error(`Database error: ${messagesRes.error.message}`);
         }
 
-        let mappedMessages = [];
+        let mappedMessages: {
+          id: string;
+          role: "user" | "assistant";
+          content: string;
+          parts: any[];
+          createdAt: Date;
+        }[] = [];
         if (messagesRes.data && messagesRes.data.length > 0) {
           mappedMessages = messagesRes.data.map((m: any) => {
             let resolvedParts: any[] | null = null;
