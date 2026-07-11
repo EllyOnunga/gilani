@@ -1,7 +1,11 @@
 const ROWS = [
-  { feature: "Works with your exact curriculum (KCSE, CBC, IGCSE)", trad: false, gilani: true },
+  {
+    feature: "Works with your curriculum — KCSE, CBC, IGCSE, A-Level, IB, or University",
+    trad: false,
+    gilani: true,
+  },
   { feature: "Teaches the reasoning, not just the answer", trad: false, gilani: true },
-  { feature: "Available at 11pm the night before a CAT", trad: false, gilani: true },
+  { feature: "Available at 11pm the night before a CAT or exam", trad: false, gilani: true },
   { feature: "Escalates to a real human teacher when stuck", trad: false, gilani: true },
   { feature: "Tracks your weak topics automatically", trad: false, gilani: true },
   { feature: "Costs less than one hour of private tuition", trad: false, gilani: true },

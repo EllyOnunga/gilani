@@ -35,7 +35,17 @@ export function sanitizeUntrustedInput(text: string): string {
 }
 
 export function sanitizeCurriculum(curriculum?: string | null): string {
-  const allowed = ["KCSE", "CBC", "IGCSE", "A-Level", "IB", "8-4-4", "CBE"];
+  const allowed = [
+    "KCSE",
+    "CBC",
+    "IGCSE",
+    "A-Level",
+    "IB",
+    "8-4-4",
+    "CBE",
+    "University",
+    "General",
+  ];
   return curriculum && allowed.includes(curriculum) ? curriculum : "";
 }
 
@@ -74,6 +84,19 @@ const CURRICULUM_RULES: Record<string, string> = {
   CBE: `### CBE Rules (Competency-Based Education)
 - Structure: Competency-based, real-life tasks. Connect every concept to Kenyan daily life.
 - Sources: KICD CBE curriculum → approved textbooks.`,
+
+  University: `### University Level Rules
+- Audience: Undergraduate and postgraduate students across all disciplines.
+- Depth: Go beyond surface definitions — unpack mechanisms, trade-offs, and real-world application.
+- Referencing: Cite relevant academic frameworks (e.g., APA, IEEE) where appropriate.
+- Tone: Collegiate and rigorous; treat the student as an intellectual peer.
+- Breadth: Cover Engineering, Medicine, Law, Business, Computer Science, Arts, Social Sciences, and more.
+- Sources: Peer-reviewed literature, university lecture conventions, professional standards.`,
+
+  General: `### General / No Curriculum
+- Audience: Anyone — self-learners, hobbyists, professionals, curious minds.
+- No exam board constraints. Prioritise clarity, practical examples, and real-world relevance.
+- Adapt depth to the complexity of the question asked.`,
 };
 
 export function buildSystemPrompt(params: {

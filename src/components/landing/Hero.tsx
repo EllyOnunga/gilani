@@ -38,10 +38,24 @@ const CURRICULA = {
       },
     ],
   },
+  University: {
+    label: "University",
+    full: "Higher Education / University",
+    chat: [
+      {
+        type: "student",
+        text: "Explain the CAP theorem in distributed systems for my CS exam.",
+      },
+      {
+        type: "ai",
+        text: "CAP says a distributed system can only guarantee two of three properties at once: Consistency (every read gets the latest write), Availability (every request gets a response), or Partition tolerance (the system keeps running despite network splits). In practice, partition tolerance is non-negotiable — so you're always trading consistency for availability, or vice versa.",
+      },
+    ],
+  },
 } as const;
 
 type CurriculumKey = keyof typeof CURRICULA;
-const CURRICULUM_ORDER: CurriculumKey[] = ["KCSE", "CBC", "IGCSE"];
+const CURRICULUM_ORDER: CurriculumKey[] = ["KCSE", "CBC", "IGCSE", "University"];
 const AUTO_ROTATE_MS = 7000;
 const INTERACTION_PAUSE_MS = 16000;
 

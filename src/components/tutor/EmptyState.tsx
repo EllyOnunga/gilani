@@ -32,6 +32,8 @@ type Props = {
   messagesMax?: number;
   onUpgrade?: () => void;
   onRateLimitExpired?: () => void;
+  /** First name of the signed-in user for the personalised greeting */
+  userName?: string | null;
 };
 
 export function EmptyState({
@@ -44,6 +46,7 @@ export function EmptyState({
   messagesMax,
   onUpgrade,
   onRateLimitExpired,
+  userName,
 }: Props) {
   const [dismissedBanners, setDismissedBanners] = useState<string[]>([]);
 
@@ -180,7 +183,9 @@ export function EmptyState({
           <span className="text-2xl">🤖</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
-          How can I help you today?
+          {userName
+            ? `How can I help you today, ${userName.split(" ")[0]}?`
+            : "How can I help you today?"}
         </h1>
       </div>
 

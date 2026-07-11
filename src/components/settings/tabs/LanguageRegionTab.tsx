@@ -55,11 +55,21 @@ export function LanguageRegionTab({ settings }: Props) {
             onChange={(e) => updatePreference("curriculum", e.target.value)}
             className="w-full rounded-xl border border-border/50 bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
           >
-            <option value="KCSE">8-4-4 / KCSE (Kenya)</option>
-            <option value="CBC">CBC (Kenya)</option>
-            <option value="IGCSE">IGCSE (International)</option>
-            <option value="A-LEVEL">A-Level</option>
-            <option value="IB">International Baccalaureate (IB)</option>
+            <optgroup label="Secondary School (Kenya)">
+              <option value="KCSE">8-4-4 / KCSE (Kenya)</option>
+              <option value="CBC">CBC (Kenya)</option>
+            </optgroup>
+            <optgroup label="International Secondary">
+              <option value="IGCSE">Cambridge IGCSE</option>
+              <option value="A-LEVEL">A-Level</option>
+              <option value="IB">International Baccalaureate (IB)</option>
+            </optgroup>
+            <optgroup label="Higher Education">
+              <option value="University">University / College</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option value="General">General (No specific curriculum)</option>
+            </optgroup>
           </select>
           <p className="text-[11px] text-muted-foreground mt-1">
             We use this to tailor explanations to your specific exam board standards.
