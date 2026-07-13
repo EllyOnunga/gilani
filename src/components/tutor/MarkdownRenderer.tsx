@@ -81,40 +81,44 @@ function sanitizeMermaidLabels(code: string): string {
     .replace(/(\b[A-Za-z0-9_]+)\{([^{}`"]*)\}/g, (m, id, label) => wrap(id, label, "{", "}"));
 }
 
+let _mermaidInitialized = false;
+function initMermaid(isDark: boolean) {
+  if (_mermaidInitialized) return;
+  _mermaidInitialized = true;
+  import("mermaid").then((m) => {
+    m.default.initialize({
+      startOnLoad: false,
+      suppressErrorRendering: true,
+      theme: isDark ? "dark" : "default",
+    });
+  });
+}
+
 function MermaidDiagram({ code, isStreaming }: { code: string; isStreaming?: boolean }) {
   const ref = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!ref.current) return;
+    const el = ref.current;
     const id = `mermaid-${Math.random().toString(36).slice(2)}`;
+    const isDark = document.documentElement.classList.contains("dark");
+    initMermaid(isDark);
 
     import("mermaid")
-      .then((m) => {
-        const isDark = document.documentElement.classList.contains("dark");
-        m.default.initialize({
-          startOnLoad: false,
-          suppressErrorRendering: true,
-          theme: isDark ? "dark" : "default",
-        });
-        return m.default.render(id, code);
-      })
+      .then((m) => m.default.render(id, code))
       .then(({ svg }) => {
-        if (ref.current) {
-          ref.current.innerHTML = svg;
-        }
+        if (el) el.innerHTML = svg;
       })
       .catch((err) => {
-        if (!isStreaming) {
-          console.error("Mermaid render failed:", err);
-        }
-        if (ref.current) ref.current.textContent = code;
+        if (!isStreaming) console.error("Mermaid render failed:", err);
+        if (el) el.textContent = code;
       });
   }, [code, isStreaming]);
 
   return (
     <div
       ref={ref}
-      className="my-3 overflow-x-auto rounded-xl border border-border/40 bg-muted/20 p-3 whitespace-pre-wrap font-mono text-sm text-left text-zinc-300"
+      className="my-3 overflow-x-auto rounded-xl border border-border/40 bg-muted/20 p-4 flex justify-center [&>svg]:max-w-full [&>svg]:h-auto"
     />
   );
 }
