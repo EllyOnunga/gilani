@@ -69,9 +69,7 @@ function MermaidDiagram({ code, isStreaming }: { code: string; isStreaming?: boo
       })
       .then(({ svg }) => {
         if (ref.current) {
-          ref.current.innerHTML = DOMPurify.sanitize(svg, {
-            USE_PROFILES: { svg: true, svgFilters: true },
-          });
+          ref.current.innerHTML = DOMPurify.sanitize(svg);
         }
       })
       .catch((err) => {
@@ -126,9 +124,7 @@ function DiagramSVG({ svg }: { svg: string }) {
   const ref = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     if (!ref.current) return;
-    ref.current.innerHTML = DOMPurify.sanitize(svg, {
-      USE_PROFILES: { svg: true, svgFilters: true },
-    });
+    ref.current.innerHTML = DOMPurify.sanitize(svg);
   }, [svg]);
   return (
     <div className="my-3 rounded-xl border border-border bg-white dark:bg-zinc-900 p-3 overflow-x-auto flex justify-center">
