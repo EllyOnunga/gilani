@@ -34,6 +34,7 @@ type Props = {
   onVoiceClick?: () => void;
   isListening?: boolean;
   allThreadsPath?: string;
+  userName?: string | null;
 };
 
 export const MessageList = React.memo(function MessageList({
@@ -64,6 +65,7 @@ export const MessageList = React.memo(function MessageList({
   onVoiceClick,
   isListening,
   allThreadsPath,
+  userName,
 }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -262,6 +264,7 @@ export const MessageList = React.memo(function MessageList({
             messagesMax={messagesMax}
             onUpgrade={onUpgrade}
             onRateLimitExpired={onRateLimitExpired}
+            userName={userName}
           />
         )}
 

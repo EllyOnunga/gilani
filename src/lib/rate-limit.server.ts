@@ -185,16 +185,16 @@ export async function checkPlanRateLimit(
       dailyMax = limits.dailyMessages;
       break;
     case "quiz":
-      minuteMax = plan === "free" ? 0 : 10;
-      dailyMax = plan === "free" ? 0 : limits.dailyQuizzes;
+      minuteMax = plan === "free" ? 2 : 10;
+      dailyMax = limits.dailyQuizzes;
       break;
     case "planner":
-      minuteMax = plan === "free" ? 0 : 10;
-      dailyMax = plan === "free" ? 0 : limits.dailyPlanners;
+      minuteMax = plan === "free" ? 2 : 10;
+      dailyMax = limits.dailyPlanners;
       break;
     case "notes":
-      minuteMax = plan === "free" ? 0 : 10;
-      dailyMax = plan === "free" ? 0 : limits.dailyNotes;
+      minuteMax = plan === "free" ? 2 : 10;
+      dailyMax = limits.dailyNotes;
       break;
   }
 
@@ -254,16 +254,16 @@ export async function getPlanRateLimitStatus(
       dailyMax = limits.dailyMessages;
       break;
     case "quiz":
-      minuteMax = plan === "free" ? 0 : planMinute;
-      dailyMax = plan === "free" ? 0 : limits.dailyQuizzes;
+      minuteMax = planMinute;
+      dailyMax = limits.dailyQuizzes;
       break;
     case "planner":
-      minuteMax = plan === "free" ? 0 : planMinute;
-      dailyMax = plan === "free" ? 0 : limits.dailyPlanners;
+      minuteMax = planMinute;
+      dailyMax = limits.dailyPlanners;
       break;
     case "notes":
-      minuteMax = plan === "free" ? 0 : planMinute;
-      dailyMax = plan === "free" ? 0 : limits.dailyNotes;
+      minuteMax = planMinute;
+      dailyMax = limits.dailyNotes;
       break;
     default:
       minuteMax = planMinute;

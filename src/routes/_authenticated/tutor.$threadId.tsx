@@ -47,18 +47,23 @@ function TutorThread() {
 
   const authToken = session?.access_token ?? null;
   const userId = session?.user?.id ?? null;
+  const userName = session?.user?.user_metadata?.full_name ?? null;
 
   if (authLoading) return <GilaniLoader />;
 
-  return <TutorThreadInner key={threadId} authToken={authToken} userId={userId} />;
+  return (
+    <TutorThreadInner key={threadId} authToken={authToken} userId={userId} userName={userName} />
+  );
 }
 
 function TutorThreadInner({
   authToken,
   userId,
+  userName,
 }: {
   authToken: string | null;
   userId: string | null;
+  userName: string | null;
 }) {
   const { threadId } = Route.useParams();
   const navigate = useNavigate({ from: "/tutor/$threadId" });
@@ -226,6 +231,7 @@ function TutorThreadInner({
             messagesUsed={chatState.messagesUsed}
             messagesMax={chatState.messagesMax}
             onUpgrade={() => setShowPlans(true)}
+            userName={userName}
           />
         </div>
 
