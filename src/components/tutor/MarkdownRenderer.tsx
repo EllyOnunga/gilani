@@ -29,15 +29,29 @@ import {
   GeometryRenderer,
 } from "@/components/maths";
 
-// Converts chemical formulas in a node label to Mermaid's subscript syntax.
-// e.g. "H2SO4" → "H~2~SO~4~", "CO2" → "CO~2~"
-// Deliberately avoids matching non-chemical tokens like "M1", "B12", "IPv4"
-// by requiring the word to look like a proper formula: uppercase-start, all element-like parts.
+// Map of digit → Unicode subscript character
+const SUBSCRIPT: Record<string, string> = {
+  "0": "₀",
+  "1": "₁",
+  "2": "₂",
+  "3": "₃",
+  "4": "₄",
+  "5": "₅",
+  "6": "₆",
+  "7": "₇",
+  "8": "₈",
+  "9": "₉",
+};
+
+// Converts chemical formulas to Unicode subscripts so Mermaid renders them
+// correctly as plain text inside SVG nodes.
+// e.g. "H2SO4" → "H₂SO₄", "CO2" → "CO₂"
+// Avoids false positives like "M1", "B12", "IPv4" by only matching tokens
+// that look entirely like a sequence of element symbols.
 function formatChemFormulas(text: string): string {
   return text.replace(/\b([A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*)+)\b/g, (word) => {
-    // Must be a sequence of element symbols with numbers — e.g. H2SO4, NaCl, CO2
     if (/^([A-Z][a-z]?\d*)+$/.test(word) && /\d/.test(word)) {
-      return word.replace(/([A-Z][a-z]?)(\d+)/g, "$1~$2~");
+      return word.replace(/\d/g, (d) => SUBSCRIPT[d] ?? d);
     }
     return word;
   });
@@ -48,25 +62,19 @@ function formatChemFormulas(text: string): string {
 // quoted. AI-generated diagrams often include parentheses in labels (e.g.
 // "Brine (NaCl)"), so quote any bracket label containing unescaped parens
 // before handing the code to Mermaid.
-// Also upgrades labels containing chemical formulas to Mermaid's Markdown
-// string format (backtick-quoted) so subscripts render correctly.
+// Also converts chemical formulas to Unicode subscripts for proper display.
 function sanitizeMermaidLabels(code: string): string {
   const wrap = (id: string, label: string, open: string, close: string) => {
-    const hasFormula = /[A-Z][a-z]?\d/.test(label);
-    const hasParen = /[()]/.test(label);
     const alreadyQuoted = /^".*"$/.test(label.trim());
-
     if (alreadyQuoted) return `${id}${open}${label}${close}`;
 
-    if (hasFormula) {
-      // Use Mermaid Markdown strings (backtick) to enable subscript tilde syntax
-      const formatted = formatChemFormulas(label).replace(/"/g, "'");
-      return `${id}${open}"\`${formatted}\`"${close}`;
+    // Apply Unicode subscript formatting to chemical formulas
+    const formatted = formatChemFormulas(label);
+    // Quote the label if it contains parentheses (or was changed by formula formatting)
+    if (/[()]/.test(formatted) || formatted !== label) {
+      return `${id}${open}"${formatted.replace(/"/g, "'")}"${close}`;
     }
-    if (hasParen) {
-      return `${id}${open}"${label.replace(/"/g, "'")}"${close}`;
-    }
-    return `${id}${open}${label}${close}`;
+    return `${id}${open}${formatted}${close}`;
   };
   return code
     .replace(/(\b[A-Za-z0-9_]+)\[([^\[\]"`]*)\]/g, (m, id, label) => wrap(id, label, "[", "]"))
