@@ -29,23 +29,48 @@ import {
   GeometryRenderer,
 } from "@/components/maths";
 
-// ─── Mermaid ────────────────────────────────────────────────────────────────
+// Converts chemical formulas in a node label to Mermaid's subscript syntax.
+// e.g. "H2SO4" → "H~2~SO~4~", "CO2" → "CO~2~"
+// Deliberately avoids matching non-chemical tokens like "M1", "B12", "IPv4"
+// by requiring the word to look like a proper formula: uppercase-start, all element-like parts.
+function formatChemFormulas(text: string): string {
+  return text.replace(/\b([A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*)+)\b/g, (word) => {
+    // Must be a sequence of element symbols with numbers — e.g. H2SO4, NaCl, CO2
+    if (/^([A-Z][a-z]?\d*)+$/.test(word) && /\d/.test(word)) {
+      return word.replace(/([A-Z][a-z]?)(\d+)/g, "$1~$2~");
+    }
+    return word;
+  });
+}
 
 // Mermaid's flowchart parser treats "(" inside a [...] node label as the start
 // of a different node shape, which breaks parsing unless the whole label is
 // quoted. AI-generated diagrams often include parentheses in labels (e.g.
 // "Brine (NaCl)"), so quote any bracket label containing unescaped parens
 // before handing the code to Mermaid.
+// Also upgrades labels containing chemical formulas to Mermaid's Markdown
+// string format (backtick-quoted) so subscripts render correctly.
 function sanitizeMermaidLabels(code: string): string {
   const wrap = (id: string, label: string, open: string, close: string) => {
-    if (/[()]/.test(label) && !/^".*"$/.test(label.trim())) {
+    const hasFormula = /[A-Z][a-z]?\d/.test(label);
+    const hasParen = /[()]/.test(label);
+    const alreadyQuoted = /^".*"$/.test(label.trim());
+
+    if (alreadyQuoted) return `${id}${open}${label}${close}`;
+
+    if (hasFormula) {
+      // Use Mermaid Markdown strings (backtick) to enable subscript tilde syntax
+      const formatted = formatChemFormulas(label).replace(/"/g, "'");
+      return `${id}${open}"\`${formatted}\`"${close}`;
+    }
+    if (hasParen) {
       return `${id}${open}"${label.replace(/"/g, "'")}"${close}`;
     }
     return `${id}${open}${label}${close}`;
   };
   return code
-    .replace(/(\b[A-Za-z0-9_]+)\[([^\[\]"]*)\]/g, (m, id, label) => wrap(id, label, "[", "]"))
-    .replace(/(\b[A-Za-z0-9_]+)\{([^{}"]*)\}/g, (m, id, label) => wrap(id, label, "{", "}"));
+    .replace(/(\b[A-Za-z0-9_]+)\[([^\[\]"`]*)\]/g, (m, id, label) => wrap(id, label, "[", "]"))
+    .replace(/(\b[A-Za-z0-9_]+)\{([^{}`"]*)\}/g, (m, id, label) => wrap(id, label, "{", "}"));
 }
 
 function MermaidDiagram({ code, isStreaming }: { code: string; isStreaming?: boolean }) {
