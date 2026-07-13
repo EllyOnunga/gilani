@@ -59,7 +59,7 @@ export const PLANS: Record<PlanId, Plan> = {
 export const TOPUP_TOKENS_PER_KES = 1_000;
 export const TOPUP_MIN_KES = 10;
 
-export const PLAN_MINUTE_LIMITS: Record<PlanId, number> = {
+const PLAN_MINUTE_LIMITS: Record<PlanId, number> = {
   free: 5,
   pro: 20,
 };

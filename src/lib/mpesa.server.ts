@@ -6,7 +6,7 @@ const MPESA_BASE =
     ? "https://api.safaricom.co.ke"
     : "https://sandbox.safaricom.co.ke";
 
-export async function getMpesaToken(): Promise<string> {
+async function getMpesaToken(): Promise<string> {
   const auth = Buffer.from(
     `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`,
   ).toString("base64");

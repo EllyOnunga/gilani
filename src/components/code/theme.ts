@@ -1,1 +1,0 @@
-export const GILANI_THEME = "github-dark";

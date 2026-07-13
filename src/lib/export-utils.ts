@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
+
 function saveAs(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -69,46 +69,4 @@ export function exportAsPDF(messages: Message[], title: string) {
 
   doc.save(`${title.replace(/\s+/g, "-")}.pdf`);
   toast.success("PDF exported successfully!");
-}
-
-export async function exportAsWord(messages: Message[], title: string) {
-  const children: Paragraph[] = [
-    new Paragraph({ text: "GilaniAI Study Session", heading: HeadingLevel.HEADING_1 }),
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: `Exported on ${new Date().toLocaleDateString()}`,
-          color: "888888",
-          size: 18,
-        }),
-      ],
-    }),
-    new Paragraph({ text: "" }),
-  ];
-
-  messages.forEach((m) => {
-    const role = m.role === "user" ? "You" : "GilaniAI";
-    const text = m.parts?.find((p) => p.type === "text")?.text || m.content || "";
-    const clean = text.replace(/[#*`$]/g, "").trim();
-
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: role,
-            bold: true,
-            color: m.role === "user" ? "1E64FF" : "0096FF",
-            size: 20,
-          }),
-        ],
-      }),
-      new Paragraph({ children: [new TextRun({ text: clean, size: 20 })] }),
-      new Paragraph({ text: "" }),
-    );
-  });
-
-  const doc = new Document({ sections: [{ children }] });
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, `${title.replace(/\s+/g, "-")}.docx`);
-  toast.success("Word document exported successfully!");
 }
