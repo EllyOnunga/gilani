@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
-import { LegalHeader, LegalFooter } from "@/components/LegalLayout";
+import { LegalHeader, LegalFooter } from "@/client/components/LegalLayout";
 
 export const Route = createFileRoute("/faq")({
   head: () => ({

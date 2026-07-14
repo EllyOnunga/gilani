@@ -1,27 +1,27 @@
 import React, { useCallback, useEffect, useState, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
-import { GilaniLoader } from "@/components/GilaniLoader";
-import { useLayout } from "@/contexts/layout-context";
-import { parseDocument } from "@/lib/document-parser";
+import { supabase } from "@/client/supabase";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
+import { useLayout } from "@/client/contexts/layout-context";
+import { parseDocument } from "@/shared/utils/document-parser";
 import { toast } from "sonner";
-import { friendlyError } from "@/lib/async";
-import { generateThreadTitleFn, renameThreadFn } from "@/lib/tutor.server-fns";
-import { consumePendingMessage } from "@/lib/pending-message";
-import { useAuth } from "@/hooks/use-auth";
+import { friendlyError } from "@/shared/utils/async";
+import { generateThreadTitleFn, renameThreadFn } from "@/fns/tutor.server-fns";
+import { consumePendingMessage } from "@/shared/utils/pending-message";
+import { useAuth } from "@/client/hooks/use-auth";
 
-import { useTutorChat } from "@/components/tutor/hooks/useTutorChat";
-import { useComposer } from "@/components/tutor/hooks/useComposer";
-import { ThreadHeader } from "@/components/tutor/ThreadHeader";
-import { ChatInput } from "@/components/tutor/ChatInput";
-import { PlansModal } from "@/components/PlansModal";
-import { EscalateModal } from "@/components/tutor/EscalateModal";
-import { MessageList } from "@/components/tutor/MessageList";
-import { PomodoroTimer } from "@/components/tutor/PomodoroTimer";
+import { useTutorChat } from "@/client/components/tutor/hooks/useTutorChat";
+import { useComposer } from "@/client/components/tutor/hooks/useComposer";
+import { ThreadHeader } from "@/client/components/tutor/ThreadHeader";
+import { ChatInput } from "@/client/components/tutor/ChatInput";
+import { PlansModal } from "@/client/components/PlansModal";
+import { EscalateModal } from "@/client/components/tutor/EscalateModal";
+import { MessageList } from "@/client/components/tutor/MessageList";
+import { PomodoroTimer } from "@/client/components/tutor/PomodoroTimer";
 import { Suspense, lazy } from "react";
 
 const InAppCamera = lazy(() =>
-  import("@/components/tutor/InAppCamera").then((m) => ({ default: m.InAppCamera })),
+  import("@/client/components/tutor/InAppCamera").then((m) => ({ default: m.InAppCamera })),
 );
 
 export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
@@ -30,10 +30,10 @@ export const Route = createFileRoute("/_authenticated/tutor/$threadId")({
 
 // Export utils loaded lazily
 const exportAsPDF = async (
-  ...args: Parameters<typeof import("@/lib/export-utils").exportAsPDF>
+  ...args: Parameters<typeof import("@/shared/utils/export-utils").exportAsPDF>
 ) => {
   try {
-    const { exportAsPDF: fn } = await import("@/lib/export-utils");
+    const { exportAsPDF: fn } = await import("@/shared/utils/export-utils");
     return fn(...args);
   } catch {
     const { toast } = await import("sonner");

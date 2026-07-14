@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { authenticateRequest } from "@/lib/api-auth.server";
-import { initiateSTKPush } from "@/lib/mpesa.server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { PLANS, TOPUP_MIN_KES } from "@/lib/plans";
+import { authenticateRequest } from "@/server/api-auth.server";
+import { initiateSTKPush } from "@/server/mpesa.server";
+import { supabaseAdmin } from "@/server/supabase";
+import { PLANS, TOPUP_MIN_KES } from "@/shared/plans";
 import { z } from "zod";
 
 // CS-INJ-001: Validates Kenyan phone numbers: 07xx, 01xx, +2547xx, +2541xx, 2547xx

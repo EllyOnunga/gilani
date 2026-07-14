@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { GilaniLoader } from "@/components/GilaniLoader";
+import { supabase } from "@/client/supabase";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
 import {
   Calendar as CalendarIcon,
   CheckCircle2,
@@ -16,10 +16,11 @@ import {
   Flag,
 } from "lucide-react";
 import { toast } from "sonner";
-import { TutorPageHeader } from "@/components/tutor/TutorPageHeader";
-import { MarkdownRenderer } from "@/components/tutor/MarkdownRenderer";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { friendlyError } from "@/shared/utils/async";
+import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { MarkdownRenderer } from "@/client/components/tutor/MarkdownRenderer";
+import { Calendar } from "@/client/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/client/components/ui/popover";
 import { format } from "date-fns";
 import {
   generateStudyPlanFn,
@@ -27,11 +28,11 @@ import {
   deleteStudyPlanFn,
   getPlannerFormOptionsFn,
   type StudyPlanItem,
-} from "@/lib/planner.server-fns";
-import { PomodoroTimer } from "@/components/tutor/PomodoroTimer";
+} from "@/fns/planner.server-fns";
+import { PomodoroTimer } from "@/client/components/tutor/PomodoroTimer";
 import { Timer, Brain, LayoutList, LayoutGrid } from "lucide-react";
-import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { PlannerWeekView } from "@/components/tutor/planner/PlannerWeekView";
+import { ConfirmDialog } from "@/client/components/shared/ConfirmDialog";
+import { PlannerWeekView } from "@/client/components/tutor/planner/PlannerWeekView";
 
 export const Route = createFileRoute("/_authenticated/tutor/planner")({
   component: PlannerRoute,
@@ -87,7 +88,7 @@ function PlannerRoute() {
       if (error) throw error;
       setPlans(data || []);
     } catch (err: any) {
-      toast.error(err.message || "Failed to load study plans");
+      toast.error(friendlyError(err, "Failed to load your study plans."));
     } finally {
       setLoading(false);
     }
@@ -126,7 +127,7 @@ function PlannerRoute() {
       setSubjects("");
       await fetchPlans();
     } catch (err: any) {
-      toast.error(err.message || "Failed to generate study plan");
+      toast.error(friendlyError(err, "Couldn't generate your study plan. Please try again."));
     } finally {
       setGenerating(false);
     }

@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { GilaniLoader } from "@/components/GilaniLoader";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { supabase as supabaseClient } from "@/integrations/supabase/client";
+import { supabase as supabaseClient } from "@/client/supabase";
 import { createServerFn } from "@tanstack/react-start";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendTransactionalEmail, emailTemplate } from "@/lib/email.server";
+import { supabaseAdmin } from "@/server/supabase";
+import { sendTransactionalEmail, emailTemplate } from "@/server/email.server";
 import {
   ShieldAlert,
   CheckCircle2,
@@ -14,15 +14,15 @@ import {
   Menu,
   RefreshCw,
 } from "lucide-react";
-import { useLayout } from "@/contexts/layout-context";
-import { NotificationBell } from "@/components/notifications";
+import { useLayout } from "@/client/contexts/layout-context";
+import { NotificationBell } from "@/client/components/notifications";
 import { z } from "zod";
 import { getRequest } from "@tanstack/react-start/server";
-import { authenticateRequest } from "@/lib/api-auth.server";
+import { authenticateRequest } from "@/server/api-auth.server";
 
-import { useTeacherEscalations } from "@/components/teacher/hooks/useTeacherEscalations";
-import { EscalationCard } from "@/components/teacher/escalations/EscalationCard";
-import { EscalationDetail } from "@/components/teacher/escalations/EscalationDetail";
+import { useTeacherEscalations } from "@/client/components/teacher/hooks/useTeacherEscalations";
+import { EscalationCard } from "@/client/components/teacher/escalations/EscalationCard";
+import { EscalationDetail } from "@/client/components/teacher/escalations/EscalationDetail";
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
 

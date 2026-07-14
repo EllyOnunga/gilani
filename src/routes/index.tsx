@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { GilaniLoader } from "@/components/GilaniLoader";
-import { AuthModal } from "@/components/auth/AuthModal";
+import { useAuth } from "@/client/hooks/use-auth";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
+import { AuthModal } from "@/client/components/auth/AuthModal";
 
 import {
   Navbar,
@@ -16,7 +16,7 @@ import {
   FAQ,
   FinalCTA,
   Footer,
-} from "@/components/landing";
+} from "@/client/components/landing";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): { authModalOpen?: boolean } => ({

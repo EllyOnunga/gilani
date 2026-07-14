@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Logo } from "@/components/ui/logo";
-import { LegalFooter } from "@/components/LegalLayout";
+import { Logo } from "@/client/components/ui/logo";
+import { LegalFooter } from "@/client/components/LegalLayout";
 import {
   ArrowLeft,
   ShieldCheck,

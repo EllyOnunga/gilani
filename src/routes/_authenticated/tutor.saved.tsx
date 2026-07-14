@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { GilaniLoader } from "@/components/GilaniLoader";
+import { supabase } from "@/client/supabase";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
 import { Star, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
-import { TutorPageHeader } from "@/components/tutor/TutorPageHeader";
-import { MarkdownRenderer } from "@/components/tutor/MarkdownRenderer";
+import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { MarkdownRenderer } from "@/client/components/tutor/MarkdownRenderer";
 
 export const Route = createFileRoute("/_authenticated/tutor/saved")({
   component: SavedRoute,

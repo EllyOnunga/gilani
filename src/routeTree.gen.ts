@@ -21,6 +21,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiStreamTestRouteImport } from './routes/api/stream-test'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedTutorRouteImport } from './routes/_authenticated/tutor'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -101,6 +102,11 @@ const IndexRoute = IndexRouteImport.update({
 const ApiStreamTestRoute = ApiStreamTestRouteImport.update({
   id: '/api/stream-test',
   path: '/api/stream-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -236,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tutor': typeof AuthenticatedTutorRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/stream-test': typeof ApiStreamTestRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
@@ -271,6 +278,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/tutor': typeof AuthenticatedTutorRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/stream-test': typeof ApiStreamTestRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
@@ -308,6 +316,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tutor': typeof AuthenticatedTutorRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/stream-test': typeof ApiStreamTestRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/teacher/escalations': typeof AuthenticatedTeacherEscalationsRoute
@@ -345,6 +354,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tutor'
     | '/api/chat'
+    | '/api/health'
     | '/api/stream-test'
     | '/admin/users'
     | '/teacher/escalations'
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tutor'
     | '/api/chat'
+    | '/api/health'
     | '/api/stream-test'
     | '/admin/users'
     | '/teacher/escalations'
@@ -416,6 +427,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/tutor'
     | '/api/chat'
+    | '/api/health'
     | '/api/stream-test'
     | '/_authenticated/admin/users'
     | '/_authenticated/teacher/escalations'
@@ -451,6 +463,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   ApiStreamTestRoute: typeof ApiStreamTestRoute
   ApiMpesaCallbackRoute: typeof ApiMpesaCallbackRoute
   ApiMpesaInitiateRoute: typeof ApiMpesaInitiateRoute
@@ -548,6 +561,13 @@ declare module '@tanstack/react-router' {
       path: '/api/stream-test'
       fullPath: '/api/stream-test'
       preLoaderRoute: typeof ApiStreamTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -761,6 +781,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ApiStreamTestRoute: ApiStreamTestRoute,
   ApiMpesaCallbackRoute: ApiMpesaCallbackRoute,
   ApiMpesaInitiateRoute: ApiMpesaInitiateRoute,

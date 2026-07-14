@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { GilaniLoader } from "@/components/GilaniLoader";
+import { supabase } from "@/client/supabase";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
 import { PenTool, Brain, Calendar, CheckCircle2, Sparkles, X, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { TutorPageHeader } from "@/components/tutor/TutorPageHeader";
-import { generateQuizFn, getQuizFormOptionsFn, deleteQuizFn } from "@/lib/quiz.server-fns";
-import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { friendlyError } from "@/shared/utils/async";
+import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { generateQuizFn, getQuizFormOptionsFn, deleteQuizFn } from "@/fns/quiz.server-fns";
+import { ConfirmDialog } from "@/client/components/shared/ConfirmDialog";
 
 const PAGE_SIZE = 10;
 
@@ -78,7 +79,7 @@ function QuizzesRoute() {
       setQuizzes((prev) => (append ? [...prev, ...results] : results));
       setHasMore(results.length === PAGE_SIZE);
     } catch (err: any) {
-      toast.error(err.message || "Failed to load quizzes");
+      toast.error(friendlyError(err, "Failed to load your quizzes."));
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -113,7 +114,7 @@ function QuizzesRoute() {
       setQuizzes((prev) => prev.filter((q) => q.id !== id));
       toast.success("Quiz deleted");
     } catch (err: any) {
-      toast.error(err.message || "Failed to delete quiz");
+      toast.error(friendlyError(err, "Couldn't delete this quiz. Please try again."));
     } finally {
       setDeletingId(null);
     }
@@ -134,7 +135,7 @@ function QuizzesRoute() {
       setTopic("");
       navigate({ to: "/tutor/quizzes/$quizId", params: { quizId: (result as any).quizId } });
     } catch (err: any) {
-      toast.error(err.message || "Failed to generate quiz");
+      toast.error(friendlyError(err, "Couldn't generate your quiz. Please try again."));
     } finally {
       setGenerating(false);
     }

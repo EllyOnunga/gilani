@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { upgradePlan, creditTopupTokens } from "@/lib/mpesa.server";
-import { sendTransactionalEmail, mpesaReceiptEmail } from "@/lib/email.server";
-import { sendSMS } from "@/lib/sms.server";
+import { supabaseAdmin } from "@/server/supabase";
+import { upgradePlan, creditTopupTokens, verifyTransactionStatus } from "@/server/mpesa.server";
+import { z } from "zod";
+import { sendTransactionalEmail, mpesaReceiptEmail } from "@/server/email.server";
+import { sendSMS } from "@/server/sms.server";
 
 export const Route = createFileRoute("/api/mpesa/callback")({
   server: {
@@ -36,12 +37,39 @@ export const Route = createFileRoute("/api/mpesa/callback")({
             }
           }
 
-          const body = await request.json().catch(() => ({}));
-          const callback = body?.Body?.stkCallback;
+          const callbackSchema = z.object({
+            Body: z
+              .object({
+                stkCallback: z.object({
+                  CheckoutRequestID: z.string(),
+                  ResultCode: z.number(),
+                  CallbackMetadata: z
+                    .object({
+                      Item: z.array(
+                        z.object({
+                          Name: z.string(),
+                          Value: z.any().optional(),
+                        }),
+                      ),
+                    })
+                    .optional(),
+                }),
+              })
+              .optional(),
+          });
 
-          if (!callback) {
+          const rawBody = await request.json().catch(() => ({}));
+          const parseResult = callbackSchema.safeParse(rawBody);
+
+          if (!parseResult.success || !parseResult.data.Body?.stkCallback) {
+            console.error(
+              "[M-Pesa Callback] Invalid payload shape",
+              JSON.stringify(parseResult.error ?? "No stkCallback"),
+            );
             return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
           }
+
+          const callback = parseResult.data.Body.stkCallback;
 
           const checkoutRequestId = callback.CheckoutRequestID;
           const resultCode = callback.ResultCode;
@@ -73,6 +101,15 @@ export const Route = createFileRoute("/api/mpesa/callback")({
               .from("payments")
               .update({ status: "failed" })
               .eq("checkout_request_id", checkoutRequestId);
+            return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
+          }
+
+          // Active verification: check Safaricom before crediting
+          const isVerified = await verifyTransactionStatus(checkoutRequestId);
+          if (!isVerified) {
+            console.error(
+              `[M-Pesa Callback] Transaction verification failed for ${checkoutRequestId}`,
+            );
             return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
           }
 
@@ -180,7 +217,10 @@ export const Route = createFileRoute("/api/mpesa/callback")({
           console.log(`[M-Pesa Callback] ✅ ${payment.user_id} → ${payment.plan} (${receipt})`);
           return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
         } catch (err: any) {
-          console.error("[M-Pesa Callback Error]", err?.message);
+          console.error(
+            "[M-Pesa Callback Error]",
+            JSON.stringify({ message: err?.message, stack: err?.stack }),
+          );
           // Always return 200 to Safaricom or they will retry
           return new Response(JSON.stringify({ ResultCode: 0 }), { status: 200 });
         }

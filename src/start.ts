@@ -1,6 +1,6 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
-import { renderErrorPage } from "./lib/error-page";
-import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+import { renderErrorPage } from "@/shared/utils/error-page";
+import { attachSupabaseAuth } from "@/shared/auth/auth-attacher";
 
 const CSRF_EXEMPT_PATHS = ["/api/mpesa/callback", "/api/notifications/digest"];
 

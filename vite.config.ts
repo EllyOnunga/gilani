@@ -26,20 +26,13 @@ export default defineConfig({
       include: ["katex", "katex/dist/contrib/mhchem.min.js"],
     },
     build: {
-      chunkSizeWarningLimit: 600,
+      chunkSizeWarningLimit: 3000,
       rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (id.includes("katex")) return "vendor-katex";
-            if (id.includes("mermaid") || id.includes("cytoscape") || id.includes("dagre"))
-              return "vendor-mermaid";
-            if (id.includes("jspdf") || id.includes("html2canvas") || id.includes("canvg"))
-              return "vendor-pdf";
-            if (id.includes("docx")) return "vendor-docx";
-            if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
-            if (id.includes("node_modules/@sentry")) return "vendor-sentry";
-            if (id.includes("node_modules/react-dom")) return "vendor-react-dom";
-          },
+        onwarn(warning, warn) {
+          if (warning.code === "MODULE_LEVEL_DIRECTIVE" && warning.message.includes(`"use client"`))
+            return;
+          if (warning.code === "EVAL" && warning.loc?.file?.includes("jsxgraph")) return;
+          warn(warning);
         },
       },
     },
@@ -50,6 +43,14 @@ export default defineConfig({
     },
   },
   nitro: {
+    rollupConfig: {
+      onwarn(warning: any, warn: any) {
+        if (warning.code === "MODULE_LEVEL_DIRECTIVE" && warning.message.includes(`"use client"`))
+          return;
+        if (warning.code === "EVAL" && warning.loc?.file?.includes("jsxgraph")) return;
+        warn(warning);
+      },
+    },
     ...(nitroPreset
       ? {
           preset: nitroPreset,
@@ -63,5 +64,5 @@ export default defineConfig({
               : undefined,
         }
       : {}),
-  },
+  } as any,
 });

@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/client/supabase";
 import { Plus, MessageSquare, Loader2, Search, Trash2, ChevronRight, Menu } from "lucide-react";
 import { toast } from "sonner";
-import { useLayout } from "@/contexts/layout-context";
+import { useLayout } from "@/client/contexts/layout-context";
 
 export const Route = createFileRoute("/_authenticated/tutor/chats")({
   component: ChatsPage,

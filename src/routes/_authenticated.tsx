@@ -2,15 +2,15 @@ import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-
 import { useEffect, useRef, useState } from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { authenticateRequest } from "@/lib/api-auth.server";
-import { LayoutContext } from "@/contexts/layout-context";
-import { DisclaimerModal } from "@/components/DisclaimerModal";
-import { GilaniLoader } from "@/components/GilaniLoader";
-import { Breadcrumb } from "@/components/Breadcrumb";
-import { PlansModal } from "@/components/PlansModal";
-import { DeleteModal } from "@/components/tutor/DeleteModal";
-import { useAuthedShell } from "@/components/layout/hooks/useAuthedShell";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { authenticateRequest } from "@/server/api-auth.server";
+import { LayoutContext } from "@/client/contexts/layout-context";
+import { DisclaimerModal } from "@/client/components/DisclaimerModal";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
+import { Breadcrumb } from "@/client/components/Breadcrumb";
+import { PlansModal } from "@/client/components/PlansModal";
+import { DeleteModal } from "@/client/components/tutor/DeleteModal";
+import { useAuthedShell } from "@/client/components/layout/hooks/useAuthedShell";
+import { Sidebar } from "@/client/components/layout/Sidebar";
 import * as Sentry from "@sentry/react";
 
 const requireAuth = createServerFn({ method: "GET" }).handler(async () => {

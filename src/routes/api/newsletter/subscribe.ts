@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendTransactionalEmail } from "@/lib/email.server";
-import { authenticateRequest } from "@/lib/api-auth.server";
+import { supabaseAdmin } from "@/server/supabase";
+import { sendTransactionalEmail } from "@/server/email.server";
+import { authenticateRequest } from "@/server/api-auth.server";
 
 // Simple email regex — stronger than just checking for "@"
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;

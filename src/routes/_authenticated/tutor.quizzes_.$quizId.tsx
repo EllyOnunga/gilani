@@ -1,14 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { GilaniLoader } from "@/components/GilaniLoader";
+import { supabase } from "@/client/supabase";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
 import { toast } from "sonner";
 import { Flame, BookOpen, Timer as TimerIcon } from "lucide-react";
-import { TutorPageHeader } from "@/components/tutor/TutorPageHeader";
-import { QuizProgressBar } from "@/components/tutor/quiz/QuizProgressBar";
-import { QuizQuestionCard } from "@/components/tutor/quiz/QuizQuestionCard";
-import { QuizResultSummary } from "@/components/tutor/quiz/QuizResultSummary";
-import { submitQuizAttemptFn, type QuizQuestion } from "@/lib/quiz.server-fns";
+import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { QuizProgressBar } from "@/client/components/tutor/quiz/QuizProgressBar";
+import { QuizQuestionCard } from "@/client/components/tutor/quiz/QuizQuestionCard";
+import { QuizResultSummary } from "@/client/components/tutor/quiz/QuizResultSummary";
+import { submitQuizAttemptFn, type QuizQuestion } from "@/fns/quiz.server-fns";
 
 export const Route = createFileRoute("/_authenticated/tutor/quizzes_/$quizId")({
   component: QuizTakeRoute,

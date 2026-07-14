@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
-import { GilaniLoader } from "@/components/GilaniLoader";
-import { CompleteProfileForm } from "@/components/auth/CompleteProfileForm";
-import { WorkspaceLoader } from "@/components/auth/WorkspaceLoader";
+import { supabase } from "@/client/supabase";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
+import { CompleteProfileForm } from "@/client/components/auth/CompleteProfileForm";
+import { WorkspaceLoader } from "@/client/components/auth/WorkspaceLoader";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/callback")({
@@ -171,7 +171,7 @@ function AuthCallback() {
 
   const onSaveProfile = async (displayName: string, role: "student" | "teacher") => {
     try {
-      const { assignUserRole } = await import("@/lib/auth-actions.server-fns");
+      const { assignUserRole } = await import("@/fns/auth-actions.server-fns");
       await assignUserRole({
         data: {
           role,

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth.server";
+import { supabaseAdmin } from "@/server/supabase";
+import { authenticateRequest } from "@/server/api-auth.server";
 
 export const Route = createFileRoute("/api/settings/events")({
   server: {

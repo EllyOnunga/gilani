@@ -1,15 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { deleteNote, retryNote } from "@/lib/notes.server-fns";
-import { processNoteChunks } from "@/lib/notes/process-chunks-client";
-import { GilaniLoader } from "@/components/GilaniLoader";
+import { supabase } from "@/client/supabase";
+import { deleteNote, retryNote } from "@/fns/notes.server-fns";
+import { processNoteChunks } from "@/fns/notes/process-chunks-client";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
 import { UploadCloud, Search } from "lucide-react";
 import { toast } from "sonner";
-import { TutorPageHeader } from "@/components/tutor/TutorPageHeader";
-import { NoteCard, type NoteCardData } from "@/components/notes/NoteCard";
-import { NoteUploadModal } from "@/components/notes/NoteUploadModal";
-import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { friendlyError, getErrorMessage } from "@/shared/utils/async";
+import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { NoteCard, type NoteCardData } from "@/client/components/notes/NoteCard";
+import { NoteUploadModal } from "@/client/components/notes/NoteUploadModal";
+import { ConfirmDialog } from "@/client/components/shared/ConfirmDialog";
 
 export const Route = createFileRoute("/_authenticated/tutor/documents")({
   component: DocumentsRoute,
@@ -54,7 +55,7 @@ function DocumentsRoute() {
       setNotes((prev) => (append ? [...prev, ...results] : results));
       setHasMore(results.length === PAGE_SIZE);
     } catch (err: any) {
-      toast.error(err.message || "Failed to load documents");
+      toast.error(friendlyError(err, "Failed to load your documents."));
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -89,7 +90,7 @@ function DocumentsRoute() {
       setNotes((prev) => prev.filter((n) => n.id !== id));
       toast.success("Note deleted");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete note");
+      toast.error(getErrorMessage(err, "Couldn't delete this note. Please try again."));
     } finally {
       setDeletingId(null);
     }
@@ -111,7 +112,7 @@ function DocumentsRoute() {
       if (data) setNotes((prev) => prev.map((n) => (n.id === id ? (data as any) : n)));
       toast.success("Note reprocessed successfully");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Retry failed");
+      toast.error(friendlyError(err as any, "Couldn't reprocess this note. Please try again."));
       setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, status: "failed" } : n)));
     } finally {
       setRetryingId(null);

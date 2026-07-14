@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/client/hooks/use-auth";
 import {
   User,
   Sun,
@@ -12,26 +12,26 @@ import {
   Monitor,
   Keyboard,
 } from "lucide-react";
-import { useLayout } from "@/contexts/layout-context";
-import { NotificationBell } from "@/components/notifications";
-import { TutorPageHeader } from "@/components/tutor/TutorPageHeader";
+import { useLayout } from "@/client/contexts/layout-context";
+import { NotificationBell } from "@/client/components/notifications";
+import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth.server";
-import { PlansModal } from "@/components/PlansModal";
-import { useSettings } from "@/components/settings/hooks/useSettings";
-import { PresetAvatarSVG } from "@/components/settings/PresetAvatarSVG";
-import { ProfileDetailsTab } from "@/components/settings/tabs/ProfileDetailsTab";
-import { TutorPreferencesTab } from "@/components/settings/tabs/TutorPreferencesTab";
-import { DisplayThemeTab } from "@/components/settings/tabs/DisplayThemeTab";
-import { PlanUsageTab } from "@/components/settings/tabs/PlanUsageTab";
-import { ConsentSecurityTab } from "@/components/settings/tabs/ConsentSecurityTab";
-import { AccountCredentialsTab } from "@/components/settings/tabs/AccountCredentialsTab";
-import { NotificationsTab } from "@/components/settings/tabs/NotificationsTab";
-import { LanguageRegionTab } from "@/components/settings/tabs/LanguageRegionTab";
-import { AccessibilityTab } from "@/components/settings/tabs/AccessibilityTab";
-import { ShortcutsTab } from "@/components/settings/tabs/ShortcutsTab";
+import { supabaseAdmin } from "@/server/supabase";
+import { authenticateRequest } from "@/server/api-auth.server";
+import { PlansModal } from "@/client/components/PlansModal";
+import { useSettings } from "@/client/components/settings/hooks/useSettings";
+import { PresetAvatarSVG } from "@/client/components/settings/PresetAvatarSVG";
+import { ProfileDetailsTab } from "@/client/components/settings/tabs/ProfileDetailsTab";
+import { TutorPreferencesTab } from "@/client/components/settings/tabs/TutorPreferencesTab";
+import { DisplayThemeTab } from "@/client/components/settings/tabs/DisplayThemeTab";
+import { PlanUsageTab } from "@/client/components/settings/tabs/PlanUsageTab";
+import { ConsentSecurityTab } from "@/client/components/settings/tabs/ConsentSecurityTab";
+import { AccountCredentialsTab } from "@/client/components/settings/tabs/AccountCredentialsTab";
+import { NotificationsTab } from "@/client/components/settings/tabs/NotificationsTab";
+import { LanguageRegionTab } from "@/client/components/settings/tabs/LanguageRegionTab";
+import { AccessibilityTab } from "@/client/components/settings/tabs/AccessibilityTab";
+import { ShortcutsTab } from "@/client/components/settings/tabs/ShortcutsTab";
 
 const deleteAccount = createServerFn({ method: "POST" })
   .validator((data: { otp: string }) => data)
@@ -59,7 +59,7 @@ const deleteAccount = createServerFn({ method: "POST" })
 
     if (userEmail) {
       try {
-        const { sendTransactionalEmail, emailTemplate } = await import("@/lib/email.server");
+        const { sendTransactionalEmail, emailTemplate } = await import("@/server/email.server");
         await sendTransactionalEmail({
           to: userEmail,
           subject: "Your GilaniAI account has been deleted",

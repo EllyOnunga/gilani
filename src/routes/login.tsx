@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/client/supabase";
 
 function safeRedirectPath(url: string | undefined): string {
   if (!url) return "/tutor";

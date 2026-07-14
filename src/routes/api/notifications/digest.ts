@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendTransactionalEmail, weeklyDigestEmailTemplate } from "@/lib/email.server";
+import { supabaseAdmin } from "@/server/supabase";
+import { sendTransactionalEmail, weeklyDigestEmailTemplate } from "@/server/email.server";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 const APP_URL = process.env.APP_URL || "https://gilaniai.site";

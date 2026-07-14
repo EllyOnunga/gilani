@@ -9,13 +9,13 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { Toaster } from "@/client/components/ui/sonner";
+import { supabase } from "@/client/supabase";
 import { Analytics } from "@vercel/analytics/react";
 import * as Sentry from "@sentry/react";
 
 import appCss from "../styles.css?url";
-import { CookieBanner, COOKIE_CONSENT_EVENT } from "@/components/CookieBanner";
+import { CookieBanner, COOKIE_CONSENT_EVENT } from "@/client/components/CookieBanner";
 
 function ConsentGatedAnalytics() {
   const [allowed, setAllowed] = useState(false);

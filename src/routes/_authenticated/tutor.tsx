@@ -1,23 +1,23 @@
 import { createFileRoute, useNavigate, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef, useState, Suspense, lazy } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/client/supabase";
 import { AlertCircle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/client/components/ui/button";
 import { toast } from "sonner";
-import { fetchWithTimeout, getErrorMessage, withTimeout } from "@/lib/async";
-import { GilaniLoader } from "@/components/GilaniLoader";
-import { ChatInput } from "@/components/tutor/ChatInput";
-import { EmptyState } from "@/components/tutor/EmptyState";
-import { ThreadHeader } from "@/components/tutor/ThreadHeader";
-import { PomodoroTimer } from "@/components/tutor/PomodoroTimer";
+import { fetchWithTimeout, getErrorMessage, withTimeout } from "@/shared/utils/async";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
+import { ChatInput } from "@/client/components/tutor/ChatInput";
+import { EmptyState } from "@/client/components/tutor/EmptyState";
+import { ThreadHeader } from "@/client/components/tutor/ThreadHeader";
+import { PomodoroTimer } from "@/client/components/tutor/PomodoroTimer";
 const InAppCamera = lazy(() =>
-  import("@/components/tutor/InAppCamera").then((m) => ({ default: m.InAppCamera })),
+  import("@/client/components/tutor/InAppCamera").then((m) => ({ default: m.InAppCamera })),
 );
-import { useComposer } from "@/components/tutor/hooks/useComposer";
-import { useThreadsQuery } from "@/lib/hooks/useThreadsQuery";
-import { setPendingMessage } from "@/lib/pending-message";
-import { useLayout } from "@/contexts/layout-context";
-import { useAuth } from "@/hooks/use-auth";
+import { useComposer } from "@/client/components/tutor/hooks/useComposer";
+import { useThreadsQuery } from "@/client/hooks/useThreadsQuery";
+import { setPendingMessage } from "@/shared/utils/pending-message";
+import { useLayout } from "@/client/contexts/layout-context";
+import { useAuth } from "@/client/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/tutor")({
   component: TutorIndex,

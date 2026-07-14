@@ -12,8 +12,8 @@ import {
   Phone,
   Sparkles,
 } from "lucide-react";
-import { submitContactFn } from "@/lib/contact.server-fns";
-import { LegalHeader, LegalFooter } from "@/components/LegalLayout";
+import { submitContactFn } from "@/fns/contact.server-fns";
+import { LegalHeader, LegalFooter } from "@/client/components/LegalLayout";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({

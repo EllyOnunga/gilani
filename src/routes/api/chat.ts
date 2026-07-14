@@ -2,12 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
 import { streamText, embed, smoothStream, tool, stepCountIs } from "ai";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth.server";
-import { withTimeout } from "@/lib/async";
-import { buildSystemPrompt, sanitizeUntrustedInput, sanitizeCurriculum } from "@/lib/tutor-prompt";
-import { checkPlanRateLimit } from "@/lib/rate-limit.server";
-import { createGoogleAiProvider } from "@/lib/ai-gateway.server";
+import { supabaseAdmin } from "@/server/supabase";
+import { authenticateRequest } from "@/server/api-auth.server";
+import { withTimeout } from "@/shared/utils/async";
+import {
+  buildSystemPrompt,
+  sanitizeUntrustedInput,
+  sanitizeCurriculum,
+} from "@/shared/utils/tutor-prompt";
+import { checkPlanRateLimit } from "@/server/rate-limit.server";
+import { createGoogleAiProvider } from "@/server/ai-gateway.server";
 
 // ─── Profile cache (per-user, 60s TTL) ──────────────────────────────────────
 const _profileCache = new Map<
@@ -38,7 +42,7 @@ function setCachedProfile(
     tutorDepth: string;
   },
 ) {
-  _profileCache.set(userId, { data, expiresAt: Date.now() + 10_000 });
+  _profileCache.set(userId, { data, expiresAt: Date.now() + 60_000 });
 }
 
 function isRateLimitError(error: unknown): boolean {
@@ -59,13 +63,13 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async () => {
+        let authResult: { userId: string } | undefined;
         try {
           const request = getRequest();
-          let authResult;
           try {
             authResult = await authenticateRequest(request);
           } catch (err) {
-            console.error("[API Chat] Auth failed:", err);
+            console.error("[API Chat] Auth failed:", JSON.stringify({ error: String(err) }));
             if (err instanceof Response) return err;
             return new Response(JSON.stringify({ error: "Unauthorized access" }), {
               status: 401,
@@ -75,13 +79,28 @@ export const Route = createFileRoute("/api/chat")({
 
           const { userId } = authResult;
 
-          const body = await request.json().catch(() => ({}));
-          const { threadId, messages, isRetry, attachmentMeta } = body as {
-            threadId?: string;
-            messages?: any[];
-            isRetry?: boolean;
-            attachmentMeta?: { storageUrl?: string; mimeType?: string; fileName?: string };
-          };
+          const chatSchema = z.object({
+            threadId: z.string().max(200).optional(),
+            messages: z.array(z.any()).max(200).optional(),
+            isRetry: z.boolean().optional(),
+            attachmentMeta: z
+              .object({
+                storageUrl: z.string().max(1000).optional(),
+                mimeType: z.string().max(100).optional(),
+                fileName: z.string().max(255).optional(),
+              })
+              .optional(),
+          });
+
+          const rawBody = await request.json().catch(() => ({}));
+          const parseResult = chatSchema.safeParse(rawBody);
+          if (!parseResult.success) {
+            return new Response(JSON.stringify({ error: "Invalid request payload" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+          const { threadId, messages, isRetry, attachmentMeta } = parseResult.data;
 
           const rlResult = await checkPlanRateLimit(userId, "chat", !!isRetry);
           if (!rlResult.allowed) {
@@ -323,7 +342,7 @@ export const Route = createFileRoute("/api/chat")({
             tutorDepth,
           });
 
-          const cappedMessages = messages?.slice(-50) ?? [];
+          const cappedMessages = messages?.slice(-20) ?? [];
           const aiMessages = cappedMessages.map((m: any, index: number) => {
             const textContent = extractText(m);
             const isUser = m.role !== "assistant";
@@ -692,7 +711,7 @@ ${finalContent}`;
                     .select("id")
                     .single();
                   if (!escErr && escData) {
-                    import("@/lib/zapier.server")
+                    import("@/server/zapier.server")
                       .then(({ triggerZapierEscalation }) => {
                         triggerZapierEscalation({
                           escalationId: escData.id,
@@ -740,7 +759,11 @@ ${finalContent}`;
         } catch (error: unknown) {
           console.error(
             "[API Chat] Error:",
-            error instanceof Error ? error.message : String(error),
+            JSON.stringify({
+              message: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+              userId: authResult?.userId,
+            }),
           );
           return new Response(
             JSON.stringify({

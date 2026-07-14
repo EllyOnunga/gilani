@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { Logo } from "@/components/ui/logo";
+import { supabaseAdmin } from "@/server/supabase";
+import { Logo } from "@/client/components/ui/logo";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 const consumeVerifyToken = createServerFn({ method: "GET" })

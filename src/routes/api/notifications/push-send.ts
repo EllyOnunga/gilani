@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth.server";
-import { sendPushNotification } from "@/lib/push.server";
-import type { PushPayload } from "@/lib/push.server";
-import { createNotification } from "@/lib/tutor.server-fns";
+import { supabaseAdmin } from "@/server/supabase";
+import { authenticateRequest } from "@/server/api-auth.server";
+import { sendPushNotification } from "@/server/push.server";
+import type { PushPayload } from "@/server/push.server";
+import { createNotification } from "@/fns/tutor.server-fns";
 
 export const Route = createFileRoute("/api/notifications/push-send")({
   server: {

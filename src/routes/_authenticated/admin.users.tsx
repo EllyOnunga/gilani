@@ -2,10 +2,10 @@ import { useEffect, useMemo } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { supabase } from "@/integrations/supabase/client";
-import { GilaniLoader } from "@/components/GilaniLoader";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth.server";
+import { supabase } from "@/client/supabase";
+import { GilaniLoader } from "@/client/components/GilaniLoader";
+import { supabaseAdmin } from "@/server/supabase";
+import { authenticateRequest } from "@/server/api-auth.server";
 import {
   Settings,
   Loader2,
@@ -22,19 +22,19 @@ import {
   Activity,
   Menu,
 } from "lucide-react";
-import { useLayout } from "@/contexts/layout-context";
-import { NotificationBell } from "@/components/notifications";
+import { useLayout } from "@/client/contexts/layout-context";
+import { NotificationBell } from "@/client/components/notifications";
 import { z } from "zod";
-import { AdminGlobalNotes } from "@/components/admin/AdminGlobalNotes";
-import { useAdminDashboard } from "@/components/admin/hooks/useAdminDashboard";
-import { AdminUsersTab } from "@/components/admin/tabs/AdminUsersTab";
-import { AdminFeedbackTab } from "@/components/admin/tabs/AdminFeedbackTab";
-import { AdminMessagesTab } from "@/components/admin/tabs/AdminMessagesTab";
-import { AdminRateLimitsTab } from "@/components/admin/tabs/AdminRateLimitsTab";
-import { AdminEscalationsTab } from "@/components/admin/tabs/AdminEscalationsTab";
-import { AdminSubscriptionsTab } from "@/components/admin/tabs/AdminSubscriptionsTab";
-import { AdminNewsletterTab } from "@/components/admin/tabs/AdminNewsletterTab";
-import { AdminSettingsAnalyticsTab } from "@/components/admin/tabs/AdminSettingsAnalyticsTab";
+import { AdminGlobalNotes } from "@/client/components/admin/AdminGlobalNotes";
+import { useAdminDashboard } from "@/client/components/admin/hooks/useAdminDashboard";
+import { AdminUsersTab } from "@/client/components/admin/tabs/AdminUsersTab";
+import { AdminFeedbackTab } from "@/client/components/admin/tabs/AdminFeedbackTab";
+import { AdminMessagesTab } from "@/client/components/admin/tabs/AdminMessagesTab";
+import { AdminRateLimitsTab } from "@/client/components/admin/tabs/AdminRateLimitsTab";
+import { AdminEscalationsTab } from "@/client/components/admin/tabs/AdminEscalationsTab";
+import { AdminSubscriptionsTab } from "@/client/components/admin/tabs/AdminSubscriptionsTab";
+import { AdminNewsletterTab } from "@/client/components/admin/tabs/AdminNewsletterTab";
+import { AdminSettingsAnalyticsTab } from "@/client/components/admin/tabs/AdminSettingsAnalyticsTab";
 import type {
   Profile,
   Escalation,
@@ -44,7 +44,7 @@ import type {
   NewsletterSubscriber,
   RateLimitRow,
   Payment,
-} from "@/components/admin/types";
+} from "@/client/components/admin/types";
 
 // ─── Server Functions ──────────────────────────────────────────────────────────
 async function verifyAdmin(request: Request): Promise<string> {

@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getRequest } from "@tanstack/react-start/server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { authenticateRequest } from "@/lib/api-auth.server";
-import { sendTransactionalEmail } from "@/lib/email.server";
+import { supabaseAdmin } from "@/server/supabase";
+import { authenticateRequest } from "@/server/api-auth.server";
+import { sendTransactionalEmail } from "@/server/email.server";
 
 export const Route = createFileRoute("/api/newsletter/send")({
   server: {
