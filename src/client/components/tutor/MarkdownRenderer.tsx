@@ -5,11 +5,12 @@ import { ExternalLink, AlertCircle, Lightbulb, AlertTriangle, Info } from "lucid
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import "katex/contrib/mhchem/mhchem.js";
+import "katex/contrib/mhchem";
 
 import DefinitionCard from "@/client/components/cards/DefinitionCard";
 import ExampleCard from "@/client/components/cards/ExampleCard";
@@ -17,6 +18,7 @@ import WarningCard from "@/client/components/cards/WarningCard";
 import StudyTipCard from "@/client/components/cards/StudyTipCard";
 import SummaryCard from "@/client/components/cards/SummaryCard";
 import PracticeQuestionCard from "@/client/components/cards/PracticeQuestionCard";
+import { FlashCard } from "@/client/components/cards/FlashCard";
 
 import { FreeBodyDiagram, CircuitDiagram, KinematicsEquation } from "@/client/components/physics";
 import { ChemicalReaction, MolecularStructure, PeriodicTable } from "@/client/components/chemistry";
@@ -96,6 +98,7 @@ function initMermaid(isDark: boolean) {
 
 function MermaidDiagram({ code, isStreaming }: { code: string; isStreaming?: boolean }) {
   const ref = React.useRef<HTMLDivElement>(null);
+  const [errorCode, setErrorCode] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (import.meta.env.SSR || !ref.current) return;
@@ -104,16 +107,46 @@ function MermaidDiagram({ code, isStreaming }: { code: string; isStreaming?: boo
     const isDark = document.documentElement.classList.contains("dark");
     initMermaid(isDark);
 
+    // Auto-repair common AI mistakes in Mermaid code
+    let processedCode = code;
+    // 1. If everything is on a single line, try to unpack it
+    if (!processedCode.includes("\n")) {
+      processedCode = processedCode
+        .replace(/\s+(subgraph\b)/g, "\n$1")
+        .replace(/\s+(end\b)/g, "\n$1")
+        .replace(/(end\b)\s+/g, "$1\n")
+        .replace(/\]\s+([A-Za-z0-9_-]+\[)/g, "]\n$1")
+        .replace(/\]\s+([A-Za-z0-9_-]+\s*-[->.])/g, "]\n$1")
+        .replace(/([A-Za-z0-9_-]+)\s+([A-Za-z0-9_-]+\s*-[->.])/g, "$1\n$2")
+        .replace(/(subgraph[^\n]+?)\s+([A-Za-z0-9_-]+\[)/g, "$1\n$2");
+    }
+    // 2. Wrap subgraph titles with spaces in quotes (invalid in Mermaid)
+    processedCode = processedCode.replace(/subgraph\s+([^"\[\n]+)(?=\n|$)/g, (match, title) => {
+      const t = title.trim();
+      return t.includes(" ") ? `subgraph "${t}"` : match;
+    });
+
+    setErrorCode(null);
+    el.innerHTML = "";
+
     import("mermaid")
-      .then((m) => m.default.render(id, code))
+      .then((m) => m.default.render(id, processedCode))
       .then(({ svg }) => {
         if (el) el.innerHTML = svg;
       })
       .catch((err) => {
         if (!isStreaming) console.error("Mermaid render failed:", err);
-        if (el) el.textContent = code;
+        setErrorCode(processedCode);
       });
   }, [code, isStreaming]);
+
+  if (errorCode) {
+    return (
+      <div className="my-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 overflow-x-auto text-sm text-destructive whitespace-pre-wrap font-mono">
+        {errorCode}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -170,6 +203,51 @@ function DiagramSVG({ svg }: { svg: string }) {
 
 // ─── Callouts ────────────────────────────────────────────────────────────────
 
+/**
+ * Helper to recursively extract raw text from a React node.
+ */
+function extractText(node: any): string {
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node);
+  }
+  if (!node || !node.props) return "";
+  if (node.props.children) {
+    if (Array.isArray(node.props.children)) {
+      return node.props.children.map(extractText).join("");
+    }
+    return extractText(node.props.children);
+  }
+  return "";
+}
+
+/**
+ * Split React children at the first element that contains an "Answer:" / "A:" heading.
+ * Returns { questionNodes, answerNodes }.
+ */
+function splitPracticeChildren(children: React.ReactNode): {
+  questionNodes: React.ReactNode[];
+  answerNodes: React.ReactNode[];
+} {
+  const arr = React.Children.toArray(children);
+  let splitIdx = -1;
+  for (let i = 0; i < arr.length; i++) {
+    const text = extractText(arr[i]);
+    console.log(`[splitPracticeChildren] Node ${i} text:`, text);
+    if (/^\s*(Answer|A)\s*:/i.test(text)) {
+      console.log(`[splitPracticeChildren] Found answer at node ${i}`);
+      splitIdx = i;
+      break;
+    }
+  }
+  if (splitIdx === -1) {
+    return { questionNodes: arr, answerNodes: [] };
+  }
+  return {
+    questionNodes: arr.slice(0, splitIdx),
+    answerNodes: arr.slice(splitIdx),
+  };
+}
+
 function CustomCallout({ type, children }: { type: string; children: React.ReactNode }) {
   switch (type) {
     case "DEFINITION":
@@ -185,8 +263,14 @@ function CustomCallout({ type, children }: { type: string; children: React.React
     case "IMPORTANT":
     case "SUMMARY":
       return <SummaryCard>{children}</SummaryCard>;
-    case "PRACTICE":
-      return <StudyTipCard>{children}</StudyTipCard>;
+    case "PRACTICE": {
+      const { questionNodes, answerNodes } = splitPracticeChildren(children);
+      if (answerNodes.length === 0) {
+        // No answer section yet — fall back to StudyTipCard so it still looks good
+        return <StudyTipCard>{children}</StudyTipCard>;
+      }
+      return <PracticeQuestionCard question={<>{questionNodes}</>} answer={<>{answerNodes}</>} />;
+    }
     default:
       // Fallback
       return (
@@ -348,6 +432,28 @@ function preprocessLatex(raw: string): string {
 
   let s = raw;
 
+  // ── Step 0: Repair broken blockquotes ──────────────────────────────────────
+  // The AI frequently separates blockquote paragraphs with empty lines, which
+  // Markdown parses as entirely separate blockquotes. This breaks multi-line
+  // callouts (like `> [!PRACTICE]`). We join them back together securely.
+
+  // Step 0a: Ensure [!PRACTICE] always starts with a `>`
+  s = s.replace(/^\[!PRACTICE\]/gim, "> [!PRACTICE]");
+
+  // Step 0b: Scope repair to individual PRACTICE blocks (stops at the next section)
+  s = s.replace(
+    /(> \[!PRACTICE\][\s\S]*?)(?=(?:\n> \[!PRACTICE\]|\n---|(?:\n|^)🔖|(?:\n|^)##|$))/gi,
+    (practiceBlock) => {
+      return practiceBlock
+        .split("\n")
+        .map((line) => (line.startsWith(">") ? line : `> ${line}`))
+        .join("\n");
+    },
+  );
+
+  // Step 0c: Ensure consecutive PRACTICE blocks are NOT joined into a single blockquote
+  s = s.replace(/\n>\s*\n> \[!PRACTICE\]/gim, "\n\n> [!PRACTICE]");
+
   // ── Step 1: Fix control-character mangling from streaming ─────────────────
   s = s
     .replace(/[\x00-\x1F]rac/g, "\\frac")
@@ -416,10 +522,17 @@ function preprocessLatex(raw: string): string {
   s = s.replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_m, inner) => `$$\n${inner.trim()}\n$$`);
   s = s.replace(/\\\(\s*([\s\S]*?)\s*\\\)/g, (_m, inner) => `$${inner.trim()}$`);
 
-  // ── Step 6: Wrap bare LaTeX commands ─────────────────────────────────────
-  // \ce{...}
-  s = s.replace(/(^|[^a-zA-Z\\])ce\{([^}]+)\}/g, "$1\\ce{$2}");
-  s = s.replace(/\\ce\{([^}]+)\}/g, "$\\ce{$1}$");
+  // ── Step 6: \ce chemical notation (mhchem) ───────────────────────────────
+  // Normalize ALL variants the AI produces → \ce{FORMULA} → $\ce{FORMULA}$
+  // Phase A – normalise so everything becomes \ce{FORMULA}
+  //   1. bare ce{} without leading backslash: ce{H2O}
+  s = s.replace(/(^|[^a-zA-Z\\])ce\s*\{([^}]+)\}/g, "$1\\ce{$2}");
+  //   2. \ce immediately fused to formula (no space, no braces): \ceAO2 \ceH2SO4
+  s = s.replace(/\\ce([A-Z][A-Za-z0-9^_+\-]*)/g, "\\ce{$1}");
+  //   3. \ce separated by space: \ce AO2  \ce H2O
+  s = s.replace(/\\ce\s+([A-Za-z][A-Za-z0-9^_+\-]*)/g, "\\ce{$1}");
+  // Phase B – convert every \ce{...} to an inline code block `chem:...` so our custom renderer can parse it directly
+  s = s.replace(/(?<!\$)\\ce\{([^}]+)\}(?!\$)/g, "`chem:$1`");
 
   // Common maths commands
   s = s.replace(/\\xrightarrow\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g, "$\\xrightarrow{$1}$");
@@ -475,6 +588,27 @@ function preprocessLatex(raw: string): string {
 
   // Clean up stray LaTeX thin spaces outside math mode
   s = s.replace(/\\,/g, " ");
+
+  // ── Step 10: Make plain-text URLs clickable ───────────────────────────────
+  // Match bare domain-like strings (not already inside markdown links or fences)
+  s = s.replace(
+    /(?<![\[(!`]|https?:\/\/)\b((?:www\.)?[a-zA-Z0-9-]{2,}(?:\.[a-zA-Z]{2,}){1,}(?:\/[^\s,)"'<>]*)?)/g,
+    (_m, url) => {
+      // Skip if it's part of a known pattern (emails, file paths, etc.)
+      if (!url.includes(".") || url.match(/^(\d+\.)+\d+$/)) return _m;
+      // Skip single-word things that happen to have dots like e.g. version numbers
+      if (/^\d/.test(url)) return _m;
+      const href = url.startsWith("http") ? url : `https://${url}`;
+      return `[${url}](${href})`;
+    },
+  );
+
+  // ── Step 11: Ensure numbered/lettered items start on new lines ────────────
+  // AI often packs "a) First b) Second c) Third" or "1. step 2. step" inline.
+  // Split lettered sub-questions (a) b) c)) onto their own lines
+  s = s.replace(/([^\n(])\s+([a-z]\))\s+(?=[A-Z])/g, (_, pre, letter) => `${pre}\n\n   ${letter} `);
+  // Split inline numbered list items: "text 1. Step 2. Step" → "text\n1. Step\n2. Step"
+  s = s.replace(/([^\n:])[ \t]+(\d+\.\s+)(?=[A-Z])/g, (_, pre, num) => `${pre}\n${num}`);
 
   // Restore protected blocks — run repairMatrix on each math block so that
   // pmatrix / bmatrix content without \\ row separators is auto-fixed.
@@ -605,32 +739,37 @@ function renderKatex(latex: string, display: boolean): string {
 const MERMAID_PATTERN =
   /^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gantt|pie|gitGraph|journey|quadrantChart|timeline|xychart|block-beta|mindmap)\b/;
 
+// ── Practice Question contexts ──────────────────────────────────────────────
+//
+// PracticeCounterCtx: stable Map<byteOffset → questionNumber> computed once
+// from the raw HAST `node` in `ol` — no render-time mutations, Strict Mode safe.
+const PracticeCounterCtx = React.createContext<Map<number, number> | null>(null);
+//
+// InsidePracticeCardCtx: set to `true` inside a practice card so nested
+// sub-question li items (a, b, c …) are NOT converted into more cards.
+export const InsidePracticeCardCtx = React.createContext(false);
+
+// Extract plain text from a HAST node (depth-first, ignores element boundaries)
+function hastText(node: any): string {
+  if (!node) return "";
+  if (node.type === "text") return node.value ?? "";
+  return (node.children ?? []).map(hastText).join("");
+}
+
+const PRACTICE_MARKS_RE = /\(\d+\s+marks?\)/i;
+const PRACTICE_VERBS_RE =
+  /^(state|find|calculate|identify|given|show|prove|determine|explain|describe|evaluate|solve|simplify|compute|derive|sketch|draw|write|list|define|compare|differentiate|hence)/i;
+function looksLikePractice(text: string) {
+  return PRACTICE_MARKS_RE.test(text) || PRACTICE_VERBS_RE.test(text.trim());
+}
+
 const buildComponents = (isStreaming: boolean): any => ({
   h1: ({ children }: any) => (
     <h1 className="text-2xl font-bold mt-8 mb-4 text-foreground pb-2 leading-tight tracking-tight border-b border-border/50">
       {children}
     </h1>
   ),
-  // ── Math nodes produced by remarkMath ──────────────────────────────────────
-  // react-markdown v10 exposes these as element types "inlineMath" and "math"
-  inlineMath: ({ node }: any) => {
-    const latex = node?.value ?? "";
-    return (
-      <span
-        className="inline-block max-w-full overflow-x-auto align-middle"
-        dangerouslySetInnerHTML={{ __html: renderKatex(latex, false) }}
-      />
-    );
-  },
-  math: ({ node }: any) => {
-    const latex = node?.value ?? "";
-    return (
-      <div
-        className="my-5 overflow-x-auto py-1 text-center"
-        dangerouslySetInnerHTML={{ __html: renderKatex(latex, true) }}
-      />
-    );
-  },
+
   h2: ({ children }: any) => (
     <h2 className="text-xl font-bold mt-7 mb-3 text-foreground leading-snug">{children}</h2>
   ),
@@ -650,7 +789,7 @@ const buildComponents = (isStreaming: boolean): any => ({
     const { type, newChildren } = extractCallout(children);
     if (type) return <CustomCallout type={type}>{newChildren}</CustomCallout>;
     return (
-      <p className="text-[15px] sm:text-base leading-8 sm:leading-loose mb-5 last:mb-0 text-foreground/90">
+      <p className="text-[15px] sm:text-[16px] leading-relaxed sm:leading-7 mb-5 last:mb-0 text-foreground/90">
         {children}
       </p>
     );
@@ -711,29 +850,88 @@ const buildComponents = (isStreaming: boolean): any => ({
       {children}
     </ul>
   ),
-  ol: ({ children }: any) => (
-    <ol className="list-decimal pl-6 my-5 space-y-2.5 block w-full marker:text-muted-foreground marker:font-medium [&_ol]:list-[lower-alpha] [&_ol_ol]:list-[lower-roman]">
-      {children}
-    </ol>
-  ),
-  li: ({ children, checked }: any) => {
+  ol: ({ children, node }: any) => {
+    // Pre-compute which li items are practice questions and assign them stable
+    // numbers based on the HAST node's byte offset — no render-time mutations,
+    // correct in React Strict Mode (no double-increment), correct with nested lists.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const practiceNumbers = React.useMemo(() => {
+      const map = new Map<number, number>();
+      let q = 0;
+      for (const child of node?.children ?? []) {
+        if (child.tagName !== "li") continue;
+        if (looksLikePractice(hastText(child))) {
+          // Use the byte offset as a stable, unique key for this node
+          const key = child.position?.start?.offset ?? -Math.random();
+          map.set(key, ++q);
+        }
+      }
+      return map;
+    }, [node]);
+    return (
+      <PracticeCounterCtx.Provider value={practiceNumbers}>
+        <ol className="list-decimal pl-6 my-5 space-y-2.5 block w-full marker:text-muted-foreground marker:font-medium [&_ol]:list-[lower-alpha] [&_ol_ol]:list-[lower-roman]">
+          {children}
+        </ol>
+      </PracticeCounterCtx.Provider>
+    );
+  },
+  li: ({ children, checked, node }: any) => {
+    // Always call hooks at top level (Rules of Hooks)
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const practiceNumbers = React.useContext(PracticeCounterCtx);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const insidePractice = React.useContext(InsidePracticeCardCtx);
+
     // Task-list checkbox support
     if (checked !== null && checked !== undefined) {
       return (
-        <li className="flex items-start gap-3 text-[15px] sm:text-base leading-8 sm:leading-loose list-none -ml-2">
+        <li className="flex items-start gap-3 text-[15px] sm:text-[16px] leading-relaxed sm:leading-7 list-none -ml-2">
           <input
             type="checkbox"
             checked={checked}
             readOnly
-            className="mt-2 h-4 w-4 rounded border-border accent-primary flex-shrink-0 cursor-default"
+            className="mt-1.5 h-4 w-4 rounded border-border accent-primary flex-shrink-0 cursor-default"
           />
           <span>{children}</span>
         </li>
       );
     }
+
+    // Text extraction for pattern matching (React children → string)
+    const text = React.Children.toArray(children)
+      .map((c) => (typeof c === "string" ? c : ((c as any)?.props?.children ?? "")))
+      .join("");
+
+    // Quick Review Card detection — match "Front: <q> Back: <a>" pattern
+    const flashMatch = text.match(/^Front:\s*(.+?)\s+Back:\s*(.+)$/s);
+    if (flashMatch) {
+      return (
+        <li className="list-none -mx-1">
+          <FlashCard front={flashMatch[1].trim()} back={flashMatch[2].trim()} />
+        </li>
+      );
+    }
+
+    // Practice Question Card:
+    //   Only convert top-level li items (insidePractice === false).
+    //   Sub-questions (a, b, c …) inside a card set insidePractice = true
+    //   via InsidePracticeCardCtx so they never get converted.
+    if (!insidePractice && practiceNumbers && looksLikePractice(text)) {
+      const offset = node?.position?.start?.offset ?? -1;
+      const num = practiceNumbers.get(offset);
+      return (
+        <InsidePracticeCardCtx.Provider value={true}>
+          <li className="list-none -ml-6 my-2">
+            <PracticeQuestionCard number={num} question={<>{children}</>} />
+          </li>
+        </InsidePracticeCardCtx.Provider>
+      );
+    }
+
     return (
       <li
-        className="text-[15px] sm:text-base leading-8 sm:leading-loose"
+        className="text-[15px] sm:text-[16px] leading-relaxed sm:leading-7"
         style={{ display: "list-item" }}
       >
         {children}
@@ -775,44 +973,6 @@ const buildComponents = (isStreaming: boolean): any => ({
     </td>
   ),
 
-  div: ({ children, className }: any) => {
-    const classStr = className || "";
-    if (classStr.includes("math-display") || classStr.includes("math math-display")) {
-      const latex = String(children);
-      const html = katex.renderToString(latex, {
-        throwOnError: false,
-        displayMode: true,
-        macros: MATH_MACROS,
-        strict: "ignore",
-      });
-      return (
-        <section className="my-6 w-full max-w-full overflow-x-auto overflow-y-hidden py-2 text-lg">
-          <div dangerouslySetInnerHTML={{ __html: html }} />
-        </section>
-      );
-    }
-    return <div className={className}>{children}</div>;
-  },
-  span: ({ children, className }: any) => {
-    const classStr = className || "";
-    if (classStr.includes("math-inline") || classStr.includes("math math-inline")) {
-      const latex = String(children);
-      const html = katex.renderToString(latex, {
-        throwOnError: false,
-        displayMode: false,
-        macros: MATH_MACROS,
-        strict: "ignore",
-      });
-      return (
-        <span
-          className="inline-block max-w-full overflow-x-auto align-middle overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
-      );
-    }
-    return <span className={className}>{children}</span>;
-  },
-
   // ── Code blocks (react-markdown v10: no `inline` prop; use parent context) ──
   // lowercase name required by react-markdown's components map (matches the
   // <pre> tag); the hook below is called unconditionally on every invocation,
@@ -837,7 +997,7 @@ const buildComponents = (isStreaming: boolean): any => ({
       langs.some((l: string) => ["function-plot", "plot"].includes(l)) ||
       (langs.includes("graph") && !isMermaidContent);
     const isSvg = langs.some((l: string) => ["svg", "diagram"].includes(l));
-    // math/chemistry blocks are handled by rehype-katex — let them pass through
+    // math/chemistry blocks are handled by our custom code/pre components
     const isMath = langs.some((l: string) => ["math", "latex", "tex"].includes(l));
     const isChem = langs.some((l: string) => ["chemistry", "chem"].includes(l));
 
@@ -916,6 +1076,23 @@ const buildComponents = (isStreaming: boolean): any => ({
         return <StudyTipCard>{code}</StudyTipCard>;
       case "summary":
         return <SummaryCard>{code}</SummaryCard>;
+      case "practice":
+      case "question": {
+        // Split raw text at `---` or `Answer:` / `A:` line
+        const separator = /\n---\n|\n(?:Answer|A):\s*/i;
+        const parts = code.split(separator);
+        const qText = parts[0]?.trim() ?? code;
+        const aText = parts[1]?.trim() ?? "";
+        if (!aText) {
+          return <StudyTipCard>{qText}</StudyTipCard>;
+        }
+        return (
+          <PracticeQuestionCard
+            question={<span style={{ whiteSpace: "pre-wrap" }}>{qText}</span>}
+            answer={<span style={{ whiteSpace: "pre-wrap" }}>{aText}</span>}
+          />
+        );
+      }
     }
 
     if (isMath) return <MathBlock block={createBlock("math")} />;
@@ -980,6 +1157,16 @@ const buildComponents = (isStreaming: boolean): any => ({
     // Block-level code is handled by `pre`. If we end up here without a parent `pre`,
     // it's a bare inline code span.
     if (!rawLang) {
+      const text = String(children);
+      if (text.startsWith("chem:")) {
+        const formula = text.slice(5);
+        try {
+          const html = katex.renderToString(`\\ce{${formula}}`, { throwOnError: false });
+          return <span dangerouslySetInnerHTML={{ __html: html }} />;
+        } catch (e) {
+          return <span>{`\\ce{${formula}}`}</span>;
+        }
+      }
       return (
         <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px] text-primary">
           {children}
@@ -987,7 +1174,7 @@ const buildComponents = (isStreaming: boolean): any => ({
       );
     }
     // Block code inside pre — rendering handled by pre (SyntaxHighlighter takes over)
-    return null;
+    return <code className={className}>{children}</code>;
   },
 });
 
@@ -1001,6 +1188,14 @@ type Props = {
 };
 
 // ─── Canonical MarkdownRenderer ──────────────────────────────────────────────
+
+function remarkDisableIndentedCode(this: any) {
+  const data = this.data();
+  data.micromarkExtensions = data.micromarkExtensions || [];
+  data.micromarkExtensions.push({
+    disable: { null: ["codeIndented"] },
+  });
+}
 
 export const MarkdownRenderer = React.memo(function MarkdownRenderer({
   content,
@@ -1018,7 +1213,11 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
 
   return (
     <div className={`markdown-content text-foreground ${className}`}>
-      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} components={components}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkMath, remarkDisableIndentedCode]}
+        rehypePlugins={[]}
+        components={components}
+      >
         {processed}
       </ReactMarkdown>
     </div>

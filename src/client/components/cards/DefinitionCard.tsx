@@ -13,9 +13,7 @@ export default function DefinitionCard({ children }: Props) {
           Definition
         </span>
       </div>
-      <div className="p-4 text-sm text-foreground leading-relaxed prose prose-sm max-w-none">
-        {children}
-      </div>
+      <div className="p-4 text-sm text-foreground leading-relaxed">{children}</div>
     </section>
   );
 }

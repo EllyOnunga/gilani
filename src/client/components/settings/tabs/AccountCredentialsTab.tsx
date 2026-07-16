@@ -1,4 +1,4 @@
-import { Mail, Save } from "lucide-react";
+import { Mail, Save, Loader2 } from "lucide-react";
 import type { useSettings } from "@/client/components/settings/hooks/useSettings";
 
 type Props = {
@@ -38,7 +38,12 @@ export function AccountCredentialsTab({ settings, userEmail }: Props) {
           disabled={settings.emailBusy || !settings.newEmail}
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer"
         >
-          <Mail className="h-3.5 w-3.5" /> {settings.emailBusy ? "Sending…" : "Update Email"}
+          {settings.emailBusy ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Mail className="h-3.5 w-3.5" />
+          )}
+          {settings.emailBusy ? "Sending…" : "Update Email"}
         </button>
       </form>
     </section>

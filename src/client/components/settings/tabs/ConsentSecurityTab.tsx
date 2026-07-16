@@ -7,6 +7,7 @@ import {
   BarChart,
   ChevronRight,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import type { useSettings } from "@/client/components/settings/hooks/useSettings";
 
@@ -211,8 +212,12 @@ export function ConsentSecurityTab({ settings, userEmail }: Props) {
                       type="button"
                       className="inline-flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-xs font-bold uppercase tracking-wider text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors cursor-pointer"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      {settings.deleting ? "Deleting..." : "Yes, Delete Everything"}
+                      {settings.deleting ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                      {settings.deleting ? "Deleting…" : "Yes, Delete Everything"}
                     </button>
                     <button
                       onClick={settings.handleRequestReauth}
@@ -220,7 +225,10 @@ export function ConsentSecurityTab({ settings, userEmail }: Props) {
                       type="button"
                       className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent transition-colors cursor-pointer"
                     >
-                      Resend Code
+                      {settings.reauthSending ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : null}
+                      {settings.reauthSending ? "Sending…" : "Resend Code"}
                     </button>
                   </div>
                 </>

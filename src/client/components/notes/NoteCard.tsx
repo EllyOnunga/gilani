@@ -95,7 +95,7 @@ export function NoteCard({ note, onDelete, onRetry, deleting, retrying }: NoteCa
               ))}
             </div>
           )}
-          <div className="prose prose-sm max-w-none markdown-content text-foreground">
+          <div className="markdown-content text-foreground">
             <MarkdownRenderer content={note.summary || note.raw_text || ""} />
           </div>
         </div>

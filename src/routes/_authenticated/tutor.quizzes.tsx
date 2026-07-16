@@ -2,10 +2,20 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/client/supabase";
 import { GilaniLoader } from "@/client/components/GilaniLoader";
-import { PenTool, Brain, Calendar, CheckCircle2, Sparkles, X, Search, Trash2 } from "lucide-react";
+import {
+  PenTool,
+  Brain,
+  Calendar,
+  CheckCircle2,
+  Sparkles,
+  X,
+  Search,
+  Trash2,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/shared/utils/async";
-import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { AppHeader } from "@/client/components/layout/AppHeader";
 import { generateQuizFn, getQuizFormOptionsFn, deleteQuizFn } from "@/fns/quiz.server-fns";
 import { ConfirmDialog } from "@/client/components/shared/ConfirmDialog";
 
@@ -144,7 +154,7 @@ function QuizzesRoute() {
   if (loading)
     return (
       <div className="h-full flex flex-col">
-        <TutorPageHeader title="Quiz Generator" subtitle="AI-generated assessments" />
+        <AppHeader title="Quiz Generator" subtitle="AI-generated assessments" />
         <div className="flex-1 flex items-center justify-center">
           <GilaniLoader />
         </div>
@@ -153,7 +163,7 @@ function QuizzesRoute() {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <TutorPageHeader
+      <AppHeader
         title="Quiz Generator"
         subtitle={
           quizzes.length > 0
@@ -254,7 +264,10 @@ function QuizzesRoute() {
                 className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
               >
                 {generating ? (
-                  "Generating your quiz..."
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating your quiz…
+                  </>
                 ) : (
                   <>
                     <Brain className="h-4 w-4" />
@@ -326,7 +339,11 @@ function QuizzesRoute() {
                       title="Delete quiz"
                       className="shrink-0 p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {deletingId === quiz.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 );
@@ -338,7 +355,10 @@ function QuizzesRoute() {
                     disabled={loadingMore}
                     className="px-5 py-2.5 rounded-xl text-sm font-medium border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors disabled:opacity-40"
                   >
-                    {loadingMore ? "Loading…" : "Load more"}
+                    <span className="inline-flex items-center gap-2">
+                      {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {loadingMore ? "Loading…" : "Load more"}
+                    </span>
                   </button>
                 </div>
               )}

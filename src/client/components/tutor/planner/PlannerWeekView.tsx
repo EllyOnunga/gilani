@@ -118,7 +118,7 @@ export function PlannerWeekView({ items, onToggleItem, onStartFocus }: PlannerWe
                             {item.subject}
                           </p>
                           <div
-                            className={`text-[11px] leading-snug prose prose-sm max-w-none [&>p]:m-0 ${
+                            className={`text-[11px] leading-snug [&>p]:m-0 ${
                               item.completed
                                 ? "text-muted-foreground line-through"
                                 : "text-foreground"

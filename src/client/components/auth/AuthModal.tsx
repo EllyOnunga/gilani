@@ -21,25 +21,31 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<"google" | "email" | "otp" | null>(null);
   const [showProfileForm, setShowProfileForm] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
 
   const onGoogle = async () => {
-    setBusy(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/callback?next=/tutor`,
-        queryParams: {
-          access_type: "offline",
-          prompt: "select_account",
+    setLoadingProvider("google");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/callback?next=/tutor`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "select_account",
+          },
         },
-      },
-    });
-    if (error) {
-      setBusy(false);
-      return toast.error(friendlyError(error, "Google sign-in failed. Please try again."));
+      });
+      if (error) {
+        setLoadingProvider(null);
+        toast.error(friendlyError(error, "Google sign-in failed. Please try again."));
+      }
+    } catch (err) {
+      setLoadingProvider(null);
+      toast.error("An unexpected error occurred during Google sign-in.");
+      console.error(err);
     }
   };
 
@@ -66,7 +72,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
   const onEmailContinue = async (e: FormEvent) => {
     e.preventDefault();
     if (!email) return toast.error("Please enter your email address.");
-    setBusy(true);
+    setLoadingProvider("email");
     onAuthStart?.();
 
     try {
@@ -91,11 +97,11 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
         if (error) throw error;
 
         setOtpSent(true);
-        setBusy(false);
+        setLoadingProvider(null);
       }
     } catch (err) {
       onAuthComplete?.();
-      setBusy(false);
+      setLoadingProvider(null);
       toast.error(
         friendlyError(err as { message?: string }, "Failed to process login. Please try again."),
       );
@@ -105,11 +111,11 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
   const onVerifyOtp = async (e: FormEvent) => {
     e.preventDefault();
     if (!otp) return toast.error("Please enter the verification code.");
-    setBusy(true);
+    setLoadingProvider("otp");
 
     const { data, error } = await supabase.auth.verifyOtp({ email, token: otp, type: "email" });
     if (error || !data.session) {
-      setBusy(false);
+      setLoadingProvider(null);
       return toast.error(
         friendlyError(error as { message?: string }, "Invalid or expired code. Please try again."),
       );
@@ -123,7 +129,7 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
       .maybeSingle();
 
     if (!profileRow?.onboarding_completed) {
-      setBusy(false);
+      setLoadingProvider(null);
       setShowProfileForm(true);
     } else {
       setShowLoader(true);
@@ -202,10 +208,10 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
               <>
                 <button
                   onClick={onGoogle}
-                  disabled={busy}
+                  disabled={loadingProvider !== null}
                   className="w-full flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] py-3.5 text-sm font-semibold text-white hover:bg-white/[0.08] hover:border-white/15 disabled:opacity-50 transition-all duration-200 cursor-pointer"
                 >
-                  {busy ? (
+                  {loadingProvider === "google" ? (
                     <Loader2 className="h-4 w-4 animate-spin text-white/40" />
                   ) : (
                     <FcGoogle className="h-5 w-5" />
@@ -233,17 +239,18 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
                       placeholder="Email address"
                       value={email}
                       maxLength={254}
+                      disabled={loadingProvider !== null}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] pl-10 pr-4 py-3.5 text-sm text-white placeholder-white/25 focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all"
+                      className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] pl-10 pr-4 py-3.5 text-sm text-white placeholder-white/25 focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all disabled:opacity-50"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    disabled={busy}
+                    disabled={loadingProvider !== null}
                     className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C96A3D] py-3.5 text-sm font-bold text-white hover:bg-[#D9784A] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 shadow-lg shadow-[#C96A3D]/20 cursor-pointer"
                   >
-                    {busy ? (
+                    {loadingProvider === "email" ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <>
@@ -290,16 +297,21 @@ export function AuthModal({ onClose, onAuthStart, onAuthComplete }: AuthModalPro
                     placeholder="Enter 6-digit code"
                     value={otp}
                     maxLength={6}
+                    disabled={loadingProvider !== null}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                    className="w-full text-center tracking-[0.5em] rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3.5 text-lg font-mono text-white placeholder-white/25 focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all"
+                    className="w-full text-center tracking-[0.5em] rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3.5 text-lg font-mono text-white placeholder-white/25 focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all disabled:opacity-50"
                   />
                 </div>
                 <button
                   type="submit"
-                  disabled={busy || otp.length !== 6}
+                  disabled={loadingProvider !== null || otp.length !== 6}
                   className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C96A3D] py-3.5 text-sm font-bold text-white hover:bg-[#D9784A] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 shadow-lg shadow-[#C96A3D]/20 cursor-pointer mt-2"
                 >
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify Code"}
+                  {loadingProvider === "otp" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Verify Code"
+                  )}
                 </button>
                 <button
                   type="button"

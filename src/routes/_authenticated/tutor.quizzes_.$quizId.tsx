@@ -4,7 +4,7 @@ import { supabase } from "@/client/supabase";
 import { GilaniLoader } from "@/client/components/GilaniLoader";
 import { toast } from "sonner";
 import { Flame, BookOpen, Timer as TimerIcon } from "lucide-react";
-import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { AppHeader } from "@/client/components/layout/AppHeader";
 import { QuizProgressBar } from "@/client/components/tutor/quiz/QuizProgressBar";
 import { QuizQuestionCard } from "@/client/components/tutor/quiz/QuizQuestionCard";
 import { QuizResultSummary } from "@/client/components/tutor/quiz/QuizResultSummary";
@@ -127,7 +127,7 @@ function QuizTakeRoute() {
   if (loading) {
     return (
       <div className="h-full flex flex-col">
-        <TutorPageHeader title="Quiz" subtitle="Loading..." />
+        <AppHeader title="Quiz" subtitle="Loading..." />
         <div className="flex-1 flex items-center justify-center">
           <GilaniLoader />
         </div>
@@ -138,7 +138,7 @@ function QuizTakeRoute() {
   if (!activeQuestions.length) {
     return (
       <div className="h-full flex flex-col">
-        <TutorPageHeader title="Quiz" subtitle={topic} />
+        <AppHeader title="Quiz" subtitle={topic} />
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           This quiz has no questions.
         </div>
@@ -149,7 +149,7 @@ function QuizTakeRoute() {
   if (!mode) {
     return (
       <div className="h-full flex flex-col bg-background">
-        <TutorPageHeader title={topic} subtitle="Choose a mode" />
+        <AppHeader title={topic} subtitle="Choose a mode" />
         <div className="flex-1 flex items-center justify-center p-4">
           <div className="max-w-md w-full space-y-4">
             <button
@@ -185,7 +185,7 @@ function QuizTakeRoute() {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <TutorPageHeader
+      <AppHeader
         title={topic}
         subtitle={
           showResult ? "Results" : `Question ${currentIndex + 1} of ${activeQuestions.length}`

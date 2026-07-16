@@ -48,7 +48,7 @@ export function QuizQuestionCard({
           {question.difficulty}
         </span>
       </div>
-      <div className="text-xl font-bold text-foreground leading-snug prose prose-sm max-w-none [&>p]:m-0 [&>p]:text-xl [&>p]:font-bold [&>p]:text-foreground [&>p]:leading-snug">
+      <div className="text-xl font-bold text-foreground leading-snug [&>p]:m-0 [&>p]:text-xl [&>p]:font-bold [&>p]:text-foreground [&>p]:leading-snug">
         <MarkdownRenderer content={question.question} />
       </div>
       <div className="space-y-3">
@@ -74,7 +74,7 @@ export function QuizQuestionCard({
             <Lightbulb className="h-4 w-4" />
             {isCorrect ? "Correct! Here's why:" : "Not quite — here's the explanation:"}
           </div>
-          <div className="text-sm text-foreground/90 prose prose-sm max-w-none">
+          <div className="text-sm text-foreground/90">
             <MarkdownRenderer content={question.explanation} />
           </div>
         </div>

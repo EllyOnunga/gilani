@@ -1,4 +1,4 @@
-import { User, Upload, Info, Save } from "lucide-react";
+import { User, Upload, Info, Save, Loader2 } from "lucide-react";
 import type { useSettings } from "@/client/components/settings/hooks/useSettings";
 
 type Props = {
@@ -74,7 +74,12 @@ export function ProfileDetailsTab({ settings, userEmail, PresetAvatarSVG }: Prop
           onClick={settings.handleProfileSave}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary/95 disabled:opacity-50 transition-colors shadow-sm cursor-pointer w-full sm:w-auto"
         >
-          <Save className="h-4 w-4" /> {settings.busy ? "Saving..." : "Save Profile"}
+          {settings.busy ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          {settings.busy ? "Saving…" : "Save Profile"}
         </button>
       </div>
     </section>

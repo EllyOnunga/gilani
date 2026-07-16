@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useLayout } from "@/client/contexts/layout-context";
 import { NotificationBell } from "@/client/components/notifications";
-import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { AppHeader } from "@/client/components/layout/AppHeader";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/server/supabase";
@@ -103,7 +103,7 @@ function SettingsPage() {
   return (
     <>
       <div className="flex-1 overflow-y-auto">
-        <TutorPageHeader
+        <AppHeader
           title="App Settings"
           subtitle="Customize your tutor's persona, change your profile appearance, and oversee subscription parameters."
           actions={user?.id ? <NotificationBell userId={user.id} /> : null}

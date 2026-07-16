@@ -4,7 +4,7 @@ import { supabase } from "@/client/supabase";
 import { GilaniLoader } from "@/client/components/GilaniLoader";
 import { Star, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
-import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { AppHeader } from "@/client/components/layout/AppHeader";
 import { MarkdownRenderer } from "@/client/components/tutor/MarkdownRenderer";
 
 export const Route = createFileRoute("/_authenticated/tutor/saved")({
@@ -61,7 +61,7 @@ function SavedRoute() {
   if (loading)
     return (
       <div className="h-full flex flex-col">
-        <TutorPageHeader title="Saved Explanations" subtitle="Your bookmarked AI responses" />
+        <AppHeader title="Saved Explanations" subtitle="Your bookmarked AI responses" />
         <div className="flex-1 flex items-center justify-center">
           <GilaniLoader />
         </div>
@@ -70,7 +70,7 @@ function SavedRoute() {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <TutorPageHeader
+      <AppHeader
         title="Saved Explanations"
         subtitle={`${savedMessages.length} saved response${savedMessages.length !== 1 ? "s" : ""}`}
       />

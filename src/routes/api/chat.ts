@@ -134,7 +134,8 @@ export const Route = createFileRoute("/api/chat")({
 
           // ─── Use ai-gateway, with automatic multi-provider fallback ──────
           const gateway = createGoogleAiProvider();
-          const chatModel = gateway.chatModel("gemini-2.5-flash");
+          const requestedModel = request.headers.get("x-model-id") || "gemini-2.5-flash";
+          const chatModel = gateway.chatModel(requestedModel);
 
           if (!chatModel) {
             return new Response(JSON.stringify({ error: "No AI provider configured." }), {
@@ -387,21 +388,26 @@ ${finalContent}`;
             streamAbortController.abort();
           }, 25000);
 
+          // gemini-2.5-flash: dynamic thinking with streamed thoughts
+          // gemini-2.0-flash and gemini-1.5-pro: no thinkingConfig needed
+          const providerOptions = requestedModel.includes("gemini-2.5-flash")
+            ? {
+                providerOptions: {
+                  google: {
+                    thinkingConfig: { thinkingBudget: -1, includeThoughts: true },
+                  },
+                },
+              }
+            : {};
+
           const result = streamText({
             model: chatModel,
             system: systemPrompt,
             messages: aiMessages,
             maxRetries: 2,
-            temperature: 0.7,
+            temperature: 0.2,
             abortSignal: streamAbortController.signal,
-            providerOptions: {
-              google: {
-                thinkingConfig: {
-                  thinkingBudget: -1,
-                  includeThoughts: true,
-                },
-              },
-            },
+            ...providerOptions,
             tools: {
               evaluateCode: tool({
                 description:

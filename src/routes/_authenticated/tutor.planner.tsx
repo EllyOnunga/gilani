@@ -14,10 +14,11 @@ import {
   X,
   Trash2,
   Flag,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError } from "@/shared/utils/async";
-import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { AppHeader } from "@/client/components/layout/AppHeader";
 import { MarkdownRenderer } from "@/client/components/tutor/MarkdownRenderer";
 import { Calendar } from "@/client/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/client/components/ui/popover";
@@ -190,7 +191,7 @@ function PlannerRoute() {
   if (loading)
     return (
       <div className="h-full flex flex-col">
-        <TutorPageHeader title="Study Planner" subtitle="Organize your sessions and track goals" />
+        <AppHeader title="Study Planner" subtitle="Organize your sessions and track goals" />
         <div className="flex-1 flex items-center justify-center">
           <GilaniLoader />
         </div>
@@ -199,7 +200,7 @@ function PlannerRoute() {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <TutorPageHeader
+      <AppHeader
         title="Study Planner"
         subtitle={
           plans.length > 0
@@ -345,7 +346,10 @@ function PlannerRoute() {
                 className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
               >
                 {generating ? (
-                  "Building your schedule..."
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Building your schedule…
+                  </>
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4" />
@@ -424,7 +428,11 @@ function PlannerRoute() {
                       className="p-1.5 rounded-lg text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 disabled:opacity-40"
                       title="Delete plan"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {deletingId === plan.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </button>
                     {isOpen ? (
                       <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -527,7 +535,7 @@ function PlannerRoute() {
                                       )}
                                     </div>
                                     <div
-                                      className={`text-sm prose prose-sm max-w-none [&>p]:m-0 ${item.completed ? "text-muted-foreground line-through" : "text-foreground"}`}
+                                      className={`text-sm [&>p]:m-0 ${item.completed ? "text-muted-foreground line-through" : "text-foreground"}`}
                                     >
                                       <MarkdownRenderer content={item.task} />
                                     </div>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @source "../src";
 @import "tw-animate-css";
 
@@ -700,90 +701,4 @@
 .markdown-content a:hover {
   color: #7dd3fc;
   text-decoration-color: #7dd3fc;
-}
-
-/* Tables */
-.markdown-content table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-.markdown-content th {
-  background: rgba(var(--color-primary), 0.12);
-  font-weight: 700;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.625rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-.markdown-content td {
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-.markdown-content tr:last-child td {
-  border-bottom: none;
-}
-.markdown-content tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.03);
-}
-.markdown-content tr:hover td {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-/* Lists */
-.markdown-content ul {
-  list-style-type: disc;
-  padding-left: 1.4rem;
-  margin: 0.5rem 0;
-}
-.markdown-content ol {
-  list-style-type: decimal;
-  padding-left: 1.4rem;
-  margin: 0.5rem 0;
-}
-.markdown-content li {
-  margin: 0.2rem 0;
-  display: list-item;
-}
-.markdown-content li > ul,
-.markdown-content li > ol {
-  margin: 0.2rem 0 0.2rem 0.5rem;
-}
-
-/* Blockquotes */
-.markdown-content blockquote {
-  border-left: 3px solid rgba(var(--color-primary), 0.5);
-  padding: 0.4rem 0.8rem;
-  margin: 0.75rem 0;
-  color: rgba(255, 255, 255, 0.7);
-  font-style: italic;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 0 0.5rem 0.5rem 0;
-}
-
-/* Inline code */
-.markdown-content code:not(pre code) {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f472b6;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.3rem;
-}
-
-/* Horizontal rule */
-.markdown-content hr {
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin: 1rem 0;
-}
-
-/* Paragraph spacing */
-.markdown-content p {
-  margin: 0 0 0.6rem;
-}
-.markdown-content p:last-child {
-  margin-bottom: 0;
 }

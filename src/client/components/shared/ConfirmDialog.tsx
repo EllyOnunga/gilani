@@ -1,4 +1,4 @@
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 interface ConfirmDialogProps {
   title: string;
@@ -54,7 +54,10 @@ export function ConfirmDialog({
                 : "bg-primary text-primary-foreground hover:opacity-90"
             }`}
           >
-            {busy ? "Please wait…" : confirmLabel}
+            <span className="inline-flex items-center gap-2">
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+              {busy ? "Please wait…" : confirmLabel}
+            </span>
           </button>
         </div>
       </div>

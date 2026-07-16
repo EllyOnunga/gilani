@@ -59,7 +59,7 @@ export function QuizResultSummary({
                 ) : (
                   <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
                 )}
-                <div className="font-medium text-sm text-foreground prose prose-sm max-w-none [&>p]:m-0">
+                <div className="font-medium text-sm text-foreground [&>p]:m-0">
                   <MarkdownRenderer content={a.question.question} />
                 </div>
               </div>
@@ -67,13 +67,13 @@ export function QuizResultSummary({
                 <p className="text-xs text-muted-foreground pl-6">
                   Correct answer:{" "}
                   <span className="font-medium text-emerald-500">
-                    <span className="prose prose-sm max-w-none [&>p]:inline [&>p]:m-0">
+                    <span className="[&>p]:inline [&>p]:m-0">
                       <MarkdownRenderer content={a.question.options[a.question.correctIndex]} />
                     </span>
                   </span>
                 </p>
               )}
-              <div className="text-sm text-foreground/80 pl-6 prose prose-sm max-w-none [&>p]:m-0">
+              <div className="text-sm text-foreground/80 pl-6 [&>p]:m-0">
                 <MarkdownRenderer content={a.question.explanation} />
               </div>
             </div>

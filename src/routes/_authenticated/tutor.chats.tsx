@@ -4,6 +4,7 @@ import { supabase } from "@/client/supabase";
 import { Plus, MessageSquare, Loader2, Search, Trash2, ChevronRight, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { useLayout } from "@/client/contexts/layout-context";
+import { AppHeader } from "@/client/components/layout/AppHeader";
 
 export const Route = createFileRoute("/_authenticated/tutor/chats")({
   component: ChatsPage,
@@ -106,26 +107,19 @@ function ChatsPage() {
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-background sticky top-0 z-10 gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+      <AppHeader
+        title="Chats"
+        actions={
           <button
-            onClick={() => setSidebarOpen(true)}
-            className="rounded-full p-2 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors active:scale-95 lg:hidden"
-            title="Open Menu"
+            onClick={createNewThread}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-all active:scale-[0.97] flex-shrink-0"
+            title="New Chat"
           >
-            <Menu className="h-5 w-5" />
+            <Plus className="h-4 w-4" />
+            New Chat
           </button>
-          <h1 className="text-base font-semibold text-foreground truncate">Chats</h1>
-        </div>
-        <button
-          onClick={createNewThread}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:opacity-90 transition-all active:scale-[0.97] flex-shrink-0"
-          title="New Chat"
-        >
-          <Plus className="h-4 w-4" />
-          New Chat
-        </button>
-      </div>
+        }
+      />
 
       {/* Search */}
       <div className="px-4 pt-4 pb-2">

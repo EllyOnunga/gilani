@@ -13,9 +13,7 @@ export default function WarningCard({ children }: Props) {
           Common Mistake
         </span>
       </div>
-      <div className="p-4 text-sm text-foreground leading-relaxed prose prose-sm max-w-none">
-        {children}
-      </div>
+      <div className="p-4 text-sm text-foreground leading-relaxed">{children}</div>
     </section>
   );
 }

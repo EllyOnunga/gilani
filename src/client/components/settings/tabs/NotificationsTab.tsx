@@ -1,4 +1,4 @@
-import { Bell, Mail, Smartphone, RefreshCcw } from "lucide-react";
+import { Bell, Mail, Smartphone, RefreshCcw, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/client/supabase";
@@ -198,7 +198,10 @@ export function NotificationsTab({ settings }: Props) {
           disabled={busy}
           className="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-50"
         >
-          {busy ? "Saving..." : "Save Preferences"}
+          <span className="inline-flex items-center gap-2">
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+            {busy ? "Saving…" : "Save Preferences"}
+          </span>
         </button>
       </div>
     </section>

@@ -4,10 +4,10 @@ import { supabase } from "@/client/supabase";
 import { deleteNote, retryNote } from "@/fns/notes.server-fns";
 import { processNoteChunks } from "@/fns/notes/process-chunks-client";
 import { GilaniLoader } from "@/client/components/GilaniLoader";
-import { UploadCloud, Search } from "lucide-react";
+import { UploadCloud, Search, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyError, getErrorMessage } from "@/shared/utils/async";
-import { TutorPageHeader } from "@/client/components/tutor/TutorPageHeader";
+import { AppHeader } from "@/client/components/layout/AppHeader";
 import { NoteCard, type NoteCardData } from "@/client/components/notes/NoteCard";
 import { NoteUploadModal } from "@/client/components/notes/NoteUploadModal";
 import { ConfirmDialog } from "@/client/components/shared/ConfirmDialog";
@@ -122,7 +122,7 @@ function DocumentsRoute() {
   if (loading)
     return (
       <div className="h-full flex flex-col">
-        <TutorPageHeader title="My Documents" subtitle="Study materials uploaded to the AI" />
+        <AppHeader title="My Documents" subtitle="Study materials uploaded to the AI" />
         <div className="flex-1 flex items-center justify-center">
           <GilaniLoader />
         </div>
@@ -131,7 +131,7 @@ function DocumentsRoute() {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <TutorPageHeader
+      <AppHeader
         title="My Documents"
         subtitle={`${notes.length}${hasMore ? "+" : ""} document${notes.length !== 1 ? "s" : ""}`}
         actions={
@@ -201,7 +201,10 @@ function DocumentsRoute() {
                     disabled={loadingMore}
                     className="px-5 py-2.5 rounded-xl text-sm font-medium border border-border text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors disabled:opacity-40"
                   >
-                    {loadingMore ? "Loading…" : "Load more"}
+                    <span className="inline-flex items-center gap-2">
+                      {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {loadingMore ? "Loading…" : "Load more"}
+                    </span>
                   </button>
                 </div>
               )}

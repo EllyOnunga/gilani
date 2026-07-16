@@ -1,4 +1,4 @@
-import { Type, Eye, Zap, Monitor } from "lucide-react";
+import { Type, Eye, Zap, Monitor, Loader2 } from "lucide-react";
 import type { useSettings } from "@/client/components/settings/hooks/useSettings";
 
 type Props = {
@@ -100,7 +100,10 @@ export function AccessibilityTab({ settings }: Props) {
           disabled={busy}
           className="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-50"
         >
-          {busy ? "Saving..." : "Save Preferences"}
+          <span className="inline-flex items-center gap-2">
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+            {busy ? "Saving…" : "Save Preferences"}
+          </span>
         </button>
       </div>
     </section>
