@@ -1,4 +1,4 @@
-// GilaniAI Service Worker — v3.0.0
+// GilaniAI Service Worker — v3.1.0
 // Bump CACHE_NAME when you release a new version (npm version patch/minor/major)
 // Strategy:
 //  - Navigation requests (HTML pages) → always pass through to the SSR server (never intercept)
@@ -6,7 +6,7 @@
 //  - PWA files (icons, manifest) → cache-first with network fallback
 //  - Everything else → network-only (pass through)
 
-const CACHE_NAME = "gilaniai-v3.0.0";
+const CACHE_NAME = "gilaniai-v3.1.0";
 
 const STATIC_ASSETS = [
   "/favicon.png", // was /favicon.svg
