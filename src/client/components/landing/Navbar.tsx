@@ -98,8 +98,8 @@ export default function Navbar() {
           </div>
 
           <Link
-            to="/"
-            search={{ authModalOpen: true }}
+            to="/login"
+            search={{ redirect: undefined, signout: undefined }}
             className="hidden sm:inline-flex text-sm font-medium text-[rgba(255,255,255,0.75)] hover:text-white transition-colors px-3 py-2"
           >
             Sign In
@@ -108,7 +108,7 @@ export default function Navbar() {
             asChild
             className="hidden sm:inline-flex rounded-full bg-[#C96A3D] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#E28743]"
           >
-            <Link to="/" search={{ authModalOpen: true }}>
+            <Link to="/login" search={{ redirect: undefined, signout: undefined }}>
               Get Started
             </Link>
           </Button>
@@ -167,8 +167,8 @@ export default function Navbar() {
                 </div>
 
                 <Link
-                  to="/"
-                  search={{ authModalOpen: true }}
+                  to="/login"
+                  search={{ redirect: undefined, signout: undefined }}
                   onClick={() => setMobileOpen(false)}
                   className="text-center rounded-lg px-4 py-3 text-sm font-medium text-white/85 hover:bg-white/5 hover:text-white transition-colors"
                 >
@@ -179,8 +179,8 @@ export default function Navbar() {
                   className="rounded-full bg-[#C96A3D] px-5 py-3 text-sm font-medium text-white hover:bg-[#E28743]"
                 >
                   <Link
-                    to="/"
-                    search={{ authModalOpen: true }}
+                    to="/login"
+                    search={{ redirect: undefined, signout: undefined }}
                     onClick={() => setMobileOpen(false)}
                   >
                     Get Started

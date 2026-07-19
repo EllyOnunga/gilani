@@ -19,9 +19,7 @@ import {
 } from "@/client/components/landing";
 
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>): { authModalOpen?: boolean } => ({
-    authModalOpen: search.authModalOpen === "true" || search.authModalOpen === true || undefined,
-  }),
+  validateSearch: () => ({}),
   head: () => ({
     meta: [
       { title: "GilaniAI — AI Study Assistant for Students" },
@@ -33,7 +31,7 @@ export const Route = createFileRoute("/")({
       {
         name: "keywords",
         content:
-          "AI tutor, study assistant, AI tutoring Kenya, online study Kenya, AI education Africa, GilaniAI",
+          "AI tutor, study assistant, global curriculum, AI education, online study, GilaniAI",
       },
       { name: "robots", content: "index, follow" },
       { property: "og:type", content: "website" },
@@ -63,16 +61,8 @@ export const Route = createFileRoute("/")({
 function LandingPage() {
   const { user, roles, loading } = useAuth();
   const navigate = useNavigate();
-  const search = Route.useSearch();
-  // True while a brand-new sign-up is mid-flow (e.g. still needs to submit
-  // the display-name form). Supabase reports `user` as signed-in the
-  // moment setSession() runs, which is BEFORE that form is filled out —
-  // without this flag, this page would redirect away (or blank the modal
-  // via the loader below) before the user ever saw the name-capture step.
-  const [authInProgress, setAuthInProgress] = useState(false);
-
   useEffect(() => {
-    if (!loading && user && !authInProgress) {
+    if (!loading && user) {
       if (roles.includes("admin")) {
         navigate({ to: "/admin/users" as any });
       } else if (roles.includes("teacher")) {
@@ -81,26 +71,14 @@ function LandingPage() {
         navigate({ to: "/tutor" as any });
       }
     }
-  }, [user, roles, loading, authInProgress, navigate]);
+  }, [user, roles, loading, navigate]);
 
-  if (!authInProgress && user && !loading) {
+  if (user && !loading) {
     return <GilaniLoader />;
   }
 
-  const closeAuthModal = () => {
-    setAuthInProgress(false);
-    navigate({ search: { authModalOpen: undefined } as any });
-  };
-
   return (
     <main className="min-h-screen w-full bg-[#121212] text-white selection:bg-[#C96A3D] selection:text-white font-sans overflow-x-hidden">
-      {search.authModalOpen && (
-        <AuthModal
-          onClose={closeAuthModal}
-          onAuthStart={() => setAuthInProgress(true)}
-          onAuthComplete={() => setAuthInProgress(false)}
-        />
-      )}
       <Navbar />
       <Hero />
       <SocialProof />

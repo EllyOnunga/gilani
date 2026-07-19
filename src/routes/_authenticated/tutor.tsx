@@ -53,25 +53,6 @@ function TutorIndex() {
   const { threads } = useThreadsQuery(userId);
   const { sidebarOpen, setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
 
-  const ALLOWED_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
-  const DEFAULT_MODEL = "gemini-2.5-flash";
-
-  const [selectedModel, setSelectedModel] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("preferred-gemini-model");
-      if (stored && ALLOWED_MODELS.includes(stored)) return stored;
-      localStorage.removeItem("preferred-gemini-model");
-    }
-    return DEFAULT_MODEL;
-  });
-
-  const handleSetSelectedModel = (model: string) => {
-    setSelectedModel(model);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("preferred-gemini-model", model);
-    }
-  };
-
   useEffect(() => {
     const handler = (e: Event) => {
       const { minutes, seconds, running } = (e as CustomEvent).detail as any;
@@ -152,8 +133,6 @@ function TutorIndex() {
           setTimerOpen={setTimerOpen}
           handleExportPDF={() => {}}
           setEscalateModalOpen={() => {}}
-          selectedModel={selectedModel}
-          setSelectedModel={handleSetSelectedModel}
         />
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <EmptyState

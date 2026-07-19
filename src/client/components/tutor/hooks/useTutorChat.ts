@@ -47,25 +47,6 @@ export function useTutorChat({
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
   const [userVotes, setUserVotes] = useState<Record<string, 1 | -1>>({});
 
-  const ALLOWED_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
-  const DEFAULT_MODEL = "gemini-2.5-flash";
-
-  const [selectedModel, setSelectedModel] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("preferred-gemini-model");
-      if (stored && ALLOWED_MODELS.includes(stored)) return stored;
-      // Clear stale/deprecated model and fall back to default
-      localStorage.removeItem("preferred-gemini-model");
-    }
-    return DEFAULT_MODEL;
-  });
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("preferred-gemini-model", selectedModel);
-    }
-  }, [selectedModel]);
-
   const [escalationStatus, setEscalationStatus] = useState<
     "open" | "in_review" | "resolved" | null
   >(null);
@@ -176,7 +157,7 @@ export function useTutorChat({
         body: { threadId },
         headers: {
           "x-thread-id": threadId ?? "",
-          "x-model-id": selectedModel,
+          "x-model-id": "gemini-2.5-flash",
           Authorization: `Bearer ${authToken ?? ""}`,
         },
         fetch: async (input, init) => {
@@ -536,8 +517,6 @@ export function useTutorChat({
     escalating,
     escalateEmailError,
     setEscalateEmailError,
-    selectedModel,
-    setSelectedModel,
     messages,
     setMessages,
     sendMessage: (

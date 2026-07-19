@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { authenticateRequest } from "@/server/api-auth.server";
+import { supabaseAdmin } from "@/server/supabase";
 
 // Vercel Hobby's serverless functions have a hard, non-configurable 10s
 // execution limit. There's no background job/queue infrastructure in this

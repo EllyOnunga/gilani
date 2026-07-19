@@ -1,0 +1,299 @@
+import { useState, type FormEvent } from "react";
+import { useNavigate, Link } from "@tanstack/react-router";
+import { Logo } from "@/client/components/ui/logo";
+import { supabase } from "@/client/supabase";
+import { instantLogin, assignUserRole, checkEmailStatus } from "@/fns/auth-actions.server-fns";
+import { CompleteProfileForm } from "@/client/components/auth/CompleteProfileForm";
+import { WorkspaceLoader } from "@/client/components/auth/WorkspaceLoader";
+import { FcGoogle } from "react-icons/fc";
+import { toast } from "sonner";
+import { Mail, Loader2, ArrowRight } from "lucide-react";
+import { friendlyError } from "@/shared/utils/async";
+
+export function AuthForm() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<"google" | "email" | "otp" | null>(null);
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
+
+  const onGoogle = async () => {
+    setLoadingProvider("google");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/callback?next=/tutor`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "select_account",
+          },
+        },
+      });
+      if (error) {
+        setLoadingProvider(null);
+        toast.error(friendlyError(error, "Google sign-in failed. Please try again."));
+      }
+    } catch (err) {
+      setLoadingProvider(null);
+      toast.error("An unexpected error occurred during Google sign-in.");
+      console.error(err);
+    }
+  };
+
+  const routeToDestination = async () => {
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session.session?.user.id;
+    if (!userId) return navigate({ to: "/tutor" as any, search: { new: "1" } as any });
+
+    const { data: roleRow } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (roleRow?.role === "admin") {
+      navigate({ to: "/admin/users" as any });
+    } else if (roleRow?.role === "teacher") {
+      navigate({ to: "/teacher/escalations" as any });
+    } else {
+      navigate({ to: "/tutor" as any, search: { new: "1" } as any });
+    }
+  };
+
+  const onEmailContinue = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email) return toast.error("Please enter your email address.");
+    setLoadingProvider("email");
+
+    try {
+      const { isNewUser } = await checkEmailStatus({ data: { email } });
+
+      if (!isNewUser) {
+        // Returning user - bypass email verification for instant login
+        const result = await instantLogin({ data: { email } });
+        const { error } = await supabase.auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.refresh_token,
+        });
+        if (error) throw error;
+
+        setShowLoader(true);
+        await routeToDestination();
+      } else {
+        // New user - require OTP email verification
+        const { error } = await supabase.auth.signInWithOtp({ email });
+        if (error) throw error;
+
+        setOtpSent(true);
+        setLoadingProvider(null);
+      }
+    } catch (err) {
+      setLoadingProvider(null);
+      toast.error(
+        friendlyError(err as { message?: string }, "Failed to process login. Please try again."),
+      );
+    }
+  };
+
+  const onVerifyOtp = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!otp) return toast.error("Please enter the verification code.");
+    setLoadingProvider("otp");
+
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: otp, type: "email" });
+    if (error || !data.session) {
+      setLoadingProvider(null);
+      return toast.error(
+        friendlyError(error as { message?: string }, "Invalid or expired code. Please try again."),
+      );
+    }
+
+    const userId = data.session.user.id;
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!profileRow?.onboarding_completed) {
+      setLoadingProvider(null);
+      setShowProfileForm(true);
+    } else {
+      setShowLoader(true);
+      await routeToDestination();
+    }
+  };
+
+  const onSaveProfile = async (displayName: string, role: "student" | "teacher") => {
+    try {
+      await assignUserRole({ data: { role, displayName: displayName.trim() } });
+      setShowProfileForm(false);
+      setShowLoader(true);
+      setTimeout(async () => {
+        if (role === "teacher") {
+          navigate({ to: "/teacher/escalations" as any });
+        } else {
+          navigate({ to: "/tutor" as any, search: { new: "1" } as any });
+        }
+      }, 1600);
+    } catch (err) {
+      console.error("[AuthForm] Failed to save profile:", err);
+      toast.error("Something went wrong. Please try again.");
+      throw err;
+    }
+  };
+
+  if (showLoader) {
+    return <WorkspaceLoader />;
+  }
+
+  if (showProfileForm) {
+    return <CompleteProfileForm onSave={onSaveProfile} />;
+  }
+
+  return (
+    <div className="w-full max-w-[420px] mx-auto animate-in fade-in zoom-in-95 duration-300">
+      <div className="relative rounded-3xl border border-white/[0.08] bg-[#13151f]/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+        {/* Top accent bar */}
+        <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#C96A3D] to-transparent opacity-70" />
+
+        <div className="p-7 sm:p-9 space-y-5">
+          {/* Header */}
+          <div className="text-center space-y-2 pt-1">
+            <Logo to="/" size="md" className="mx-auto" />
+            <div className="space-y-1 pt-1">
+              <h1 className="font-serif text-2xl font-black text-white tracking-tight">
+                Welcome back
+              </h1>
+              <p className="text-sm text-white/40">Continue to your account.</p>
+            </div>
+          </div>
+
+          {/* Google Sign-in & Email Form */}
+          {!otpSent ? (
+            <>
+              <button
+                onClick={onGoogle}
+                disabled={loadingProvider !== null}
+                className="w-full flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.04] py-3.5 text-sm font-semibold text-white hover:bg-white/[0.08] hover:border-white/15 disabled:opacity-50 transition-all duration-200 cursor-pointer"
+              >
+                {loadingProvider === "google" ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                ) : (
+                  <FcGoogle className="h-5 w-5" />
+                )}
+                Continue with Google
+              </button>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <span className="text-[10px] font-mono uppercase tracking-widest text-white/20">
+                  or
+                </span>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+
+              {/* Email Form */}
+              <form onSubmit={onEmailContinue} className="space-y-3">
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    required
+                    placeholder="Email address"
+                    value={email}
+                    maxLength={254}
+                    disabled={loadingProvider !== null}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] pl-10 pr-4 py-3.5 text-sm text-white placeholder-white/25 focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all disabled:opacity-50"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loadingProvider !== null}
+                  className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C96A3D] py-3.5 text-sm font-bold text-white hover:bg-[#D9784A] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 shadow-lg shadow-[#C96A3D]/20 cursor-pointer"
+                >
+                  {loadingProvider === "email" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Footer */}
+              <p className="text-center text-[10px] text-white/20 leading-relaxed">
+                By continuing you agree to our{" "}
+                <Link
+                  to="/terms"
+                  className="text-white/35 hover:text-[#E28743] cursor-pointer transition-colors"
+                >
+                  Terms
+                </Link>{" "}
+                &{" "}
+                <Link
+                  to="/privacy"
+                  className="text-white/35 hover:text-[#E28743] cursor-pointer transition-colors"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </p>
+            </>
+          ) : (
+            <form onSubmit={onVerifyOtp} className="space-y-3">
+              <div className="text-sm text-white/60 text-center mb-4">
+                We sent a 6-digit code to <br />
+                <span className="font-semibold text-white/90">{email}</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  required
+                  placeholder="Enter 6-digit code"
+                  value={otp}
+                  maxLength={6}
+                  disabled={loadingProvider !== null}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  className="w-full text-center tracking-[0.5em] rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3.5 text-lg font-mono text-white placeholder-white/25 focus:border-[#C96A3D]/50 focus:outline-none focus:ring-1 focus:ring-[#C96A3D]/30 focus:bg-white/[0.06] transition-all disabled:opacity-50"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loadingProvider !== null || otp.length !== 6}
+                className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[#C96A3D] py-3.5 text-sm font-bold text-white hover:bg-[#D9784A] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 shadow-lg shadow-[#C96A3D]/20 cursor-pointer mt-2"
+              >
+                {loadingProvider === "otp" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Verify Code"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtp("");
+                }}
+                className="w-full text-xs font-semibold text-white/40 hover:text-white/80 py-2 mt-1"
+              >
+                Back to email
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

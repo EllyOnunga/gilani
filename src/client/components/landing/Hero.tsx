@@ -181,8 +181,8 @@ export default function Hero() {
 
           <div className="flex flex-wrap items-center gap-4 mt-2">
             <Link
-              to="/"
-              search={{ authModalOpen: true } as any}
+              to="/login"
+              search={{ redirect: undefined, signout: undefined }}
               className="group relative rounded-full bg-[#C96A3D] px-8 py-4 text-base font-bold text-white transition-all hover:bg-[#E28743] hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(201,106,61,0.4)] overflow-hidden"
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>

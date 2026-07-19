@@ -4,11 +4,14 @@ import { supabase } from "@/client/supabase";
 
 export type AppRole = "student" | "teacher" | "admin";
 
+export type AuthStatus = "loading" | "unauthenticated" | "needs-profile" | "authenticated";
+
 export interface AuthState {
   user: User | null;
   session: Session | null;
   roles: AppRole[];
-  loading: boolean;
+  status: AuthStatus;
+  loading: boolean; // kept for backward compatibility
 }
 
 const ROLES_CACHE_KEY = "__gilani_role";
@@ -39,7 +42,7 @@ export function useAuth(): AuthState {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<AuthStatus>("loading");
 
   // Keep refs of user/session to avoid stale closures in auth subscription callbacks
   const userRef = useRef<User | null>(null);
@@ -130,12 +133,8 @@ export function useAuth(): AuthState {
       }
     };
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, s) => {
+    const handleAuthChange = async (s: Session | null, isNewSignIn: boolean) => {
       if (!active) return;
-
-      const hasExistingUser = !!userRef.current;
 
       setSession(s);
       setUser(s?.user ?? null);
@@ -143,53 +142,62 @@ export function useAuth(): AuthState {
       userRef.current = s?.user ?? null;
 
       if (s?.user) {
-        // Prevent loading spinner (and subsequent component unmounting) if the user is already logged in
-        if (event === "SIGNED_IN" && !hasExistingUser) {
-          setLoading(true);
-        }
-        // Only treat SIGNED_IN as a fresh sign in (OAuth callback lands here)
-        const isNewSignIn = event === "SIGNED_IN";
-        checkAndAssignRole(s.user.id, isNewSignIn).then((userRoles) => {
+        try {
+          const userRoles = await checkAndAssignRole(s.user.id, isNewSignIn);
           if (active) {
             setRoles(userRoles);
-            setLoading(false);
+
+            // Check onboarding profile state to be absolutely sure
+            const { data: profileRow } = await supabase
+              .from("profiles")
+              .select("onboarding_completed")
+              .eq("id", s.user.id)
+              .maybeSingle();
+
+            if (!profileRow?.onboarding_completed) {
+              setStatus("needs-profile");
+            } else {
+              setStatus("authenticated");
+            }
           }
-        });
+        } catch {
+          if (active) setStatus("authenticated");
+        }
       } else {
-        // Clear cache on sign out
         try {
           sessionStorage.removeItem(ROLES_CACHE_KEY);
         } catch {}
-        setRoles([]);
-        setLoading(false);
+        if (active) {
+          setRoles([]);
+          setStatus("unauthenticated");
+        }
       }
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, s) => {
+      if (!active) return;
+      const hasExistingUser = !!userRef.current;
+      if (s?.user && event === "SIGNED_IN" && !hasExistingUser) {
+        setStatus("loading");
+      }
+      handleAuthChange(s, event === "SIGNED_IN");
     });
 
     supabase.auth
       .getSession()
-      .then(async ({ data }) => {
+      .then(({ data }) => {
         if (!active) return;
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
-        sessionRef.current = data.session;
-        userRef.current = data.session?.user ?? null;
-        if (data.session?.user) {
-          try {
-            // On page load, don't treat as fresh sign in
-            const userRoles = await checkAndAssignRole(data.session.user.id, false);
-            if (active) setRoles(userRoles);
-          } catch {
-            // roles fetch failed
-          } finally {
-            if (active) setLoading(false);
-          }
+        if (data.session) {
+          handleAuthChange(data.session, false);
         } else {
-          if (active) setLoading(false);
+          setStatus("unauthenticated");
         }
       })
       .catch((e) => {
         console.error("getSession error:", e);
-        if (!active) setLoading(false);
+        if (active) setStatus("unauthenticated");
       });
 
     return () => {
@@ -198,5 +206,5 @@ export function useAuth(): AuthState {
     };
   }, []);
 
-  return { user, session, roles, loading };
+  return { user, session, roles, status, loading: status === "loading" };
 }

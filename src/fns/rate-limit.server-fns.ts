@@ -4,12 +4,13 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 import { getPlanLimits } from "@/shared/plans";
+import type { RateLimitAction } from "@/server/rate-limit.server";
 
 export const getRateLimitStatus = createServerFn({ method: "POST" })
   .validator(z.string())
   .handler(async ({ data }) => {
     const { authenticateRequest } = await import("@/server/api-auth.server");
-    const { getPlanRateLimitStatus, RateLimitAction } = await import("@/server/rate-limit.server");
+    const { getPlanRateLimitStatus } = await import("@/server/rate-limit.server");
     const action = data as RateLimitAction;
     const request = getRequest();
     let authResult;

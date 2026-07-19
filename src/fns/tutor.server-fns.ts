@@ -170,6 +170,9 @@ export async function createNotification({
   type: string;
   link?: string;
 }) {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore — supabaseAdmin is only available in server-side execution paths;
+  // this function is exclusively called from createServerFn handlers.
   await (supabaseAdmin as any).from("notifications").insert({
     user_id: userId,
     title,

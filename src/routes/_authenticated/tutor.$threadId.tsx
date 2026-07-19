@@ -194,8 +194,6 @@ function TutorThreadInner({
           setTimerOpen={setTimerOpen}
           handleExportPDF={handleExportPDF}
           setEscalateModalOpen={setEscalateModalOpen}
-          selectedModel={chatState.selectedModel}
-          setSelectedModel={chatState.setSelectedModel}
         />
 
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">

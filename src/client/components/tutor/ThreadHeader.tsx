@@ -39,8 +39,6 @@ type Props = {
   setTimerOpen: (open: boolean) => void;
   handleExportPDF: () => void;
   setEscalateModalOpen: (open: boolean) => void;
-  selectedModel?: string;
-  setSelectedModel?: (model: string) => void;
 };
 
 export function ThreadHeader({
@@ -54,8 +52,6 @@ export function ThreadHeader({
   setTimerOpen,
   handleExportPDF,
   setEscalateModalOpen,
-  selectedModel,
-  setSelectedModel,
 }: Props) {
   const currentTitle = threadId ? threads.find((th) => th.id === threadId)?.title : "";
 
@@ -68,25 +64,7 @@ export function ThreadHeader({
     </div>
   ) : null;
 
-  const modelSelectorContent =
-    selectedModel && setSelectedModel ? (
-      <select
-        value={selectedModel}
-        onChange={(e) => setSelectedModel(e.target.value)}
-        className="h-7 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring"
-      >
-        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-        <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-      </select>
-    ) : null;
-
-  const combinedLeftContent = (
-    <div className="flex items-center gap-2">
-      {modelSelectorContent}
-      {timerContent}
-    </div>
-  );
+  const combinedLeftContent = <div className="flex items-center gap-2">{timerContent}</div>;
 
   const actionsContent = (
     <>

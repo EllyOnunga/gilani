@@ -11,8 +11,8 @@ export default function FinalCTA() {
           Free to start. No credit card. Works with your curriculum from day one.
         </p>
         <Link
-          to="/"
-          search={{ authModalOpen: true }}
+          to="/login"
+          search={{ redirect: undefined, signout: undefined }}
           className="rounded-full bg-white px-10 py-5 text-lg font-bold text-[#C96A3D] shadow-2xl transition-transform hover:scale-105 active:scale-95"
         >
           Join Free

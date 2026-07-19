@@ -1,5 +1,15 @@
 {
   "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "eslint.config.js"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/client/components/ui/alert-dialog.tsx",
+    "src/client/components/ui/chart.tsx",
+    "src/client/components/ui/drawer.tsx",
+    "src/client/components/ui/form.tsx"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

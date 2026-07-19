@@ -53,8 +53,8 @@ export default function Pricing() {
             </ul>
 
             <Link
-              to="/"
-              search={{ authModalOpen: true } as any}
+              to="/login"
+              search={{ redirect: undefined, signout: undefined }}
               className="relative z-10 w-full text-center rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-sm font-bold text-white transition-all hover:bg-white/10 hover:border-white/20 backdrop-blur-md"
             >
               Get Started Free
@@ -102,8 +102,8 @@ export default function Pricing() {
             </ul>
 
             <Link
-              to="/"
-              search={{ authModalOpen: true } as any}
+              to="/login"
+              search={{ redirect: undefined, signout: undefined }}
               className="relative z-10 w-full text-center rounded-2xl bg-gradient-to-r from-[#d9531e] to-[#c44819] px-6 py-4 text-sm font-bold text-white transition-all hover:scale-105 shadow-[0_0_30px_rgba(217,83,30,0.4)] group overflow-hidden"
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>

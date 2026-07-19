@@ -17,18 +17,19 @@ import {
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "How GilaniAI Works — Ethical AI Tutoring for Kenyan Students" },
+      { title: "How GilaniAI Works — Ethical AI Tutoring" },
       {
         name: "description",
         content:
           "Learn how GilaniAI combines curriculum-grounded AI, Socratic questioning, and human teacher oversight to help students across any curriculum study more effectively and ethically.",
       },
+      { property: "og:image", content: "https://gilaniai.site/og-about.png" },
+      { name: "twitter:image", content: "https://gilaniai.site/og-about.png" },
       { name: "robots", content: "index, follow" },
       { property: "og:title", content: "How GilaniAI Works — Ethical AI Tutoring" },
       {
         property: "og:description",
-        content:
-          "AI tutoring grounded in Kenyan curriculum standards with real teacher escalation built in.",
+        content: "AI tutoring across any curriculum with real teacher escalation built in.",
       },
       { property: "og:url", content: "https://gilaniai.site/about" },
     ],
@@ -109,8 +110,8 @@ function About() {
               <ArrowLeft className="h-3.5 w-3.5" /> Back to home
             </Link>
             <Link
-              to="/"
-              search={{ authModalOpen: true } as any}
+              to="/login"
+              search={{ redirect: undefined, signout: undefined }}
               className="rounded-lg bg-[#d9531e] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#c44819] transition-all shadow-lg shadow-[#d9531e]/25"
             >
               Get started
@@ -299,15 +300,15 @@ function About() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
-                to="/"
-                search={{ authModalOpen: true } as any}
+                to="/login"
+                search={{ redirect: undefined, signout: undefined }}
                 className="rounded-xl bg-white px-7 py-3 text-sm font-bold uppercase tracking-wider text-[#d9531e] hover:bg-white/90 transition-all shadow-lg hover:scale-[1.02]"
               >
                 Start for free
               </Link>
               <Link
-                to="/"
-                search={{ authModalOpen: true } as any}
+                to="/login"
+                search={{ redirect: undefined, signout: undefined }}
                 className="rounded-xl border border-white/20 bg-white/5 px-7 py-3 text-sm font-bold uppercase tracking-wider text-white hover:bg-white/10 transition-all"
               >
                 Sign in

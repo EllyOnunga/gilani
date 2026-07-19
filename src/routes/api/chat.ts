@@ -278,12 +278,32 @@ export const Route = createFileRoute("/api/chat")({
                       query_embedding: embeddingStr,
                       match_user_id: userId,
                       match_count: 5,
+                      match_threshold: 0.65,
                     }),
                     supabaseAdmin.rpc("match_global_note_chunks", {
                       query_embedding: embeddingStr,
                       match_count: 5,
+                      match_threshold: 0.65,
                     }),
                   ]);
+
+                  // ── Diagnostic logging ────────────────────────────────────────
+                  if (personalResult.status === "rejected") {
+                    console.error("[RAG] match_note_chunks RPC rejected:", personalResult.reason);
+                  } else if (personalResult.value.error) {
+                    console.error("[RAG] match_note_chunks RPC error:", personalResult.value.error);
+                  }
+                  if (globalResult.status === "rejected") {
+                    console.error(
+                      "[RAG] match_global_note_chunks RPC rejected:",
+                      globalResult.reason,
+                    );
+                  } else if (globalResult.value.error) {
+                    console.error(
+                      "[RAG] match_global_note_chunks RPC error:",
+                      globalResult.value.error,
+                    );
+                  }
 
                   const personalChunks: string[] =
                     personalResult.status === "fulfilled" && personalResult.value.data?.length
@@ -296,7 +316,7 @@ export const Route = createFileRoute("/api/chat")({
                       : [];
 
                   console.log(
-                    `[RAG] Personal: ${personalChunks.length} chunks, Global: ${globalChunks.length} chunks`,
+                    `[RAG Hit-Rate] Thread: ${thread?.title || "general"} | Personal: ${personalChunks.length}/5 | Global: ${globalChunks.length}/5`,
                   );
 
                   // ── Personal notes first, then global ─────────────────────────
@@ -335,8 +355,11 @@ export const Route = createFileRoute("/api/chat")({
           const { studentName, curriculum, tutorTone, tutorStyle, tutorDepth } = cachedProfile;
 
           // ─── Build Prompt ────────────────────────────────────────────────
+          // studentName is intentionally excluded from the system prompt so it
+          // stays identical across all users with the same profile settings.
+          // This makes Gemini's implicit prefix cache fire consistently (the
+          // system prompt is ~36k chars — well above the 1k-token threshold).
           const systemPrompt = buildSystemPrompt({
-            studentName,
             curriculum,
             tutorTone,
             tutorStyle,
@@ -344,6 +367,24 @@ export const Route = createFileRoute("/api/chat")({
           });
 
           const cappedMessages = messages?.slice(-20) ?? [];
+
+          // ── Student context preamble ─────────────────────────────────────
+          // Inject per-user context as the first user message so it sits
+          // AFTER the stable system prompt prefix (doesn't bust the cache).
+          const preambleMessages: { role: "user" | "assistant"; content: string }[] = [];
+          if (studentName) {
+            preambleMessages.push({
+              role: "user",
+              content: `[STUDENT CONTEXT — do not quote back to the user]
+Student name: ${studentName}
+Use their name occasionally to personalise the experience.`,
+            });
+            preambleMessages.push({
+              role: "assistant",
+              content: `Understood — I'll address ${studentName} by name occasionally throughout our session.`,
+            });
+          }
+
           const aiMessages = cappedMessages.map((m: any, index: number) => {
             const textContent = extractText(m);
             const isUser = m.role !== "assistant";
@@ -373,6 +414,8 @@ ${finalContent}`;
             };
           });
 
+          const finalMessages = [...preambleMessages, ...aiMessages];
+
           // ─── Stream with Gemini (auto-fallback to Groq/OpenAI/Mistral) ───
           console.log(`[API Chat] Streaming with provider: google (gemini)`);
 
@@ -389,7 +432,8 @@ ${finalContent}`;
           }, 25000);
 
           // gemini-2.5-flash: dynamic thinking with streamed thoughts
-          // gemini-2.0-flash and gemini-1.5-pro: no thinkingConfig needed
+          // cachedContent: true tells the Google provider to use implicit prefix caching
+          // (requires a stable system prompt ≥ ~1024 tokens — satisfied at ~36k chars)
           const providerOptions = requestedModel.includes("gemini-2.5-flash")
             ? {
                 providerOptions: {
@@ -403,7 +447,7 @@ ${finalContent}`;
           const result = streamText({
             model: chatModel,
             system: systemPrompt,
-            messages: aiMessages,
+            messages: finalMessages,
             maxRetries: 2,
             temperature: 0.2,
             abortSignal: streamAbortController.signal,
@@ -771,19 +815,22 @@ ${finalContent}`;
               userId: authResult?.userId,
             }),
           );
-          return new Response(
-            JSON.stringify({
-              error: isRateLimitError(error)
-                ? "AI quota exceeded. Please try again later."
-                : error instanceof Error
-                  ? error.message
-                  : "Failed to process chat request",
-            }),
-            {
-              status: isRateLimitError(error) ? 429 : 500,
-              headers: { "Content-Type": "application/json" },
+
+          const isRateLimit = isRateLimitError(error);
+          const errorMessage =
+            isRateLimit || String(error).includes("503")
+              ? "The AI tutor is temporarily busy. Please try again in a moment."
+              : "GilaniAI couldn't generate a response right now. Please try again — if this keeps happening, contact support.";
+
+          return new Response(`0:${JSON.stringify(errorMessage)}\n`, {
+            status: 200,
+            headers: {
+              "Content-Type": "text/event-stream",
+              "Cache-Control": "no-cache",
+              Connection: "keep-alive",
+              "X-Accel-Buffering": "no",
             },
-          );
+          });
         }
       },
     },

@@ -12,6 +12,8 @@ export const Route = createFileRoute("/faq")({
         content: "Frequently asked questions about GilaniAI — your AI study assistant.",
       },
       { name: "robots", content: "index, follow" },
+      { property: "og:image", content: "https://gilaniai.site/og-faq.png" },
+      { name: "twitter:image", content: "https://gilaniai.site/og-faq.png" },
     ],
     links: [{ rel: "canonical", href: "https://gilaniai.site/faq" }],
   }),

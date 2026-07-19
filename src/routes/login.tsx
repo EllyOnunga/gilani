@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/client/supabase";
+import { AuthForm } from "@/client/components/auth/AuthForm";
 
 function safeRedirectPath(url: string | undefined): string {
   if (!url) return "/tutor";
@@ -15,11 +16,10 @@ export const Route = createFileRoute("/login")({
   beforeLoad: async ({ search }) => {
     if (search.signout) {
       await supabase.auth.signOut();
-      throw redirect({ to: "/", search: { authModalOpen: true } as any });
+      throw redirect({ to: "/login" as any });
     }
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: safeRedirectPath(search.redirect) });
-    throw redirect({ to: "/", search: { authModalOpen: true } as any });
   },
   head: () => ({
     meta: [
@@ -28,9 +28,16 @@ export const Route = createFileRoute("/login")({
         name: "description",
         content: "Sign in to your GilaniAI account to access AI tutoring and teacher escalation.",
       },
-      { name: "robots", content: "noindex, nofollow" },
     ],
     links: [{ rel: "canonical", href: "https://gilaniai.site/login" }],
   }),
-  component: () => null,
+  component: LoginPage,
 });
+
+function LoginPage() {
+  return (
+    <main className="min-h-screen w-full flex items-center justify-center bg-[#121212] p-4 selection:bg-[#C96A3D] selection:text-white">
+      <AuthForm />
+    </main>
+  );
+}

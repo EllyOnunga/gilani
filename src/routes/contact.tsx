@@ -24,6 +24,8 @@ export const Route = createFileRoute("/contact")({
         content:
           "Get in touch with the GilaniAI team for support, feedback, or partnership enquiries.",
       },
+      { property: "og:image", content: "https://gilaniai.site/og-contact.png" },
+      { name: "twitter:image", content: "https://gilaniai.site/og-contact.png" },
     ],
   }),
   component: ContactPage,
