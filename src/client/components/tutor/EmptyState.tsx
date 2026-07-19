@@ -211,7 +211,7 @@ export function EmptyState({
       {/* Recent Threads */}
       {recentThreads.length > 0 && (
         <div className="w-full flex flex-col items-center mt-2">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center justify-between w-full max-w-2xl mb-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider m-0">
               Recent Chats
             </p>

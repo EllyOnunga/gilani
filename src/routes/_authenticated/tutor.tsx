@@ -18,6 +18,7 @@ import { useThreadsQuery } from "@/client/hooks/useThreadsQuery";
 import { setPendingMessage } from "@/shared/utils/pending-message";
 import { useLayout } from "@/client/contexts/layout-context";
 import { useAuth } from "@/client/hooks/use-auth";
+import { PullToRefresh } from "@/client/components/ui/PullToRefresh";
 
 export const Route = createFileRoute("/_authenticated/tutor")({
   component: TutorIndex,
@@ -50,7 +51,7 @@ function TutorIndex() {
     seconds: number;
     running: boolean;
   } | null>(null);
-  const { threads } = useThreadsQuery(userId);
+  const { threads, invalidateThreads } = useThreadsQuery(userId);
   const { sidebarOpen, setSidebarOpen, requestRenameThread, requestDeleteThread } = useLayout();
 
   useEffect(() => {
@@ -134,7 +135,14 @@ function TutorIndex() {
           handleExportPDF={() => {}}
           setEscalateModalOpen={() => {}}
         />
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <PullToRefresh
+          className="flex-1 min-h-0"
+          onRefresh={async () => {
+            invalidateThreads();
+            // small delay so the spinner is visible
+            await new Promise((r) => setTimeout(r, 600));
+          }}
+        >
           <EmptyState
             onPromptClick={composer.handlePromptClick}
             onUploadClick={() => {
@@ -148,7 +156,7 @@ function TutorIndex() {
             allThreadsPath="/tutor/chats"
             userName={session?.user?.user_metadata?.full_name ?? null}
           />
-        </div>
+        </PullToRefresh>
         <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">
           <ChatInput
             input={composer.input}

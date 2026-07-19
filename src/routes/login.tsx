@@ -1,6 +1,7 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { supabase } from "@/client/supabase";
 import { AuthForm } from "@/client/components/auth/AuthForm";
+import { ArrowLeft } from "lucide-react";
 
 function safeRedirectPath(url: string | undefined): string {
   if (!url) return "/tutor";
@@ -37,6 +38,14 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   return (
     <main className="min-h-screen w-full flex items-center justify-center bg-[#121212] p-4 selection:bg-[#C96A3D] selection:text-white">
+      <Link
+        to="/"
+        className="fixed top-4 left-4 z-10 inline-flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors"
+        aria-label="Back to home"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span className="hidden sm:inline">Back</span>
+      </Link>
       <AuthForm />
     </main>
   );

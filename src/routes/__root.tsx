@@ -329,6 +329,27 @@ function AuthInvalidator() {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [toasterPos, setToasterPos] = useState<"top-right" | "top-center">("top-right");
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let listener: any = null;
+    import("@capacitor/app")
+      .then(({ App }) => {
+        App.addListener("backButton", ({ canGoBack }) => {
+          if (canGoBack) {
+            router.history.back();
+          } else {
+            App.exitApp();
+          }
+        }).then((l) => (listener = l));
+      })
+      .catch((err) => console.log("Capacitor App plugin not available", err));
+
+    return () => {
+      if (listener) listener.remove();
+    };
+  }, [router.history]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
