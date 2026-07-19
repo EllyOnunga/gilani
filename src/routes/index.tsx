@@ -12,7 +12,6 @@ import {
   HowItWorks,
   DemoSection,
   Testimonials,
-  Pricing,
   FAQ,
   FinalCTA,
   Footer,
@@ -86,7 +85,6 @@ function LandingPage() {
       <HowItWorks />
       <DemoSection />
       <Testimonials />
-      <Pricing />
       <FAQ />
       <FinalCTA />
       <Footer />

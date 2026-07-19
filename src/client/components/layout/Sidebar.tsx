@@ -126,10 +126,16 @@ export function Sidebar({ shell }: Props) {
   // Right panel is shown for students only when sidebar is not collapsed
   const hasPanel = !isTeacher && !isAdmin && !collapsed;
 
-  const renderUserMenu = () => (
+  const renderUserMenu = (isCompact = false) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-3 lg:justify-center lg:w-9 lg:h-9 w-full rounded-xl lg:rounded-full overflow-hidden border border-transparent hover:border-border lg:border-border bg-transparent lg:bg-background/50 hover:bg-muted/40 transition-all cursor-pointer outline-none p-2 lg:p-0 text-left">
+        <button
+          className={`flex items-center gap-3 transition-all cursor-pointer outline-none text-left ${
+            isCompact
+              ? "justify-center w-9 h-9 rounded-full overflow-hidden border border-transparent hover:border-border lg:border-border bg-transparent lg:bg-background/50 hover:bg-muted/40"
+              : "w-full rounded-xl overflow-hidden border border-transparent hover:border-border bg-transparent lg:bg-background/50 hover:bg-muted/40 p-2"
+          }`}
+        >
           <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-border bg-background/50 shadow-inner">
             {avatarUrl ? (
               avatarUrl.startsWith("preset:") ? (
@@ -143,17 +149,23 @@ export function Sidebar({ shell }: Props) {
               </span>
             )}
           </div>
-          <div className="lg:hidden flex flex-col min-w-0">
-            <p className="text-sm font-semibold truncate text-foreground leading-tight">
-              {profileName || user?.email?.split("@")[0]}
-            </p>
-            <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary mt-0.5">
-              {currentPlan} PLAN
-            </p>
-          </div>
+          {!isCompact && (
+            <div className="flex flex-col min-w-0">
+              <p className="text-sm font-semibold truncate text-foreground leading-tight">
+                {profileName || user?.email?.split("@")[0]}
+              </p>
+              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary mt-0.5">
+                {currentPlan} PLAN
+              </p>
+            </div>
+          )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="right" align="end" className="w-64 p-2 shadow-lg rounded-xl">
+      <DropdownMenuContent
+        side={isCompact ? "right" : "top"}
+        align={isCompact ? "end" : "start"}
+        className="w-64 p-2 shadow-lg rounded-xl"
+      >
         <DropdownMenuLabel className="px-4 py-2">
           <p className="text-sm font-semibold truncate">
             {profileName || user?.email?.split("@")[0]}
@@ -380,7 +392,7 @@ export function Sidebar({ shell }: Props) {
                 <TooltipContent side="right">{collapsed ? "Expand" : "Collapse"}</TooltipContent>
               </Tooltip>
 
-              <div className="mb-1">{renderUserMenu()}</div>
+              {!hasPanel && <div className="mb-1">{renderUserMenu(true)}</div>}
             </div>
           </TooltipProvider>
         </div>
@@ -560,25 +572,24 @@ export function Sidebar({ shell }: Props) {
               )}
             </div>
 
-            {/* Mobile-only User profile */}
-            <div className="lg:hidden flex-shrink-0 border-t border-border/30 px-3 py-2 bg-sidebar">
-              {renderUserMenu()}
-            </div>
+            {/* Bottom section: User profile & Upgrade */}
+            <div className="flex-shrink-0 border-t border-border/30 p-3 bg-sidebar lg:bg-transparent flex flex-row items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">{renderUserMenu(false)}</div>
 
-            {/* Upgrade banner (non-pro only) */}
-            {currentPlan !== "pro" && (
-              <div className="flex-shrink-0 px-3 py-3 border-t border-border/30">
-                <button
-                  onClick={() => {
-                    setSidebarOpen(false);
-                    setShowPlans(true);
-                  }}
-                  className="w-full flex items-center justify-center rounded-lg bg-[#d9531e] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white hover:bg-[#c44819] transition-colors shadow-sm cursor-pointer"
-                >
-                  Upgrade to Pro
-                </button>
-              </div>
-            )}
+              {currentPlan !== "pro" && (
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      setSidebarOpen(false);
+                      setShowPlans(true);
+                    }}
+                    className="flex items-center justify-center rounded-lg bg-[#d9531e] px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-white hover:bg-[#c44819] transition-colors shadow-sm cursor-pointer"
+                  >
+                    Upgrade
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </aside>
