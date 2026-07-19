@@ -334,17 +334,23 @@ function RootComponent() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     let listener: any = null;
-    import("@capacitor/app")
-      .then(({ App }) => {
-        App.addListener("backButton", ({ canGoBack }) => {
-          if (canGoBack) {
-            router.history.back();
-          } else {
-            App.exitApp();
-          }
-        }).then((l) => (listener = l));
-      })
-      .catch((err) => console.log("Capacitor App plugin not available", err));
+
+    // Only register the hardware back button listener inside a native Capacitor app
+    import("@capacitor/core").then(({ Capacitor }) => {
+      if (!Capacitor.isNativePlatform()) return;
+
+      import("@capacitor/app")
+        .then(({ App }) => {
+          App.addListener("backButton", ({ canGoBack }) => {
+            if (canGoBack) {
+              router.history.back();
+            } else {
+              App.exitApp();
+            }
+          }).then((l) => (listener = l));
+        })
+        .catch((err) => console.log("Capacitor App plugin not available", err));
+    });
 
     return () => {
       if (listener) listener.remove();
