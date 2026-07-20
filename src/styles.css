@@ -702,3 +702,18 @@
   color: #7dd3fc;
   text-decoration-color: #7dd3fc;
 }
+
+/* ── Accessibility Modes ─────────────────────────────────────────── */
+.reduce-motion * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.high-contrast {
+  --border: hsl(24 20% 10% / 0.5);
+  --muted-foreground: hsl(24 10% 10%);
+}
+.dark.high-contrast {
+  --border: rgba(255, 255, 255, 0.4);
+  --muted-foreground: rgba(255, 255, 255, 0.9);
+}

@@ -169,7 +169,6 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
           <div className="flex items-center gap-1">
             <button
               onClick={() => {
-                onClose();
                 if (onOpenSidebar) onOpenSidebar();
               }}
               className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
@@ -188,12 +187,17 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
         </header>
 
         {/* Layout: Sidebar + Content */}
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        <div className="flex flex-row flex-1 overflow-hidden">
           {/* Sidebar */}
-          <div className="md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border bg-sidebar/50 flex flex-col">
+          <div className="w-[140px] sm:w-[180px] md:w-64 flex-shrink-0 border-r border-border bg-sidebar/50 flex flex-col">
             {/* Desktop Header area */}
             <div className="hidden md:flex items-center justify-between p-5 border-b border-border/40">
-              <h2 className="font-serif text-lg font-bold text-foreground">Settings</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-serif text-lg font-bold text-foreground">Settings</h2>
+                {settings.busy && (
+                  <span className="text-[10px] text-muted-foreground animate-pulse">saving…</span>
+                )}
+              </div>
               <button
                 onClick={onClose}
                 className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
@@ -203,7 +207,7 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
             </div>
 
             {/* Tab navigation */}
-            <nav className="flex-1 overflow-y-auto p-2 md:p-3 flex flex-row md:flex-col gap-1 overflow-x-auto scrollbar-none">
+            <nav className="flex-1 overflow-y-auto p-2 md:p-3 flex flex-col gap-1 overflow-x-hidden scrollbar-none">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
                 const isSelected = settings.activeTab === tab.id;
@@ -211,14 +215,14 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
                   <button
                     key={tab.id}
                     onClick={() => settings.setActiveTab(tab.id as any)}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all duration-200 whitespace-nowrap md:whitespace-normal group ${
+                    className={`flex items-center gap-2 md:gap-3 rounded-lg px-2 py-2 md:px-3 md:py-2.5 text-left transition-all duration-200 whitespace-normal group ${
                       isSelected
                         ? "bg-muted text-foreground shadow-sm"
                         : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                     }`}
                   >
                     <Icon className={`h-4 w-4 flex-shrink-0 ${isSelected ? "text-primary" : ""}`} />
-                    <span className="text-sm font-medium">{tab.label}</span>
+                    <span className="text-xs md:text-sm font-medium">{tab.label}</span>
                   </button>
                 );
               })}

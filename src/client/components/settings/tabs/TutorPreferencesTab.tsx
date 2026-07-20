@@ -213,21 +213,6 @@ export function TutorPreferencesTab({ settings }: Props) {
           </label>
         </div>
       </div>
-
-      <div className="flex items-center justify-end border-t border-border/50 pt-4 mt-2">
-        <button
-          onClick={settings.handleProfileSave}
-          disabled={settings.busy}
-          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-50 inline-flex items-center gap-2"
-        >
-          {settings.busy ? (
-            <span className="h-4 w-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          {settings.busy ? "Saving..." : "Save Preferences"}
-        </button>
-      </div>
     </section>
   );
 }

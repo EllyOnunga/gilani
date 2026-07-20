@@ -21,6 +21,7 @@ type SettingsServerFns = {
 
 export function useSettings(user: any, serverFns: SettingsServerFns) {
   const [activeTab, setActiveTab] = useState<TabType>("profile");
+  const [initialLoaded, setInitialLoaded] = useState(false);
 
   // Profile Details
   const [displayName, setDisplayName] = useState("");
@@ -123,6 +124,7 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
               }
             }
           }
+          setInitialLoaded(true);
         }
       } catch (err) {
         console.error("Failed to load user profile:", err);
@@ -154,6 +156,27 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
     }
   }, [user?.id]);
 
+  // ─── Accessibility CSS Hookup ────────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // High Contrast
+    document.documentElement.classList.toggle("high-contrast", !!preferences.highContrast);
+
+    // Reduce Motion
+    document.documentElement.classList.toggle("reduce-motion", !!preferences.reduceMotion);
+
+    // Font Size
+    document.documentElement.classList.remove("text-sm", "text-base", "text-lg");
+    if (preferences.fontSize === "compact") {
+      document.documentElement.classList.add("text-sm");
+    } else if (preferences.fontSize === "large") {
+      document.documentElement.classList.add("text-lg");
+    } else {
+      document.documentElement.classList.add("text-base");
+    }
+  }, [preferences.highContrast, preferences.reduceMotion, preferences.fontSize]);
+
   // ─── Analytics ────────────────────────────────────────────────────────────────
   const fireSettingsEvent = useCallback(
     (action: string, payload?: Record<string, any>) => {
@@ -183,7 +206,7 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
   );
 
   // ─── Actions ─────────────────────────────────────────────────────────────────
-  const handleProfileSave = async (e?: React.FormEvent) => {
+  const handleProfileSave = async (e?: React.FormEvent, quiet = false) => {
     if (e) e.preventDefault();
     if (!user?.id) return;
 
@@ -246,14 +269,32 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
         preferencesKeys: Object.keys(preferences),
       });
 
-      toast.success("Settings saved successfully! ✨");
+      if (!quiet) toast.success("Settings saved successfully! ✨");
       window.dispatchEvent(new CustomEvent("custom:profile-updated"));
     } catch (err: any) {
-      toast.error(friendlyError(err, "Failed to update profile settings."));
+      if (!quiet) toast.error(friendlyError(err, "Failed to update profile settings."));
     } finally {
       setBusy(false);
     }
   };
+
+  // ─── Auto-Save Effect ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!initialLoaded) return;
+    const timer = setTimeout(() => {
+      handleProfileSave(undefined, true);
+    }, 750);
+    return () => clearTimeout(timer);
+  }, [
+    initialLoaded,
+    tutorTone,
+    tutorStyle,
+    tutorDepth,
+    preferences,
+    disclaimerAccepted,
+    cookieConsent,
+    analyticsConsent,
+  ]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
