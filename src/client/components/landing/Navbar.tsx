@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { PanelRight } from "lucide-react";
 import { Logo } from "@/client/components/ui/logo";
+import { Button } from "@/client/components/ui/button";
 
 const NAV_LINKS = [
   { href: "#features", label: "Features" },
