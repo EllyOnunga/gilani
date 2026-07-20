@@ -210,18 +210,18 @@ export function Sidebar({ shell }: Props) {
 
   return (
     <>
-      {/* ── Sidebar Shell ── */}
+      {/* ── Sidebar Shell (desktop only) ── */}
       <aside
         className={`
+          hidden lg:flex
           fixed inset-y-0 left-0 z-50
-          flex flex-col lg:flex-row
+          flex-col lg:flex-row
           border-r border-border/50
           bg-sidebar/95 backdrop-blur-xl
           shadow-xl lg:shadow-[4px_0_24px_-4px_rgba(0,0,0,0.05)]
           overflow-hidden
           transition-[transform,width] duration-300 ease-in-out
           lg:translate-x-0 lg:static lg:h-screen
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           ${collapsed ? "w-14" : "w-[340px]"}
         `}
       >
@@ -648,6 +648,60 @@ export function Sidebar({ shell }: Props) {
         onClose={() => setSettingsOpen(false)}
         onOpenSidebar={() => setSidebarOpen(true)}
       />
+      {/* ── Mobile bottom tab bar (mobile only) ── */}
+      {!isTeacher && !isAdmin && (
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-border/40 bg-sidebar/90 backdrop-blur-xl pb-safe">
+          {STUDENT_NAV.map((item) => {
+            const active = isNavActive(path, item.to, "exact" in item ? item.exact : undefined);
+            return (
+              <Link
+                key={item.label}
+                to={item.to as any}
+                className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 min-w-[48px] transition-colors ${
+                  active ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                <item.icon className={`h-5 w-5 ${active ? "text-primary" : ""}`} />
+                <span
+                  className={`text-[10px] font-medium leading-none ${active ? "text-primary" : ""}`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+
+      {isTeacher && (
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-border/40 bg-sidebar/90 backdrop-blur-xl pb-safe">
+          <Link
+            to="/teacher/escalations"
+            className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 min-w-[48px] transition-colors ${
+              path.startsWith("/teacher/escalations") ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            <ShieldAlert
+              className={`h-5 w-5 ${path.startsWith("/teacher/escalations") ? "text-primary" : ""}`}
+            />
+            <span className="text-[10px] font-medium leading-none">Escalations</span>
+          </Link>
+        </nav>
+      )}
+
+      {isAdmin && (
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-border/40 bg-sidebar/90 backdrop-blur-xl pb-safe">
+          <Link
+            to="/admin/users"
+            className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 min-w-[48px] transition-colors ${
+              path.startsWith("/admin") ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            <Users className={`h-5 w-5 ${path.startsWith("/admin") ? "text-primary" : ""}`} />
+            <span className="text-[10px] font-medium leading-none">Dashboard</span>
+          </Link>
+        </nav>
+      )}
     </>
   );
 }
