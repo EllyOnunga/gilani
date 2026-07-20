@@ -6,7 +6,6 @@ import { authenticateRequest } from "@/server/api-auth.server";
 import { LayoutContext } from "@/client/contexts/layout-context";
 import { DisclaimerModal } from "@/client/components/DisclaimerModal";
 import { GilaniLoader } from "@/client/components/GilaniLoader";
-import { Breadcrumb } from "@/client/components/Breadcrumb";
 import { PlansModal } from "@/client/components/PlansModal";
 import { DeleteModal } from "@/client/components/tutor/DeleteModal";
 import { useAuthedShell } from "@/client/components/layout/hooks/useAuthedShell";
@@ -110,7 +109,6 @@ function AuthedShell() {
       <main
         className={`flex-1 min-w-0 min-h-0 flex flex-col overflow-x-hidden pb-16 lg:pb-0 ${shell.path.startsWith("/tutor") ? "overflow-hidden h-full" : "overflow-y-auto scroll-smooth"}`}
       >
-        {!shell.path.startsWith("/tutor") && <Breadcrumb />}
         <div className="w-full flex-1 flex flex-col min-h-0">
           <LayoutContext.Provider
             value={{

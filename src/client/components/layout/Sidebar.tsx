@@ -595,8 +595,8 @@ export function Sidebar({ shell }: Props) {
 
         {/* Mobile-only user menu for teacher/admin (no right panel exists to hold it) */}
         {(isTeacher || isAdmin) && (
-          <div className="lg:hidden flex-shrink-0 border-t border-border/30 p-3 bg-sidebar">
-            {renderUserMenu(false)}
+          <div className="lg:hidden mt-auto flex-shrink-0 border-t border-border/30 p-3 bg-sidebar flex flex-row items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">{renderUserMenu(false)}</div>
           </div>
         )}
       </aside>

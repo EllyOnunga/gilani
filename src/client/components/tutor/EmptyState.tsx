@@ -12,11 +12,58 @@ import {
 import { useRateLimitCountdown, formatTime } from "./ChatInput";
 
 const SUBJECTS = [
-  { icon: "✅", label: "Homework Help", prompt: "Check my homework answers before I submit" },
-  { icon: "📐", label: "Math", prompt: "Help me solve a maths problem step by step" },
-  { icon: "💻", label: "Coding", prompt: "Teach me the basics of programming with examples" },
-  { icon: "✍️", label: "Essays", prompt: "Help me structure and write an essay" },
+  { label: "Homework", prompt: "Check my homework answers before I submit" },
+  { label: "Code", prompt: "Teach me the basics of programming with examples" },
+  { label: "Maths", prompt: "Help me solve a maths problem step by step" },
+  { label: "Essays", prompt: "Help me structure and write an essay" },
 ];
+
+const MORNING_TEMPLATES = [
+  "Good Morning{name}! What do you want to learn today?",
+  "Good Morning{name}! Ready to get started?",
+  "Rise and shine{name}! Let's learn something new today.",
+];
+const AFTERNOON_TEMPLATES = [
+  "Good Afternoon{name}! What's up today?",
+  "Good Afternoon{name}! Ready to keep learning?",
+  "Good Afternoon{name}! What do you want to explore today?",
+];
+const EVENING_TEMPLATES = [
+  "Good Evening{name}! What's up today?",
+  "Good Evening{name}! Let's make progress before the day ends.",
+  "Good Evening{name}! What would you like to study tonight?",
+];
+const MONDAY_TEMPLATES = [
+  "Happy New Week{name}! Your study awaits.",
+  "Happy New Week{name}! Let's make this week count.",
+  "It's a brand new week{name}. Ready to dive in?",
+];
+const FRIDAY_TEMPLATES = [
+  "Happy Friday{name}! What's up today?",
+  "Happy Friday{name}! Let's finish the week strong.",
+  "It's Friday{name}! What do you want to learn today?",
+];
+
+function getGreeting(userName?: string | null): string {
+  const firstName = userName ? userName.split(" ")[0] : "";
+  const nameToken = firstName ? `, ${firstName}` : "";
+
+  const now = new Date();
+  const hour = now.getHours();
+  const day = now.getDay(); // 0 = Sunday ... 1 = Monday ... 5 = Friday
+
+  const timeTemplates =
+    hour < 12 ? MORNING_TEMPLATES : hour < 17 ? AFTERNOON_TEMPLATES : EVENING_TEMPLATES;
+
+  const pool = [
+    ...timeTemplates,
+    ...(day === 1 ? MONDAY_TEMPLATES : []),
+    ...(day === 5 ? FRIDAY_TEMPLATES : []),
+  ];
+
+  const template = pool[Math.floor(Math.random() * pool.length)];
+  return template.replace("{name}", nameToken);
+}
 
 type Props = {
   onPromptClick: (prompt: string) => void;
@@ -62,6 +109,9 @@ export function EmptyState({
     messagesUsed < (messagesMax ?? 999_999) &&
     !isRateLimited;
   const remaining = Math.max(0, (messagesMax ?? 0) - messagesUsed);
+
+  // Recomputed on every mount, so it changes each time the user visits the empty state
+  const greeting = useMemo(() => getGreeting(userName), []);
 
   return (
     <div className="flex flex-col items-center justify-start min-h-[60vh] pt-6 md:pt-12 px-4 sm:px-6 gap-6 md:gap-8 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500 pb-12">
@@ -179,31 +229,20 @@ export function EmptyState({
 
       {/* Welcome Section */}
       <div className="flex flex-col items-center text-center space-y-1">
-        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-start mb-2">
-          <span className="text-2xl">🤖</span>
-        </div>
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
-          {userName
-            ? `How can I help you today, ${userName.split(" ")[0]}?`
-            : "How can I help you today?"}
+          {greeting}
         </h1>
       </div>
 
-      {/* Subject Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
-        {SUBJECTS.map((subject, index) => (
+      {/* Prompt Pills */}
+      <div className="flex flex-row flex-wrap items-center justify-center gap-2 w-full">
+        {SUBJECTS.map((subject) => (
           <button
             key={subject.label}
             onClick={() => onPromptClick(subject.prompt)}
-            className="flex flex-col items-start gap-2 bg-card border border-border/60 rounded-2xl p-4 hover:border-primary/40 hover:bg-muted/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition-all text-left group"
-            style={{ animationDelay: `${index * 50}ms` }}
+            className="rounded-full border border-border/60 bg-transparent px-4 py-2 text-sm font-medium text-foreground/80 hover:border-primary/40 hover:text-foreground hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition-all"
           >
-            <div className="text-xl opacity-80 group-hover:opacity-100 transition-opacity">
-              {subject.icon}
-            </div>
-            <span className="text-sm font-semibold text-foreground/90 group-hover:text-foreground">
-              {subject.label}
-            </span>
+            {subject.label}
           </button>
         ))}
       </div>
