@@ -68,23 +68,23 @@ export default function Navbar() {
             </button>
 
             {mobileOpen && (
-              <div className="absolute right-0 top-full mt-2 z-50 flex flex-col min-w-[140px]">
+              <div className="absolute right-0 top-full mt-3 z-50 flex flex-col min-w-[160px] bg-[#161210]/95 backdrop-blur-xl border border-white/10 rounded-xl p-2 shadow-2xl gap-1">
                 {NAV_LINKS.map((link) => (
                   <a
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className="px-3 py-2 text-sm font-medium text-white/75 hover:text-white transition-colors text-right"
+                    className="px-3 py-2.5 rounded-lg bg-white/5 text-sm font-medium text-white/85 hover:bg-white/10 hover:text-white transition-colors text-left"
                   >
                     {link.label}
                   </a>
                 ))}
-                <div className="mt-1 border-t border-white/10 pt-1">
+                <div className="mt-1 flex flex-col gap-1 border-t border-white/10 pt-2">
                   <Link
                     to="/login"
                     search={{ redirect: undefined, signout: undefined }}
                     onClick={() => setMobileOpen(false)}
-                    className="block px-3 py-2 text-sm font-medium text-white/75 hover:text-white transition-colors text-right"
+                    className="block px-3 py-2.5 rounded-lg bg-white/5 text-sm font-medium text-white/85 hover:bg-white/10 hover:text-white transition-colors text-left"
                   >
                     Sign In
                   </Link>
@@ -92,7 +92,7 @@ export default function Navbar() {
                     to="/login"
                     search={{ redirect: undefined, signout: undefined }}
                     onClick={() => setMobileOpen(false)}
-                    className="block px-3 py-2 text-sm font-semibold text-[#E28743] hover:text-[#C96A3D] transition-colors text-right"
+                    className="block px-3 py-2.5 rounded-lg bg-[#C96A3D]/10 text-sm font-semibold text-[#E28743] hover:bg-[#C96A3D]/20 transition-colors text-left"
                   >
                     Get Started
                   </Link>
