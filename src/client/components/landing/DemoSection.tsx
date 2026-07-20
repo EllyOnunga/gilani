@@ -1,4 +1,8 @@
+import { useState } from "react";
+
 export default function DemoSection() {
+  const [activeChat, setActiveChat] = useState<"math" | "essay">("math");
+
   return (
     <section id="demo" className="w-full bg-[#050505] py-20 relative overflow-hidden">
       {/* Background glowing orb */}
@@ -42,9 +46,16 @@ export default function DemoSection() {
               <div className="text-xs font-bold uppercase tracking-wider text-[#71717a] mb-4 px-2">
                 Today
               </div>
-              <div className="flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2.5 text-sm text-white font-medium border border-white/5 shadow-inner cursor-pointer">
+              <div
+                onClick={() => setActiveChat("math")}
+                className={`mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium border cursor-pointer transition-colors ${
+                  activeChat === "math"
+                    ? "bg-white/10 text-white border-white/5 shadow-inner"
+                    : "border-transparent text-[#a1a1aa] hover:bg-white/5 hover:text-white"
+                }`}
+              >
                 <svg
-                  className="w-4 h-4 text-[#d9531e]"
+                  className={`w-4 h-4 ${activeChat === "math" ? "text-[#d9531e]" : "text-current"}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -52,18 +63,30 @@ export default function DemoSection() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2.5}
+                    strokeWidth={activeChat === "math" ? 2.5 : 2}
                     d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
                   />
                 </svg>
                 Balancing Equations
               </div>
-              <div className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[#a1a1aa] hover:bg-white/5 hover:text-white transition-colors cursor-pointer">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div
+                onClick={() => setActiveChat("essay")}
+                className={`mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium border cursor-pointer transition-colors ${
+                  activeChat === "essay"
+                    ? "bg-white/10 text-white border-white/5 shadow-inner"
+                    : "border-transparent text-[#a1a1aa] hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <svg
+                  className={`w-4 h-4 ${activeChat === "essay" ? "text-[#d9531e]" : "text-current"}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={activeChat === "essay" ? 2.5 : 2}
                     d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
                   />
                 </svg>
@@ -74,9 +97,11 @@ export default function DemoSection() {
             {/* Main Chat Mockup */}
             <div className="flex flex-1 flex-col bg-[#0a0a0a]">
               <div className="flex h-16 items-center border-b border-white/5 px-8 bg-[#121212]/50 backdrop-blur-md">
-                <span className="font-semibold text-white">Balancing Equations</span>
+                <span className="font-semibold text-white">
+                  {activeChat === "math" ? "Balancing Equations" : "History Essay Help"}
+                </span>
                 <span className="ml-3 px-2 py-0.5 rounded-md bg-[#d9531e]/10 text-[#d9531e] text-[10px] font-bold uppercase tracking-wider border border-[#d9531e]/20">
-                  Chemistry
+                  {activeChat === "math" ? "Chemistry" : "History"}
                 </span>
               </div>
 
@@ -84,7 +109,9 @@ export default function DemoSection() {
                 {/* Student Message */}
                 <div className="flex w-full justify-end">
                   <div className="max-w-[85%] md:max-w-[80%] rounded-[20px] bg-[#d9531e] px-4 md:px-6 py-3 md:py-4 text-[14px] md:text-[15px] text-white rounded-tr-sm shadow-md">
-                    How do I balance the combustion of methane?
+                    {activeChat === "math"
+                      ? "How do I balance the combustion of methane?"
+                      : "Can you help me structure my essay on the causes of World War I?"}
                   </div>
                 </div>
                 {/* AI Message */}
@@ -93,13 +120,45 @@ export default function DemoSection() {
                     AI
                   </div>
                   <div className="max-w-[85%] md:max-w-[80%] rounded-[20px] bg-[#121212] px-4 md:px-6 py-4 md:py-5 text-[14px] md:text-[15px] text-[#e4e4e7] rounded-tl-sm border border-white/5 shadow-md leading-relaxed">
-                    <p className="mb-3 md:mb-4">
-                      Here is the balanced equation for the combustion of methane:
-                    </p>
-                    <div className="font-mono text-[12px] md:text-[13px] bg-[#050505] p-3 md:p-4 rounded-xl mb-3 border border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                      CH₄ + 2O₂ → CO₂ + 2H₂O
-                    </div>
-                    <p>Notice how we now have equal atoms on both sides!</p>
+                    {activeChat === "math" ? (
+                      <>
+                        <p className="mb-3 md:mb-4">
+                          Here is the balanced equation for the combustion of methane:
+                        </p>
+                        <div className="font-mono text-[12px] md:text-[13px] bg-[#050505] p-3 md:p-4 rounded-xl mb-3 border border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                          CH₄ + 2O₂ → CO₂ + 2H₂O
+                        </div>
+                        <p>Notice how we now have equal atoms on both sides!</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mb-3 md:mb-4">
+                          Sure! A great way to structure it is using the MAIN acronym for the body
+                          paragraphs:
+                        </p>
+                        <ul className="list-disc pl-5 space-y-2 mb-3 md:mb-4 text-[#a1a1aa]">
+                          <li>
+                            <strong className="text-[#e4e4e7]">Militarism:</strong> The arms race.
+                          </li>
+                          <li>
+                            <strong className="text-[#e4e4e7]">Alliances:</strong> Secret treaties
+                            pulling nations in.
+                          </li>
+                          <li>
+                            <strong className="text-[#e4e4e7]">Imperialism:</strong> Competition for
+                            colonies.
+                          </li>
+                          <li>
+                            <strong className="text-[#e4e4e7]">Nationalism:</strong> Extreme pride
+                            and tension.
+                          </li>
+                        </ul>
+                        <p>
+                          Start with a strong thesis in your intro, and conclude by showing how they
+                          all led to the spark in Sarajevo!
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
