@@ -156,7 +156,7 @@ function TutorIndex() {
             isListening={composer.isListening}
             recentThreads={threads}
             allThreadsPath="/tutor/chats"
-            userName={(profileName || session?.user?.user_metadata?.full_name) ?? null}
+            userName={profileName || (session?.user?.user_metadata?.full_name ?? null)}
           />
         </PullToRefresh>
         <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">

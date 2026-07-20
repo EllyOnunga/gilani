@@ -49,7 +49,7 @@ function TutorThread() {
   const authToken = session?.access_token ?? null;
   const userId = session?.user?.id ?? null;
   const { profileName } = useProfile(userId);
-  const userName = (profileName || session?.user?.user_metadata?.full_name) ?? null;
+  const userName = profileName || (session?.user?.user_metadata?.full_name ?? null);
 
   if (authLoading) return <GilaniLoader />;
 
