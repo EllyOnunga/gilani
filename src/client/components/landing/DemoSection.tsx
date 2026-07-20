@@ -20,7 +20,7 @@ export default function DemoSection() {
         <div className="overflow-hidden rounded-[32px] border border-white/10 bg-[#0a0a0a] shadow-[0_30px_100px_-20px_rgba(217,83,30,0.25)] relative">
           <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
 
-          <div className="flex h-[600px] w-full relative z-10">
+          <div className="flex h-auto md:h-[600px] w-full relative z-10">
             {/* Sidebar Mockup */}
             <div className="hidden w-64 flex-col border-r border-white/5 bg-[#121212]/80 backdrop-blur-xl p-4 md:flex">
               <div className="mb-8 flex items-center justify-between px-2">
@@ -80,33 +80,26 @@ export default function DemoSection() {
                 </span>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-8 scrollbar-hide">
+              <div className="flex-1 overflow-hidden md:overflow-y-auto p-4 md:p-8 flex flex-col gap-6 md:gap-8 scrollbar-hide">
                 {/* Student Message */}
                 <div className="flex w-full justify-end">
-                  <div className="max-w-[80%] rounded-[20px] bg-[#d9531e] px-6 py-4 text-[15px] text-white rounded-tr-sm shadow-md">
+                  <div className="max-w-[85%] md:max-w-[80%] rounded-[20px] bg-[#d9531e] px-4 md:px-6 py-3 md:py-4 text-[14px] md:text-[15px] text-white rounded-tr-sm shadow-md">
                     How do I balance the combustion of methane?
                   </div>
                 </div>
                 {/* AI Message */}
-                <div className="flex w-full justify-start gap-5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1f1f1f] to-[#121212] border border-white/10 text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d9531e] to-[#f59e0b] shadow-lg">
+                <div className="flex w-full justify-start gap-3 md:gap-5">
+                  <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1f1f1f] to-[#121212] border border-white/10 text-xs md:text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d9531e] to-[#f59e0b] shadow-lg">
                     AI
                   </div>
-                  <div className="max-w-[80%] rounded-[20px] bg-[#121212] px-6 py-5 text-[15px] text-[#e4e4e7] rounded-tl-sm border border-white/5 shadow-md leading-relaxed">
-                    <p className="mb-4">
-                      Here is the unbalanced equation for the combustion of methane:
+                  <div className="max-w-[85%] md:max-w-[80%] rounded-[20px] bg-[#121212] px-4 md:px-6 py-4 md:py-5 text-[14px] md:text-[15px] text-[#e4e4e7] rounded-tl-sm border border-white/5 shadow-md leading-relaxed">
+                    <p className="mb-3 md:mb-4">
+                      Here is the balanced equation for the combustion of methane:
                     </p>
-                    <div className="font-mono text-[13px] bg-[#050505] p-4 rounded-xl mb-4 border border-emerald-900/50 text-emerald-400 shadow-inner">
-                      CH₄ + O₂ → CO₂ + H₂O
-                    </div>
-                    <p>
-                      To balance it, we need equal numbers of each atom on both sides. We need 2
-                      oxygen molecules (O₂) to react with one methane (CH₄) to produce one carbon
-                      dioxide (CO₂) and two water (H₂O) molecules:
-                    </p>
-                    <div className="font-mono text-[13px] bg-[#050505] p-4 rounded-xl mt-4 border border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                    <div className="font-mono text-[12px] md:text-[13px] bg-[#050505] p-3 md:p-4 rounded-xl mb-3 border border-emerald-500/30 text-emerald-400 font-bold shadow-[0_0_15px_rgba(16,185,129,0.1)]">
                       CH₄ + 2O₂ → CO₂ + 2H₂O
                     </div>
+                    <p>Notice how we now have equal atoms on both sides!</p>
                   </div>
                 </div>
               </div>
