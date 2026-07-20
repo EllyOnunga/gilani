@@ -1,9 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { PanelRight } from "lucide-react";
 import { Logo } from "@/client/components/ui/logo";
-import { Button } from "@/client/components/ui/button";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/client/components/ui/sheet";
 
 const NAV_LINKS = [
   { href: "#features", label: "Features" },
@@ -14,6 +12,18 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [mobileOpen]);
 
   return (
     <nav className="fixed top-0 left-0 z-50 h-[72px] w-full border-b border-white/5 bg-[#161210]/80 backdrop-blur-md">
@@ -45,66 +55,50 @@ export default function Navbar() {
             </Link>
           </Button>
 
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <button
-                type="button"
-                aria-label="Open menu"
-                className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-white/80 hover:text-white hover:bg-white/5 transition-colors"
-              >
-                <PanelRight className="h-5 w-5" />
-              </button>
-            </SheetTrigger>
-            <SheetContent
-              side="right"
-              className="bg-[#161210]/95 backdrop-blur-xl border-white/10 text-white w-64 p-0 gap-0 flex flex-col"
+          {/* Mobile menu trigger + inline dropdown */}
+          <div ref={menuRef} className="relative md:hidden">
+            <button
+              type="button"
+              aria-label="Open menu"
+              onClick={() => setMobileOpen((o) => !o)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-white/80 hover:text-white transition-colors"
             >
-              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <PanelRight className="h-5 w-5" />
+            </button>
 
-              <div className="flex items-center justify-center px-6 pt-6 pb-5 border-b border-white/10 flex-shrink-0">
-                <Logo to="/" size="md" />
-              </div>
-
-              <div className="flex flex-col gap-1 px-3 pt-4 flex-1 overflow-y-auto">
+            {mobileOpen && (
+              <div className="absolute right-0 top-full mt-2 z-50 flex flex-col min-w-[140px]">
                 {NAV_LINKS.map((link) => (
                   <a
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className="rounded-lg px-4 py-3.5 text-sm font-medium text-center text-white/85 hover:bg-white/5 hover:text-white active:bg-white/10 transition-colors"
+                    className="px-3 py-2 text-sm font-medium text-white/75 hover:text-white transition-colors text-right"
                   >
                     {link.label}
                   </a>
                 ))}
-              </div>
-
-              <div
-                className="flex flex-col gap-3 border-t border-white/10 px-4 pt-5 flex-shrink-0"
-                style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
-              >
-                <Link
-                  to="/login"
-                  search={{ redirect: undefined, signout: undefined }}
-                  onClick={() => setMobileOpen(false)}
-                  className="text-center rounded-lg px-4 py-3 text-sm font-medium text-white/85 hover:bg-white/5 hover:text-white transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Button
-                  asChild
-                  className="rounded-full bg-[#C96A3D] px-5 py-3 text-sm font-medium text-white hover:bg-[#E28743]"
-                >
+                <div className="mt-1 border-t border-white/10 pt-1">
                   <Link
                     to="/login"
                     search={{ redirect: undefined, signout: undefined }}
                     onClick={() => setMobileOpen(false)}
+                    className="block px-3 py-2 text-sm font-medium text-white/75 hover:text-white transition-colors text-right"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/login"
+                    search={{ redirect: undefined, signout: undefined }}
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-3 py-2 text-sm font-semibold text-[#E28743] hover:text-[#C96A3D] transition-colors text-right"
                   >
                     Get Started
                   </Link>
-                </Button>
+                </div>
               </div>
-            </SheetContent>
-          </Sheet>
+            )}
+          </div>
         </div>
       </div>
     </nav>
