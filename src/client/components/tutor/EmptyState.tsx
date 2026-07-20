@@ -246,7 +246,7 @@ export function EmptyState({
         ))}
       </div>
 
-      {/* Recent Threads */}
+      {/* Recent Threads 
       {recentThreads.length > 0 && (
         <div className="w-full flex flex-col mt-2">
           <div className="flex items-center justify-between w-full mb-4">
@@ -277,7 +277,7 @@ export function EmptyState({
             ))}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
