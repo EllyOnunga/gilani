@@ -141,12 +141,13 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
   const { user } = useAuth();
   const settings = useSettings(user, { deleteAccount });
 
-  // On mount, sync settings active tab to default "profile" if empty
+  // On desktop, default to "profile" tab when first opened.
+  // On mobile we start with no tab so the list is shown.
   useEffect(() => {
-    if (open && !settings.activeTab) {
+    if (open && !settings.activeTab && typeof window !== "undefined" && window.innerWidth >= 768) {
       settings.setActiveTab("profile");
     }
-  }, [open, settings.activeTab]);
+  }, [open]);
 
   return (
     <>
@@ -164,19 +165,33 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
             : "opacity-0 md:scale-95 translate-y-4 md:translate-y-[calc(-50%+1rem)] pointer-events-none"
         }`}
       >
-        {/* Mobile Header (Only visible on mobile) */}
+        {/* Mobile Header (Only visible on mobile — shows when no tab is open) */}
         <header className="md:hidden flex h-14 items-center justify-between border-b border-border px-2 flex-shrink-0">
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => {
-                if (onOpenSidebar) onOpenSidebar();
-              }}
-              className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
-              title="Open Menu"
-            >
-              <PanelLeft className="h-5 w-5" strokeWidth={2.25} />
-            </button>
-            <h1 className="text-sm font-semibold text-foreground ml-1">Settings</h1>
+            {settings.activeTab ? (
+              <button
+                onClick={() => settings.setActiveTab(null as any)}
+                className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
+                title="Back"
+              >
+                <ChevronLeft className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (onOpenSidebar) onOpenSidebar();
+                }}
+                className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
+                title="Open Menu"
+              >
+                <PanelLeft className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+            )}
+            <h1 className="text-sm font-semibold text-foreground ml-1">
+              {settings.activeTab
+                ? (TABS.find((t) => t.id === settings.activeTab)?.label ?? "Settings")
+                : "Settings"}
+            </h1>
           </div>
           <button
             onClick={onClose}
@@ -188,8 +203,13 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
 
         {/* Layout: Sidebar + Content */}
         <div className="flex flex-row flex-1 overflow-hidden">
-          {/* Sidebar */}
-          <div className="w-[140px] sm:w-[180px] md:w-64 flex-shrink-0 border-r border-border bg-sidebar/50 flex flex-col">
+          {/* Sidebar: on mobile, hide when a tab is open; always show on desktop */}
+          <div
+            className={`flex-shrink-0 border-r border-border bg-sidebar/50 flex flex-col
+              md:w-64 md:block
+              ${settings.activeTab ? "hidden md:flex" : "flex w-full md:w-64"}
+            `}
+          >
             {/* Desktop Header area */}
             <div className="hidden md:flex items-center justify-between p-5 border-b border-border/40">
               <div className="flex items-center gap-2">
@@ -214,7 +234,11 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => settings.setActiveTab(tab.id as any)}
+                    onClick={() =>
+                      isSelected
+                        ? settings.setActiveTab(null as any)
+                        : settings.setActiveTab(tab.id as any)
+                    }
                     className={`flex items-center gap-2 md:gap-3 rounded-lg px-2 py-2 md:px-3 md:py-2.5 text-left transition-all duration-200 whitespace-normal group ${
                       isSelected
                         ? "bg-muted text-foreground shadow-sm"
@@ -229,9 +253,19 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
             </nav>
           </div>
 
-          {/* Content Area */}
-          <div className="flex-1 overflow-y-auto bg-background p-4 md:p-8">
+          {/* Content Area: on mobile, only show when a tab is active (full-width); on desktop always visible */}
+          <div
+            className={`overflow-y-auto bg-background p-4 md:p-8 md:flex-1
+              ${settings.activeTab ? "flex-1 block" : "hidden md:block md:flex-1"}
+            `}
+          >
             <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              {!settings.activeTab && (
+                <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center gap-3 text-muted-foreground">
+                  <Settings className="h-8 w-8 opacity-30" />
+                  <p className="text-sm">Select a setting from the left to get started.</p>
+                </div>
+              )}
               {settings.activeTab === "profile" && (
                 <>
                   <ProfileDetailsTab
