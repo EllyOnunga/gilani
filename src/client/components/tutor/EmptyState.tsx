@@ -113,7 +113,7 @@ export function EmptyState({
   const greeting = greetingTemplate.replace("{name}", nameToken);
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[60vh] pt-6 md:pt-12 px-4 sm:px-6 gap-6 md:gap-8 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500 pb-12">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] h-full px-4 sm:px-6 gap-6 md:gap-8 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500">
       {/* Banners */}
       <div className="w-full flex flex-col gap-2 max-w-xl">
         {isApproachingLimit && !dismissedBanners.includes("approaching") && (
