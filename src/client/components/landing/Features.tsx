@@ -43,7 +43,7 @@ export default function Features() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
 
       <div className="mx-auto max-w-7xl px-6 relative z-10">
-        <div className="mb-20 text-center max-w-3xl mx-auto space-y-4">
+        <div className="mb-12 lg:mb-20 text-center max-w-3xl mx-auto space-y-4">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#a1a1aa] backdrop-blur-md">
             Features
           </span>
@@ -60,7 +60,7 @@ export default function Features() {
           {FEATURES.map((feat, idx) => (
             <div
               key={idx}
-              className={`group relative flex flex-col gap-5 rounded-[24px] border border-white/5 bg-[#121212] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-white/10 overflow-hidden ${feat.glow}`}
+              className={`group relative flex flex-col items-center text-center md:items-start md:text-left gap-5 rounded-[24px] border border-white/5 bg-[#121212] p-6 md:p-8 transition-all duration-500 hover:-translate-y-2 hover:border-white/10 overflow-hidden ${feat.glow}`}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
@@ -70,7 +70,9 @@ export default function Features() {
 
               <div className="relative z-10 space-y-2">
                 <h3 className="text-xl font-bold text-white tracking-tight">{feat.title}</h3>
-                <p className="text-[#a1a1aa] leading-relaxed font-light">{feat.desc}</p>
+                <p className="text-[#a1a1aa] leading-relaxed font-light max-w-[280px] md:max-w-none mx-auto md:mx-0">
+                  {feat.desc}
+                </p>
               </div>
 
               <div className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-white/10 group-hover:bg-[#d9531e] transition-colors duration-500"></div>
