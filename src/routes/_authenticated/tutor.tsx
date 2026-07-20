@@ -19,6 +19,7 @@ import { setPendingMessage } from "@/shared/utils/pending-message";
 import { useLayout } from "@/client/contexts/layout-context";
 import { useAuth } from "@/client/hooks/use-auth";
 import { PullToRefresh } from "@/client/components/ui/PullToRefresh";
+import { useProfile } from "@/client/components/layout/hooks/split/useProfile";
 
 export const Route = createFileRoute("/_authenticated/tutor")({
   component: TutorIndex,
@@ -43,6 +44,7 @@ function TutorIndex() {
   const { session, loading: authLoading } = useAuth();
   const authToken = session?.access_token ?? null;
   const userId = session?.user?.id ?? null;
+  const { profileName } = useProfile(userId);
 
   const [creatingThread, setCreatingThread] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
@@ -154,7 +156,7 @@ function TutorIndex() {
             isListening={composer.isListening}
             recentThreads={threads}
             allThreadsPath="/tutor/chats"
-            userName={session?.user?.user_metadata?.full_name ?? null}
+            userName={(profileName || session?.user?.user_metadata?.full_name) ?? null}
           />
         </PullToRefresh>
         <div className="flex-shrink-0 z-20 lg:relative fixed bottom-0 left-0 right-0">

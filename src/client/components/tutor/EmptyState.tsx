@@ -44,10 +44,7 @@ const FRIDAY_TEMPLATES = [
   "It's Friday{name}! What do you want to learn today?",
 ];
 
-function getGreeting(userName?: string | null): string {
-  const firstName = userName ? userName.split(" ")[0] : "";
-  const nameToken = firstName ? `, ${firstName}` : "";
-
+function getGreetingTemplate(): string {
   const now = new Date();
   const hour = now.getHours();
   const day = now.getDay(); // 0 = Sunday ... 1 = Monday ... 5 = Friday
@@ -61,8 +58,7 @@ function getGreeting(userName?: string | null): string {
     ...(day === 5 ? FRIDAY_TEMPLATES : []),
   ];
 
-  const template = pool[Math.floor(Math.random() * pool.length)];
-  return template.replace("{name}", nameToken);
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 type Props = {
@@ -111,7 +107,10 @@ export function EmptyState({
   const remaining = Math.max(0, (messagesMax ?? 0) - messagesUsed);
 
   // Recomputed on every mount, so it changes each time the user visits the empty state
-  const greeting = useMemo(() => getGreeting(userName), []);
+  const greetingTemplate = useMemo(() => getGreetingTemplate(), []);
+  const firstName = userName ? userName.split(" ")[0] : "";
+  const nameToken = firstName ? `, ${firstName}` : "";
+  const greeting = greetingTemplate.replace("{name}", nameToken);
 
   return (
     <div className="flex flex-col items-center justify-start min-h-[60vh] pt-6 md:pt-12 px-4 sm:px-6 gap-6 md:gap-8 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500 pb-12">

@@ -12,6 +12,7 @@ import { useAuth } from "@/client/hooks/use-auth";
 
 import { useTutorChat } from "@/client/components/tutor/hooks/useTutorChat";
 import { useComposer } from "@/client/components/tutor/hooks/useComposer";
+import { useProfile } from "@/client/components/layout/hooks/split/useProfile";
 import { ThreadHeader } from "@/client/components/tutor/ThreadHeader";
 import { ChatInput } from "@/client/components/tutor/ChatInput";
 import { PlansModal } from "@/client/components/PlansModal";
@@ -47,7 +48,8 @@ function TutorThread() {
 
   const authToken = session?.access_token ?? null;
   const userId = session?.user?.id ?? null;
-  const userName = session?.user?.user_metadata?.full_name ?? null;
+  const { profileName } = useProfile(userId);
+  const userName = (profileName || session?.user?.user_metadata?.full_name) ?? null;
 
   if (authLoading) return <GilaniLoader />;
 
