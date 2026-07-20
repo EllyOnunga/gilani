@@ -20,9 +20,9 @@ export default function DemoSection() {
         <div className="overflow-hidden rounded-[32px] border border-white/10 bg-[#0a0a0a] shadow-[0_30px_100px_-20px_rgba(217,83,30,0.25)] relative">
           <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
 
-          <div className="flex h-auto md:h-[600px] w-full relative z-10">
+          <div className="flex flex-col md:flex-row h-auto md:h-[600px] w-full relative z-10">
             {/* Sidebar Mockup */}
-            <div className="hidden w-64 flex-col border-r border-white/5 bg-[#121212]/80 backdrop-blur-xl p-4 md:flex">
+            <div className="flex w-full md:w-64 flex-col border-b md:border-b-0 md:border-r border-white/5 bg-[#121212]/80 backdrop-blur-xl p-4">
               <div className="mb-8 flex items-center justify-between px-2">
                 <span className="font-bold text-white text-lg">GilaniAI</span>
                 <svg
