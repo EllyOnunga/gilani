@@ -592,6 +592,13 @@ export function Sidebar({ shell }: Props) {
             </div>
           </div>
         )}
+
+        {/* Mobile-only user menu for teacher/admin (no right panel exists to hold it) */}
+        {(isTeacher || isAdmin) && (
+          <div className="lg:hidden flex-shrink-0 border-t border-border/30 p-3 bg-sidebar">
+            {renderUserMenu(false)}
+          </div>
+        )}
       </aside>
 
       {/* ── Modals (unchanged) ── */}

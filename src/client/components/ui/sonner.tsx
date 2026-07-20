@@ -11,13 +11,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
         classNames: {
           toast: [
             "group toast",
-            "group-[.toaster]:bg-[#1a1d27]",
+            "group-[.toaster]:!bg-transparent",
             "group-[.toaster]:text-[#e2e4f0]",
-            "group-[.toaster]:border group-[.toaster]:border-white/10",
-            "group-[.toaster]:shadow-xl group-[.toaster]:shadow-black/40",
-            "group-[.toaster]:rounded-xl",
+            "group-[.toaster]:!border-none",
+            "group-[.toaster]:!shadow-none",
             "group-[.toaster]:text-xs group-[.toaster]:font-medium",
-            "group-[.toaster]:backdrop-blur-md",
             "group-[.toaster]:text-center group-[.toaster]:justify-center",
           ].join(" "),
           title: "group-[.toast]:text-center group-[.toast]:w-full",
@@ -27,35 +25,22 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:text-center",
           ].join(" "),
           // ── Success ─────────────────────────────
-          success: [
-            "group-[.toaster]:!bg-[#0f2818]",
-            "group-[.toaster]:!text-[#6ee7a0]",
-            "group-[.toaster]:!border-[#166534]/50",
-          ].join(" "),
+          success:
+            "group-[.toaster]:!bg-transparent group-[.toaster]:!text-[#6ee7a0] group-[.toaster]:!border-none",
           // ── Error ───────────────────────────────
-          error: [
-            "group-[.toaster]:!bg-[#2a0f0f]",
-            "group-[.toaster]:!text-[#fca5a5]",
-            "group-[.toaster]:!border-[#7f1d1d]/50",
-          ].join(" "),
+          error:
+            "group-[.toaster]:!bg-transparent group-[.toaster]:!text-[#fca5a5] group-[.toaster]:!border-none",
           // ── Warning ─────────────────────────────
-          warning: [
-            "group-[.toaster]:!bg-[#271c04]",
-            "group-[.toaster]:!text-[#fcd34d]",
-            "group-[.toaster]:!border-[#78350f]/50",
-          ].join(" "),
+          warning:
+            "group-[.toaster]:!bg-transparent group-[.toaster]:!text-[#fcd34d] group-[.toaster]:!border-none",
           // ── Info ────────────────────────────────
-          info: [
-            "group-[.toaster]:!bg-[#0c1a2e]",
-            "group-[.toaster]:!text-[#93c5fd]",
-            "group-[.toaster]:!border-[#1e3a5f]/50",
-          ].join(" "),
+          info: "group-[.toaster]:!bg-transparent group-[.toaster]:!text-[#93c5fd] group-[.toaster]:!border-none",
           actionButton:
-            "group-[.toast]:bg-white/10 group-[.toast]:text-white group-[.toast]:hover:bg-white/20",
+            "group-[.toast]:!bg-transparent group-[.toast]:text-white group-[.toast]:underline",
           cancelButton:
-            "group-[.toast]:bg-white/5 group-[.toast]:text-[#9ca3af] group-[.toast]:hover:bg-white/10",
+            "group-[.toast]:!bg-transparent group-[.toast]:text-[#9ca3af] group-[.toast]:underline",
           closeButton:
-            "group-[.toast]:border-white/10 group-[.toast]:bg-[#1a1d27] group-[.toast]:text-[#9ca3af]",
+            "group-[.toast]:!bg-transparent group-[.toast]:!border-none group-[.toast]:text-[#9ca3af]",
         },
       }}
       {...props}
