@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   X,
   User,
@@ -84,6 +84,19 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
   const settings = useSettings(user, { deleteAccount });
   const { t } = useI18n();
 
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Close modal when clicking outside of it
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (open && modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open, onClose]);
+
   // Mobile view state: "list" shows the tab menu, "content" shows the active tab
   const [mobileView, setMobileView] = useState<"list" | "content">("list");
 
@@ -123,16 +136,16 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop (visual only, pointer-events-none so clicks pass through) */}
       <div
-        onClick={onClose}
-        className={`fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300 ${
-          open ? "opacity-100" : "opacity-0 pointer-events-none"
+        className={`fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300 pointer-events-none ${
+          open ? "opacity-100" : "opacity-0"
         }`}
       />
 
       {/* Panel — centered modal like Claude */}
       <div
+        ref={modalRef}
         className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col w-[95vw] h-[90vh] md:w-[85vw] lg:w-[860px] md:h-[80vh] max-h-[800px] bg-background rounded-xl md:rounded-2xl border border-border/50 shadow-2xl transition-all duration-200 ease-out overflow-hidden ${
           open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
         }`}
