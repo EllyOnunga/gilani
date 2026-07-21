@@ -113,7 +113,7 @@ export function EmptyState({
   const greeting = greetingTemplate.replace("{name}", nameToken);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] h-full px-4 sm:px-6 gap-6 md:gap-8 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500">
+    <div className="flex flex-col items-center justify-center h-full min-h-full px-4 sm:px-6 gap-6 md:gap-8 w-full max-w-3xl mx-auto flex-1 animate-in fade-in duration-500">
       {/* Banners */}
       <div className="w-full flex flex-col gap-2 max-w-xl">
         {isApproachingLimit && !dismissedBanners.includes("approaching") && (
@@ -246,38 +246,7 @@ export function EmptyState({
         ))}
       </div>
 
-      {/* Recent Threads 
-      {recentThreads.length > 0 && (
-        <div className="w-full flex flex-col mt-2">
-          <div className="flex items-center justify-between w-full mb-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider m-0">
-              Recent Chats
-            </p>
-            {recentThreads.length > 3 && allThreadsPath && (
-              <Link
-                to={allThreadsPath}
-                className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
-              >
-                View all <ArrowRight className="h-3 w-3" />
-              </Link>
-            )}
-          </div>
-          <div className="flex flex-col gap-1 w-full">
-            {recentThreads.slice(0, 3).map((thread) => (
-              <button
-                key={thread.id}
-                onClick={() => {
-                  window.location.href = `/tutor/${thread.id}`;
-                }}
-                className="flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all text-left"
-              >
-                <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">{thread.title || "New Conversation"}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )} */}
+      {/* Recent Chats intentionally removed for a cleaner empty state */}
     </div>
   );
 }

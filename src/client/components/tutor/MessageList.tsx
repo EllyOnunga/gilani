@@ -223,7 +223,7 @@ export const MessageList = React.memo(function MessageList({
       }`}
       style={{ scrollBehavior: "smooth" }}
     >
-      <div ref={innerRef} className="space-y-3 flex flex-col pb-4">
+      <div ref={innerRef} className="space-y-3 flex flex-col pb-4 min-h-full">
         {/* Loading state */}
         {messagesLoading && (
           <div
