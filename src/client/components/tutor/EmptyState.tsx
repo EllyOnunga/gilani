@@ -18,11 +18,34 @@ const SUBJECTS = [
   { label: "Essays", prompt: "Help me structure and write an essay" },
 ];
 
-const MORNING_TEMPLATES = ["Good Morning{name}!", "Morning{name}!"];
-const AFTERNOON_TEMPLATES = ["Good Afternoon{name}!", "Afternoon{name}!"];
-const EVENING_TEMPLATES = ["Good Evening{name}!", "Evening{name}!"];
-const MONDAY_TEMPLATES = ["Happy Monday{name}!", "Happy New Week{name}!"];
-const FRIDAY_TEMPLATES = ["Happy Friday{name}!"];
+const MORNING_TEMPLATES = ["Good Morning{name}!", "Morning{name}!", "Rise and shine{name}!"];
+const AFTERNOON_TEMPLATES = [
+  "Good Afternoon{name}!",
+  "Afternoon{name}!",
+  "Hope you're having a good day{name}!",
+];
+const EVENING_TEMPLATES = [
+  "Good Evening{name}!",
+  "Evening{name}!",
+  "Time to wind down or level up{name}?",
+];
+const MONDAY_TEMPLATES = [
+  "Happy Monday{name}!",
+  "Happy New Week{name}!",
+  "Let's crush this week{name}!",
+];
+const FRIDAY_TEMPLATES = ["Happy Friday{name}!", "Finish strong{name}!"];
+
+const MOTIVATIONAL_TEMPLATES = [
+  "You got this{name}!",
+  "Ready to shine{name}?",
+  "Let's learn something new{name}!",
+  "Keep up the great work{name}!",
+  "Time to level up{name}!",
+  "Stay curious{name}!",
+  "You're doing amazing{name}!",
+  "Let's crush it{name}!",
+];
 
 function getGreetingTemplate(): string {
   const now = new Date();
@@ -34,6 +57,7 @@ function getGreetingTemplate(): string {
 
   const pool = [
     ...timeTemplates,
+    ...MOTIVATIONAL_TEMPLATES,
     ...(day === 1 ? MONDAY_TEMPLATES : []),
     ...(day === 5 ? FRIDAY_TEMPLATES : []),
   ];
