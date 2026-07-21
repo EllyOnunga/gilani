@@ -39,7 +39,6 @@ import { Logo } from "@/client/components/ui/logo";
 import { PresetAvatarSVG } from "@/client/components/settings/PresetAvatarSVG";
 import { ThreadActionSheet } from "@/client/components/layout/ThreadActionSheet";
 import { EscalateModal } from "@/client/components/tutor/EscalateModal";
-import { SettingsDrawer } from "@/client/components/settings/SettingsDrawer";
 import { useI18n } from "@/client/i18n/I18nContext";
 import type { useAuthedShell } from "@/client/components/layout/hooks/useAuthedShell";
 
@@ -53,7 +52,6 @@ function isNavActive(path: string, to: string, exact?: boolean) {
 }
 
 export function Sidebar({ shell }: Props) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [threadSearch, setThreadSearch] = useState("");
 
   const {
@@ -179,15 +177,15 @@ export function Sidebar({ shell }: Props) {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="my-1" />
-        <DropdownMenuItem
-          onClick={() => {
-            setSidebarOpen(false);
-            setSettingsOpen(true);
-          }}
-          className="flex w-full items-center gap-3 cursor-pointer px-4 py-3 text-sm font-medium rounded-lg"
-        >
-          <Settings className="h-5 w-5 text-muted-foreground" />
-          <span>Settings</span>
+        <DropdownMenuItem asChild>
+          <Link
+            to="/settings"
+            onClick={() => setSidebarOpen(false)}
+            className="flex w-full items-center gap-3 cursor-pointer px-4 py-3 text-sm font-medium rounded-lg"
+          >
+            <Settings className="h-5 w-5 text-muted-foreground" />
+            <span>{t("nav_settings")}</span>
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link
@@ -654,12 +652,6 @@ export function Sidebar({ shell }: Props) {
           error={escalateError}
         />
       )}
-
-      <SettingsDrawer
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        onOpenSidebar={() => setSidebarOpen(true)}
-      />
     </>
   );
 }
