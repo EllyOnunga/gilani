@@ -131,10 +131,10 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
         }`}
       />
 
-      {/* Panel — slides in from the right on desktop, full-screen on mobile */}
+      {/* Panel — centered modal like Claude */}
       <div
-        className={`fixed inset-y-0 right-0 z-[70] flex flex-col w-full md:w-[800px] lg:w-[860px] bg-background shadow-2xl transition-transform duration-300 ease-out ${
-          open ? "translate-x-0" : "translate-x-full"
+        className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] flex flex-col w-[95vw] h-[90vh] md:w-[85vw] lg:w-[860px] md:h-[80vh] max-h-[800px] bg-background rounded-xl md:rounded-2xl border border-border/50 shadow-2xl transition-all duration-200 ease-out overflow-hidden ${
+          open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
         }`}
       >
         {/* ── MOBILE LAYOUT ─────────────────────────────────────────────────── */}
@@ -152,17 +152,9 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
             ) : (
               <h1 className="text-base font-semibold text-foreground">{t("tab_settings")}</h1>
             )}
-            <div className="flex items-center gap-2">
-              {settings.busy && (
-                <span className="text-[10px] text-muted-foreground animate-pulse">saving…</span>
-              )}
-              <button
-                onClick={onClose}
-                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+            {settings.busy && (
+              <span className="text-[10px] text-muted-foreground animate-pulse pr-2">saving…</span>
+            )}
           </header>
 
           {/* Mobile: show list or content */}
@@ -231,19 +223,13 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
             </nav>
           </div>
 
-          {/* Right content + own close button */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            {/* Desktop close button */}
+          {/* Right content */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
+            {/* Desktop content header */}
             <div className="flex items-center justify-between px-8 pt-6 pb-2 flex-shrink-0">
               <h2 className="text-base font-semibold text-foreground">
                 {settings.activeTab ? activeTabLabel : ""}
               </h2>
-              <button
-                onClick={onClose}
-                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
             </div>
 
             {/* Content */}
