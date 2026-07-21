@@ -40,21 +40,12 @@ import { PresetAvatarSVG } from "@/client/components/settings/PresetAvatarSVG";
 import { ThreadActionSheet } from "@/client/components/layout/ThreadActionSheet";
 import { EscalateModal } from "@/client/components/tutor/EscalateModal";
 import { SettingsDrawer } from "@/client/components/settings/SettingsDrawer";
+import { useI18n } from "@/client/i18n/I18nContext";
 import type { useAuthedShell } from "@/client/components/layout/hooks/useAuthedShell";
 
 type Props = {
   shell: ReturnType<typeof useAuthedShell>;
 };
-
-// Student nav items definition
-const STUDENT_NAV = [
-  { icon: Home, label: "Home", to: "/tutor", exact: true },
-  { icon: MessageSquare, label: "Chats", to: "/tutor/chats" },
-  { icon: FileText, label: "Notes", to: "/tutor/documents" },
-  { icon: PenTool, label: "Quizzes", to: "/tutor/quizzes" },
-  { icon: Calendar, label: "Planner", to: "/tutor/planner" },
-  { icon: Star, label: "Saved", to: "/tutor/saved" },
-] as const;
 
 function isNavActive(path: string, to: string, exact?: boolean) {
   if (exact) return path === to || path === to + "/";
@@ -125,6 +116,18 @@ export function Sidebar({ shell }: Props) {
 
   // Right panel is shown for students only when sidebar is not collapsed
   const hasPanel = !isTeacher && !isAdmin && !collapsed;
+
+  const { t } = useI18n();
+
+  // Student nav items — rebuilt each render so labels respond to language changes
+  const STUDENT_NAV = [
+    { icon: Home, label: t("nav_home"), to: "/tutor", exact: true },
+    { icon: MessageSquare, label: t("nav_chats"), to: "/tutor/chats" },
+    { icon: FileText, label: t("nav_notes"), to: "/tutor/documents" },
+    { icon: PenTool, label: t("nav_quizzes"), to: "/tutor/quizzes" },
+    { icon: Calendar, label: t("nav_planner"), to: "/tutor/planner" },
+    { icon: Star, label: t("nav_saved"), to: "/tutor/saved" },
+  ] as const;
 
   const renderUserMenu = (isCompact = false) => (
     <DropdownMenu>
@@ -404,14 +407,16 @@ export function Sidebar({ shell }: Props) {
           <div className="flex flex-col flex-1 min-w-0 min-h-0 bg-sidebar/50 lg:bg-transparent">
             {/* Panel header */}
             <div className="flex items-center justify-between px-4 py-3 flex-shrink-0">
-              <h2 className="text-sm font-semibold text-foreground tracking-tight">Chats</h2>
+              <h2 className="text-sm font-semibold text-foreground tracking-tight">
+                {t("nav_chats")}
+              </h2>
               <button
                 onClick={createNewThread}
                 className="flex items-center gap-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors px-2.5 py-1.5 text-xs font-semibold cursor-pointer"
-                title="New Chat"
+                title={t("nav_new_chat")}
               >
                 <Plus className="h-3.5 w-3.5" />
-                New
+                {t("nav_new_chat").split(" ")[0]}
               </button>
             </div>
 
@@ -421,7 +426,7 @@ export function Sidebar({ shell }: Props) {
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search chats…"
+                  placeholder={t("sidebar_search")}
                   value={threadSearch}
                   onChange={(e) => setThreadSearch(e.target.value)}
                   className="w-full rounded-lg bg-muted/30 border border-border/30 pl-8 pr-7 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-border/60 focus:bg-muted/50 transition-all"
@@ -455,10 +460,10 @@ export function Sidebar({ shell }: Props) {
                     const groupThreads = filteredGroupedThreads[key];
                     if (!groupThreads || groupThreads.length === 0) return null;
                     const label = {
-                      today: "Today",
-                      yesterday: "Yesterday",
-                      last7Days: "Last 7 Days",
-                      older: "Older",
+                      today: t("sidebar_today"),
+                      yesterday: t("sidebar_yesterday"),
+                      last7Days: t("sidebar_this_week"),
+                      older: t("sidebar_older"),
                     }[key];
                     return (
                       <div key={key} className="space-y-1">

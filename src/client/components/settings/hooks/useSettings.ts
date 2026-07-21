@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/client/supabase";
 import { toast } from "sonner";
 import { friendlyError } from "@/shared/utils/async";
+import { persistLang } from "@/client/i18n/I18nContext";
+import type { LangCode } from "@/client/i18n/translations";
 
 export type TabType =
   | "profile"
@@ -54,6 +56,10 @@ export function useSettings(user: any, serverFns: SettingsServerFns) {
 
   const updatePreference = useCallback((key: string, value: any) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
+    // Immediately persist language changes so the I18n context updates
+    if (key === "uiLanguage" && (value === "en" || value === "sw")) {
+      persistLang(value as LangCode);
+    }
   }, []);
 
   // Loading States

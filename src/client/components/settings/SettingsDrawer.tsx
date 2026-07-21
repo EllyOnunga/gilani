@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/client/hooks/use-auth";
 import { useSettings } from "@/client/components/settings/hooks/useSettings";
+import { useI18n } from "@/client/i18n/I18nContext";
 import { PresetAvatarSVG } from "@/client/components/settings/PresetAvatarSVG";
 import { ProfileDetailsTab } from "@/client/components/settings/tabs/ProfileDetailsTab";
 import { TutorPreferencesTab } from "@/client/components/settings/tabs/TutorPreferencesTab";
@@ -74,63 +75,6 @@ const deleteAccount = createServerFn({ method: "POST" })
     }
   });
 
-const TABS = [
-  {
-    id: "profile" as const,
-    label: "Profile Details",
-    icon: User,
-    description: "Name, avatar and account credentials",
-  },
-  {
-    id: "notifications" as const,
-    label: "Notifications",
-    icon: Bell,
-    description: "Email and push alerts",
-  },
-  {
-    id: "language" as const,
-    label: "Language & Region",
-    icon: Globe,
-    description: "Locale and time settings",
-  },
-  {
-    id: "tutor" as const,
-    label: "Tutor Preferences",
-    icon: Brain,
-    description: "Teaching style and personality",
-  },
-  {
-    id: "accessibility" as const,
-    label: "Accessibility",
-    icon: Monitor,
-    description: "Font size and contrast",
-  },
-  {
-    id: "shortcuts" as const,
-    label: "Keyboard Shortcuts",
-    icon: Keyboard,
-    description: "App navigation hotkeys",
-  },
-  {
-    id: "theme" as const,
-    label: "Display Theme",
-    icon: Sun,
-    description: "Light, dark and appearance",
-  },
-  {
-    id: "plan" as const,
-    label: "Plan & Usage",
-    icon: CreditCard,
-    description: "Subscription and message limits",
-  },
-  {
-    id: "consent" as const,
-    label: "Consent & Security",
-    icon: Shield,
-    description: "Privacy, consent and data",
-  },
-];
-
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -140,6 +84,64 @@ type Props = {
 export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
   const { user } = useAuth();
   const settings = useSettings(user, { deleteAccount });
+  const { t } = useI18n();
+
+  const TABS = [
+    {
+      id: "profile" as const,
+      label: t("tab_profile"),
+      icon: User,
+      description: "Name, avatar and account credentials",
+    },
+    {
+      id: "notifications" as const,
+      label: t("tab_notifications"),
+      icon: Bell,
+      description: "Email and push alerts",
+    },
+    {
+      id: "language" as const,
+      label: t("tab_language"),
+      icon: Globe,
+      description: "Locale and time settings",
+    },
+    {
+      id: "tutor" as const,
+      label: t("tab_tutor"),
+      icon: Brain,
+      description: "Teaching style and personality",
+    },
+    {
+      id: "accessibility" as const,
+      label: t("tab_accessibility"),
+      icon: Monitor,
+      description: "Font size and contrast",
+    },
+    {
+      id: "shortcuts" as const,
+      label: t("tab_shortcuts"),
+      icon: Keyboard,
+      description: "App navigation hotkeys",
+    },
+    {
+      id: "theme" as const,
+      label: t("tab_theme"),
+      icon: Sun,
+      description: "Light, dark and appearance",
+    },
+    {
+      id: "plan" as const,
+      label: t("tab_plan"),
+      icon: CreditCard,
+      description: "Subscription and message limits",
+    },
+    {
+      id: "consent" as const,
+      label: t("tab_consent"),
+      icon: Shield,
+      description: "Privacy, consent and data",
+    },
+  ];
 
   // On desktop, default to "profile" tab when first opened.
   // On mobile we start with no tab so the list is shown.
