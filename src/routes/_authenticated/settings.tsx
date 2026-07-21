@@ -125,6 +125,12 @@ function SettingsPage() {
           but adding it for standard mobile menu toggle */}
       <div className="md:hidden flex items-center justify-between border-b border-border/60 px-4 h-14 flex-shrink-0">
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 -ml-2 rounded-lg text-muted-foreground hover:bg-muted/60 transition-colors"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
           {mobileView === "content" ? (
             <button
               onClick={handleBackToList}
@@ -134,15 +140,7 @@ function SettingsPage() {
               <span>{t("tab_settings")}</span>
             </button>
           ) : (
-            <>
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="p-2 -ml-2 rounded-lg text-muted-foreground hover:bg-muted/60 transition-colors"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <h1 className="text-base font-semibold text-foreground">{t("tab_settings")}</h1>
-            </>
+            <h1 className="text-base font-semibold text-foreground">{t("tab_settings")}</h1>
           )}
         </div>
         {settings.busy && (
