@@ -6,14 +6,12 @@ import {
   Shield,
   CreditCard,
   Brain,
-  ChevronRight,
   ChevronLeft,
-  Settings,
   Bell,
   Globe,
   Monitor,
   Keyboard,
-  PanelLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/client/hooks/use-auth";
 import { useSettings } from "@/client/components/settings/hooks/useSettings";
@@ -86,207 +84,178 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
   const settings = useSettings(user, { deleteAccount });
   const { t } = useI18n();
 
+  // Mobile view state: "list" shows the tab menu, "content" shows the active tab
+  const [mobileView, setMobileView] = useState<"list" | "content">("list");
+
   const TABS = [
-    {
-      id: "profile" as const,
-      label: t("tab_profile"),
-      icon: User,
-      description: "Name, avatar and account credentials",
-    },
-    {
-      id: "notifications" as const,
-      label: t("tab_notifications"),
-      icon: Bell,
-      description: "Email and push alerts",
-    },
-    {
-      id: "language" as const,
-      label: t("tab_language"),
-      icon: Globe,
-      description: "Locale and time settings",
-    },
-    {
-      id: "tutor" as const,
-      label: t("tab_tutor"),
-      icon: Brain,
-      description: "Teaching style and personality",
-    },
-    {
-      id: "accessibility" as const,
-      label: t("tab_accessibility"),
-      icon: Monitor,
-      description: "Font size and contrast",
-    },
-    {
-      id: "shortcuts" as const,
-      label: t("tab_shortcuts"),
-      icon: Keyboard,
-      description: "App navigation hotkeys",
-    },
-    {
-      id: "theme" as const,
-      label: t("tab_theme"),
-      icon: Sun,
-      description: "Light, dark and appearance",
-    },
-    {
-      id: "plan" as const,
-      label: t("tab_plan"),
-      icon: CreditCard,
-      description: "Subscription and message limits",
-    },
-    {
-      id: "consent" as const,
-      label: t("tab_consent"),
-      icon: Shield,
-      description: "Privacy, consent and data",
-    },
+    { id: "profile" as const, label: t("tab_profile"), icon: User },
+    { id: "notifications" as const, label: t("tab_notifications"), icon: Bell },
+    { id: "language" as const, label: t("tab_language"), icon: Globe },
+    { id: "tutor" as const, label: t("tab_tutor"), icon: Brain },
+    { id: "theme" as const, label: t("tab_theme"), icon: Sun },
+    { id: "accessibility" as const, label: t("tab_accessibility"), icon: Monitor },
+    { id: "shortcuts" as const, label: t("tab_shortcuts"), icon: Keyboard },
+    { id: "plan" as const, label: t("tab_plan"), icon: CreditCard },
+    { id: "consent" as const, label: t("tab_consent"), icon: Shield },
   ];
 
-  // On desktop, default to "profile" tab when first opened.
-  // On mobile we start with no tab so the list is shown.
+  // Default to "profile" on desktop open
   useEffect(() => {
-    if (open && !settings.activeTab && typeof window !== "undefined" && window.innerWidth >= 768) {
-      settings.setActiveTab("profile");
+    if (open && typeof window !== "undefined") {
+      if (window.innerWidth >= 768 && !settings.activeTab) {
+        settings.setActiveTab("profile");
+      }
+      setMobileView("list");
     }
   }, [open]);
+
+  const activeTabLabel =
+    TABS.find((tab) => tab.id === settings.activeTab)?.label ?? t("tab_settings");
+
+  const handleTabClick = (tabId: (typeof TABS)[number]["id"]) => {
+    settings.setActiveTab(tabId);
+    setMobileView("content");
+  };
+
+  const handleBackToList = () => {
+    setMobileView("list");
+  };
 
   return (
     <>
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300 ${
+          open ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
       />
 
-      {/* Centered Modal / Fullscreen on Mobile */}
+      {/* Panel — slides in from the right on desktop, full-screen on mobile */}
       <div
-        className={`fixed inset-0 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-[70] flex flex-col md:w-[90vw] md:max-w-5xl md:h-[85vh] bg-background md:rounded-2xl md:border md:border-border shadow-2xl transition-all duration-300 ease-in-out ${
-          open
-            ? "opacity-100 scale-100 translate-y-0"
-            : "opacity-0 md:scale-95 translate-y-4 md:translate-y-[calc(-50%+1rem)] pointer-events-none"
+        className={`fixed inset-y-0 right-0 z-[70] flex flex-col w-full md:w-[800px] lg:w-[860px] bg-background shadow-2xl transition-transform duration-300 ease-out ${
+          open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {/* Mobile Header (Only visible on mobile — shows when no tab is open) */}
-        <header className="md:hidden flex h-14 items-center justify-between border-b border-border px-2 flex-shrink-0">
-          <div className="flex items-center gap-1">
-            {settings.activeTab ? (
+        {/* ── MOBILE LAYOUT ─────────────────────────────────────────────────── */}
+        <div className="flex flex-col h-full md:hidden">
+          {/* Mobile header */}
+          <header className="flex h-14 items-center justify-between border-b border-border/60 px-4 flex-shrink-0">
+            {mobileView === "content" ? (
               <button
-                onClick={() => settings.setActiveTab(null as any)}
-                className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
-                title="Back"
+                onClick={handleBackToList}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                <ChevronLeft className="h-5 w-5" strokeWidth={2.25} />
+                <ChevronLeft className="h-4 w-4" />
+                <span>{t("tab_settings")}</span>
               </button>
             ) : (
-              <button
-                onClick={() => {
-                  if (onOpenSidebar) onOpenSidebar();
-                }}
-                className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
-                title="Open Menu"
-              >
-                <PanelLeft className="h-5 w-5" strokeWidth={2.25} />
-              </button>
+              <h1 className="text-base font-semibold text-foreground">{t("tab_settings")}</h1>
             )}
-            <h1 className="text-sm font-semibold text-foreground ml-1">
-              {settings.activeTab
-                ? (TABS.find((t) => t.id === settings.activeTab)?.label ?? "Settings")
-                : "Settings"}
-            </h1>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-muted-foreground transition-all duration-200 hover:bg-muted/60 hover:text-foreground active:scale-95 flex-shrink-0"
-          >
-            <X className="h-5 w-5" strokeWidth={2.25} />
-          </button>
-        </header>
-
-        {/* Layout: Sidebar + Content */}
-        <div className="flex flex-row flex-1 overflow-hidden">
-          {/* Sidebar: on mobile, hide when a tab is open; always show on desktop */}
-          <div
-            className={`flex-shrink-0 border-r border-border bg-sidebar/50 flex flex-col
-              md:w-64 md:block
-              ${settings.activeTab ? "hidden md:flex" : "flex w-full md:w-64"}
-            `}
-          >
-            {/* Desktop Header area */}
-            <div className="hidden md:flex items-center justify-between p-5 border-b border-border/40">
-              <div className="flex items-center gap-2">
-                <h2 className="font-serif text-lg font-bold text-foreground">Settings</h2>
-                {settings.busy && (
-                  <span className="text-[10px] text-muted-foreground animate-pulse">saving…</span>
-                )}
-              </div>
+            <div className="flex items-center gap-2">
+              {settings.busy && (
+                <span className="text-[10px] text-muted-foreground animate-pulse">saving…</span>
+              )}
               <button
                 onClick={onClose}
-                className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
+          </header>
 
-            {/* Tab navigation */}
-            <nav className="flex-1 overflow-y-auto p-2 md:p-3 flex flex-col gap-1 overflow-x-hidden scrollbar-none">
+          {/* Mobile: show list or content */}
+          {mobileView === "list" ? (
+            <nav className="flex-1 overflow-y-auto">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
-                const isSelected = settings.activeTab === tab.id;
+                const isActive = settings.activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
-                    onClick={() =>
-                      isSelected
-                        ? settings.setActiveTab(null as any)
-                        : settings.setActiveTab(tab.id as any)
-                    }
-                    className={`flex items-center gap-2 md:gap-3 rounded-lg px-2 py-2 md:px-3 md:py-2.5 text-left transition-all duration-200 whitespace-normal group ${
-                      isSelected
-                        ? "bg-muted text-foreground shadow-sm"
-                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    onClick={() => handleTabClick(tab.id)}
+                    className={`w-full flex items-center justify-between px-5 py-3.5 border-b border-border/40 transition-colors ${
+                      isActive ? "bg-muted/50 text-foreground" : "text-foreground hover:bg-muted/30"
                     }`}
                   >
-                    <Icon className={`h-4 w-4 flex-shrink-0 ${isSelected ? "text-primary" : ""}`} />
-                    <span className="text-xs md:text-sm font-medium">{tab.label}</span>
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm font-medium">{tab.label}</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                  </button>
+                );
+              })}
+            </nav>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-5">
+              <h2 className="text-base font-semibold text-foreground mb-5">{activeTabLabel}</h2>
+              {renderContent(settings, user)}
+            </div>
+          )}
+        </div>
+
+        {/* ── DESKTOP LAYOUT ────────────────────────────────────────────────── */}
+        <div className="hidden md:flex h-full">
+          {/* Left nav column */}
+          <div className="w-[220px] flex-shrink-0 border-r border-border/60 flex flex-col bg-muted/20">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-5 flex-shrink-0">
+              <h1 className="text-base font-semibold text-foreground">{t("tab_settings")}</h1>
+              {settings.busy && (
+                <span className="text-[10px] text-muted-foreground animate-pulse">saving…</span>
+              )}
+            </div>
+
+            {/* Tab nav */}
+            <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = settings.activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => settings.setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-all duration-150 ${
+                      isActive
+                        ? "bg-muted text-foreground font-medium"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? "text-primary" : ""}`} />
+                    <span>{tab.label}</span>
                   </button>
                 );
               })}
             </nav>
           </div>
 
-          {/* Content Area: on mobile, only show when a tab is active (full-width); on desktop always visible */}
-          <div
-            className={`overflow-y-auto bg-background p-4 md:p-8 md:flex-1
-              ${settings.activeTab ? "flex-1 block" : "hidden md:block md:flex-1"}
-            `}
-          >
-            <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-              {!settings.activeTab && (
-                <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center gap-3 text-muted-foreground">
-                  <Settings className="h-8 w-8 opacity-30" />
-                  <p className="text-sm">Select a setting from the left to get started.</p>
+          {/* Right content + own close button */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            {/* Desktop close button */}
+            <div className="flex items-center justify-between px-8 pt-6 pb-2 flex-shrink-0">
+              <h2 className="text-base font-semibold text-foreground">
+                {settings.activeTab ? activeTabLabel : ""}
+              </h2>
+              <button
+                onClick={onClose}
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-8 pb-8">
+              {!settings.activeTab ? (
+                <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center gap-3">
+                  <p className="text-sm text-muted-foreground">Select a setting from the left</p>
                 </div>
-              )}
-              {settings.activeTab === "profile" && (
-                <>
-                  <ProfileDetailsTab
-                    settings={settings}
-                    userEmail={user?.email}
-                    PresetAvatarSVG={PresetAvatarSVG}
-                  />
-                  <AccountCredentialsTab settings={settings} userEmail={user?.email} />
-                </>
-              )}
-              {settings.activeTab === "notifications" && <NotificationsTab settings={settings} />}
-              {settings.activeTab === "language" && <LanguageRegionTab settings={settings} />}
-              {settings.activeTab === "tutor" && <TutorPreferencesTab settings={settings} />}
-              {settings.activeTab === "accessibility" && <AccessibilityTab settings={settings} />}
-              {settings.activeTab === "shortcuts" && <ShortcutsTab settings={settings} />}
-              {settings.activeTab === "theme" && <DisplayThemeTab settings={settings} />}
-              {settings.activeTab === "plan" && <PlanUsageTab settings={settings} />}
-              {settings.activeTab === "consent" && (
-                <ConsentSecurityTab settings={settings} userEmail={user?.email} />
+              ) : (
+                <div className="max-w-xl space-y-8 pt-2 animate-in fade-in duration-200">
+                  {renderContent(settings, user)}
+                </div>
               )}
             </div>
           </div>
@@ -301,4 +270,41 @@ export function SettingsDrawer({ open, onClose, onOpenSidebar }: Props) {
       )}
     </>
   );
+}
+
+function renderContent(
+  settings: ReturnType<typeof useSettings>,
+  user: ReturnType<typeof useAuth>["user"],
+) {
+  switch (settings.activeTab) {
+    case "profile":
+      return (
+        <>
+          <ProfileDetailsTab
+            settings={settings}
+            userEmail={user?.email}
+            PresetAvatarSVG={PresetAvatarSVG}
+          />
+          <AccountCredentialsTab settings={settings} userEmail={user?.email} />
+        </>
+      );
+    case "notifications":
+      return <NotificationsTab settings={settings} />;
+    case "language":
+      return <LanguageRegionTab settings={settings} />;
+    case "tutor":
+      return <TutorPreferencesTab settings={settings} />;
+    case "theme":
+      return <DisplayThemeTab settings={settings} />;
+    case "accessibility":
+      return <AccessibilityTab settings={settings} />;
+    case "shortcuts":
+      return <ShortcutsTab settings={settings} />;
+    case "plan":
+      return <PlanUsageTab settings={settings} />;
+    case "consent":
+      return <ConsentSecurityTab settings={settings} userEmail={user?.email} />;
+    default:
+      return null;
+  }
 }
