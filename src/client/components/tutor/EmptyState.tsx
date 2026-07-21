@@ -18,31 +18,11 @@ const SUBJECTS = [
   { label: "Essays", prompt: "Help me structure and write an essay" },
 ];
 
-const MORNING_TEMPLATES = [
-  "Good Morning{name}! What do you want to learn today?",
-  "Good Morning{name}! Ready to get started?",
-  "Rise and shine{name}! Let's learn something new today.",
-];
-const AFTERNOON_TEMPLATES = [
-  "Good Afternoon{name}! What's up today?",
-  "Good Afternoon{name}! Ready to keep learning?",
-  "Good Afternoon{name}! What do you want to explore today?",
-];
-const EVENING_TEMPLATES = [
-  "Good Evening{name}! What's up today?",
-  "Good Evening{name}! Let's make progress before the day ends.",
-  "Good Evening{name}! What would you like to study tonight?",
-];
-const MONDAY_TEMPLATES = [
-  "Happy New Week{name}! Your study awaits.",
-  "Happy New Week{name}! Let's make this week count.",
-  "It's a brand new week{name}. Ready to dive in?",
-];
-const FRIDAY_TEMPLATES = [
-  "Happy Friday{name}! What's up today?",
-  "Happy Friday{name}! Let's finish the week strong.",
-  "It's Friday{name}! What do you want to learn today?",
-];
+const MORNING_TEMPLATES = ["Good Morning{name}!", "Morning{name}!"];
+const AFTERNOON_TEMPLATES = ["Good Afternoon{name}!", "Afternoon{name}!"];
+const EVENING_TEMPLATES = ["Good Evening{name}!", "Evening{name}!"];
+const MONDAY_TEMPLATES = ["Happy Monday{name}!", "Happy New Week{name}!"];
+const FRIDAY_TEMPLATES = ["Happy Friday{name}!"];
 
 function getGreetingTemplate(): string {
   const now = new Date();
